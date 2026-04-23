@@ -1,0 +1,115 @@
+/**
+ * WhatsApp Webhook — Meta Cloud API
+ * GET  → Webhook verification handshake
+ * POST → Incoming messages (text + interactive responses)
+ */
+import { NextResponse } from "next/server";
+import { env } from "~/env";
+import { markAsRead } from "~/server/whatsapp";
+import { handleIncomingMessage } from "~/server/whatsapp/conversation-handler";
+
+// ─── Webhook verification (GET) ────────────────────────────────────────────
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const mode = searchParams.get("hub.mode");
+  const token = searchParams.get("hub.verify_token");
+  const challenge = searchParams.get("hub.challenge");
+
+  if (mode === "subscribe" && token === env.WHATSAPP_VERIFY_TOKEN) {
+    console.log("[WhatsApp] Webhook verified ✅");
+    return new NextResponse(challenge, { status: 200 });
+  }
+
+  return new NextResponse("Forbidden", { status: 403 });
+}
+
+// ─── Incoming messages (POST) ──────────────────────────────────────────────
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json() as WebhookPayload;
+
+    if (body.object !== "whatsapp_business_account") {
+      return new NextResponse("OK", { status: 200 });
+    }
+
+    const entry = body.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const value = changes?.value;
+    const message = value?.messages?.[0];
+
+    if (!message) {
+      // Status update or other non-message event
+      return new NextResponse("OK", { status: 200 });
+    }
+
+    // Get contact name
+    const contactName = value?.contacts?.[0]?.profile?.name;
+
+    // Mark as read immediately for good UX
+    if (message.id) {
+      void markAsRead(message.id);
+    }
+
+    // Parse message based on type
+    if (message.type === "text") {
+      await handleIncomingMessage({
+        from: message.from,
+        name: contactName,
+        type: "text",
+        text: message.text?.body,
+        messageId: message.id,
+      });
+    } else if (message.type === "interactive") {
+      // Button reply or list reply
+      const interactive = message.interactive;
+      const replyId =
+        interactive?.button_reply?.id ?? interactive?.list_reply?.id;
+      const replyTitle =
+        interactive?.button_reply?.title ?? interactive?.list_reply?.title;
+
+      await handleIncomingMessage({
+        from: message.from,
+        name: contactName,
+        type: "interactive",
+        interactiveId: replyId,
+        interactiveTitle: replyTitle,
+        messageId: message.id,
+      });
+    }
+
+    // Meta Webhooks require a 200 OK within ~15s
+    return new NextResponse("OK", { status: 200 });
+  } catch (err) {
+    console.error("[WhatsApp] Webhook error:", err);
+    // Still return 200 to prevent Meta from retrying
+    return new NextResponse("OK", { status: 200 });
+  }
+}
+
+// ─── Type definitions for webhook payload ──────────────────────────────────
+
+interface WebhookPayload {
+  object: string;
+  entry?: Array<{
+    changes?: Array<{
+      value?: {
+        messages?: Array<{
+          id: string;
+          from: string;
+          type: string;
+          text?: { body: string };
+          interactive?: {
+            type: string;
+            button_reply?: { id: string; title: string };
+            list_reply?: { id: string; title: string };
+          };
+        }>;
+        contacts?: Array<{
+          profile?: { name?: string };
+        }>;
+      };
+    }>;
+  }>;
+}

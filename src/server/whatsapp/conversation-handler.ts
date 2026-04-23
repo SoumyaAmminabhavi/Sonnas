@@ -1,0 +1,522 @@
+/**
+ * WhatsApp Conversation State Machine
+ * Handles the full ordering flow: IDLE → BROWSING → SELECTING_SIZE → CONFIRMING → COMPLETE
+ */
+import { db } from "~/server/db";
+import { products } from "~/data/landing";
+import {
+  sendTextMessage,
+  sendInteractiveList,
+  sendInteractiveButtons,
+} from "~/server/whatsapp";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type ConversationState =
+  | "IDLE"
+  | "BROWSING_MENU"
+  | "SELECTING_CATEGORY"
+  | "SELECTING_SIZE"
+  | "CONFIRMING";
+
+interface IncomingMessage {
+  from: string;
+  name?: string;
+  type: "text" | "interactive";
+  text?: string;
+  interactiveId?: string;
+  interactiveTitle?: string;
+  messageId: string;
+}
+
+// ─── Order number generator ────────────────────────────────────────────────
+
+function generateOrderNumber(): string {
+  const prefix = "SPC";
+  const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `${prefix}-${timestamp}${random}`;
+}
+
+// ─── Get or create conversation ────────────────────────────────────────────
+
+async function getConversation(phone: string, name?: string) {
+  let convo = await db.whatsAppConversation.findUnique({
+    where: { phone },
+  });
+
+  if (!convo) {
+    convo = await db.whatsAppConversation.create({
+      data: { phone, name },
+    });
+  } else if (name && !convo.name) {
+    convo = await db.whatsAppConversation.update({
+      where: { phone },
+      data: { name },
+    });
+  }
+
+  return convo;
+}
+
+// ─── Update conversation state ─────────────────────────────────────────────
+
+async function updateState(
+  phone: string,
+  state: ConversationState,
+  extra: {
+    selectedCake?: string | null;
+    selectedSize?: string | null;
+    selectedPrice?: string | null;
+  } = {}
+) {
+  await db.whatsAppConversation.update({
+    where: { phone },
+    data: {
+      state,
+      lastMessageAt: new Date(),
+      ...extra,
+    },
+  });
+}
+
+// ─── Main handler ──────────────────────────────────────────────────────────
+
+export async function handleIncomingMessage(msg: IncomingMessage) {
+  const convo = await getConversation(msg.from, msg.name);
+  const state = convo.state as ConversationState;
+  const input = msg.text?.trim().toLowerCase() ?? "";
+  const interactiveId = msg.interactiveId ?? "";
+
+  // ── Global commands (work from any state) ──────────────────────────────
+
+  if (input === "help" || input === "hi" || input === "hello" || input === "hey") {
+    await updateState(msg.from, "IDLE", {
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+    });
+    await sendWelcome(msg.from, msg.name);
+    return;
+  }
+
+  if (input === "menu" || input === "cakes" || interactiveId === "btn_menu") {
+    await updateState(msg.from, "BROWSING_MENU", {
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+    });
+    await sendMenu(msg.from);
+    return;
+  }
+
+  if (
+    input === "status" ||
+    input === "my order" ||
+    input === "order status" ||
+    interactiveId === "btn_status"
+  ) {
+    await sendOrderStatus(msg.from);
+    return;
+  }
+
+  if (input === "cancel" || interactiveId === "btn_cancel") {
+    await updateState(msg.from, "IDLE", {
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+    });
+    await sendTextMessage(
+      msg.from,
+      "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
+    );
+    return;
+  }
+
+  // ── State-specific handling ────────────────────────────────────────────
+
+  switch (state) {
+    case "IDLE":
+      await sendWelcome(msg.from, msg.name);
+      break;
+
+    case "BROWSING_MENU":
+      await handleCakeSelection(msg);
+      break;
+
+    case "SELECTING_CATEGORY":
+      await handleCategorySelection(msg);
+      break;
+
+    case "SELECTING_SIZE":
+      await handleSizeSelection(msg, convo);
+      break;
+
+    case "CONFIRMING":
+      await handleConfirmation(msg, convo);
+      break;
+
+    default:
+      await sendWelcome(msg.from, msg.name);
+  }
+}
+
+// ─── Welcome message ───────────────────────────────────────────────────────
+
+async function sendWelcome(to: string, name?: string) {
+  const greeting = name ? `Hi ${name}! 👋` : "Hi there! 👋";
+  await sendInteractiveButtons(
+    to,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie & Cafe* 🎂\n\nEvery cake is handcrafted with love using the finest ingredients.\n\nWhat would you like to do?`,
+    [
+      { id: "btn_menu", title: "📋 View Menu" },
+      { id: "btn_status", title: "📦 Order Status" },
+    ]
+  );
+}
+
+// ─── Send interactive menu ─────────────────────────────────────────────────
+
+// ─── Send interactive menu ─────────────────────────────────────────────────
+
+async function sendMenu(to: string) {
+  if (products.length <= 10) {
+    // If we have 10 or fewer cakes, show the full list in sections
+    const chocolateCakes = filterCakes("chocolate");
+    const vanillaCakes = filterCakes("vanilla");
+    const teaTimeCakes = filterCakes("teatime");
+
+    const sections = [];
+    if (chocolateCakes.length > 0) {
+      sections.push({
+        title: "🍫 Chocolate Based",
+        rows: chocolateCakes.map(cakeRow),
+      });
+    }
+    if (vanillaCakes.length > 0) {
+      sections.push({
+        title: "🍦 Vanilla & Fruit Based",
+        rows: vanillaCakes.map(cakeRow),
+      });
+    }
+    if (teaTimeCakes.length > 0) {
+      sections.push({
+        title: "☕ Tea Time Specials",
+        rows: teaTimeCakes.map(cakeRow),
+      });
+    }
+
+    await sendInteractiveList(
+      to,
+      "🧁 Our Menu",
+      "Browse our handcrafted signature cakes. Each made fresh with premium ingredients.\n\nTap below to explore:",
+      "View Cakes",
+      sections
+    );
+    await updateState(to, "BROWSING_MENU");
+  } else {
+    // Too many cakes for a single list (WhatsApp limit: 10 rows total)
+    // Send category selection buttons instead
+    await updateState(to, "SELECTING_CATEGORY");
+    await sendInteractiveButtons(
+      to,
+      "🧁 *Our Menu*\n\nWe have quite a variety today! Please select a category to browse:",
+      [
+        { id: "cat_chocolate", title: "🍫 Chocolate" },
+        { id: "cat_vanilla", title: "🍦 Vanilla & Fruit" },
+        { id: "cat_teatime", title: "☕ Tea Time" },
+      ]
+    );
+  }
+}
+
+// ─── Helpers for Menu ──────────────────────────────────────────────────────
+
+function filterCakes(type: "chocolate" | "vanilla" | "teatime") {
+  switch (type) {
+    case "chocolate":
+      return products.filter(
+        (p) =>
+          p.name.toLowerCase().includes("chocolate") ||
+          p.name.toLowerCase().includes("hazelnut") ||
+          p.name.toLowerCase().includes("coffee") ||
+          p.name.toLowerCase().includes("caramel") ||
+          p.name.toLowerCase().includes("classic")
+      );
+    case "vanilla":
+      return products.filter(
+        (p) =>
+          p.name.toLowerCase().includes("pineapple") ||
+          p.name.toLowerCase().includes("pina") ||
+          p.name.toLowerCase().includes("white chocolate") ||
+          p.name.toLowerCase().includes("strawberry")
+      );
+    case "teatime":
+      return products.filter(
+        (p) =>
+          p.name.toLowerCase().includes("mawa") ||
+          p.name.toLowerCase().includes("persian") ||
+          p.name.toLowerCase().includes("butter")
+      );
+  }
+}
+
+const cakeRow = (c: (typeof products)[0]) => ({
+  id: `cake_${c.id}`,
+  title: c.name.slice(0, 24),
+  description: `From ${c.options?.[0]?.price ?? "₹750"}`,
+});
+
+// ─── Handle category selection ─────────────────────────────────────────────
+
+async function handleCategorySelection(msg: IncomingMessage) {
+  const category = msg.interactiveId?.replace("cat_", "") as
+    | "chocolate"
+    | "vanilla"
+    | "teatime";
+
+  if (!category || !["chocolate", "vanilla", "teatime"].includes(category)) {
+    await sendMenu(msg.from);
+    return;
+  }
+
+  const filtered = filterCakes(category);
+  const titles = {
+    chocolate: "🍫 Chocolate Based",
+    vanilla: "🍦 Vanilla & Fruit Based",
+    teatime: "☕ Tea Time Specials",
+  };
+
+  await updateState(msg.from, "BROWSING_MENU");
+  await sendInteractiveList(
+    msg.from,
+    titles[category],
+    `Here are our signature ${titles[category].toLowerCase()} cakes:`,
+    "Select a Cake",
+    [
+      {
+        title: "Choose your favorite",
+        rows: filtered.map(cakeRow),
+      },
+    ]
+  );
+}
+
+// ─── Handle cake selection ─────────────────────────────────────────────────
+
+async function handleCakeSelection(msg: IncomingMessage) {
+  let selectedProduct = null;
+
+  // Check if they selected from the interactive list
+  if (msg.interactiveId?.startsWith("cake_")) {
+    const cakeId = parseInt(msg.interactiveId.replace("cake_", ""), 10);
+    selectedProduct = products.find((p) => p.id === cakeId);
+  }
+
+  // Or if they typed a cake name
+  if (!selectedProduct && msg.text) {
+    const input = msg.text.toLowerCase();
+    selectedProduct = products.find(
+      (p) =>
+        p.name.toLowerCase().includes(input) ||
+        input.includes(p.name.toLowerCase())
+    );
+  }
+
+  if (!selectedProduct) {
+    await sendTextMessage(
+      msg.from,
+      "I couldn't find that cake. 🤔\n\nReply *Menu* to see our full list, or type the name of a cake!"
+    );
+    return;
+  }
+
+  // Store the selection and move to size selection
+  await updateState(msg.from, "SELECTING_SIZE", {
+    selectedCake: selectedProduct.name,
+  });
+
+  const options = selectedProduct.options ?? [];
+  const buttons = options.map((opt, idx) => ({
+    id: `size_${idx}`,
+    title: `${opt.size} — ${opt.price}`,
+  }));
+
+  await sendInteractiveButtons(
+    msg.from,
+    `*${selectedProduct.name}*\n\n_${selectedProduct.description}_\n\nChoose your size:`,
+    buttons
+  );
+}
+
+// ─── Handle size selection ─────────────────────────────────────────────────
+
+async function handleSizeSelection(
+  msg: IncomingMessage,
+  convo: { selectedCake: string | null }
+) {
+  if (!convo.selectedCake) {
+    await updateState(msg.from, "IDLE");
+    await sendWelcome(msg.from);
+    return;
+  }
+
+  const cake = products.find((p) => p.name === convo.selectedCake);
+  if (!cake) {
+    await updateState(msg.from, "IDLE");
+    await sendWelcome(msg.from);
+    return;
+  }
+
+  let selectedOption = null;
+
+  // From interactive button
+  if (msg.interactiveId?.startsWith("size_")) {
+    const sizeIdx = parseInt(msg.interactiveId.replace("size_", ""), 10);
+    selectedOption = cake.options?.[sizeIdx];
+  }
+
+  // Or typed size
+  if (!selectedOption && msg.text) {
+    const input = msg.text.toLowerCase();
+    selectedOption = cake.options?.find(
+      (opt) =>
+        input.includes(opt.size.toLowerCase()) ||
+        input.includes(opt.price.toLowerCase())
+    );
+  }
+
+  if (!selectedOption) {
+    await sendTextMessage(
+      msg.from,
+      "Please select a valid size option, or reply *Cancel* to start over."
+    );
+    return;
+  }
+
+  // Move to confirmation
+  await updateState(msg.from, "CONFIRMING", {
+    selectedSize: selectedOption.size,
+    selectedPrice: selectedOption.price,
+  });
+
+  await sendInteractiveButtons(
+    msg.from,
+    `📋 *Order Summary*\n\n🎂 *${cake.name}*\n📏 Size: ${selectedOption.size} (serves ${selectedOption.serves})\n💰 Price: ${selectedOption.price}\n\nShall I place this order?`,
+    [
+      { id: "btn_confirm", title: "✅ Confirm Order" },
+      { id: "btn_cancel", title: "❌ Cancel" },
+    ]
+  );
+}
+
+// ─── Handle confirmation ───────────────────────────────────────────────────
+
+async function handleConfirmation(
+  msg: IncomingMessage,
+  convo: {
+    selectedCake: string | null;
+    selectedSize: string | null;
+    selectedPrice: string | null;
+  }
+) {
+  const isConfirm =
+    msg.interactiveId === "btn_confirm" ||
+    msg.text?.toLowerCase() === "yes" ||
+    msg.text?.toLowerCase() === "confirm";
+
+  if (!isConfirm) {
+    await updateState(msg.from, "IDLE", {
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+    });
+    await sendTextMessage(
+      msg.from,
+      "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
+    );
+    return;
+  }
+
+  if (!convo.selectedCake || !convo.selectedSize || !convo.selectedPrice) {
+    await updateState(msg.from, "IDLE");
+    await sendTextMessage(
+      msg.from,
+      "Something went wrong. Let's start over — reply *Menu*."
+    );
+    return;
+  }
+
+  // Create the order
+  const orderNumber = generateOrderNumber();
+
+  const existingConvo = await db.whatsAppConversation.findUnique({
+    where: { phone: msg.from },
+  });
+
+  await db.whatsAppOrder.create({
+    data: {
+      orderNumber,
+      phone: msg.from,
+      customerName: existingConvo?.name ?? msg.name,
+      cakeName: convo.selectedCake,
+      size: convo.selectedSize,
+      price: convo.selectedPrice,
+      status: "PENDING",
+    },
+  });
+
+  // Reset conversation state
+  await updateState(msg.from, "IDLE", {
+    selectedCake: null,
+    selectedSize: null,
+    selectedPrice: null,
+  });
+
+  await sendTextMessage(
+    msg.from,
+    `✅ *Order Placed Successfully!*\n\n🧾 Order #: *${orderNumber}*\n🎂 ${convo.selectedCake}\n📏 ${convo.selectedSize}\n💰 ${convo.selectedPrice}\n\n📞 We'll reach out shortly to confirm delivery details.\n\nReply *Status* anytime to check your order.\nReply *Menu* to order more!\n\n_Thank you for choosing Sonna's!_ 💕`
+  );
+}
+
+// ─── Order status lookup ───────────────────────────────────────────────────
+
+async function sendOrderStatus(to: string) {
+  const orders = await db.whatsAppOrder.findMany({
+    where: { phone: to },
+    orderBy: { createdAt: "desc" },
+    take: 3,
+  });
+
+  if (orders.length === 0) {
+    await sendTextMessage(
+      to,
+      "You don't have any orders yet! 🛒\n\nReply *Menu* to see our cakes and place your first order! 🎂"
+    );
+    return;
+  }
+
+  const statusEmoji: Record<string, string> = {
+    PENDING: "🕐",
+    CONFIRMED: "✅",
+    PREPARING: "👩‍🍳",
+    READY: "📦",
+    DELIVERED: "🎉",
+    CANCELLED: "❌",
+  };
+
+  let statusText = "📦 *Your Recent Orders*\n\n";
+
+  for (const order of orders) {
+    const emoji = statusEmoji[order.status] ?? "📋";
+    statusText += `${emoji} *#${order.orderNumber}*\n`;
+    statusText += `   🎂 ${order.cakeName} (${order.size})\n`;
+    statusText += `   💰 ${order.price}\n`;
+    statusText += `   Status: *${order.status}*\n`;
+    statusText += `   Placed: ${order.createdAt.toLocaleDateString("en-IN")}\n\n`;
+  }
+
+  statusText += "Reply *Menu* to order more! 🧁";
+
+  await sendTextMessage(to, statusText);
+}
