@@ -6,7 +6,7 @@ export const Navbar = () => (
     <div className="container mx-auto flex items-center justify-between px-lg">
       {/* Logo */}
       <Link href="/" className="text-xl font-heading text-text-primary tracking-widest uppercase">
-        SONNA'S PATISSERIE & CAFE
+        SONNA&apos;S PATISSERIE & CAFE
       </Link>
 
       {/* Links */}

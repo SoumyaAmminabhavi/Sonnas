@@ -23,10 +23,10 @@ export const AboutStory = () => (
           </h2>
           <div className="space-y-md text-text-secondary font-body leading-relaxed text-lg">
             <p>
-              SONNA'S PATISSERIE & CAFE was born from a simple dream: to bring the authentic, soul-warming flavors of a traditional French patisserie to the vibrant streets of Bengaluru.
+              SONNA&apos;S PATISSERIE & CAFE was born from a simple dream: to bring the authentic, soul-warming flavors of a traditional French patisserie to the vibrant streets of Bengaluru.
             </p>
             <p>
-              Every croissant, every macaron, and every bespoke cake is crafted with an artisan's heart, blending French technique with the finest local ingredients like Alphonso mangoes and Mysore pistachios.
+              Every croissant, every macaron, and every bespoke cake is crafted with an artisan&apos;s heart, blending French technique with the finest local ingredients like Alphonso mangoes and Mysore pistachios.
             </p>
           </div>
           <div className="pt-md">

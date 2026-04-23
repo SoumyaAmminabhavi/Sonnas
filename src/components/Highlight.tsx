@@ -10,7 +10,7 @@ export const Highlight = () => (
           Custom Cakes <span className="italic text-rose">Made for You</span>
         </h2>
         <p className="text-xl font-body text-text-secondary mb-xl leading-relaxed">
-          Whether it's a grand wedding or an intimate celebration, we'll design a masterpiece that tastes as beautiful as it looks. Hand-painted details, delicate sugar flowers, and flavors that linger.
+          Whether it&apos;s a grand wedding or an intimate celebration, we&apos;ll design a masterpiece that tastes as beautiful as it looks. Hand-painted details, delicate sugar flowers, and flavors that linger.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-lg">
           <button className="bg-rose text-white font-body py-md px-2xl rounded-md hover:bg-rose-dark transition-default w-full sm:w-auto shadow-soft">

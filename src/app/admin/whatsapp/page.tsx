@@ -103,7 +103,7 @@ export default function WhatsAppAdminPage() {
   const orders = ordersQuery.data?.orders ?? [];
   const conversations = conversationsQuery.data ?? [];
 
-  const selectedOrder = orders.find((o) => o.id === selectedOrderId);
+  // const selectedOrder = orders.find((o) => o.id === selectedOrderId);
 
   return (
     <div style={styles.container}>

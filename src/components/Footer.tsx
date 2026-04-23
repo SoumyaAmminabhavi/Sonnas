@@ -7,7 +7,7 @@ export const Footer = () => (
         {/* Brand */}
         <div className="col-span-1 md:col-span-1">
           <h2 className="text-xl font-heading text-text-primary mb-md tracking-widest uppercase">
-            SONNA'S PATISSERIE & CAFE
+            SONNA&apos;S PATISSERIE & CAFE
           </h2>
           <p className="text-text-secondary font-body text-sm leading-6">
             Crafting luxury French desserts and artisanal cakes since 1992. Experience true elegance in every bite.
@@ -32,7 +32,7 @@ export const Footer = () => (
         <div className="col-span-1">
           <h3 className="text-sm uppercase tracking-widest font-heading mb-md">Contact Us</h3>
           <ul className="space-y-sm text-sm font-body text-text-secondary">
-            <li> 4TH Phase, Shop No. 5,6,7 Ground Floor, "Aum Shree" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021</li>
+            <li> 4TH Phase, Shop No. 5,6,7 Ground Floor, &quot;Aum Shree&quot; Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021</li>
             <li>+1 555 643 1763</li>
           </ul>
         </div>
@@ -56,7 +56,7 @@ export const Footer = () => (
 
       <div className="border-t border-cream pt-lg flex flex-col md:flex-row justify-between items-center gap-md">
         <p className="text-xs font-body text-text-muted">
-          © {new Date().getFullYear()} SONNA'S PATISSERIE & CAFE. All rights reserved.
+          © {new Date().getFullYear()} SONNA&apos;S PATISSERIE & CAFE. All rights reserved.
         </p>
         <div className="flex space-x-lg text-text-muted hover:text-rose transition-default">
           <span className="text-xs font-body cursor-pointer">Instagram</span>
