@@ -30,8 +30,8 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-    NEXT_PUBLIC_WHATSAPP_NUMBER: z.string(),
-    NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: z.string(),
+    NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().default("15551534132"),
+    NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: z.string().default("+1 (555) 153-4132"),
   },
 
   /**
