@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'menu_page.dart';
+import 'owner/owner_dashboard.dart';
 
 void main() {
   runApp(const PatisserieApp());
@@ -366,6 +367,15 @@ class ModernDrawer extends StatelessWidget {
               _DrawerItem(
                 icon: Icons.admin_panel_settings_outlined,
                 label: "Login as Owner",
+                onTap: () {
+                  // Close the drawer before navigating
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const OwnerDashboard(),
+                    ),
+                  );
+                },
               ),
               _DrawerItem(icon: Icons.badge_outlined, label: "Login as Staff"),
 
@@ -423,14 +433,15 @@ class ModernDrawer extends StatelessWidget {
 class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const _DrawerItem({required this.icon, required this.label});
+  const _DrawerItem({required this.icon, required this.label, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () {},
+      onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(12),
       hoverColor: cs.primary.withOpacity(0.05),
       child: Padding(
