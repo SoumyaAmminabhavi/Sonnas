@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/image";
 import { usePathname } from "next/navigation";
 import LinkNext from "next/link";
 

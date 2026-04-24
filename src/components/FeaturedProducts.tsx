@@ -21,7 +21,7 @@ export const FeaturedProducts = () => {
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-xl pb-lg hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {isLoading ? (
             // Skeleton Loader
-            [...Array(4)].map((_, i) => (
+            Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="shrink-0 w-[280px] md:w-[320px] bg-white/50 animate-pulse rounded-lg overflow-hidden h-[500px]" />
             ))
           ) : (

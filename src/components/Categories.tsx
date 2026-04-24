@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { categories } from "~/data/landing";
 
 export const Categories = () => (
@@ -9,10 +10,11 @@ export const Categories = () => (
             key={category.id}
             className="group relative h-96 rounded-lg overflow-hidden cursor-pointer shadow-soft hover:shadow-medium transition-default transform hover:-translate-y-1"
           >
-            <img
+            <Image
               src={category.image}
               alt={category.name}
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+              fill
+              className="object-cover transition-transform duration-1000 group-hover:scale-110"
             />
             {/* Overlay - Darker for readability */}
             <div className="absolute inset-0 bg-cocoa/40 group-hover:bg-rose/40 transition-default" />

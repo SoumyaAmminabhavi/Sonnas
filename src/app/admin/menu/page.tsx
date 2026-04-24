@@ -60,14 +60,14 @@ export default function AdminMenuPage() {
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  const openModal = (cake?: any) => {
+  const openModal = (cake?: { id: string; name: string; description: string | null; image: string; options: CakeOptionInput[] }) => {
     if (cake) {
       setFormData({
         id: cake.id,
         name: cake.name,
         description: cake.description ?? "",
         image: cake.image,
-        options: cake.options.map((o: any) => ({
+        options: cake.options.map((o) => ({
           id: o.id,
           size: o.size,
           serves: o.serves,
@@ -110,9 +110,9 @@ export default function AdminMenuPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditing && formData.id) {
-      updateMutation.mutate(formData as any);
+      updateMutation.mutate(formData as { id: string; name: string; image: string; options: CakeOptionInput[]; description?: string });
     } else {
-      createMutation.mutate(formData as any);
+      createMutation.mutate(formData as { name: string; image: string; options: CakeOptionInput[]; description?: string });
     }
   };
 
