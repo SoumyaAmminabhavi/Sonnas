@@ -235,11 +235,11 @@ export default function AdminMenuPage() {
                                 method: "POST",
                                 body: formDataUpload,
                               });
-                              const data = await res.json();
+                              const data = (await res.json()) as { imageUrl?: string; error?: string };
                               if (data.imageUrl) {
                                 setFormData({ ...formData, image: data.imageUrl });
                               }
-                            } catch (err) {
+                            } catch {
                               alert("Failed to upload image. Please try again.");
                             }
                           }}
