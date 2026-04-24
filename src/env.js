@@ -30,6 +30,8 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
+    NEXT_PUBLIC_WHATSAPP_NUMBER: z.string(),
+    NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: z.string(),
   },
 
   /**
@@ -47,6 +49,8 @@ export const env = createEnv({
     WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
+    NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

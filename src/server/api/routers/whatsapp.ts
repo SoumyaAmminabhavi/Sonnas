@@ -5,6 +5,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { sendTextMessage } from "~/server/whatsapp";
+import { env } from "~/env";
 
 export const whatsappRouter = createTRPCRouter({
   // ─── Orders ────────────────────────────────────────────────────────────
@@ -70,7 +71,7 @@ export const whatsappRouter = createTRPCRouter({
           PREPARING: `👩‍🍳 *Now Preparing!*\n\n🧾 #${order.orderNumber}\n🎂 ${order.cakeName}\n\nOur bakers are working their magic! ✨`,
           READY: `📦 *Order Ready!*\n\n🧾 #${order.orderNumber}\n🎂 ${order.cakeName} (${order.size})\n\nYour cake is ready for pickup/delivery! 🎉`,
           DELIVERED: `🎉 *Order Delivered!*\n\n🧾 #${order.orderNumber}\n\nEnjoy your cake! We'd love to hear your feedback 💕\n\nReply *Menu* to order again!`,
-          CANCELLED: `❌ *Order Cancelled*\n\n🧾 #${order.orderNumber}\n\nYour order has been cancelled. If you have any questions, please call us at +1 555 643 1763.`,
+          CANCELLED: `❌ *Order Cancelled*\n\n🧾 #${order.orderNumber}\n\nYour order has been cancelled. If you have any questions, please call us at ${env.NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED}.`,
         };
 
         const message = statusMessages[input.status];

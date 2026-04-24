@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { api } from "~/trpc/react";
+import { env } from "~/env";
 
 export const FeaturedProducts = () => {
   const { data: cakes, isLoading } = api.cake.getAll.useQuery();
@@ -63,7 +64,7 @@ export const FeaturedProducts = () => {
                     </div>
                   )}
                   <a 
-                    href={`https://wa.me/1151028171420215?text=${encodeURIComponent(`Hi Sonna's! I am interested in ordering the ${cake.name}.`)}`}
+                    href={`https://wa.me/${env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi Sonna's! I am interested in ordering the ${cake.name}.`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-xs text-xs uppercase tracking-widest text-text-muted border-b border-transparent hover:border-rose hover:text-rose transition-default cursor-pointer inline-flex items-center gap-2"
