@@ -248,7 +248,7 @@ export default function AdminMenuPage() {
                               if (data.imageUrl) {
                                 setFormData({ ...formData, image: data.imageUrl });
                               } else {
-                                alert(`Upload failed: ${data.message || data.error || "Unknown error"}`);
+                                alert(`Upload failed: ${data.message ?? data.error ?? "Unknown error"}`);
                               }
                             } catch {
                               alert("Failed to upload image. Check your internet connection.");
