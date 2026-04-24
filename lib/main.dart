@@ -14,7 +14,7 @@ class PatisserieApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sonna\'s Patisserie',
+      title: 'Sonna\'s Patisserie & Cafe',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -93,6 +93,17 @@ class LandingPage extends StatelessWidget {
   final VoidCallback onViewMenu;
   const LandingPage({super.key, required this.onViewMenu});
 
+  void _showContactInfo(BuildContext context, String title, String content) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("$title: $content"),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -153,7 +164,7 @@ class LandingPage extends StatelessWidget {
 
                 // Headline
                 Text(
-                  "Sonna's Patisserie",
+                  "Sonna's Patisserie & Cafe",
                   style: theme.textTheme.displayLarge?.copyWith(
                     fontSize: 48,
                     height: 1.1,
@@ -178,16 +189,45 @@ class LandingPage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _ContactGlassIcon(icon: Icons.location_on_outlined, cs: cs),
+                    _ContactGlassIcon(
+                      icon: Icons.location_on_outlined,
+                      cs: cs,
+                      onPressed: () => _showContactInfo(
+                        context,
+                        "Find Us",
+                        "4TH Phase, Shop No. 5,6,7 Ground Floor, Akshay Colony, Hubballi",
+                      ),
+                    ),
                     const SizedBox(width: 24),
-                    _ContactGlassIcon(icon: Icons.mail_outline, cs: cs),
+                    _ContactGlassIcon(
+                      icon: Icons.mail_outline,
+                      cs: cs,
+                      onPressed: () => _showContactInfo(
+                        context,
+                        "Email Us",
+                        "sonnaspatisseriecafe@gmail.com",
+                      ),
+                    ),
                     const SizedBox(width: 24),
                     _ContactGlassIcon(
                       icon: Icons.photo_camera_outlined,
                       cs: cs,
+                      onPressed: () => _showContactInfo(
+                        context,
+                        "Instagram",
+                        "@sonnas__",
+                      ),
                     ),
                     const SizedBox(width: 24),
-                    _ContactGlassIcon(icon: Icons.call_outlined, cs: cs),
+                    _ContactGlassIcon(
+                      icon: Icons.call_outlined,
+                      cs: cs,
+                      onPressed: () => _showContactInfo(
+                        context,
+                        "Call Us",
+                        "+91 91132 31424",
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 48),
@@ -305,7 +345,12 @@ class LandingPage extends StatelessWidget {
 class _ContactGlassIcon extends StatelessWidget {
   final IconData icon;
   final ColorScheme cs;
-  const _ContactGlassIcon({required this.icon, required this.cs});
+  final VoidCallback onPressed;
+  const _ContactGlassIcon({
+    required this.icon,
+    required this.cs,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -321,15 +366,17 @@ class _ContactGlassIcon extends StatelessWidget {
         child: BackdropFilter(
           filter: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
           child: IconButton(
+            onPressed: onPressed,
             iconSize: 20,
             icon: Icon(icon, color: cs.primary),
-            onPressed: () {},
+            padding: EdgeInsets.zero,
           ),
         ),
       ),
     );
   }
 }
+
 
 class ModernDrawer extends StatelessWidget {
   const ModernDrawer({super.key});
@@ -412,7 +459,7 @@ class ModernDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "123 Rue de la Paix\n75002 Paris, France",
+                      "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Hubballi, Karnataka 580021",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: cs.onSurface,

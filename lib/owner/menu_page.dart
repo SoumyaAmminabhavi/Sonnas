@@ -14,20 +14,7 @@ class MenuPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 768;
-
-        return Scaffold(
-          backgroundColor: _bgColor,
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: _primaryColor,
-            onPressed: () {
-              // TODO: Save action
-            },
-            elevation: 8,
-            shape: const CircleBorder(),
-            child: const Icon(Icons.check, color: Colors.white, size: 32),
-          ),
-          body: _AddMenuContent(isDesktop: isDesktop),
-        );
+        return _AddMenuContent(isDesktop: isDesktop);
       },
     );
   }
@@ -49,8 +36,8 @@ class _AddMenuContentState extends State<_AddMenuContent> {
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.symmetric(
-        horizontal: widget.isDesktop ? 48.0 : 24.0,
-        vertical: 32.0,
+        horizontal: widget.isDesktop ? 48.0 : 16.0,
+        vertical: 24.0,
       ),
       children: [
         Row(
@@ -73,7 +60,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                   "Add New Cake",
                   style: GoogleFonts.notoSerif(
                     color: _secondaryColor,
-                    fontSize: widget.isDesktop ? 48 : 36,
+                    fontSize: widget.isDesktop ? 48 : 32,
                     height: 1.1,
                   ),
                 ),
@@ -216,6 +203,31 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                       icon: Icons.people,
                     ),
                   ],
+                  const SizedBox(height: 48),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Product added successfully!")),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "ADD PRODUCT TO MENU",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 64),
                 ],
               );

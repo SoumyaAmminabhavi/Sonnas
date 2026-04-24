@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'menu_page.dart';
+import 'owner_settings.dart';
 
 // Brand Colors
 const Color _bgColor = Color(0xFFFFF8F5);
@@ -50,7 +51,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              "Sonna's Patisserie",
+              "Sonna's Patisserie & Cafe",
               style: GoogleFonts.notoSerif(
                 color: _primaryColor,
                 fontStyle: FontStyle.italic,
@@ -60,8 +61,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             actions: [
               if (isDesktop) ...[
                 const _TopNavText(text: "DASHBOARD", isSelected: true),
-                const _TopNavText(text: "ORDERS"),
-                const _TopNavText(text: "MENU"),
+                GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = 3),
+                  child: const _TopNavText(text: "MENU"),
+                ),
+                GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = 4),
+                  child: const _TopNavText(text: "SETTINGS"),
+                ),
               ],
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -84,30 +91,37 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   currentIndex: _selectedIndex,
                   onTap: (index) => setState(() => _selectedIndex = index),
                 ),
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: _primaryColor,
-            onPressed: () {},
-            elevation: 8,
-            shape: const CircleBorder(),
-            child: const Icon(Icons.add, color: Colors.white, size: 32),
-          ),
-          body: isDesktop
-              ? Row(
-                  children: [
-                    _Sidebar(
-                      currentIndex: _selectedIndex,
-                      onTap: (index) => setState(() => _selectedIndex = index),
-                    ),
-                    Expanded(
-                      child: _selectedIndex == 3
-                          ? const MenuPage()
-                          : const _MainContent(isDesktop: true),
-                    ),
-                  ],
+          floatingActionButton: _selectedIndex == 3
+              ? FloatingActionButton(
+                  backgroundColor: _primaryColor,
+                  onPressed: () {
+                    // Save menu item
+                  },
+                  elevation: 8,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.check, color: Colors.white, size: 32),
                 )
-              : _selectedIndex == 3
-              ? const MenuPage()
-              : const _MainContent(isDesktop: false),
+              : null,
+          body: Row(
+            children: [
+              if (isDesktop)
+                _Sidebar(
+                  currentIndex: _selectedIndex,
+                  onTap: (index) => setState(() => _selectedIndex = index),
+                ),
+              Expanded(
+                child: _selectedIndex == 1
+                    ? const Center(child: Text("Orders Page (Coming Soon)"))
+                    : _selectedIndex == 2
+                        ? const Center(child: Text("Payments Page (Coming Soon)"))
+                        : _selectedIndex == 3
+                            ? const MenuPage()
+                            : _selectedIndex == 4
+                                ? const OwnerSettingsPage()
+                                : _MainContent(isDesktop: isDesktop),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -290,27 +304,21 @@ class _MobileBottomNav extends StatelessWidget {
       selectedItemColor: _primaryColor,
       unselectedItemColor: _secondaryColor.withOpacity(0.6),
       selectedLabelStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: FontWeight.bold,
-        letterSpacing: 1.5,
+        letterSpacing: 0.5,
       ),
       unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: FontWeight.bold,
-        letterSpacing: 1.5,
+        letterSpacing: 0.5,
       ),
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard),
-          label: "DASHBOARD",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_bag),
-          label: "ORDERS",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.payments), label: "PAYMENTS"),
-        BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "MENU"),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "SETTINGS"),
+        BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: "Overview"),
+        BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: "Orders"),
+        BottomNavigationBarItem(icon: Icon(Icons.payments_outlined), label: "Payments"),
+        BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), label: "Menu"),
+        BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Settings"),
       ],
     );
   }
@@ -330,15 +338,15 @@ class _MainContent extends StatelessWidget {
       ),
       children: [
         // Welcome Header
-        // Text(
-        //   "OWNER OVERVIEW",
-        //   style: GoogleFonts.plusJakartaSans(
-        //     color: _primaryColor,
-        //     fontWeight: FontWeight.bold,
-        //     fontSize: 12,
-        //     letterSpacing: 2.0,
-        //   ),
-        // ),
+        Text(
+          "OWNER OVERVIEW",
+          style: GoogleFonts.plusJakartaSans(
+            color: _primaryColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            letterSpacing: 2.0,
+          ),
+        ),
         const SizedBox(height: 8),
         Text(
           "Hello, Sonna.",
@@ -356,29 +364,6 @@ class _MainContent extends StatelessWidget {
         ),
         const SizedBox(height: 48),
 
-        // Stat Cards Layout
-        // if (isDesktop)
-        //   Row(
-        //     children: [
-        //       Expanded(child: _RevenueCard()),
-        //       const SizedBox(width: 24),
-        //       Expanded(child: _PendingCard()),
-        //       const SizedBox(width: 24),
-        //       Expanded(child: _LowStockCard()),
-        //     ],
-        //   )
-        // else
-        //   Column(
-        //     children: [
-        //       _RevenueCard(),
-        //       const SizedBox(height: 16),
-        //       _PendingCard(),
-        //       const SizedBox(height: 16),
-        //       _LowStockCard(),
-        //     ],
-        //   ),
-
-        // const SizedBox(height: 64),
 
         // Recent Orders Header
         Row(
@@ -439,8 +424,8 @@ class _MainContent extends StatelessWidget {
                 status: "IN PREPARATION",
                 statusColor: _primaryColor,
                 statusBg: _surfaceLow,
-                title: "Valrhona Chocolate Noir",
-                customer: "Customer: Madame Dupont",
+                title: "Belgian Dark Chocolate Cake",
+                customer: "Customer: Mrs. Deshpande",
                 imageUrl: _imgOrder1,
               ),
               _OrderCard(
@@ -448,8 +433,8 @@ class _MainContent extends StatelessWidget {
                 status: "PENDING PICKUP",
                 statusColor: _secondaryColor,
                 statusBg: const Color(0xFFFDBF97).withOpacity(0.2),
-                title: "Wild Strawberry Fraisier",
-                customer: "Customer: Julian Vane",
+                title: "Wild Strawberry Cake",
+                customer: "Customer: Mr. Kulkarni",
                 imageUrl: _imgOrder2,
               ),
               _OrderCard(
@@ -458,7 +443,7 @@ class _MainContent extends StatelessWidget {
                 statusColor: _primaryColor,
                 statusBg: _surfaceLow,
                 title: "Signature Macaron Box (24)",
-                customer: "Customer: Sophie Laurent",
+                customer: "Customer: Ms. Patil",
                 imageUrl: _imgOrder3,
               ),
               _OrderCard(
@@ -511,169 +496,6 @@ class _MainContent extends StatelessWidget {
   }
 }
 
-class _RevenueCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [_primaryColor, _primaryContainer],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(Icons.payments, color: Colors.white, size: 24),
-              Text(
-                "GROWTH +8%",
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            "₹1,240",
-            style: GoogleFonts.notoSerif(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "REVENUE TODAY",
-            style: GoogleFonts.plusJakartaSans(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PendingCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: _surfaceLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(
-                Icons.pending_actions,
-                color: _secondaryColor,
-                size: 24,
-              ),
-              Text(
-                "ATTENTION",
-                style: GoogleFonts.plusJakartaSans(
-                  color: _secondaryColor.withOpacity(0.6),
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            "4",
-            style: GoogleFonts.notoSerif(color: _secondaryColor, fontSize: 32),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "PENDING PAYMENTS",
-            style: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withOpacity(0.7),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LowStockCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: _errorContainer.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: const Border(left: BorderSide(color: _errorColor, width: 4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(Icons.warning, color: _errorColor, size: 24),
-              Text(
-                "ALERT",
-                style: GoogleFonts.plusJakartaSans(
-                  color: _errorColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            "2",
-            style: GoogleFonts.notoSerif(color: _errorColor, fontSize: 32),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "LOW STOCK ITEMS",
-            style: GoogleFonts.plusJakartaSans(
-              color: _errorColor.withOpacity(0.8),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _OrderCard extends StatelessWidget {
   final String id;
