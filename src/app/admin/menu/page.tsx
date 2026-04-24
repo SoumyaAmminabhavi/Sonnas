@@ -228,6 +228,9 @@ export default function AdminMenuPage() {
                             const file = e.target.files?.[0];
                             if (!file) return;
                             
+                            const btn = e.target.parentElement;
+                            if (btn) btn.style.opacity = "0.5";
+                            
                             const formDataUpload = new FormData();
                             formDataUpload.append("file", file);
                             
@@ -236,12 +239,21 @@ export default function AdminMenuPage() {
                                 method: "POST",
                                 body: formDataUpload,
                               });
-                              const data = (await res.json()) as { imageUrl?: string; error?: string };
+                              const data = (await res.json()) as { 
+                                imageUrl?: string; 
+                                error?: string;
+                                message?: string;
+                              };
+                              
                               if (data.imageUrl) {
                                 setFormData({ ...formData, image: data.imageUrl });
+                              } else {
+                                alert(`Upload failed: ${data.message || data.error || "Unknown error"}`);
                               }
                             } catch {
-                              alert("Failed to upload image. Please try again.");
+                              alert("Failed to upload image. Check your internet connection.");
+                            } finally {
+                              if (btn) btn.style.opacity = "1";
                             }
                           }}
                         />
