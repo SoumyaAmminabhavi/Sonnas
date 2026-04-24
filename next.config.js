@@ -16,6 +16,10 @@ const config = {
         protocol: "https",
         hostname: "placehold.co",
       },
+      {
+        protocol: "https",
+        hostname: "qwqsarpzcwwpgyimhxzn.supabase.co",
+      },
     ],
   },
 };
