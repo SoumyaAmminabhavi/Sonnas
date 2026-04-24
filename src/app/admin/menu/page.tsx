@@ -254,6 +254,7 @@ export default function AdminMenuPage() {
                               alert("Failed to upload image. Check your internet connection.");
                             } finally {
                               if (btn) btn.style.opacity = "1";
+                              e.target.value = ""; // Reset to allow re-selecting same file
                             }
                           }}
                         />
