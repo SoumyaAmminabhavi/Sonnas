@@ -35,6 +35,7 @@ export const FeaturedProducts = () => {
                     src={cake.image}
                     alt={cake.name}
                     fill
+                    unoptimized
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-default" />

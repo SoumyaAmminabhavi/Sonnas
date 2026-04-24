@@ -145,6 +145,7 @@ export default function AdminMenuPage() {
                     src={cake.image}
                     alt={cake.name}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                   <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -265,6 +266,7 @@ export default function AdminMenuPage() {
                           src={formData.image}
                           alt="Preview"
                           fill
+                          unoptimized
                           className="object-cover"
                         />
                       </div>
