@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { products } from "~/data/landing";
 
 export const FeaturedProducts = () => (
@@ -19,10 +20,11 @@ export const FeaturedProducts = () => (
             className="group shrink-0 w-[280px] md:w-[320px] bg-white rounded-lg shadow-soft overflow-hidden transition-default hover:shadow-medium hover:scale-[1.02] snap-start"
           >
             <div className="relative h-72 overflow-hidden">
-              <img
+              <Image
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-default" />
             </div>

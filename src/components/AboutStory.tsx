@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export const AboutStory = () => (
   <section id="about" className="py-2xl bg-cream overflow-hidden">
     <div className="container mx-auto px-lg">
@@ -5,9 +7,11 @@ export const AboutStory = () => (
         {/* Images with stylized layout */}
         <div className="w-full md:w-1/2 relative">
           <div className="relative z-10 rounded-lg overflow-hidden shadow-medium transform -rotate-2 hover:rotate-0 transition-default">
-            <img
+            <Image
               src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=1000"
               alt="Artisanal Bakery"
+              width={1000}
+              height={500}
               className="w-full h-[500px] object-cover"
             />
           </div>
