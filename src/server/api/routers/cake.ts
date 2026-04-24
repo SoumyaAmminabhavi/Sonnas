@@ -14,6 +14,15 @@ export const cakeRouter = createTRPCRouter({
     return cakes;
   }),
 
+  getById: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return ctx.db.cake.findUnique({
+        where: { id: input.id },
+        include: { options: true },
+      });
+    }),
+
   create: publicProcedure
     .input(
       z.object({
@@ -37,6 +46,47 @@ export const cakeRouter = createTRPCRouter({
           image: input.image,
           options: {
             create: input.options,
+          },
+        },
+        include: { options: true },
+      });
+    }),
+
+  update: publicProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string().min(1),
+        description: z.string().optional(),
+        image: z.string().min(1),
+        options: z.array(
+          z.object({
+            id: z.string().optional(),
+            size: z.string().min(1),
+            serves: z.string().min(1),
+            price: z.string().min(1),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // For simplicity, we'll delete and recreate options to avoid complex nested updates
+      await ctx.db.cakeOption.deleteMany({
+        where: { cakeId: input.id },
+      });
+
+      return ctx.db.cake.update({
+        where: { id: input.id },
+        data: {
+          name: input.name,
+          description: input.description ?? "",
+          image: input.image,
+          options: {
+            create: input.options.map(opt => ({
+              size: opt.size,
+              serves: opt.serves,
+              price: opt.price
+            })),
           },
         },
         include: { options: true },

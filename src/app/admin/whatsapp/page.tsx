@@ -109,10 +109,6 @@ export default function WhatsAppAdminPage() {
     <div style={styles.container}>
       {/* ─── Sidebar ─────────────────────────────────────────── */}
       <aside style={styles.sidebar}>
-        <div style={styles.sidebarHeader}>
-          <h2 style={styles.sidebarLogo}>SONNA&apos;S</h2>
-          <span style={styles.sidebarSubtitle}>WhatsApp Orders</span>
-        </div>
 
         {/* Filter Tabs */}
         <nav style={styles.filterNav}>
