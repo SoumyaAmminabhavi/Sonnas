@@ -208,26 +208,68 @@ export default function AdminMenuPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#6E6E6E]">Image URL</label>
-                    <input
-                      required
-                      className="w-full p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none"
-                      value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                      placeholder="https://..."
-                    />
+                    <label className="text-sm font-semibold text-[#6E6E6E]">Image</label>
+                    <div className="flex gap-2">
+                      <input
+                        required
+                        className="flex-1 p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none text-sm"
+                        value={formData.image}
+                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                        placeholder="Image URL or upload..."
+                      />
+                      <label className="cursor-pointer bg-[#E8DED4] text-[#2B2B2B] px-4 py-3 rounded-xl hover:bg-[#D8CDBC] transition-colors flex items-center justify-center">
+                        <span className="text-lg">📷</span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            
+                            const formDataUpload = new FormData();
+                            formDataUpload.append("file", file);
+                            
+                            try {
+                              const res = await fetch("/api/upload", {
+                                method: "POST",
+                                body: formDataUpload,
+                              });
+                              const data = await res.json();
+                              if (data.imageUrl) {
+                                setFormData({ ...formData, image: data.imageUrl });
+                              }
+                            } catch (err) {
+                              alert("Failed to upload image. Please try again.");
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#6E6E6E]">Description</label>
-                  <textarea
-                    rows={3}
-                    className="w-full p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe the flavors..."
-                  />
+                  <div className="flex gap-4">
+                    <textarea
+                      rows={3}
+                      className="flex-1 p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Describe the flavors..."
+                    />
+                    {formData.image && (
+                      <div className="relative w-24 h-24 rounded-xl overflow-hidden border border-[#E8DED4] shrink-0 bg-gray-50">
+                        <Image
+                          src={formData.image}
+                          alt="Preview"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Options */}
