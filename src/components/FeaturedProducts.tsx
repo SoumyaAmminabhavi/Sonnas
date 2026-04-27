@@ -39,6 +39,15 @@ export const FeaturedProducts = () => {
                     unoptimized
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
+                  {/* Veg Badge */}
+                  <div className="absolute top-md right-md z-10">
+                    <div className="bg-white/90 backdrop-blur-sm px-sm py-xs rounded flex items-center gap-xs shadow-sm border border-green-600/20">
+                      <div className="w-3 h-3 border-2 border-green-600 flex items-center justify-center p-[1px]">
+                        <div className="w-full h-full bg-green-600 rounded-full" />
+                      </div>
+                      <span className="text-[10px] font-bold text-green-700 uppercase tracking-tighter">100% Veg</span>
+                    </div>
+                  </div>
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-default" />
                 </div>
                 <div className="p-lg flex flex-col items-center">
