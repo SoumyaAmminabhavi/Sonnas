@@ -498,13 +498,6 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
 
-  // Main
-  main: {
-    flex: 1,
-    padding: "28px 32px",
-    overflowY: "auto" as const,
-  },
-
   // Stats
   statsBar: {
     display: "grid",
