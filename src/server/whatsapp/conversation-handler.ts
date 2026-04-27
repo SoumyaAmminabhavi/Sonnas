@@ -4,6 +4,7 @@
  */
 import { db } from "~/server/db";
 import { products } from "~/data/landing";
+import { classifyMessage } from "./local-classifier";
 import {
   sendTextMessage,
   sendInteractiveList,
@@ -135,6 +136,37 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
     );
     return;
+  }
+
+  // ── Local NLP Classification (Make it faster) ──────────────────────────
+  
+  if (msg.type === "text" && input.length > 5 && state !== "CONFIRMING" && state !== "IDLE") {
+    const category = classifyMessage(input);
+    
+    if (category === "ADDRESS" && state !== "ASKING_ADDRESS") {
+      await updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: msg.text });
+      await sendTextMessage(msg.from, "✅ Address saved! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)");
+      return;
+    }
+    
+    if (category === "INSTRUCTIONS" && state !== "ASKING_INSTRUCTIONS") {
+      await updateState(msg.from, "CONFIRMING", { selectedNotes: msg.text });
+      const updated = await db.whatsAppConversation.findUnique({ where: { phone: msg.from } });
+      
+      // If we already have cake/size/address, go to confirmation
+      if (updated?.selectedCake && updated?.selectedSize && updated?.selectedAddress) {
+        const cake = products.find(p => p.name === updated.selectedCake);
+        await sendInteractiveButtons(
+          msg.from,
+          `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updated.selectedSize}\n📍 Address: ${updated.selectedAddress}\n📝 Notes: ${msg.text}\n\nShall I place this order?`,
+          [
+            { id: "btn_confirm", title: "✅ Confirm Order" },
+            { id: "btn_cancel", title: "❌ Cancel" },
+          ]
+        );
+        return;
+      }
+    }
   }
 
   // ── State-specific handling ────────────────────────────────────────────
