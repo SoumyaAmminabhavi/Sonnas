@@ -25,9 +25,12 @@ classifier.addDocument('please call on arrival gate code do not ring bell', 'INS
 classifier.addDocument('put a candle keep it cold', 'INSTRUCTIONS');
 
 // CAKE SELECTION
-classifier.addDocument('i want chocolate truffle cake signature pineapple', 'CAKE_SELECTION');
-classifier.addDocument('what is the price of red velvet show me cakes', 'CAKE_SELECTION');
-classifier.addDocument('order a 1kg vanilla cake', 'CAKE_SELECTION');
+classifier.addDocument('i want chocolate truffle cake classic chocolate', 'CAKE_SELECTION');
+classifier.addDocument('almond brittle salted caramel hazelnut coffee', 'CAKE_SELECTION');
+classifier.addDocument('pina colada pineapple mawa persian butter cake', 'CAKE_SELECTION');
+classifier.addDocument('strawberry vanilla chocolate seasonal cakes', 'CAKE_SELECTION');
+classifier.addDocument('what is the price of cakes show me menu', 'CAKE_SELECTION');
+classifier.addDocument('order a 600g 1kg cake', 'CAKE_SELECTION');
 
 // ─── Training ──────────────────────────────────────────────────────────────
 

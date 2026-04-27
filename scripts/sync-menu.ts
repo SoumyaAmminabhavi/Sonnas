@@ -1,17 +1,12 @@
-export const navLinks = [
-  { name: "Home", href: "#home" },
-  { name: "Cakes", href: "#cakes" },
-  { name: "Custom Orders", href: "#highlight" },
-  { name: "About", href: "#about" },
-  { name: "Contact", href: "#footer" },
-];
 
-export const products = [
+import { PrismaClient } from '../generated/prisma';
+
+const prisma = new PrismaClient();
+
+const products = [
   {
-    id: 1,
     name: "Sonna’s Classic Chocolate",
     description: "Chocolate cake with whipped ganache",
-    category: "Chocolate Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹675" },
       { size: "1050g", serves: "8-12", price: "₹1250" }
@@ -19,10 +14,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Classic+Chocolate",
   },
   {
-    id: 2,
     name: "Almond Brittle Salted Caramel",
     description: "Caramel chocolate ganache + almond brittle",
-    category: "Chocolate Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -30,10 +23,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Almond+Brittle",
   },
   {
-    id: 3,
     name: "Orange & Chocolate",
     description: "Chocolate cake with orange ganache",
-    category: "Chocolate Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -41,10 +32,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Orange+Chocolate",
   },
   {
-    id: 4,
     name: "Hazelnut & Chocolate",
     description: "Chocolate cake with hazelnut ganache",
-    category: "Chocolate Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -52,10 +41,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Hazelnut+Chocolate",
   },
   {
-    id: 5,
     name: "Coffee & Chocolate",
     description: "Chocolate cake with coffee ganache",
-    category: "Chocolate Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -63,10 +50,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Coffee+Chocolate",
   },
   {
-    id: 6,
     name: "Caramelised White Chocolate",
     description: "Vanilla cake with white chocolate ganache",
-    category: "Vanilla Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -74,10 +59,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=White+Chocolate",
   },
   {
-    id: 7,
     name: "Pina Colada",
     description: "Coconut & pineapple mousse cake",
-    category: "Vanilla Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -85,10 +68,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Pina+Colada",
   },
   {
-    id: 8,
     name: "Pineapple",
     description: "Pineapple compote vanilla cake",
-    category: "Vanilla Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -96,10 +77,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Pineapple",
   },
   {
-    id: 9,
     name: "Rich Mawa",
     description: "Mawa cake with almond flour & cardamom",
-    category: "Tea Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -107,10 +86,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Rich+Mawa",
   },
   {
-    id: 10,
     name: "Persian Cake",
     description: "Almond + orange + mawa cake",
-    category: "Tea Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -118,10 +95,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Persian+Cake",
   },
   {
-    id: 11,
     name: "Butter Cake",
     description: "Classic butter cake",
-    category: "Tea Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -129,10 +104,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Butter+Cake",
   },
   {
-    id: 12,
     name: "Strawberry & Chocolate",
     description: "Strawberry compote + chocolate ganache",
-    category: "Seasonal Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -140,10 +113,8 @@ export const products = [
     image: "https://placehold.co/800x800/FAF6F0/54433A?text=Strawberry+Chocolate",
   },
   {
-    id: 13,
     name: "Strawberry & Vanilla",
     description: "Strawberry + vanilla cake",
-    category: "Seasonal Cakes",
     options: [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
@@ -152,29 +123,33 @@ export const products = [
   },
 ];
 
-export const categories = [
-  {
-    id: "chocolate",
-    name: "Chocolate Cakes",
-    slug: "chocolate-cakes",
-    image: "https://placehold.co/600x400/54433A/FAF6F0?text=Chocolate+Cakes",
-  },
-  {
-    id: "vanilla",
-    name: "Vanilla Cakes",
-    slug: "vanilla-cakes",
-    image: "https://placehold.co/600x400/E8DED4/54433A?text=Vanilla+Cakes",
-  },
-  {
-    id: "tea",
-    name: "Tea Cakes",
-    slug: "tea-cakes",
-    image: "https://placehold.co/600x400/D4C4B7/54433A?text=Tea+Cakes",
-  },
-  {
-    id: "seasonal",
-    name: "Seasonal Cakes",
-    slug: "seasonal-cakes",
-    image: "https://placehold.co/600x400/F4C2C2/54433A?text=Seasonal+Cakes",
-  },
-];
+async function main() {
+  console.log('🔄 Cleaning existing menu...');
+  await prisma.cakeOption.deleteMany();
+  await prisma.cake.deleteMany();
+
+  console.log('✨ Seeding new menu...');
+  for (const product of products) {
+    await prisma.cake.create({
+      data: {
+        name: product.name,
+        description: product.description,
+        image: product.image,
+        options: {
+          create: product.options,
+        },
+      },
+    });
+  }
+
+  console.log('✅ Menu sync complete!');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

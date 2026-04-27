@@ -228,7 +228,8 @@ async function sendMenu(to: string) {
     // If we have 10 or fewer cakes, show the full list in sections
     const chocolateCakes = filterCakes("chocolate");
     const vanillaCakes = filterCakes("vanilla");
-    const teaTimeCakes = filterCakes("teatime");
+    const teaCakes = filterCakes("tea");
+    const seasonalCakes = filterCakes("seasonal");
 
     const sections = [];
     if (chocolateCakes.length > 0) {
@@ -243,10 +244,16 @@ async function sendMenu(to: string) {
         rows: vanillaCakes.map(cakeRow),
       });
     }
-    if (teaTimeCakes.length > 0) {
+    if (teaCakes.length > 0) {
       sections.push({
         title: "☕ Tea Time Specials",
-        rows: teaTimeCakes.map(cakeRow),
+        rows: teaCakes.map(cakeRow),
+      });
+    }
+    if (seasonalCakes.length > 0) {
+      sections.push({
+        title: "🍓 Seasonal Specials",
+        rows: seasonalCakes.map(cakeRow),
       });
     }
 
@@ -268,7 +275,8 @@ async function sendMenu(to: string) {
       [
         { id: "cat_chocolate", title: "🍫 Chocolate" },
         { id: "cat_vanilla", title: "🍦 Vanilla & Fruit" },
-        { id: "cat_teatime", title: "☕ Tea Time" },
+        { id: "cat_tea", title: "☕ Tea Time" },
+        { id: "cat_seasonal", title: "🍓 Seasonal" },
       ]
     );
   }
@@ -276,32 +284,18 @@ async function sendMenu(to: string) {
 
 // ─── Helpers for Menu ──────────────────────────────────────────────────────
 
-function filterCakes(type: "chocolate" | "vanilla" | "teatime") {
+function filterCakes(type: "chocolate" | "vanilla" | "tea" | "seasonal") {
   switch (type) {
     case "chocolate":
-      return products.filter(
-        (p) =>
-          p.name.toLowerCase().includes("chocolate") ||
-          p.name.toLowerCase().includes("hazelnut") ||
-          p.name.toLowerCase().includes("coffee") ||
-          p.name.toLowerCase().includes("caramel") ||
-          p.name.toLowerCase().includes("classic")
-      );
+      return products.filter((p) => p.category === "Chocolate Cakes");
     case "vanilla":
-      return products.filter(
-        (p) =>
-          p.name.toLowerCase().includes("pineapple") ||
-          p.name.toLowerCase().includes("pina") ||
-          p.name.toLowerCase().includes("white chocolate") ||
-          p.name.toLowerCase().includes("strawberry")
-      );
-    case "teatime":
-      return products.filter(
-        (p) =>
-          p.name.toLowerCase().includes("mawa") ||
-          p.name.toLowerCase().includes("persian") ||
-          p.name.toLowerCase().includes("butter")
-      );
+      return products.filter((p) => p.category === "Vanilla Cakes");
+    case "tea":
+      return products.filter((p) => p.category === "Tea Cakes");
+    case "seasonal":
+      return products.filter((p) => p.category === "Seasonal Cakes");
+    default:
+      return [];
   }
 }
 
@@ -317,9 +311,10 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const category = msg.interactiveId?.replace("cat_", "") as
     | "chocolate"
     | "vanilla"
-    | "teatime";
+    | "tea"
+    | "seasonal";
 
-  if (!category || !["chocolate", "vanilla", "teatime"].includes(category)) {
+  if (!category || !["chocolate", "vanilla", "tea", "seasonal"].includes(category)) {
     await sendMenu(msg.from);
     return;
   }
@@ -328,7 +323,8 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const titles = {
     chocolate: "🍫 Chocolate Based",
     vanilla: "🍦 Vanilla & Fruit Based",
-    teatime: "☕ Tea Time Specials",
+    tea: "☕ Tea Time Specials",
+    seasonal: "🍓 Seasonal Specials",
   };
 
   await updateState(msg.from, "BROWSING_MENU");
