@@ -274,6 +274,13 @@ export default function WhatsAppAdminPage() {
                       <span>💰 {order.price}</span>
                     </div>
 
+                    {order.notes && (
+                      <div style={styles.orderNotes}>
+                        <span style={styles.notesIcon}>📍</span>
+                        <span style={styles.notesText}>{order.notes}</span>
+                      </div>
+                    )}
+
                     <div style={styles.orderFooter}>
                       <span style={styles.customerName}>
                         {order.customerName ?? order.phone}
@@ -707,6 +714,27 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#6E6E6E",
   },
   orderDate: {},
+
+  // Notes
+  orderNotes: {
+    display: "flex",
+    gap: 8,
+    backgroundColor: "rgba(244,194,194,0.08)",
+    padding: "10px 12px",
+    borderRadius: 8,
+    marginBottom: 12,
+    border: "1px dashed rgba(244,194,194,0.3)",
+  },
+  notesIcon: {
+    fontSize: 14,
+    flexShrink: 0,
+  },
+  notesText: {
+    fontSize: 12,
+    color: "#5A3E36",
+    lineHeight: 1.4,
+    fontStyle: "italic",
+  },
 
   // Order Actions
   orderActions: {

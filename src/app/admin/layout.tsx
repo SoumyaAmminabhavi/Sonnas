@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import LinkNext from "next/link";
 
@@ -9,6 +10,7 @@ export default function AdminRootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navItems = [
     { name: "Orders", href: "/admin/whatsapp", icon: "📋" },
@@ -18,10 +20,28 @@ export default function AdminRootLayout({
   return (
     <div className="flex min-h-screen bg-[#FFF9F7]">
       {/* Sidebar Navigation */}
-      <aside className="w-64 bg-[#2B2B2B] text-[#FFF9F7] flex flex-col shadow-2xl">
-        <div className="p-8 border-b border-white/5">
-          <h2 className="font-heading text-xl text-[#F4C2C2] tracking-widest">SONNA&apos;S</h2>
-          <p className="text-[10px] uppercase tracking-[3px] text-[#9A9A9A] mt-1">Management</p>
+      <aside 
+        className={`bg-[#2B2B2B] text-[#FFF9F7] flex flex-col shadow-2xl transition-all duration-300 ease-in-out ${
+          isCollapsed ? "w-20" : "w-64"
+        }`}
+      >
+        <div className={`p-8 border-b border-white/5 relative ${isCollapsed ? "px-4 py-8 text-center" : ""}`}>
+          {!isCollapsed && (
+            <>
+              <h2 className="font-heading text-xl text-[#F4C2C2] tracking-widest">SONNA&apos;S</h2>
+              <p className="text-[10px] uppercase tracking-[3px] text-[#9A9A9A] mt-1">Management</p>
+            </>
+          )}
+          {isCollapsed && (
+            <h2 className="font-heading text-xl text-[#F4C2C2]">S</h2>
+          )}
+          
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-[#F4C2C2] text-[#2B2B2B] rounded-full flex items-center justify-center text-xs shadow-lg hover:scale-110 transition-transform z-10"
+          >
+            {isCollapsed ? "→" : "←"}
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-2">
@@ -35,10 +55,11 @@ export default function AdminRootLayout({
                   isActive
                     ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
                     : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
-                }`}
+                } ${isCollapsed ? "justify-center px-2" : ""}`}
+                title={isCollapsed ? item.name : ""}
               >
                 <span className="text-xl">{item.icon}</span>
-                <span>{item.name}</span>
+                {!isCollapsed && <span>{item.name}</span>}
               </LinkNext>
             );
           })}
@@ -47,9 +68,13 @@ export default function AdminRootLayout({
         <div className="p-6 border-t border-white/5">
           <LinkNext
             href="/"
-            className="flex items-center gap-2 text-xs text-[#9A9A9A] hover:text-[#F4C2C2] transition-colors"
+            className={`flex items-center gap-2 text-xs text-[#9A9A9A] hover:text-[#F4C2C2] transition-colors ${
+              isCollapsed ? "justify-center" : ""
+            }`}
+            title="Back to Website"
           >
-            ← Back to Website
+            <span>←</span>
+            {!isCollapsed && <span>Back to Website</span>}
           </LinkNext>
         </div>
       </aside>
