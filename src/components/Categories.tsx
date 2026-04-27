@@ -1,14 +1,16 @@
 import Image from "next/image";
+import Link from "next/link";
 import { categories } from "~/data/landing";
 
 export const Categories = () => (
   <section id="categories" className="py-2xl bg-beige/30">
     <div className="container mx-auto px-lg">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-lg">
         {categories.map((category) => (
-          <div
+          <Link
             key={category.id}
-            className="group relative h-96 rounded-lg overflow-hidden cursor-pointer shadow-soft hover:shadow-medium transition-default transform hover:-translate-y-1"
+            href={`#cakes`}
+            className="group relative h-64 rounded-lg overflow-hidden cursor-pointer shadow-soft hover:shadow-medium transition-default transform hover:-translate-y-1"
           >
             <Image
               src={category.image}
@@ -21,14 +23,14 @@ export const Categories = () => (
 
             {/* Content */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-lg text-center">
-              <h3 className="text-3xl font-heading mb-md tracking-wide drop-shadow-md">
+              <h3 className="text-xl font-heading mb-sm tracking-wide drop-shadow-md">
                 {category.name}
               </h3>
-              <span className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 font-body text-sm uppercase tracking-widest border border-white px-lg py-sm">
-                Explore Category
+              <span className="opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 font-body text-xs uppercase tracking-widest border border-white px-md py-xs">
+                Explore
               </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
