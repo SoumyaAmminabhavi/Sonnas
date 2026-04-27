@@ -19,27 +19,27 @@ class PatisserieApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFF964261),
-          secondary: Color(0xFF825433),
-          surface: Color(0xFFFFF8F5),
-          onSurface: Color(0xFF2B1606),
-          onSurfaceVariant: Color(0xFF534247),
-          primaryContainer: Color(0xFFF48FB1),
-          onPrimaryContainer: Color(0xFF722544),
-          surfaceContainer: Color(0xFFFFEADD),
-          surfaceContainerLow: Color(0xFFFFF1E9),
+          primary: Color(0xFFFF4D8D), // Vibrant Pink
+          secondary: Color(0xFF701235), // Deep Berry
+          surface: Color(0xFFFFF0F6), // Pale Pink Background
+          onSurface: Color(0xFF701235),
+          onSurfaceVariant: Color(0xFF964261),
+          primaryContainer: Color(0xFFFFB6D3), // Pastel Pink
+          onPrimaryContainer: Color(0xFF701235),
+          surfaceContainer: Color(0xFFFFF5F9),
+          surfaceContainerLow: Color(0xFFFFF5F9),
         ),
         textTheme: TextTheme(
           displayLarge: GoogleFonts.notoSerif(
-            color: const Color(0xFF2B1606),
+            color: const Color(0xFF701235),
             fontWeight: FontWeight.w400,
           ),
           headlineLarge: GoogleFonts.notoSerif(
-            color: const Color(0xFF2B1606),
+            color: const Color(0xFF701235),
             fontWeight: FontWeight.w400,
           ),
           bodyLarge: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF825433),
+            color: const Color(0xFF701235),
           ),
           labelSmall: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.bold,
@@ -325,7 +325,7 @@ class LandingPage extends StatelessWidget {
                 // Scroll down arrow
                 Icon(
                   Icons.keyboard_double_arrow_down,
-                  color: const Color(0xFFD8C1C6), // outline-variant
+                  color: const Color(0xFFFFB6D3), // outline-variant (Pastel Pink)
                 ),
                 const SizedBox(height: 100), // Space for bottom nav
               ],

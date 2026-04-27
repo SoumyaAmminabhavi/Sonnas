@@ -3,15 +3,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'menu_page.dart';
 import 'owner_settings.dart';
 import 'orders_page.dart';
+import 'payments_page.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-// Brand Colors
-const Color _bgColor = Color(0xFFFFF8F5);
-const Color _primaryColor = Color(0xFF964261);
-const Color _primaryContainer = Color(0xFFF48FB1);
-const Color _secondaryColor = Color(0xFF825433);
-const Color _surfaceLow = Color(0xFFFFF1E9);
-const Color _errorColor = Color(0xFFBA1A1A);
-const Color _errorContainer = Color(0xFFFFDAD6);
+// Brand Colors - Sweet Pink Bakery Theme
+const Color _bgColor = Color(0xFFFFF0F6); // Ultra pale pink
+const Color _primaryColor = Color(0xFFFF4D8D); // Vibrant pink
+const Color _primaryContainer = Color(0xFFFFB6D3); // Pastel pink accent
+const Color _secondaryColor = Color(0xFF701235); // Deep berry for text/contrast
+const Color _surfaceLow = Color(0xFFFFF5F9); // Lighter surface
+const Color _errorColor = Color(0xFFE91E63);
+const Color _errorContainer = Color(0xFFF8BBD0);
 
 // Images
 const _profileUrl =
@@ -54,7 +56,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             title: Text(
               "Sonna's Patisserie & Cafe",
               style: GoogleFonts.notoSerif(
-                color: _primaryColor,
+                color: const Color.fromARGB(255, 146, 6, 53),
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.5,
@@ -119,15 +121,16 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 child: _selectedIndex == 1
                     ? const ManageOrdersPage()
                     : _selectedIndex == 2
-                        ? const Center(child: Text("Payments Page (Coming Soon)"))
-                        : _selectedIndex == 3
-                            ? const MenuPage()
-                            : _selectedIndex == 4
-                                ? const OwnerSettingsPage()
-                                : _MainContent(
-                                    isDesktop: isDesktop,
-                                    onViewAllOrders: () => setState(() => _selectedIndex = 1),
-                                  ),
+                    ? const PaymentsPage()
+                    : _selectedIndex == 3
+                    ? const MenuPage()
+                    : _selectedIndex == 4
+                    ? const OwnerSettingsPage()
+                    : _MainContent(
+                        isDesktop: isDesktop,
+                        onViewAllOrders: () =>
+                            setState(() => _selectedIndex = 1),
+                      ),
               ),
             ],
           ),
@@ -323,7 +326,10 @@ class _MobileBottomNav extends StatelessWidget {
         letterSpacing: 0.5,
       ),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Dashboard"),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.grid_view),
+          label: "Dashboard",
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Orders"),
         BottomNavigationBarItem(icon: Icon(Icons.payments), label: "Payments"),
         BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Menu"),
@@ -373,7 +379,8 @@ class _MainContent extends StatelessWidget {
           color: _secondaryColor.withOpacity(0.3),
         ),
         const SizedBox(height: 48),
-
+        _buildPerformanceChart(context, isDesktop),
+        const SizedBox(height: 48),
 
         // Recent Orders Header
         Row(
@@ -504,8 +511,182 @@ class _MainContent extends StatelessWidget {
       ],
     );
   }
-}
 
+  Widget _buildPerformanceChart(BuildContext context, bool isDesktop) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _secondaryColor.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Sales Performance",
+                    style: GoogleFonts.notoSerif(
+                      color: _secondaryColor,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    "Revenue trend for the past week",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: _secondaryColor.withOpacity(0.5),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  "WEEKLY",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: _primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 40),
+          SizedBox(
+            height: 220,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 5,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: _secondaryColor.withOpacity(0.05),
+                      strokeWidth: 1,
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        const days = [
+                          'MON',
+                          'TUE',
+                          'WED',
+                          'THU',
+                          'FRI',
+                          'SAT',
+                          'SUN',
+                        ];
+                        if (value.toInt() >= 0 && value.toInt() < days.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 10.0),
+                            child: Text(
+                              days[value.toInt()],
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _secondaryColor.withOpacity(0.4),
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: 6,
+                minY: 0,
+                maxY: 25,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: const [
+                      FlSpot(0, 10),
+                      FlSpot(1, 14),
+                      FlSpot(2, 12),
+                      FlSpot(3, 20),
+                      FlSpot(4, 16),
+                      FlSpot(5, 22),
+                      FlSpot(6, 18),
+                    ],
+                    isCurved: true,
+                    gradient: const LinearGradient(
+                      colors: [_primaryColor, _primaryContainer],
+                    ),
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) =>
+                          FlDotCirclePainter(
+                            radius: 4,
+                            color: Colors.white,
+                            strokeWidth: 3,
+                            strokeColor: _primaryColor,
+                          ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          _primaryColor.withOpacity(0.2),
+                          _primaryColor.withOpacity(0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _OrderCard extends StatelessWidget {
   final String id;
