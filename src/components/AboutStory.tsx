@@ -30,7 +30,7 @@ export const AboutStory = () => (
               SONNA&apos;S PATISSERIE & CAFE was born from a simple dream: to bring the authentic, soul-warming flavors of a traditional French patisserie to the vibrant streets of Bengaluru.
             </p>
             <p>
-              Every croissant, every macaron, and every bespoke cake is crafted with an artisan&apos;s heart, blending French technique with the finest local ingredients like Alphonso mangoes and Mysore pistachios.
+              Every creation at Sonna&apos;s is **100% Eggless and Vegetarian**, crafted with an artisan&apos;s heart. We blend classic French techniques with the finest local ingredients to ensure every bite is inclusive, pure, and absolutely divine.
             </p>
           </div>
           <div className="pt-md">
