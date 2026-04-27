@@ -306,7 +306,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
