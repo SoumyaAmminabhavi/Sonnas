@@ -191,6 +191,7 @@ exports.Prisma.WhatsAppConversationScalarFieldEnum = {
   selectedCake: 'selectedCake',
   selectedSize: 'selectedSize',
   selectedPrice: 'selectedPrice',
+  selectedNotes: 'selectedNotes',
   lastMessageAt: 'lastMessageAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

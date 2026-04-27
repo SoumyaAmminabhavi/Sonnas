@@ -101,6 +101,7 @@ model WhatsAppConversation {
     selectedCake   String?
     selectedSize   String?
     selectedPrice  String?
+    selectedNotes  String?
     lastMessageAt  DateTime @default(now())
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt

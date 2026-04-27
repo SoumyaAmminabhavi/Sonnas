@@ -17,6 +17,7 @@ type ConversationState =
   | "BROWSING_MENU"
   | "SELECTING_CATEGORY"
   | "SELECTING_SIZE"
+  | "ASKING_INSTRUCTIONS"
   | "CONFIRMING";
 
 interface IncomingMessage {
@@ -68,6 +69,7 @@ async function updateState(
     selectedCake?: string | null;
     selectedSize?: string | null;
     selectedPrice?: string | null;
+    selectedNotes?: string | null;
   } = {}
 ) {
   await db.whatsAppConversation.update({
@@ -150,6 +152,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
     case "SELECTING_SIZE":
       await handleSizeSelection(msg, convo);
+      break;
+
+    case "ASKING_INSTRUCTIONS":
+      await handleInstructionsInput(msg, convo);
       break;
 
     case "CONFIRMING":
@@ -394,15 +400,46 @@ async function handleSizeSelection(
     return;
   }
 
-  // Move to confirmation
-  await updateState(msg.from, "CONFIRMING", {
+  // Move to asking instructions
+  await updateState(msg.from, "ASKING_INSTRUCTIONS", {
     selectedSize: selectedOption.size,
     selectedPrice: selectedOption.price,
   });
 
+  await sendTextMessage(
+    msg.from,
+    "📍 *Delivery Address & Instructions*\n\nPlease provide your full delivery address and any special instructions (e.g., landmark, door code, or specific timing).\n\nIf you'd like to skip this, just reply *'Skip'*."
+  );
+}
+
+// ─── Handle instructions input ─────────────────────────────────────────────
+
+async function handleInstructionsInput(
+  msg: IncomingMessage,
+  convo: { selectedCake: string | null }
+) {
+  const input = msg.text?.trim() ?? "";
+  const isSkip =
+    input.toLowerCase() === "none" ||
+    input.toLowerCase() === "skip" ||
+    input.toLowerCase() === "no";
+
+  const notes = isSkip ? null : input;
+
+  // Move to confirmation
+  await updateState(msg.from, "CONFIRMING", {
+    selectedNotes: notes,
+  });
+
+  const updatedConvo = await db.whatsAppConversation.findUnique({
+    where: { phone: msg.from },
+  });
+
+  const cake = products.find((p) => p.name === updatedConvo?.selectedCake);
+
   await sendInteractiveButtons(
     msg.from,
-    `📋 *Order Summary*\n\n🎂 *${cake.name}*\n📏 Size: ${selectedOption.size} (serves ${selectedOption.serves})\n💰 Price: ${selectedOption.price}\n\nShall I place this order?`,
+    `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updatedConvo?.selectedSize}\n💰 Price: ${updatedConvo?.selectedPrice}\n📍 Address/Instructions: ${notes ?? "_Not provided_"}\n\nShall I place this order?`,
     [
       { id: "btn_confirm", title: "✅ Confirm Order" },
       { id: "btn_cancel", title: "❌ Cancel" },
@@ -418,6 +455,7 @@ async function handleConfirmation(
     selectedCake: string | null;
     selectedSize: string | null;
     selectedPrice: string | null;
+    selectedNotes?: string | null;
   }
 ) {
   const isConfirm =
@@ -462,6 +500,7 @@ async function handleConfirmation(
       cakeName: convo.selectedCake,
       size: convo.selectedSize,
       price: convo.selectedPrice,
+      notes: convo.selectedNotes,
       status: "PENDING",
     },
   });
@@ -471,6 +510,7 @@ async function handleConfirmation(
     selectedCake: null,
     selectedSize: null,
     selectedPrice: null,
+    selectedNotes: null,
   });
 
   await sendTextMessage(
