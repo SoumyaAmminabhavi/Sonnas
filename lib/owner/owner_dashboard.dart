@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'menu_page.dart';
 import 'owner_settings.dart';
+import 'orders_page.dart';
 
 // Brand Colors
 const Color _bgColor = Color(0xFFFFF8F5);
@@ -55,7 +56,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               style: GoogleFonts.notoSerif(
                 color: _primaryColor,
                 fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
               ),
             ),
             actions: [
@@ -89,7 +91,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               ? null
               : _MobileBottomNav(
                   currentIndex: _selectedIndex,
-                  onTap: (index) => setState(() => _selectedIndex = index),
+                  onTap: (index) {
+                    setState(() => _selectedIndex = index);
+                  },
                 ),
           floatingActionButton: _selectedIndex == 3
               ? FloatingActionButton(
@@ -107,18 +111,23 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               if (isDesktop)
                 _Sidebar(
                   currentIndex: _selectedIndex,
-                  onTap: (index) => setState(() => _selectedIndex = index),
+                  onTap: (index) {
+                    setState(() => _selectedIndex = index);
+                  },
                 ),
               Expanded(
                 child: _selectedIndex == 1
-                    ? const Center(child: Text("Orders Page (Coming Soon)"))
+                    ? const ManageOrdersPage()
                     : _selectedIndex == 2
                         ? const Center(child: Text("Payments Page (Coming Soon)"))
                         : _selectedIndex == 3
                             ? const MenuPage()
                             : _selectedIndex == 4
                                 ? const OwnerSettingsPage()
-                                : _MainContent(isDesktop: isDesktop),
+                                : _MainContent(
+                                    isDesktop: isDesktop,
+                                    onViewAllOrders: () => setState(() => _selectedIndex = 1),
+                                  ),
               ),
             ],
           ),
@@ -314,11 +323,11 @@ class _MobileBottomNav extends StatelessWidget {
         letterSpacing: 0.5,
       ),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: "Overview"),
-        BottomNavigationBarItem(icon: Icon(Icons.shopping_bag_outlined), label: "Orders"),
-        BottomNavigationBarItem(icon: Icon(Icons.payments_outlined), label: "Payments"),
-        BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), label: "Menu"),
-        BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: "Settings"),
+        BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Dashboard"),
+        BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Orders"),
+        BottomNavigationBarItem(icon: Icon(Icons.payments), label: "Payments"),
+        BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Menu"),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
       ],
     );
   }
@@ -326,8 +335,9 @@ class _MobileBottomNav extends StatelessWidget {
 
 class _MainContent extends StatelessWidget {
   final bool isDesktop;
+  final VoidCallback onViewAllOrders;
 
-  const _MainContent({required this.isDesktop});
+  const _MainContent({required this.isDesktop, required this.onViewAllOrders});
 
   @override
   Widget build(BuildContext context) {
@@ -390,7 +400,7 @@ class _MainContent extends StatelessWidget {
               ],
             ),
             InkWell(
-              onTap: () {},
+              onTap: onViewAllOrders,
               child: Container(
                 decoration: const BoxDecoration(
                   border: Border(
