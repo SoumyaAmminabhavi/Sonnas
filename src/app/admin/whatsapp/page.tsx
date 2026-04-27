@@ -107,75 +107,6 @@ export default function WhatsAppAdminPage() {
 
   return (
     <div style={styles.container}>
-      {/* ─── Sidebar ─────────────────────────────────────────── */}
-      <aside style={styles.sidebar}>
-
-        {/* Filter Tabs */}
-        <nav style={styles.filterNav}>
-          <button
-            style={{
-              ...styles.filterBtn,
-              ...(statusFilter === undefined ? styles.filterBtnActive : {}),
-            }}
-            onClick={() => setStatusFilter(undefined)}
-          >
-            All Orders
-          </button>
-          {STATUS_FLOW.map((s) => {
-            const cfg = STATUS_CONFIG[s]!;
-            return (
-              <button
-                key={s}
-                style={{
-                  ...styles.filterBtn,
-                  ...(statusFilter === s ? styles.filterBtnActive : {}),
-                }}
-                onClick={() => setStatusFilter(s)}
-              >
-                {cfg.emoji} {cfg.label}
-              </button>
-            );
-          })}
-          <button
-            style={{
-              ...styles.filterBtn,
-              ...(statusFilter === "CANCELLED" ? styles.filterBtnActive : {}),
-            }}
-            onClick={() => setStatusFilter("CANCELLED")}
-          >
-            ❌ Cancelled
-          </button>
-        </nav>
-
-        {/* Recent Conversations */}
-        <div style={styles.convSection}>
-          <h3 style={styles.convTitle}>💬 Recent Chats</h3>
-          <div style={styles.convList}>
-            {conversations.map((c) => (
-              <div key={c.id} style={styles.convItem}>
-                <div style={styles.convAvatar}>
-                  {(c.name ?? c.phone).charAt(0).toUpperCase()}
-                </div>
-                <div style={styles.convInfo}>
-                  <span style={styles.convName}>{c.name ?? "Unknown"}</span>
-                  <span style={styles.convPhone}>{c.phone}</span>
-                </div>
-                <button
-                  style={styles.convReplyBtn}
-                  onClick={() => setReplyPhone(c.phone)}
-                  title="Reply via WhatsApp"
-                >
-                  💬
-                </button>
-              </div>
-            ))}
-            {conversations.length === 0 && (
-              <p style={styles.emptyText}>No conversations yet</p>
-            )}
-          </div>
-        </div>
-      </aside>
-
       {/* ─── Main Content ────────────────────────────────────── */}
       <main style={styles.main}>
         {/* Stats Bar */}
@@ -446,23 +377,11 @@ function StatCard({
 // ─── Styles (inline CSS-in-JS matching Sonna's design system) ───────────────
 
 const styles: Record<string, React.CSSProperties> = {
-  // Layout
-  container: {
-    display: "flex",
-    minHeight: "100vh",
-    fontFamily: "Inter, sans-serif",
-    backgroundColor: "#FFF9F7",
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 280,
-    backgroundColor: "#2B2B2B",
-    color: "#FFF9F7",
-    display: "flex",
-    flexDirection: "column",
-    flexShrink: 0,
-    overflow: "hidden",
+  // Main
+  main: {
+    flex: 1,
+    padding: "32px",
+    overflowY: "auto" as const,
   },
   sidebarHeader: {
     padding: "28px 24px 20px",
