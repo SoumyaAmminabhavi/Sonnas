@@ -273,6 +273,19 @@ export default function WhatsAppAdminPage() {
                       <span>📏 {order.size}</span>
                       <span>💰 {order.price}</span>
                     </div>
+                    {order.address && (
+                      <div style={styles.orderNotes}>
+                        <span style={styles.notesIcon}>📍</span>
+                        <span style={styles.notesText}>{order.address}</span>
+                      </div>
+                    )}
+
+                    {order.notes && (
+                      <div style={styles.orderNotes}>
+                        <span style={styles.notesIcon}>📝</span>
+                        <span style={styles.notesText}>{order.notes}</span>
+                      </div>
+                    )}
 
                     <div style={styles.orderFooter}>
                       <span style={styles.customerName}>

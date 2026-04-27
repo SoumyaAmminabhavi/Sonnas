@@ -17,6 +17,7 @@ type ConversationState =
   | "BROWSING_MENU"
   | "SELECTING_CATEGORY"
   | "SELECTING_SIZE"
+  | "ASKING_ADDRESS"
   | "ASKING_INSTRUCTIONS"
   | "CONFIRMING";
 
@@ -69,6 +70,7 @@ async function updateState(
     selectedCake?: string | null;
     selectedSize?: string | null;
     selectedPrice?: string | null;
+    selectedAddress?: string | null;
     selectedNotes?: string | null;
   } = {}
 ) {
@@ -152,6 +154,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
     case "SELECTING_SIZE":
       await handleSizeSelection(msg, convo);
+      break;
+
+    case "ASKING_ADDRESS":
+      await handleAddressInput(msg, convo);
       break;
 
     case "ASKING_INSTRUCTIONS":
@@ -400,15 +406,39 @@ async function handleSizeSelection(
     return;
   }
 
-  // Move to asking instructions
-  await updateState(msg.from, "ASKING_INSTRUCTIONS", {
+  // Move to asking address
+  await updateState(msg.from, "ASKING_ADDRESS", {
     selectedSize: selectedOption.size,
     selectedPrice: selectedOption.price,
   });
 
   await sendTextMessage(
     msg.from,
-    "📍 *Delivery Address & Instructions*\n\nPlease provide your full delivery address and any special instructions (e.g., landmark, door code, or specific timing).\n\nIf you'd like to skip this, just reply *'Skip'*."
+    "📍 *Delivery Address*\n\nPlease provide your full delivery address (e.g., House No, Building, Area)."
+  );
+}
+
+// ─── Handle address input ──────────────────────────────────────────────────
+
+async function handleAddressInput(
+  msg: IncomingMessage,
+  convo: { selectedCake: string | null }
+) {
+  const address = msg.text?.trim() ?? "";
+
+  if (!address) {
+    await sendTextMessage(msg.from, "Please provide a valid address to continue.");
+    return;
+  }
+
+  // Move to asking instructions
+  await updateState(msg.from, "ASKING_INSTRUCTIONS", {
+    selectedAddress: address,
+  });
+
+  await sendTextMessage(
+    msg.from,
+    "📝 *Special Instructions*\n\nAny landmarks or special notes for our delivery partner? (e.g., Gate code, call on arrival)\n\nReply *'None'* or *'Skip'* if you have none."
   );
 }
 
@@ -439,7 +469,7 @@ async function handleInstructionsInput(
 
   await sendInteractiveButtons(
     msg.from,
-    `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updatedConvo?.selectedSize}\n💰 Price: ${updatedConvo?.selectedPrice}\n📍 Address/Instructions: ${notes ?? "_Not provided_"}\n\nShall I place this order?`,
+    `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updatedConvo?.selectedSize}\n💰 Price: ${updatedConvo?.selectedPrice}\n📍 Address: ${updatedConvo?.selectedAddress}\n📝 Notes: ${notes ?? "_None_"}\n\nShall I place this order?`,
     [
       { id: "btn_confirm", title: "✅ Confirm Order" },
       { id: "btn_cancel", title: "❌ Cancel" },
@@ -455,6 +485,7 @@ async function handleConfirmation(
     selectedCake: string | null;
     selectedSize: string | null;
     selectedPrice: string | null;
+    selectedAddress?: string | null;
     selectedNotes?: string | null;
   }
 ) {
@@ -500,6 +531,7 @@ async function handleConfirmation(
       cakeName: convo.selectedCake,
       size: convo.selectedSize,
       price: convo.selectedPrice,
+      address: convo.selectedAddress,
       notes: convo.selectedNotes,
       status: "PENDING",
     },
@@ -510,6 +542,7 @@ async function handleConfirmation(
     selectedCake: null,
     selectedSize: null,
     selectedPrice: null,
+    selectedAddress: null,
     selectedNotes: null,
   });
 
