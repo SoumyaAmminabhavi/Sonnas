@@ -267,16 +267,23 @@ async function sendMenu(to: string) {
     await updateState(to, "BROWSING_MENU");
   } else {
     // Too many cakes for a single list (WhatsApp limit: 10 rows total)
-    // Send category selection buttons instead
+    // Send category selection list instead (Buttons are limited to 3)
     await updateState(to, "SELECTING_CATEGORY");
-    await sendInteractiveButtons(
+    await sendInteractiveList(
       to,
-      "🧁 *Our Menu*\n\nWe have quite a variety today! Please select a category to browse:",
+      "🧁 Our Categories",
+      "We have quite a variety today! Please select a category to browse:",
+      "Select Category",
       [
-        { id: "cat_chocolate", title: "🍫 Chocolate" },
-        { id: "cat_vanilla", title: "🍦 Vanilla & Fruit" },
-        { id: "cat_tea", title: "☕ Tea Time" },
-        { id: "cat_seasonal", title: "🍓 Seasonal" },
+        {
+          title: "Filter by Type",
+          rows: [
+            { id: "cat_chocolate", title: "🍫 Chocolate", description: "Rich & decadent cakes" },
+            { id: "cat_vanilla", title: "🍦 Vanilla & Fruit", description: "Light & refreshing flavors" },
+            { id: "cat_tea", title: "☕ Tea Time", description: "Perfect with your afternoon tea" },
+            { id: "cat_seasonal", title: "🍓 Seasonal", description: "Special treats for this month" },
+          ],
+        },
       ]
     );
   }
