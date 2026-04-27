@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Brand Colors
-const Color _bgColor = Color(0xFFFFF8F5);
-const Color _primaryColor = Color(0xFF964261);
-const Color _secondaryColor = Color(0xFF825433);
+// Brand Colors - Sweet Pink Bakery Theme
+const Color _bgColor = Color(0xFFFFF0F6);
+const Color _primaryColor = Color(0xFFFF4D8D);
+const Color _secondaryColor = Color(0xFF701235);
 
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});

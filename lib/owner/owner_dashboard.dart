@@ -178,12 +178,12 @@ class _Sidebar extends StatelessWidget {
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        color: _bgColor,
+        color: Colors.white, // Pure white sidebar for contrast
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withOpacity(0.06),
-            blurRadius: 40,
-            offset: const Offset(40, 0),
+            color: _primaryColor.withOpacity(0.08),
+            blurRadius: 30,
+            offset: const Offset(10, 0),
           ),
         ],
         borderRadius: const BorderRadius.only(
@@ -347,11 +347,13 @@ class _MainContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 48.0 : 24.0,
-        vertical: 32.0,
-      ),
+    return Container(
+      color: _bgColor, // Explicitly use the pink background for content
+      child: ListView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isDesktop ? 48.0 : 24.0,
+          vertical: 32.0,
+        ),
       children: [
         // Welcome Header
         Text(
@@ -509,8 +511,9 @@ class _MainContent extends StatelessWidget {
           },
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildPerformanceChart(BuildContext context, bool isDesktop) {
     return Container(

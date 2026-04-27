@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Brand Colors
-const Color _bgColor = Color(0xFFFFF8F5);
-const Color _primaryColor = Color(0xFF964261);
-const Color _secondaryColor = Color(0xFF825433);
-const Color _surfaceContainerLow = Color(0xFFFFF1E9);
-const Color _outlineVariant = Color(0xFFD8C1C6);
-const Color _primaryContainer = Color(0xFFF48FB1);
+// Brand Colors - Sweet Pink Bakery Theme
+const Color _bgColor = Color(0xFFFFF0F6);
+const Color _primaryColor = Color(0xFFFF4D8D);
+const Color _secondaryColor = Color(0xFF701235);
+const Color _surfaceContainerLow = Color(0xFFFFF5F9);
+const Color _outlineVariant = Color(0xFFFFB6D3);
+const Color _primaryContainer = Color(0xFFFFB6D3);
 
 class AddStaffPage extends StatefulWidget {
   const AddStaffPage({super.key});

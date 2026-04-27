@@ -133,8 +133,8 @@ class _OrdersList extends StatelessWidget {
         item: "Spring Palette Macaron Box (24)",
         time: "Pickup at 4:15 PM",
         imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuAPSKFQqtZpwtXveJNr2d1V7tki9SvDwgoH4vFaWnqY9H7Zq-9PQTu_f3xsONjHxNG_UakkYMBEcBJL143MHo7uGp-S_Uv0aQMUpRM6UBi0bxrYlsaqLduyNaBeAn4QwTvZ8H0P4EmXzbpomz2Tuv9hrxNX90MgsnPJFgEHskhzh3D48Wom5CDl4Qsz03I3Yst0PBueJT7nkQqRbdcivgBj00OiIRNeQe5iAfmx3TcZoHYheeREYO-07qovWenzsbddoXsBIXAQAhcm",
-        statusBg: const Color(0xFFFDBF97).withOpacity(0.9),
-        statusFg: const Color(0xFF784C2C),
+        statusBg: const Color(0xFFFFB6D3).withOpacity(0.9), // Pastel Pink
+        statusFg: cs.onSecondary,
       ),
       _OrderData(
         orderId: "#1248",
@@ -294,7 +294,7 @@ class _OrderCompactCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [cs.primary, const Color(0xFFF48FB1)],
+                    colors: [cs.primary, cs.primaryContainer],
                   ),
                 ),
                 child: IconButton(
