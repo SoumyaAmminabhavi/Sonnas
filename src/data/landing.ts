@@ -16,7 +16,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹675" },
       { size: "1050g", serves: "8-12", price: "₹1250" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Classic+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/classic-chocolate.png",
   },
   {
     id: 2,
@@ -27,7 +27,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Almond+Brittle",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/almond-brittle.png",
   },
   {
     id: 3,
@@ -38,7 +38,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Orange+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/orange-chocolate.png",
   },
   {
     id: 4,
@@ -49,7 +49,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Hazelnut+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/hazelnut-chocolate.png",
   },
   {
     id: 5,
@@ -60,7 +60,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Coffee+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/coffee-chocolate.png",
   },
   {
     id: 6,
@@ -71,7 +71,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=White+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/white-chocolate.png",
   },
   {
     id: 7,
@@ -82,7 +82,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Pina+Colada",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pina-colada.png",
   },
   {
     id: 8,
@@ -93,7 +93,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Pineapple",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pineapple.png",
   },
   {
     id: 9,
@@ -104,7 +104,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Rich+Mawa",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/rich-mawa.png",
   },
   {
     id: 10,
@@ -115,7 +115,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Persian+Cake",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/persian-cake.png",
   },
   {
     id: 11,
@@ -126,7 +126,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Butter+Cake",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/butter-cake.png",
   },
   {
     id: 12,
@@ -137,7 +137,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Strawberry+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-chocolate.png",
   },
   {
     id: 13,
@@ -148,7 +148,7 @@ export const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Strawberry+Vanilla",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-vanilla.png",
   },
 ];
 
@@ -157,24 +157,24 @@ export const categories = [
     id: "chocolate",
     name: "Chocolate Cakes",
     slug: "chocolate-cakes",
-    image: "https://placehold.co/600x400/54433A/FAF6F0?text=Chocolate+Cakes",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-chocolate.png",
   },
   {
     id: "vanilla",
     name: "Vanilla Cakes",
     slug: "vanilla-cakes",
-    image: "https://placehold.co/600x400/E8DED4/54433A?text=Vanilla+Cakes",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-vanilla.png",
   },
   {
     id: "tea",
     name: "Tea Cakes",
     slug: "tea-cakes",
-    image: "https://placehold.co/600x400/D4C4B7/54433A?text=Tea+Cakes",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-tea.png",
   },
   {
     id: "seasonal",
     name: "Seasonal Cakes",
     slug: "seasonal-cakes",
-    image: "https://placehold.co/600x400/F4C2C2/54433A?text=Seasonal+Cakes",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-seasonal.png",
   },
 ];

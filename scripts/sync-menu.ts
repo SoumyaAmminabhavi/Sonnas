@@ -11,7 +11,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹675" },
       { size: "1050g", serves: "8-12", price: "₹1250" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Classic+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/classic-chocolate.png",
   },
   {
     name: "Almond Brittle Salted Caramel",
@@ -20,7 +20,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Almond+Brittle",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/almond-brittle.png",
   },
   {
     name: "Orange & Chocolate",
@@ -29,7 +29,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Orange+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/orange-chocolate.png",
   },
   {
     name: "Hazelnut & Chocolate",
@@ -38,7 +38,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Hazelnut+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/hazelnut-chocolate.png",
   },
   {
     name: "Coffee & Chocolate",
@@ -47,7 +47,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Coffee+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/coffee-chocolate.png",
   },
   {
     name: "Caramelised White Chocolate",
@@ -56,7 +56,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=White+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/white-chocolate.png",
   },
   {
     name: "Pina Colada",
@@ -65,7 +65,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Pina+Colada",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pina-colada.png",
   },
   {
     name: "Pineapple",
@@ -74,7 +74,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Pineapple",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pineapple.png",
   },
   {
     name: "Rich Mawa",
@@ -83,7 +83,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Rich+Mawa",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/rich-mawa.png",
   },
   {
     name: "Persian Cake",
@@ -92,7 +92,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Persian+Cake",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/persian-cake.png",
   },
   {
     name: "Butter Cake",
@@ -101,7 +101,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Butter+Cake",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/butter-cake.png",
   },
   {
     name: "Strawberry & Chocolate",
@@ -110,7 +110,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Strawberry+Chocolate",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-chocolate.png",
   },
   {
     name: "Strawberry & Vanilla",
@@ -119,7 +119,7 @@ const products = [
       { size: "600g", serves: "4-6", price: "₹750" },
       { size: "1050g", serves: "8-12", price: "₹1350" }
     ],
-    image: "https://placehold.co/800x800/FAF6F0/54433A?text=Strawberry+Vanilla",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-vanilla.png",
   },
 ];
 
