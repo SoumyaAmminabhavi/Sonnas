@@ -554,7 +554,7 @@ async function handleSizeSelection(
   if (!selectedOption && msg.text) {
     const input = msg.text.toLowerCase();
     selectedOption = cake.options?.find(
-      (opt) =>
+      (opt: any) =>
         input.includes(opt.size.toLowerCase()) ||
         input.includes(opt.price.toLowerCase())
     );
