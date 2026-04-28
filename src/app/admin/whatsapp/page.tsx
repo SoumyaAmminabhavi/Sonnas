@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { api } from "~/trpc/react";
@@ -83,7 +83,7 @@ interface AdminOrder {
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
-export default function WhatsAppAdminPage() {
+function WhatsAppAdminContent() {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(
     undefined
   );
@@ -495,6 +495,14 @@ function StatCard({
       </span>
       <span style={styles.statLabel}>{label}</span>
     </div>
+  );
+}
+
+export default function WhatsAppAdminPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#9A9A9A" }}>Loading orders...</div>}>
+      <WhatsAppAdminContent />
+    </Suspense>
   );
 }
 
