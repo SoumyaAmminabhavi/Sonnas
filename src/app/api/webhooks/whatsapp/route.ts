@@ -5,7 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { env } from "~/env";
-import { markAsRead, sendInteractiveButtons, sendImageMessage } from "~/server/whatsapp";
+import { markAsRead } from "~/server/whatsapp";
 import { handleIncomingMessage } from "~/server/whatsapp/conversation-handler";
 
 // ─── Webhook verification (GET) ────────────────────────────────────────────
@@ -79,16 +79,16 @@ export async function POST(request: Request) {
         interactiveTitle: replyTitle,
         messageId: message.id,
       });
-    } else if (message.type === "location") {
+    } else if (message.type === "location" && message.location) {
       await handleIncomingMessage({
         from: message.from,
         name: contactName,
         type: "location",
         location: {
-          latitude: message.location?.latitude!,
-          longitude: message.location?.longitude!,
-          name: message.location?.name,
-          address: message.location?.address,
+          latitude: message.location.latitude,
+          longitude: message.location.longitude,
+          name: message.location.name,
+          address: message.location.address,
         },
         messageId: message.id,
       });

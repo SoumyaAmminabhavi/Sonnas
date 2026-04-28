@@ -12,49 +12,72 @@ import {
   sendImageMessage,
 } from "~/server/whatsapp";
 
+// ─── Types & Interfaces ──────────────────────────────────────────────────────
+
+interface CakeOption {
+  id?: string;
+  size: string;
+  serves: string;
+  price: string;
+}
+
+interface Cake {
+  id: string | number;
+  name: string;
+  description?: string | null;
+  image: string;
+  category?: string;
+  options: CakeOption[];
+}
+
 // ─── DB Helpers ─────────────────────────────────────────────────────────────
 
-async function safeGetCakes() {
+async function safeGetCakes(): Promise<Cake[]> {
   console.log("[WhatsApp] Attempting to fetch cakes from DB...");
   try {
-    return await withTimeout(
+    const result = await withTimeout(
       db.cake.findMany({ include: { options: true } }),
       DB_TIMEOUT
     );
-  } catch (e) {
+    return (result as unknown as Cake[]) ?? (products as unknown as Cake[]);
+  } catch {
     console.warn("[WhatsApp] DB Menu fetch failed, using fallback.");
-    return products as any[];
+    return products as unknown as Cake[];
   }
 }
 
-async function safeGetCakeByName(name: string) {
+async function safeGetCakeByName(name: string): Promise<Cake | null> {
   try {
-    return await withTimeout(
+    const result = await withTimeout(
       db.cake.findFirst({
         where: { name },
         include: { options: true },
       }),
       DB_TIMEOUT
     );
-  } catch (e) {
-    return products.find((p) => p.name === name) as any;
+    return (result as unknown as Cake) ?? (products.find((p) => p.name === name) as unknown as Cake) ?? null;
+  } catch {
+    return (products.find((p) => p.name === name) as unknown as Cake) ?? null;
   }
 }
 
-async function safeGetCakeById(id: string) {
+async function safeGetCakeById(id: string): Promise<Cake | null> {
   try {
     if (id.length > 5) {
-      return await withTimeout(
+      const result = await withTimeout(
         db.cake.findUnique({
           where: { id },
           include: { options: true },
         }),
         DB_TIMEOUT
       );
+      return (result as unknown as Cake) ?? null;
     }
-    return products.find((p) => p.id === parseInt(id, 10)) as any;
-  } catch (e) {
-    return products.find((p) => p.id === parseInt(id, 10)) as any;
+    const localId = parseInt(id, 10);
+    return (products.find((p) => p.id === localId) as unknown as Cake) ?? null;
+  } catch {
+    const localId = parseInt(id, 10);
+    return (products.find((p) => p.id === localId) as unknown as Cake) ?? null;
   }
 }
 
@@ -81,6 +104,19 @@ type ConversationState =
   | "ASKING_ADDRESS"
   | "ASKING_INSTRUCTIONS"
   | "CONFIRMING";
+
+interface Conversation {
+  id: string;
+  phone: string;
+  name?: string | null;
+  state: string;
+  selectedCake?: string | null;
+  selectedSize?: string | null;
+  selectedPrice?: string | null;
+  selectedAddress?: string | null;
+  selectedNotes?: string | null;
+  selectedQuantity?: number | null;
+}
 
 interface IncomingMessage {
   from: string;
@@ -109,7 +145,7 @@ function generateOrderNumber(): string {
 
 // ─── Get or create conversation ────────────────────────────────────────────
 
-async function getConversation(phone: string, name?: string) {
+async function getConversation(phone: string, name?: string): Promise<Conversation> {
   try {
     let convo = await withTimeout(
       db.whatsAppConversation.findUnique({
@@ -135,11 +171,10 @@ async function getConversation(phone: string, name?: string) {
       );
     }
 
-    return convo;
-  } catch (e) {
-    console.error("[WhatsApp] getConversation failed or timed out:", e);
+    return convo as unknown as Conversation;
+  } catch {
     // Return a dummy object to allow the bot to continue with default state
-    return { phone, state: "IDLE", name: name || "Customer" } as any;
+    return { phone, state: "IDLE", name: name ?? "Customer" } as unknown as Conversation;
   }
 }
 
@@ -248,7 +283,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     const category = classifyMessage(input);
     
     if (category === "ADDRESS" && state !== "ASKING_ADDRESS") {
-      await updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: msg.text });
+      await updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: msg.text ?? "" });
       await sendTextMessage(msg.from, "✅ Address saved! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)");
       return;
     }
@@ -332,10 +367,10 @@ async function sendMenu(to: string) {
 
   if (cakes.length <= 10) {
     // If we have 10 or fewer cakes, show the full list in sections
-    const chocolateCakes = cakes.filter((p: any) => p.category === "Chocolate Cakes" || p.category === "Chocolate");
-    const vanillaCakes = cakes.filter((p: any) => p.category === "Vanilla Cakes" || p.category === "Vanilla");
-    const teaCakes = cakes.filter((p: any) => p.category === "Tea Cakes" || p.category === "Tea");
-    const seasonalCakes = cakes.filter((p: any) => p.category === "Seasonal Cakes" || p.category === "Seasonal");
+    const chocolateCakes = cakes.filter((p) => p.category === "Chocolate Cakes" || p.category === "Chocolate");
+    const vanillaCakes = cakes.filter((p) => p.category === "Vanilla Cakes" || p.category === "Vanilla");
+    const teaCakes = cakes.filter((p) => p.category === "Tea Cakes" || p.category === "Tea");
+    const seasonalCakes = cakes.filter((p) => p.category === "Seasonal Cakes" || p.category === "Seasonal");
 
     const sections = [];
     if (chocolateCakes.length > 0) {
@@ -449,7 +484,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const catName = categoryMap[category] ?? "Cakes";
 
   const allCakes = await safeGetCakes();
-  const filtered = allCakes.filter((p: any) => p.category === catName || p.category === category);
+  const filtered = allCakes.filter((p) => p.category === catName || p.category === category);
 
   await updateState(msg.from, "BROWSING_MENU");
   await sendInteractiveList(
@@ -482,10 +517,10 @@ async function handleCakeSelection(msg: IncomingMessage) {
     const input = msg.text.toLowerCase();
     const cakes = await safeGetCakes();
     selectedProduct = cakes.find(
-      (p: any) =>
+      (p) =>
         p.name.toLowerCase().includes(input) ||
         input.includes(p.name.toLowerCase())
-    );
+    ) ?? null;
   }
 
   if (!selectedProduct) {
@@ -511,7 +546,7 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   const options = selectedProduct.options ?? [];
-  const buttons = options.map((opt: any, idx: number) => ({
+  const buttons = options.map((opt, idx) => ({
     id: `size_${idx}`,
     title: `${opt.size} — ${opt.price}`,
   }));
@@ -527,7 +562,7 @@ async function handleCakeSelection(msg: IncomingMessage) {
 
 async function handleSizeSelection(
   msg: IncomingMessage,
-  convo: { selectedCake: string | null }
+  convo: Conversation
 ) {
   if (!convo.selectedCake) {
     await updateState(msg.from, "IDLE");
@@ -554,7 +589,7 @@ async function handleSizeSelection(
   if (!selectedOption && msg.text) {
     const input = msg.text.toLowerCase();
     selectedOption = cake.options?.find(
-      (opt: any) =>
+      (opt) =>
         input.includes(opt.size.toLowerCase()) ||
         input.includes(opt.price.toLowerCase())
     );
@@ -584,7 +619,7 @@ async function handleSizeSelection(
 
 async function handleAddressInput(
   msg: IncomingMessage,
-  convo: { selectedCake: string | null }
+  convo: Conversation
 ) {
   const address = msg.text?.trim() ?? "";
 
@@ -608,7 +643,7 @@ async function handleAddressInput(
 
 async function handleInstructionsInput(
   msg: IncomingMessage,
-  convo: { selectedCake: string | null }
+  convo: Conversation
 ) {
   const input = msg.text?.trim() ?? "";
   const isSkip =
@@ -643,13 +678,7 @@ async function handleInstructionsInput(
 
 async function handleConfirmation(
   msg: IncomingMessage,
-  convo: {
-    selectedCake: string | null;
-    selectedSize: string | null;
-    selectedPrice: string | null;
-    selectedAddress?: string | null;
-    selectedNotes?: string | null;
-  }
+  convo: Conversation
 ) {
   const isConfirm =
     msg.interactiveId === "btn_confirm" ||
