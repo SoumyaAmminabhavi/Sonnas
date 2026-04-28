@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+// Brand Colors aligned with OwnerDashboard
 const Color _primaryColor = Color(0xFFFF4D8D);
+const Color _primaryContainer = Color(0xFFFFB6D3);
+const Color _secondaryColor = Color(0xFF701235);
 
 class OwnerSidebar extends StatelessWidget {
   final int currentIndex;
@@ -102,14 +105,15 @@ class _DrawerEntry extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             gradient: isSelected
                 ? const LinearGradient(
-                    colors: [Color(0xFFFF85B3), Color(0xFFFFB6D3)],
+                    colors: [_primaryColor, _primaryContainer],
                   )
                 : null,
           ),
@@ -118,16 +122,16 @@ class _DrawerEntry extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isSelected ? Colors.white : const Color(0xFF701235),
+                color: isSelected ? Colors.white : _secondaryColor,
               ),
               const SizedBox(width: 16),
               Text(
                 title,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  color: isSelected ? Colors.white : const Color(0xFF701235),
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  letterSpacing: 1.5,
+                  color: isSelected ? Colors.white : _secondaryColor,
                 ),
               ),
             ],
@@ -137,3 +141,4 @@ class _DrawerEntry extends StatelessWidget {
     );
   }
 }
+

@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'order_details_page.dart';
 
 class ManageOrdersPage extends StatefulWidget {
-  const ManageOrdersPage({super.key});
+  final ValueChanged<int>? onTabChanged;
+  const ManageOrdersPage({super.key, this.onTabChanged});
 
   @override
   State<ManageOrdersPage> createState() => _ManageOrdersPageState();
@@ -96,7 +97,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _OrdersList(cs: cs),
+                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged),
                   const Center(child: Text("Upcoming Orders")),
                   const Center(child: Text("Completed Orders")),
                 ],
@@ -111,7 +112,8 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
 
 class _OrdersList extends StatelessWidget {
   final ColorScheme cs;
-  const _OrdersList({required this.cs});
+  final ValueChanged<int>? onTabChanged;
+  const _OrdersList({required this.cs, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +154,8 @@ class _OrdersList extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       itemCount: orders.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) => _OrderCompactCard(cs: cs, data: orders[index]),
+      itemBuilder: (context, index) =>
+          _OrderCompactCard(cs: cs, data: orders[index], onTabChanged: onTabChanged),
     );
   }
 }
@@ -182,142 +185,153 @@ class _OrderData {
 class _OrderCompactCard extends StatelessWidget {
   final ColorScheme cs;
   final _OrderData data;
+  final ValueChanged<int>? onTabChanged;
 
   const _OrderCompactCard({
     required this.cs,
     required this.data,
+    this.onTabChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OrderDetailsPage(orderId: data.orderId),
           ),
         );
+        if (result is int && onTabChanged != null) {
+          onTabChanged!(result);
+        }
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          // Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              data.imageUrl,
-              width: 90,
-              height: 90,
-              fit: BoxFit.cover,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: cs.secondary.withValues(alpha: 0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(width: 16),
-          
-          // Details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      data.orderId,
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 10,
-                        fontStyle: FontStyle.italic,
-                        color: cs.secondary.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: data.statusBg.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        data.status.toUpperCase(),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          color: data.statusFg,
+          ],
+          border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            // Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                data.imageUrl,
+                width: 90,
+                height: 90,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        data.orderId,
+                        style: GoogleFonts.notoSerif(
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                          color: cs.secondary.withValues(alpha: 0.5),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: data.statusBg.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          data.status.toUpperCase(),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: data.statusFg,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data.customerName,
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  data.customerName,
-                  style: GoogleFonts.notoSerif(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: cs.secondary,
                   ),
-                ),
-                const SizedBox(height: 6),
-                _CompactInfoRow(icon: Icons.cake_outlined, text: data.item, cs: cs),
-                const SizedBox(height: 2),
-                _CompactInfoRow(icon: Icons.schedule_outlined, text: data.time, cs: cs),
-              ],
-            ),
-          ),
-          
-          // Action
-          const SizedBox(width: 8),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: Icon(Icons.more_vert, color: cs.secondary.withValues(alpha: 0.3)),
-                onPressed: () {},
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                  const SizedBox(height: 6),
+                  _CompactInfoRow(
+                      icon: Icons.cake_outlined, text: data.item, cs: cs),
+                  const SizedBox(height: 2),
+                  _CompactInfoRow(
+                      icon: Icons.schedule_outlined, text: data.time, cs: cs),
+                ],
               ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [cs.primary, cs.primaryContainer],
-                  ),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.edit_note, color: Colors.white, size: 20),
+            ),
+
+            // Action
+            const SizedBox(width: 8),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.more_vert,
+                      color: cs.secondary.withValues(alpha: 0.3)),
                   onPressed: () {},
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [cs.primary, cs.primaryContainer],
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.edit_note,
+                        color: Colors.white, size: 20),
+                    onPressed: () {},
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _CompactInfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
   final ColorScheme cs;
-  const _CompactInfoRow({required this.icon, required this.text, required this.cs});
+  const _CompactInfoRow(
+      {required this.icon, required this.text, required this.cs});
 
   @override
   Widget build(BuildContext context) {
@@ -340,4 +354,3 @@ class _CompactInfoRow extends StatelessWidget {
     );
   }
 }
-

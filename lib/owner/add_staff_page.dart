@@ -28,6 +28,18 @@ class _AddStaffPageState extends State<AddStaffPage> {
   final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
   final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+  final TextEditingController _startTimeController =
+      TextEditingController(text: "08:00 AM");
+  final TextEditingController _endTimeController =
+      TextEditingController(text: "04:00 PM");
+
+  @override
+  void dispose() {
+    _startTimeController.dispose();
+    _endTimeController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -38,7 +50,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           backgroundColor: _bgColor,
           appBar: isDesktop
               ? AppBar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: _bgColor.withValues(alpha: 0.9),
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   leading: IconButton(
@@ -48,7 +60,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   title: Text(
                     "Sonna's Patisserie & Cafe",
                     style: GoogleFonts.notoSerif(
-                      color: const Color(0xFFD9B87A),
+                      color: const Color.fromARGB(255, 146, 6, 53),
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.5,
@@ -91,7 +103,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 OwnerSidebar(
                   currentIndex: 4, // Active under Settings
                   onTap: (index) {
-                    Navigator.pop(context);
+                    Navigator.pop(context, index);
                   },
                 ),
               Expanded(
@@ -99,7 +111,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   padding: const EdgeInsets.all(24.0),
                   child: Center(
                     child: Container(
-                      constraints: const BoxConstraints(maxWidth: 600),
+                      constraints: const BoxConstraints(maxWidth: 850),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -206,7 +218,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         if (isMobile) ...[
           _buildGhostInput(
             label: "PHONE NUMBER",
-            placeholder: "+1 (555) 000-0000",
+            placeholder: "+91 9876543210",
             keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: 24),
@@ -221,7 +233,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               Expanded(
                 child: _buildGhostInput(
                   label: "PHONE NUMBER",
-                  placeholder: "+1 (555) 000-0000",
+                  placeholder: "+91 9876543210",
                   keyboardType: TextInputType.phone,
                 ),
               ),
@@ -417,8 +429,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 16),
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
+            SizedBox(
+              width: 140,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -426,22 +440,33 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     "START",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.w800,
+                      color: _primaryColor,
+                      letterSpacing: 1.0,
                     ),
                   ),
                   _buildGhostInput(
                     placeholder: "",
-                    initialValue: "08:00 AM",
+                    controller: _startTimeController,
                     isTime: true,
                   ),
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(top: 20.0, left: 8, right: 8),
-              child: Text("to", style: TextStyle(color: _outlineVariant)),
+            Padding(
+              padding: const EdgeInsets.only(top: 18.0, left: 16, right: 16),
+              child: Text(
+                "to",
+                style: GoogleFonts.notoSerif(
+                  color: _primaryColor.withValues(alpha: 0.4),
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
             ),
-            Expanded(
+            SizedBox(
+              width: 140,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -449,12 +474,14 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     "END",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.w800,
+                      color: _primaryColor,
+                      letterSpacing: 1.0,
                     ),
                   ),
                   _buildGhostInput(
                     placeholder: "",
-                    initialValue: "04:00 PM",
+                    controller: _endTimeController,
                     isTime: true,
                   ),
                 ],
@@ -529,8 +556,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: shiftTiming),
-        const SizedBox(width: 40),
+        shiftTiming,
+        const SizedBox(width: 48),
         Expanded(child: workingDays),
       ],
     );
@@ -641,6 +668,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
   Widget _buildGhostInput({
     String? label,
     required String placeholder,
+    TextEditingController? controller,
     String? initialValue,
     bool obscureText = false,
     bool isTime = false,
@@ -661,9 +689,11 @@ class _AddStaffPageState extends State<AddStaffPage> {
           ),
         const SizedBox(height: 4),
         TextFormField(
-          initialValue: initialValue,
+          controller: controller,
+          initialValue: controller == null ? initialValue : null,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          readOnly: isTime,
           style: GoogleFonts.plusJakartaSans(
             color: _secondaryColor,
             fontWeight: FontWeight.w500,
@@ -681,10 +711,75 @@ class _AddStaffPageState extends State<AddStaffPage> {
               borderSide: BorderSide(color: _primaryColor, width: 2),
             ),
             suffixIcon: isTime
-                ? const Icon(
-                    Icons.access_time,
+                ? IconButton(
+                    icon: const Icon(Icons.access_time, size: 18),
                     color: _secondaryColor,
-                    size: 18,
+                    onPressed: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              timePickerTheme: TimePickerThemeData(
+                                backgroundColor: _bgColor,
+                                hourMinuteShape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                      color: _primaryColor.withValues(alpha: 0.2)),
+                                ),
+                                hourMinuteColor: Colors.white,
+                                hourMinuteTextColor: _secondaryColor,
+                                dayPeriodColor: WidgetStateColor.resolveWith((states) =>
+                                    states.contains(WidgetState.selected)
+                                        ? _primaryColor
+                                        : Colors.transparent),
+                                dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
+                                    states.contains(WidgetState.selected)
+                                        ? Colors.white
+                                        : _secondaryColor),
+                                dayPeriodShape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(
+                                      color: _primaryColor.withValues(alpha: 0.5)),
+                                ),
+                                dialBackgroundColor: Colors.white,
+                                dialHandColor: _primaryColor,
+                                dialTextColor: _secondaryColor,
+                                entryModeIconColor: _primaryColor,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                helpTextStyle: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.bold,
+                                  color: _secondaryColor,
+                                  fontSize: 12,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                              textButtonTheme: TextButtonThemeData(
+                                style: TextButton.styleFrom(
+                                  textStyle: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  foregroundColor: _primaryColor,
+                                ),
+                              ),
+                              colorScheme: ColorScheme.light(
+                                primary: _primaryColor,
+                                onPrimary: Colors.white,
+                                surface: _bgColor,
+                                onSurface: _secondaryColor,
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (time != null && controller != null) {
+                        controller.text = time.format(context);
+                      }
+                    },
                   )
                 : null,
           ),

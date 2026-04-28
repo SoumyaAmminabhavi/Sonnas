@@ -118,13 +118,19 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 ),
               Expanded(
                 child: _selectedIndex == 1
-                    ? const ManageOrdersPage()
+                    ? ManageOrdersPage(
+                        onTabChanged: (index) =>
+                            setState(() => _selectedIndex = index),
+                      )
                     : _selectedIndex == 2
                     ? const PaymentsPage()
                     : _selectedIndex == 3
                     ? const MenuPage()
                     : _selectedIndex == 4
-                    ? const OwnerSettingsPage()
+                    ? OwnerSettingsPage(
+                        onTabChanged: (index) =>
+                            setState(() => _selectedIndex = index),
+                      )
                     : _MainContent(
                         isDesktop: isDesktop,
                         onViewAllOrders: () =>
@@ -159,139 +165,6 @@ class _TopNavText extends StatelessWidget {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 12,
             letterSpacing: 1.5,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Sidebar extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _Sidebar({required this.currentIndex, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 250,
-      decoration: BoxDecoration(
-        color: Colors.white, // Pure white sidebar for contrast
-        boxShadow: [
-          BoxShadow(
-            color: _primaryColor.withValues(alpha: 0.08),
-            blurRadius: 30,
-            offset: const Offset(10, 0),
-          ),
-        ],
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(32),
-          bottomRight: Radius.circular(32),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 32),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              "Menu",
-              style: GoogleFonts.notoSerif(
-                color: _primaryColor,
-                fontStyle: FontStyle.italic,
-                fontSize: 18,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _DrawerEntry(
-            icon: Icons.dashboard,
-            title: "DASHBOARD",
-            isSelected: currentIndex == 0,
-            onTap: () => onTap(0),
-          ),
-          _DrawerEntry(
-            icon: Icons.shopping_bag,
-            title: "ORDERS",
-            isSelected: currentIndex == 1,
-            onTap: () => onTap(1),
-          ),
-          _DrawerEntry(
-            icon: Icons.payments,
-            title: "PAYMENTS",
-            isSelected: currentIndex == 2,
-            onTap: () => onTap(2),
-          ),
-          _DrawerEntry(
-            icon: Icons.inventory_2,
-            title: "MENU",
-            isSelected: currentIndex == 3,
-            onTap: () => onTap(3),
-          ),
-          _DrawerEntry(
-            icon: Icons.settings,
-            title: "SETTINGS",
-            isSelected: currentIndex == 4,
-            onTap: () => onTap(4),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DrawerEntry extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _DrawerEntry({
-    required this.icon,
-    required this.title,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: isSelected
-                ? const LinearGradient(
-                    colors: [_primaryColor, _primaryContainer],
-                  )
-                : null,
-            color: !isSelected ? Colors.transparent : null,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? Colors.white : _secondaryColor,
-                size: 20,
-              ),
-              const SizedBox(width: 16),
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  color: isSelected ? Colors.white : _secondaryColor,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  fontSize: 12,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ],
           ),
         ),
       ),

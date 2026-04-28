@@ -7,7 +7,8 @@ const Color _primaryColor = Color(0xFFFF4D8D);
 const Color _secondaryColor = Color(0xFF701235);
 
 class OwnerSettingsPage extends StatelessWidget {
-  const OwnerSettingsPage({super.key});
+  final ValueChanged<int>? onTabChanged;
+  const OwnerSettingsPage({super.key, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +17,7 @@ class OwnerSettingsPage extends StatelessWidget {
         final isDesktop = constraints.maxWidth >= 768;
 
         // Removing nested Scaffold as it's hosted in OwnerDashboard
-        return _SettingsContent(isDesktop: isDesktop);
+        return _SettingsContent(isDesktop: isDesktop, onTabChanged: onTabChanged);
       },
     );
   }
@@ -24,8 +25,9 @@ class OwnerSettingsPage extends StatelessWidget {
 
 class _SettingsContent extends StatefulWidget {
   final bool isDesktop;
+  final ValueChanged<int>? onTabChanged;
 
-  const _SettingsContent({required this.isDesktop});
+  const _SettingsContent({required this.isDesktop, this.onTabChanged});
 
   @override
   State<_SettingsContent> createState() => _SettingsContentState();
@@ -202,11 +204,14 @@ class _SettingsContentState extends State<_SettingsContent> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AddStaffPage()),
                 );
+                if (result is int && widget.onTabChanged != null) {
+                  widget.onTabChanged!(result);
+                }
               },
               icon: const Icon(Icons.person_add, color: _primaryColor),
               label: Text(
