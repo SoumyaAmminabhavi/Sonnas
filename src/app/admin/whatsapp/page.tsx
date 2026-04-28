@@ -89,6 +89,7 @@ export default function WhatsAppAdminPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [replyPhone, setReplyPhone] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Data queries
   const statsQuery = api.whatsapp.getStats.useQuery();
@@ -125,7 +126,22 @@ export default function WhatsAppAdminPage() {
   return (
     <div style={styles.container}>
       {/* ─── Sidebar ─────────────────────────────────────────── */}
-      <aside style={styles.sidebar}>
+      <aside 
+        style={{
+          ...styles.sidebar,
+          width: isSidebarCollapsed ? 0 : 280,
+          opacity: isSidebarCollapsed ? 0 : 1,
+          pointerEvents: isSidebarCollapsed ? "none" : "auto",
+        }}
+      >
+        {/* Toggle Button Inside Sidebar */}
+        <button 
+          onClick={() => setIsSidebarCollapsed(true)}
+          style={styles.collapseBtnInternal}
+          title="Hide Filters"
+        >
+          ←
+        </button>
 
         {/* Filter Tabs */}
         <nav style={styles.filterNav}>
@@ -195,6 +211,16 @@ export default function WhatsAppAdminPage() {
 
       {/* ─── Main Content ────────────────────────────────────── */}
       <main style={styles.main}>
+        {isSidebarCollapsed && (
+          <button 
+            onClick={() => setIsSidebarCollapsed(false)}
+            style={styles.expandBtn}
+            title="Show Filters"
+          >
+            📋 Filters & Chats →
+          </button>
+        )}
+
         {/* Stats Bar */}
         <div style={styles.statsBar}>
           <StatCard
@@ -507,6 +533,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     flexShrink: 0,
     overflow: "hidden",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   sidebarHeader: {
     padding: "28px 24px 20px",
@@ -628,6 +655,8 @@ const styles: Record<string, React.CSSProperties> = {
     flex: 1,
     padding: "28px 32px",
     overflowY: "auto" as const,
+    position: "relative" as const,
+    transition: "padding 0.3s ease",
   },
 
   // Stats
@@ -908,5 +937,32 @@ const styles: Record<string, React.CSSProperties> = {
     display: "block",
     objectFit: "cover" as const,
     maxHeight: 500,
+  },
+  collapseBtnInternal: {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#9A9A9A",
+    fontSize: 20,
+    cursor: "pointer",
+    padding: "10px 20px",
+    textAlign: "right" as const,
+    width: "100%",
+    transition: "color 0.2s",
+  },
+  expandBtn: {
+    backgroundColor: "#F4C2C2",
+    color: "#2B2B2B",
+    border: "none",
+    borderRadius: "0 20px 20px 0",
+    padding: "10px 20px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    position: "absolute" as const,
+    left: 0,
+    top: 100,
+    zIndex: 40,
+    boxShadow: "4px 0 12px rgba(0,0,0,0.1)",
+    transition: "all 0.2s ease",
   },
 };

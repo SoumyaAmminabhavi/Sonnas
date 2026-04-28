@@ -16,46 +16,51 @@ export default function AdminRootLayout({
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#FFF9F7]">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 bg-[#2B2B2B] text-[#FFF9F7] flex flex-col shadow-2xl">
-        <div className="p-8 border-b border-white/5">
-          <h2 className="font-heading text-xl text-[#F4C2C2] tracking-widest">SONNA&apos;S</h2>
-          <p className="text-[10px] uppercase tracking-[3px] text-[#9A9A9A] mt-1">Management</p>
+    <div className="flex flex-col min-h-screen bg-[#FFF9F7]">
+      {/* Top Navbar */}
+      <header className="h-20 bg-[#2B2B2B] text-[#FFF9F7] flex items-center justify-between px-8 shadow-xl z-50">
+        <div className="flex items-center gap-12">
+          <div>
+            <h2 className="font-heading text-xl text-[#F4C2C2] tracking-widest m-0 leading-none">SONNA&apos;S</h2>
+            <p className="text-[10px] uppercase tracking-[3px] text-[#9A9A9A] mt-1 m-0">Management</p>
+          </div>
+
+          <nav className="flex items-center gap-4">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <LinkNext
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-full transition-all ${
+                    isActive
+                      ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
+                      : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <span className="text-sm font-medium">{item.name}</span>
+                </LinkNext>
+              );
+            })}
+          </nav>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <LinkNext
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
-                    : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
-                }`}
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span>{item.name}</span>
-              </LinkNext>
-            );
-          })}
-        </nav>
-
-        <div className="p-6 border-t border-white/5">
+        <div className="flex items-center gap-6">
           <LinkNext
             href="/"
-            className="flex items-center gap-2 text-xs text-[#9A9A9A] hover:text-[#F4C2C2] transition-colors"
+            className="text-xs text-[#9A9A9A] hover:text-[#F4C2C2] transition-colors"
           >
-            ← Back to Website
+            ← View Site
           </LinkNext>
+          <div className="w-8 h-8 rounded-full bg-[#5A3E36] flex items-center justify-center text-[#F4C2C2] font-bold text-xs">
+            A
+          </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto">
+      {/* Main Content Area */}
+      <main className="flex-1 relative">
         {children}
       </main>
     </div>
