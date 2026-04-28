@@ -44,6 +44,8 @@ export async function POST(request: Request) {
       return new NextResponse("OK", { status: 200 });
     }
 
+    console.log(`[WhatsApp] Webhook Received: type=${message.type}, from=${message.from}`);
+
     // Get contact name
     const contactName = value?.contacts?.[0]?.profile?.name;
 

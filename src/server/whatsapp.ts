@@ -21,7 +21,7 @@ function getMessagesUrl() {
 
 export async function sendTextMessage(to: string, message: string) {
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) {
-    console.warn("[WhatsApp] Env variables not configured. Skipping send.");
+    console.warn("[WhatsApp] Env variables not configured! TOKEN:", !!env.WHATSAPP_TOKEN, "ID:", !!env.WHATSAPP_PHONE_ID);
     return;
   }
 

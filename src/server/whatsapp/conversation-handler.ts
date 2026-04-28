@@ -11,6 +11,19 @@ import {
   sendInteractiveButtons,
 } from "~/server/whatsapp";
 
+// ─── DB Resilience ─────────────────────────────────────────────────────────
+
+const DB_TIMEOUT = 3000; // 3 seconds
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("DB Timeout")), timeoutMs)
+    ),
+  ]);
+}
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type ConversationState =
@@ -44,22 +57,37 @@ function generateOrderNumber(): string {
 // ─── Get or create conversation ────────────────────────────────────────────
 
 async function getConversation(phone: string, name?: string) {
-  let convo = await db.whatsAppConversation.findUnique({
-    where: { phone },
-  });
+  try {
+    let convo = await withTimeout(
+      db.whatsAppConversation.findUnique({
+        where: { phone },
+      }),
+      DB_TIMEOUT
+    );
 
-  if (!convo) {
-    convo = await db.whatsAppConversation.create({
-      data: { phone, name },
-    });
-  } else if (name && !convo.name) {
-    convo = await db.whatsAppConversation.update({
-      where: { phone },
-      data: { name },
-    });
+    if (!convo) {
+      convo = await withTimeout(
+        db.whatsAppConversation.create({
+          data: { phone, name },
+        }),
+        DB_TIMEOUT
+      );
+    } else if (name && !convo.name) {
+      convo = await withTimeout(
+        db.whatsAppConversation.update({
+          where: { phone },
+          data: { name },
+        }),
+        DB_TIMEOUT
+      );
+    }
+
+    return convo;
+  } catch (e) {
+    console.error("[WhatsApp] getConversation failed or timed out:", e);
+    // Return a dummy object to allow the bot to continue with default state
+    return { phone, state: "IDLE", name: name || "Customer" } as any;
   }
-
-  return convo;
 }
 
 // ─── Update conversation state ─────────────────────────────────────────────
@@ -73,16 +101,24 @@ async function updateState(
     selectedPrice?: string | null;
     selectedAddress?: string | null;
     selectedNotes?: string | null;
+    selectedQuantity?: number | null;
   } = {}
 ) {
-  await db.whatsAppConversation.update({
-    where: { phone },
-    data: {
-      state,
-      lastMessageAt: new Date(),
-      ...extra,
-    },
-  });
+  try {
+    await withTimeout(
+      db.whatsAppConversation.update({
+        where: { phone },
+        data: {
+          state,
+          lastMessageAt: new Date(),
+          ...extra,
+        },
+      }),
+      DB_TIMEOUT
+    );
+  } catch (e) {
+    console.error("[WhatsApp] updateState failed:", e);
+  }
 }
 
 // ─── Main handler ──────────────────────────────────────────────────────────
@@ -92,6 +128,8 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   const state = convo.state as ConversationState;
   const input = msg.text?.trim().toLowerCase() ?? "";
   const interactiveId = msg.interactiveId ?? "";
+
+  console.log(`[WhatsApp] Processing from ${msg.from}: ${input || interactiveId} (State: ${state})`);
 
   // ── Global commands (work from any state) ──────────────────────────────
 
