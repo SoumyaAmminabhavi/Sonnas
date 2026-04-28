@@ -287,6 +287,16 @@ export default function WhatsAppAdminPage() {
                       </div>
                     )}
 
+                    {(order as any).customImageUrl && (
+                      <div style={styles.imagePreview}>
+                        <img 
+                          src={(order as any).customImageUrl} 
+                          alt="Custom Cake Reference"
+                          style={styles.previewImg}
+                        />
+                      </div>
+                    )}
+
                     <div style={styles.orderFooter}>
                       <span style={styles.customerName}>
                         {order.customerName ?? order.phone}
@@ -853,5 +863,20 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     transition: "background 0.2s ease",
+  },
+  imagePreview: {
+    marginTop: 12,
+    marginBottom: 12,
+    borderRadius: 8,
+    overflow: "hidden",
+    border: "1px solid #E8DED4",
+    maxHeight: 200,
+    backgroundColor: "#F7F3EF",
+  },
+  previewImg: {
+    width: "100%",
+    height: "auto",
+    display: "block",
+    objectFit: "contain" as const,
   },
 };

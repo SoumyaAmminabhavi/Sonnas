@@ -698,8 +698,12 @@ async function handleCustomRequest(
     const mediaId = msg.image.id;
     const caption = msg.image.caption ?? "";
     
+    // Download from WhatsApp and upload to Supabase for permanent storage
+    const { downloadAndUploadImage } = await import("./media");
+    const publicUrl = await downloadAndUploadImage(mediaId);
+    
     await updateState(msg.from, "ASKING_ADDRESS", {
-      customImageUrl: `whatsapp://media/${mediaId}`,
+      customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
       selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption
     });
     
