@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 
@@ -89,7 +90,9 @@ export default function WhatsAppAdminPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [replyPhone, setReplyPhone] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  const searchParams = useSearchParams();
+  const isSidebarCollapsed = searchParams.get("sidebar") === "collapsed";
 
   // Data queries
   const statsQuery = api.whatsapp.getStats.useQuery();
@@ -134,14 +137,6 @@ export default function WhatsAppAdminPage() {
           pointerEvents: isSidebarCollapsed ? "none" : "auto",
         }}
       >
-        {/* Toggle Button Inside Sidebar */}
-        <button 
-          onClick={() => setIsSidebarCollapsed(true)}
-          style={styles.collapseBtnInternal}
-          title="Hide Filters"
-        >
-          ←
-        </button>
 
         {/* Filter Tabs */}
         <nav style={styles.filterNav}>
@@ -211,16 +206,6 @@ export default function WhatsAppAdminPage() {
 
       {/* ─── Main Content ────────────────────────────────────── */}
       <main style={styles.main}>
-        {isSidebarCollapsed && (
-          <button 
-            onClick={() => setIsSidebarCollapsed(false)}
-            style={styles.expandBtn}
-            title="Show Filters"
-          >
-            📋 Filters & Chats →
-          </button>
-        )}
-
         {/* Stats Bar */}
         <div style={styles.statsBar}>
           <StatCard

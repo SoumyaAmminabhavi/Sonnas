@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import LinkNext from "next/link";
 
 export default function AdminRootLayout({
@@ -9,6 +9,7 @@ export default function AdminRootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const navItems = [
     { name: "Orders", href: "/admin/whatsapp", icon: "📋" },
@@ -28,19 +29,34 @@ export default function AdminRootLayout({
           <nav className="flex items-center gap-4">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
+              const isOrders = item.name === "Orders";
+              
               return (
-                <LinkNext
-                  key={item.name}
-                  href={item.href}
-                  className={`flex items-center gap-2 px-6 py-2 rounded-full transition-all ${
-                    isActive
-                      ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
-                      : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
-                  }`}
-                >
-                  <span className="text-lg">{item.icon}</span>
-                  <span className="text-sm font-medium">{item.name}</span>
-                </LinkNext>
+                <div key={item.name} className="flex items-center gap-1">
+                  <LinkNext
+                    href={item.href}
+                    className={`flex items-center gap-2 px-6 py-2 rounded-full transition-all ${
+                      isActive
+                        ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
+                        : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-sm font-medium">{item.name}</span>
+                  </LinkNext>
+                  
+                  {isOrders && isActive && (
+                    <LinkNext
+                      href={pathname + (searchParams.get("sidebar") === "collapsed" ? "" : "?sidebar=collapsed")}
+                      className="p-2 hover:bg-white/5 rounded-full text-[#F4C2C2] transition-colors"
+                      title={searchParams.get("sidebar") === "collapsed" ? "Show Filters" : "Hide Filters"}
+                    >
+                      <span className="text-lg">
+                        {searchParams.get("sidebar") === "collapsed" ? "→" : "←"}
+                      </span>
+                    </LinkNext>
+                  )}
+                </div>
               );
             })}
           </nav>
