@@ -268,7 +268,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   if (msg.type === "location" && msg.location) {
     const { latitude, longitude } = msg.location;
-    const address = msg.location.address || `Location: ${latitude}, ${longitude}`;
+    const address = msg.location.address ?? `Location: ${latitude}, ${longitude}`;
     
     if (state === "ASKING_ADDRESS") {
       await updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: address });
@@ -431,20 +431,6 @@ async function sendMenu(to: string) {
 
 // ─── Helpers for Menu ──────────────────────────────────────────────────────
 
-function filterCakes(type: "chocolate" | "vanilla" | "tea" | "seasonal") {
-  switch (type) {
-    case "chocolate":
-      return products.filter((p) => p.category === "Chocolate Cakes");
-    case "vanilla":
-      return products.filter((p) => p.category === "Vanilla Cakes");
-    case "tea":
-      return products.filter((p) => p.category === "Tea Cakes");
-    case "seasonal":
-      return products.filter((p) => p.category === "Seasonal Cakes");
-    default:
-      return [];
-  }
-}
 
 const cakeRow = (c: Cake) => ({
   id: `cake_${c.id}`,
@@ -541,7 +527,7 @@ async function handleCakeSelection(msg: IncomingMessage) {
     await sendImageMessage(
       msg.from,
       selectedProduct.image,
-      `*${selectedProduct.name}*\n\n${selectedProduct.description || ""}`
+      `*${selectedProduct.name}*\n\n${selectedProduct.description ?? ""}`
     );
   }
 
@@ -619,7 +605,7 @@ async function handleSizeSelection(
 
 async function handleAddressInput(
   msg: IncomingMessage,
-  convo: Conversation
+  _convo: Conversation
 ) {
   const address = msg.text?.trim() ?? "";
 
@@ -643,7 +629,7 @@ async function handleAddressInput(
 
 async function handleInstructionsInput(
   msg: IncomingMessage,
-  convo: Conversation
+  _convo: Conversation
 ) {
   const input = msg.text?.trim() ?? "";
   const isSkip =
@@ -662,7 +648,7 @@ async function handleInstructionsInput(
     where: { phone: msg.from },
   });
 
-  const cake = await safeGetCakeByName(updatedConvo?.selectedCake || "");
+  const cake = await safeGetCakeByName(updatedConvo?.selectedCake ?? "");
 
   await sendInteractiveButtons(
     msg.from,
