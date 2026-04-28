@@ -75,6 +75,7 @@ model Cake {
     name        String
     description String?
     image       String
+    category    String       @default("General")
     createdAt   DateTime     @default(now())
     updatedAt   DateTime     @updatedAt
     

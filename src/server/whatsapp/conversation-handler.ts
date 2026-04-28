@@ -9,7 +9,54 @@ import {
   sendTextMessage,
   sendInteractiveList,
   sendInteractiveButtons,
+  sendImageMessage,
 } from "~/server/whatsapp";
+
+// ─── DB Helpers ─────────────────────────────────────────────────────────────
+
+async function safeGetCakes() {
+  console.log("[WhatsApp] Attempting to fetch cakes from DB...");
+  try {
+    return await withTimeout(
+      db.cake.findMany({ include: { options: true } }),
+      DB_TIMEOUT
+    );
+  } catch (e) {
+    console.warn("[WhatsApp] DB Menu fetch failed, using fallback.");
+    return products as any[];
+  }
+}
+
+async function safeGetCakeByName(name: string) {
+  try {
+    return await withTimeout(
+      db.cake.findFirst({
+        where: { name },
+        include: { options: true },
+      }),
+      DB_TIMEOUT
+    );
+  } catch (e) {
+    return products.find((p) => p.name === name) as any;
+  }
+}
+
+async function safeGetCakeById(id: string) {
+  try {
+    if (id.length > 5) {
+      return await withTimeout(
+        db.cake.findUnique({
+          where: { id },
+          include: { options: true },
+        }),
+        DB_TIMEOUT
+      );
+    }
+    return products.find((p) => p.id === parseInt(id, 10)) as any;
+  } catch (e) {
+    return products.find((p) => p.id === parseInt(id, 10)) as any;
+  }
+}
 
 // ─── DB Resilience ─────────────────────────────────────────────────────────
 
@@ -38,11 +85,17 @@ type ConversationState =
 interface IncomingMessage {
   from: string;
   name?: string;
-  type: "text" | "interactive";
+  type: "text" | "interactive" | "location";
   text?: string;
   interactiveId?: string;
   interactiveTitle?: string;
   messageId: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    name?: string;
+    address?: string;
+  };
 }
 
 // ─── Order number generator ────────────────────────────────────────────────
@@ -176,6 +229,19 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
+  // ── Handle Location Message ───────────────────────────────────────────
+
+  if (msg.type === "location" && msg.location) {
+    const { latitude, longitude } = msg.location;
+    const address = msg.location.address || `Location: ${latitude}, ${longitude}`;
+    
+    if (state === "ASKING_ADDRESS") {
+      await updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: address });
+      await sendTextMessage(msg.from, "✅ Location received! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)");
+      return;
+    }
+  }
+
   // ── Local NLP Classification (Make it faster) ──────────────────────────
   
   if (msg.type === "text" && input.length > 5 && state !== "CONFIRMING" && state !== "IDLE") {
@@ -193,7 +259,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       
       // If we already have cake/size/address, go to confirmation
       if (updated?.selectedCake && updated?.selectedSize && updated?.selectedAddress) {
-        const cake = products.find(p => p.name === updated.selectedCake);
+        const cake = await safeGetCakeByName(updated.selectedCake);
         await sendInteractiveButtons(
           msg.from,
           `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updated.selectedSize}\n📍 Address: ${updated.selectedAddress}\n📝 Notes: ${msg.text}\n\nShall I place this order?`,
@@ -262,12 +328,14 @@ async function sendWelcome(to: string, name?: string) {
 // ─── Send interactive menu ─────────────────────────────────────────────────
 
 async function sendMenu(to: string) {
-  if (products.length <= 10) {
+  const cakes = await safeGetCakes();
+
+  if (cakes.length <= 10) {
     // If we have 10 or fewer cakes, show the full list in sections
-    const chocolateCakes = filterCakes("chocolate");
-    const vanillaCakes = filterCakes("vanilla");
-    const teaCakes = filterCakes("tea");
-    const seasonalCakes = filterCakes("seasonal");
+    const chocolateCakes = cakes.filter((p: any) => p.category === "Chocolate Cakes" || p.category === "Chocolate");
+    const vanillaCakes = cakes.filter((p: any) => p.category === "Vanilla Cakes" || p.category === "Vanilla");
+    const teaCakes = cakes.filter((p: any) => p.category === "Tea Cakes" || p.category === "Tea");
+    const seasonalCakes = cakes.filter((p: any) => p.category === "Seasonal Cakes" || p.category === "Seasonal");
 
     const sections = [];
     if (chocolateCakes.length > 0) {
@@ -304,8 +372,7 @@ async function sendMenu(to: string) {
     );
     await updateState(to, "BROWSING_MENU");
   } else {
-    // Too many cakes for a single list (WhatsApp limit: 10 rows total)
-    // Send category selection list instead (Buttons are limited to 3)
+    // Too many cakes for a single list
     await updateState(to, "SELECTING_CATEGORY");
     await sendInteractiveList(
       to,
@@ -364,13 +431,22 @@ async function handleCategorySelection(msg: IncomingMessage) {
     return;
   }
 
-  const filtered = filterCakes(category);
-  const titles = {
+  const categoryMap: Record<string, string> = {
+    chocolate: "Chocolate Cakes",
+    vanilla: "Vanilla Cakes",
+    tea: "Tea Cakes",
+    seasonal: "Seasonal Cakes",
+  };
+
+  const titles: Record<string, string> = {
     chocolate: "🍫 Chocolate Based",
     vanilla: "🍦 Vanilla & Fruit Based",
     tea: "☕ Tea Time Specials",
     seasonal: "🍓 Seasonal Specials",
   };
+
+  const allCakes = await safeGetCakes();
+  const filtered = allCakes.filter((p: any) => p.category === categoryMap[category] || p.category === category);
 
   await updateState(msg.from, "BROWSING_MENU");
   await sendInteractiveList(
@@ -394,15 +470,16 @@ async function handleCakeSelection(msg: IncomingMessage) {
 
   // Check if they selected from the interactive list
   if (msg.interactiveId?.startsWith("cake_")) {
-    const cakeId = parseInt(msg.interactiveId.replace("cake_", ""), 10);
-    selectedProduct = products.find((p) => p.id === cakeId);
+    const cakeId = msg.interactiveId.replace("cake_", "");
+    selectedProduct = await safeGetCakeById(cakeId);
   }
 
   // Or if they typed a cake name
   if (!selectedProduct && msg.text) {
     const input = msg.text.toLowerCase();
-    selectedProduct = products.find(
-      (p) =>
+    const cakes = await safeGetCakes();
+    selectedProduct = cakes.find(
+      (p: any) =>
         p.name.toLowerCase().includes(input) ||
         input.includes(p.name.toLowerCase())
     );
@@ -421,15 +498,24 @@ async function handleCakeSelection(msg: IncomingMessage) {
     selectedCake: selectedProduct.name,
   });
 
+  // 📸 Send Product Image
+  if (selectedProduct.image) {
+    await sendImageMessage(
+      msg.from,
+      selectedProduct.image,
+      `*${selectedProduct.name}*\n\n${selectedProduct.description || ""}`
+    );
+  }
+
   const options = selectedProduct.options ?? [];
-  const buttons = options.map((opt, idx) => ({
+  const buttons = options.map((opt: any, idx: number) => ({
     id: `size_${idx}`,
     title: `${opt.size} — ${opt.price}`,
   }));
 
   await sendInteractiveButtons(
     msg.from,
-    `*${selectedProduct.name}*\n\n_${selectedProduct.description}_\n\nChoose your size:`,
+    `Choose your size for *${selectedProduct.name}*:`,
     buttons
   );
 }
@@ -446,7 +532,7 @@ async function handleSizeSelection(
     return;
   }
 
-  const cake = products.find((p) => p.name === convo.selectedCake);
+  const cake = await safeGetCakeByName(convo.selectedCake);
   if (!cake) {
     await updateState(msg.from, "IDLE");
     await sendWelcome(msg.from);
@@ -538,7 +624,7 @@ async function handleInstructionsInput(
     where: { phone: msg.from },
   });
 
-  const cake = products.find((p) => p.name === updatedConvo?.selectedCake);
+  const cake = await safeGetCakeByName(updatedConvo?.selectedCake ?? "");
 
   await sendInteractiveButtons(
     msg.from,

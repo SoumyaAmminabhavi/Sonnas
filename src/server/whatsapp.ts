@@ -46,6 +46,35 @@ export async function sendTextMessage(to: string, message: string) {
   }
 }
 
+// ─── Send image ─────────────────────────────────────────────────────────────
+
+export async function sendImageMessage(to: string, imageUrl: string, caption?: string) {
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
+
+  try {
+    const res = await fetch(getMessagesUrl(), {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "image",
+        image: {
+          link: imageUrl,
+          caption: caption,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("[WhatsApp] Failed to send image:", err);
+    }
+  } catch (e) {
+    console.error("[WhatsApp] sendImageMessage error:", e);
+  }
+}
+
 // ─── Send interactive list (for menu browsing) ─────────────────────────────
 
 interface ListSection {

@@ -5,7 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { env } from "~/env";
-import { markAsRead } from "~/server/whatsapp";
+import { markAsRead, sendInteractiveButtons, sendImageMessage } from "~/server/whatsapp";
 import { handleIncomingMessage } from "~/server/whatsapp/conversation-handler";
 
 // ─── Webhook verification (GET) ────────────────────────────────────────────
@@ -79,6 +79,19 @@ export async function POST(request: Request) {
         interactiveTitle: replyTitle,
         messageId: message.id,
       });
+    } else if (message.type === "location") {
+      await handleIncomingMessage({
+        from: message.from,
+        name: contactName,
+        type: "location",
+        location: {
+          latitude: message.location?.latitude!,
+          longitude: message.location?.longitude!,
+          name: message.location?.name,
+          address: message.location?.address,
+        },
+        messageId: message.id,
+      });
     }
 
     // Meta Webhooks require a 200 OK within ~15s
@@ -102,12 +115,18 @@ interface WebhookPayload {
           from: string;
           type: string;
           text?: { body: string };
-          interactive?: {
-            type: string;
-            button_reply?: { id: string; title: string };
-            list_reply?: { id: string; title: string };
-          };
-        }>;
+            interactive?: {
+              type: string;
+              button_reply?: { id: string; title: string };
+              list_reply?: { id: string; title: string };
+            };
+            location?: {
+              latitude: number;
+              longitude: number;
+              name?: string;
+              address?: string;
+            };
+          }>;
         contacts?: Array<{
           profile?: { name?: string };
         }>;
