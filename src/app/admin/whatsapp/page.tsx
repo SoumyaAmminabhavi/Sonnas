@@ -512,7 +512,8 @@ const styles: Record<string, React.CSSProperties> = {
   // Layout
   container: {
     display: "flex",
-    minHeight: "100vh",
+    height: "calc(100vh - 80px)",
+    overflow: "hidden",
     fontFamily: "Inter, sans-serif",
     backgroundColor: "#FFF9F7",
   },
@@ -520,6 +521,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Sidebar
   sidebar: {
     width: 280,
+    height: "100%",
     backgroundColor: "#2B2B2B",
     color: "#FFF9F7",
     display: "flex",
@@ -646,6 +648,7 @@ const styles: Record<string, React.CSSProperties> = {
   // Main
   main: {
     flex: 1,
+    height: "100%",
     padding: "28px 32px",
     overflowY: "auto" as const,
     position: "relative" as const,

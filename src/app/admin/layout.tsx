@@ -57,7 +57,7 @@ export default function AdminRootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen bg-[#FFF9F7]">
+    <div className="flex flex-col h-screen overflow-hidden bg-[#FFF9F7]">
       {/* Top Navbar */}
       <header className="h-20 bg-[#2B2B2B] text-[#FFF9F7] flex items-center justify-between px-8 shadow-xl z-50">
         <div className="flex items-center gap-12">
