@@ -960,7 +960,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     position: "absolute" as const,
     left: 0,
-    top: 100,
+    bottom: 40,
     zIndex: 40,
     boxShadow: "4px 0 12px rgba(0,0,0,0.1)",
     transition: "all 0.2s ease",
