@@ -92,6 +92,18 @@ export async function POST(request: Request) {
         },
         messageId: message.id,
       });
+    } else if (message.type === "image" && message.image) {
+      await handleIncomingMessage({
+        from: message.from,
+        name: contactName,
+        type: "image",
+        image: {
+          id: message.image.id,
+          caption: message.image.caption,
+          mimeType: message.image.mime_type,
+        },
+        messageId: message.id,
+      });
     }
 
     // Meta Webhooks require a 200 OK within ~15s
@@ -125,6 +137,11 @@ interface WebhookPayload {
               longitude: number;
               name?: string;
               address?: string;
+            };
+            image?: {
+              id: string;
+              caption?: string;
+              mime_type: string;
             };
           }>;
         contacts?: Array<{

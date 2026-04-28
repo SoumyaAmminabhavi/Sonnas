@@ -103,7 +103,11 @@ model WhatsAppConversation {
     selectedSize   String?
     selectedPrice  String?
     selectedAddress String?
-    selectedNotes   String?
+    selectedNotes    String?
+    selectedQuantity Int?     @default(1)
+    
+    customImageUrl   String?
+    
     lastMessageAt  DateTime @default(now())
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt
@@ -121,10 +125,14 @@ model WhatsAppOrder {
     price          String
     quantity       Int      @default(1)
     address        String?
-    notes          String?
-    status         String   @default("PENDING")
+    notes        String?
+    status       String   @default("PENDING")
+    
+    isCustom     Boolean  @default(false)
+    customImageUrl String?
+    
     deliveryDate   String?
-    createdAt      DateTime @default(now())
+    createdAt    DateTime @default(now())
     updatedAt      DateTime @updatedAt
 
     conversation   WhatsAppConversation @relation(fields: [phone], references: [phone])

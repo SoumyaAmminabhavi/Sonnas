@@ -103,7 +103,8 @@ type ConversationState =
   | "SELECTING_SIZE"
   | "ASKING_ADDRESS"
   | "ASKING_INSTRUCTIONS"
-  | "CONFIRMING";
+  | "CONFIRMING"
+  | "REQUESTING_CUSTOM";
 
 interface Conversation {
   id: string;
@@ -116,12 +117,13 @@ interface Conversation {
   selectedAddress?: string | null;
   selectedNotes?: string | null;
   selectedQuantity?: number | null;
+  customImageUrl?: string | null;
 }
 
 interface IncomingMessage {
   from: string;
   name?: string;
-  type: "text" | "interactive" | "location";
+  type: "text" | "interactive" | "location" | "image";
   text?: string;
   interactiveId?: string;
   interactiveTitle?: string;
@@ -131,6 +133,11 @@ interface IncomingMessage {
     longitude: number;
     name?: string;
     address?: string;
+  };
+  image?: {
+    id: string;
+    caption?: string;
+    mimeType: string;
   };
 }
 
@@ -190,6 +197,7 @@ async function updateState(
     selectedAddress?: string | null;
     selectedNotes?: string | null;
     selectedQuantity?: number | null;
+    customImageUrl?: string | null;
   } = {}
 ) {
   try {
@@ -238,6 +246,19 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       selectedPrice: null,
     });
     await sendMenu(msg.from);
+    return;
+  }
+
+  if (interactiveId === "btn_custom") {
+    await updateState(msg.from, "REQUESTING_CUSTOM", {
+      selectedCake: "CUSTOM_CAKE",
+      selectedSize: "TBD",
+      selectedPrice: "TBD",
+    });
+    await sendTextMessage(
+      msg.from,
+      "🎨 *Custom Cake Request*\n\nPlease describe the cake you have in mind! (Flavor, Theme, Size, etc.)\n\n📸 You can also send a *Reference Photo* after describing it."
+    );
     return;
   }
 
@@ -335,6 +356,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       await handleInstructionsInput(msg, convo);
       break;
 
+    case "REQUESTING_CUSTOM":
+      await handleCustomRequest(msg, convo);
+      break;
+
     case "CONFIRMING":
       await handleConfirmation(msg, convo);
       break;
@@ -353,6 +378,7 @@ async function sendWelcome(to: string, name?: string) {
     `${greeting}\n\nWelcome to *Sonna's Patisserie & Cafe* 🎂\n\nEvery cake is handcrafted with love using the finest ingredients.\n\nWhat would you like to do?`,
     [
       { id: "btn_menu", title: "📋 View Menu" },
+      { id: "btn_custom", title: "🎨 Custom Cake" },
       { id: "btn_status", title: "📦 Order Status" },
     ]
   );
@@ -660,6 +686,43 @@ async function handleInstructionsInput(
   );
 }
 
+// ─── Handle custom cake request ───────────────────────────────────────────
+
+async function handleCustomRequest(
+  msg: IncomingMessage,
+  convo: Conversation
+) {
+  // If user sends an image
+  if (msg.type === "image" && msg.image) {
+    const mediaId = msg.image.id;
+    const caption = msg.image.caption ?? "";
+    
+    await updateState(msg.from, "ASKING_ADDRESS", {
+      customImageUrl: `whatsapp://media/${mediaId}`,
+      selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption
+    });
+    
+    await sendTextMessage(
+      msg.from,
+      "📸 Reference photo received! 📍\n\nWhere should we deliver this custom creation once it's ready?\n\n(Please provide your full address)"
+    );
+    return;
+  }
+
+  // If user sends text (description)
+  if (msg.type === "text" && msg.text) {
+    await updateState(msg.from, "REQUESTING_CUSTOM", {
+      selectedNotes: msg.text
+    });
+    
+    await sendTextMessage(
+      msg.from,
+      "✅ Got the description! 📝\n\nIf you have a **Reference Photo**, please send it now. 📸\n\nOtherwise, just reply with your **Delivery Address** to proceed."
+    );
+    return;
+  }
+}
+
 // ─── Handle confirmation ───────────────────────────────────────────────────
 
 async function handleConfirmation(
@@ -711,6 +774,8 @@ async function handleConfirmation(
       address: convo.selectedAddress,
       notes: convo.selectedNotes,
       status: "PENDING",
+      isCustom: convo.selectedCake === "CUSTOM_CAKE",
+      customImageUrl: convo.customImageUrl,
     },
   });
 
@@ -721,6 +786,7 @@ async function handleConfirmation(
     selectedPrice: null,
     selectedAddress: null,
     selectedNotes: null,
+    customImageUrl: null,
   });
 
   await sendTextMessage(
