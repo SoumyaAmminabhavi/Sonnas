@@ -27,7 +27,7 @@ export async function downloadAndUploadImage(mediaId: string): Promise<string | 
       return null;
     }
 
-    const { url } = await metaResponse.json();
+    const { url } = (await metaResponse.json()) as { url: string };
 
     // 2. Download the actual image bytes
     const imageResponse = await fetch(url, {

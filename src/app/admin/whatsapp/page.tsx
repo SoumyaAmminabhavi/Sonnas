@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { api } from "~/trpc/react";
 
 // ─── Status Config ──────────────────────────────────────────────────────────
@@ -62,6 +63,22 @@ type OrderStatus =
   | "READY"
   | "DELIVERED"
   | "CANCELLED";
+
+interface AdminOrder {
+  id: string;
+  orderNumber: string;
+  phone: string;
+  customerName?: string | null;
+  cakeName: string;
+  size: string;
+  price: string;
+  status: OrderStatus;
+  address?: string | null;
+  notes?: string | null;
+  isCustom?: boolean;
+  customImageUrl?: string | null;
+  createdAt: string | Date;
+}
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
@@ -252,64 +269,75 @@ export default function WhatsAppAdminPage() {
                       setSelectedOrderId(isSelected ? null : order.id)
                     }
                   >
-                    <div style={styles.orderCardTop}>
-                      <span style={styles.orderNumber}>
-                        #{order.orderNumber}
-                      </span>
-                      <span
-                        style={{
-                          ...styles.statusPill,
-                          color: cfg.color,
-                          backgroundColor: cfg.bg,
-                        }}
-                      >
-                        {cfg.emoji} {cfg.label}
-                      </span>
-                    </div>
+                    {/* Explicitly cast to our typed interface */}
+                    {(() => {
+                      const o = order as unknown as AdminOrder;
+                      return (
+                        <>
+                          <div style={styles.orderCardTop}>
+                            <span style={styles.orderNumber}>
+                              #{o.orderNumber}
+                            </span>
+                            <span
+                              style={{
+                                ...styles.statusPill,
+                                color: cfg.color,
+                                backgroundColor: cfg.bg,
+                              }}
+                            >
+                              {cfg.emoji} {cfg.label}
+                            </span>
+                          </div>
 
-                    <h3 style={styles.cakeName}>{order.cakeName}</h3>
+                          <h3 style={styles.cakeName}>{o.cakeName}</h3>
 
-                    <div style={styles.orderMeta}>
-                      <span>📏 {order.size}</span>
-                      <span>💰 {order.price}</span>
-                    </div>
-                    {order.address && (
-                      <div style={styles.orderNotes}>
-                        <span style={styles.notesIcon}>📍</span>
-                        <span style={styles.notesText}>{order.address}</span>
-                      </div>
-                    )}
+                          <div style={styles.orderMeta}>
+                            <span>📏 {o.size}</span>
+                            <span>💰 {o.price}</span>
+                          </div>
+                          {o.address && (
+                            <div style={styles.orderNotes}>
+                              <span style={styles.notesIcon}>📍</span>
+                              <span style={styles.notesText}>{o.address}</span>
+                            </div>
+                          )}
 
-                    {order.notes && (
-                      <div style={styles.orderNotes}>
-                        <span style={styles.notesIcon}>📝</span>
-                        <span style={styles.notesText}>{order.notes}</span>
-                      </div>
-                    )}
+                          {o.notes && (
+                            <div style={styles.orderNotes}>
+                              <span style={styles.notesIcon}>📝</span>
+                              <span style={styles.notesText}>{o.notes}</span>
+                            </div>
+                          )}
 
-                    {(order as any).customImageUrl && (
-                      <div style={styles.imagePreview}>
-                        <img 
-                          src={(order as any).customImageUrl} 
-                          alt="Custom Cake Reference"
-                          style={styles.previewImg}
-                        />
-                      </div>
-                    )}
+                          {o.customImageUrl && (
+                            <div style={styles.imagePreview}>
+                              <Image
+                                src={o.customImageUrl}
+                                alt="Custom Cake Reference"
+                                style={styles.previewImg}
+                                width={300}
+                                height={200}
+                                unoptimized
+                              />
+                            </div>
+                          )}
 
-                    <div style={styles.orderFooter}>
-                      <span style={styles.customerName}>
-                        {order.customerName ?? order.phone}
-                      </span>
-                      <span style={styles.orderDate}>
-                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
+                          <div style={styles.orderFooter}>
+                            <span style={styles.customerName}>
+                              {o.customerName ?? o.phone}
+                            </span>
+                            <span style={styles.orderDate}>
+                              {new Date(o.createdAt).toLocaleDateString("en-IN", {
+                                day: "numeric",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
 
                     {/* Expanded actions */}
                     {isSelected && (
