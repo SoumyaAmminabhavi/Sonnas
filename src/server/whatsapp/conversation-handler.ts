@@ -1,4 +1,5 @@
 /**
+ * WhatsApp Conversation State Machine (Custom Flow Enabled)
  * WhatsApp Conversation State Machine
  * Handles the full ordering flow: IDLE → BROWSING → SELECTING_SIZE → CONFIRMING → COMPLETE
  */
