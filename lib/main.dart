@@ -249,7 +249,7 @@ class LandingPage extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: cs.primary.withOpacity(0.2),
+                              color: cs.primary.withValues(alpha: 0.2),
                               blurRadius: 20,
                               offset: const Offset(0, 4),
                             ),
@@ -280,9 +280,9 @@ class LandingPage extends StatelessWidget {
                         height: 54,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(999),
-                          color: cs.surface.withOpacity(0.8),
+                          color: cs.surface.withValues(alpha: 0.8),
                           border: Border.all(
-                            color: cs.primary.withOpacity(0.2),
+                            color: cs.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: ClipRRect(
@@ -359,8 +359,8 @@ class _ContactGlassIcon extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: cs.surface.withOpacity(0.5),
-        border: Border.all(color: const Color(0xFFD8C1C6).withOpacity(0.3)),
+        color: cs.surface.withValues(alpha: 0.5),
+        border: Border.all(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
       ),
       child: ClipOval(
         child: BackdropFilter(
@@ -428,7 +428,7 @@ class ModernDrawer extends StatelessWidget {
 
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Divider(color: const Color(0xFFD8C1C6).withOpacity(0.3)),
+                child: Divider(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
               ),
 
               _DrawerItem(icon: Icons.info_outline, label: "Business Info"),
@@ -442,7 +442,7 @@ class ModernDrawer extends StatelessWidget {
                   color: cs.surfaceContainer,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFD8C1C6).withOpacity(0.2),
+                    color: const Color(0xFFD8C1C6).withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
@@ -490,7 +490,7 @@ class _DrawerItem extends StatelessWidget {
     return InkWell(
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(12),
-      hoverColor: cs.primary.withOpacity(0.05),
+      hoverColor: cs.primary.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
@@ -527,11 +527,11 @@ class GlassBottomNav extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: cs.surface.withOpacity(0.9),
+        color: cs.surface.withValues(alpha: 0.9),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: cs.secondary.withOpacity(0.06),
+            color: cs.secondary.withValues(alpha: 0.06),
             blurRadius: 40,
             offset: const Offset(0, -4),
           ),
@@ -618,7 +618,7 @@ class _BottomNavItem extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: isActive
-                  ? cs.primaryContainer.withOpacity(0.1)
+                  ? cs.primaryContainer.withValues(alpha: 0.1)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(999),
             ),

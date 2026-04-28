@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -23,7 +24,7 @@ class SupabaseService {
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      print('Error fetching orders: $e');
+      debugPrint('Error fetching orders: $e');
       return [];
     }
   }
@@ -34,7 +35,7 @@ class SupabaseService {
       final data = await client.from('menu_items').select();
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      print('Error fetching menu: $e');
+      debugPrint('Error fetching menu: $e');
       return [];
     }
   }

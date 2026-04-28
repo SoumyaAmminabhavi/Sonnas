@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/owner_sidebar.dart';
 
 class OrderDetailsPage extends StatelessWidget {
   final String orderId;
@@ -11,65 +12,99 @@ class OrderDetailsPage extends StatelessWidget {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: cs.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: cs.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.more_vert, color: cs.primary),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 100, 24, 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Poetic Header
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "ATELIER RECEIPT",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 3.0,
-                        color: cs.primary.withOpacity(0.5),
-                      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 768;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFFFF0F6),
+          appBar: isDesktop
+              ? AppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back, color: cs.primary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  title: Text(
+                    "Sonna's Patisserie & Cafe",
+                    style: GoogleFonts.notoSerif(
+                      color: const Color(0xFFD9B87A),
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.5,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Order $orderId",
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 42,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                        color: cs.onSurface,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    Text(
-                      "Scheduled for Pickup today at 2:30 PM",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: cs.secondary.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
+                  ),
+                )
+              : AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  leading: IconButton(
+                    icon: Icon(Icons.arrow_back, color: cs.primary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
-                const SizedBox(height: 32),
+          extendBodyBehindAppBar: !isDesktop,
+          body: Row(
+            children: [
+              if (isDesktop)
+                OwnerSidebar(
+                  currentIndex: 1, // Active under Orders
+                  onTap: (index) {
+                    Navigator.pop(context); // Go back to dashboard with selected index
+                  },
+                ),
+              Expanded(
+                child: Container(
+                  color: const Color(0xFFFFF0F6),
+                  child: Stack(
+                    children: [
+                      SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          isDesktop ? 40 : 100,
+                          24,
+                          120,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Poetic Header
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "ATELIER RECEIPT",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 3.0,
+                                    color: cs.primary.withValues(alpha: 0.5),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Order $orderId",
+                                  style: GoogleFonts.notoSerif(
+                                    fontSize: 42,
+                                    fontWeight: FontWeight.bold,
+                                    fontStyle: FontStyle.italic,
+                                    color: cs.onSurface,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                Text(
+                                  "Scheduled for Pickup today at 2:30 PM",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    color: cs.secondary.withValues(alpha: 0.6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 32),
 
                 // Slim Progress Bar
                 _SlimProgressIndicator(cs: cs),
@@ -79,15 +114,17 @@ class OrderDetailsPage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerLow.withOpacity(0.5),
+                    color: cs.surfaceContainerLow.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: cs.primary.withOpacity(0.05)),
+                    border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
                   ),
                   child: Row(
                     children: [
                       const CircleAvatar(
                         radius: 24,
-                        backgroundImage: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuCmN-AwCh057FLeCOX0kTTxAGI-o_RIO6GsuHfIUULg5LhdEmRO-KeG7U97a-80Fxhn5lLWd-Cny6iuaZH0OERFel2YXLKHJb3inAFMf5blT38kQ2iHbjytRyHjbKJsakX4prViV0HdTN1lGS-KGrQ32ysHwKonnR8eD_QQVCB8eNSbftaFEJ0Rl_uCyfo5pODYDusQcHJ3JsHK7rYDOPWTULpmh7IcL22IjAlLwLllGB458PQUroymGWQW7amlmq2nfUCbdXU7XD4M"),
+                        backgroundImage: NetworkImage(
+                          "https://lh3.googleusercontent.com/aida-public/AB6AXuCmN-AwCh057FLeCOX0kTTxAGI-o_RIO6GsuHfIUULg5LhdEmRO-KeG7U97a-80Fxhn5lLWd-Cny6iuaZH0OERFel2YXLKHJb3inAFMf5blT38kQ2iHbjytRyHjbKJsakX4prViV0HdTN1lGS-KGrQ32ysHwKonnR8eD_QQVCB8eNSbftaFEJ0Rl_uCyfo5pODYDusQcHJ3JsHK7rYDOPWTULpmh7IcL22IjAlLwLllGB458PQUroymGWQW7amlmq2nfUCbdXU7XD4M",
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -106,7 +143,7 @@ class OrderDetailsPage extends StatelessWidget {
                               "Premium Boutique Member",
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 11,
-                                color: cs.primary.withOpacity(0.7),
+                                color: cs.primary.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -147,7 +184,7 @@ class OrderDetailsPage extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 2.0,
-                    color: cs.secondary.withOpacity(0.4),
+                    color: cs.secondary.withValues(alpha: 0.4),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -157,7 +194,8 @@ class OrderDetailsPage extends StatelessWidget {
                   title: "Valrhona Chocolate Noir",
                   subtitle: "1kg Artisan Tier",
                   price: "₹3,500",
-                  imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuBcgLx1wB_YtTPx7L-WwIzghvzvQLj43G009Tgdx1uD4KLxn2vWlH6YUZ1Q-lGTQDvpN7xaz-2nVbwjmzbWH5ylkGSkDiW8LNpmC5ljF6E-YfV1jzZ722iWXWt54gfNS20E0rusxK9a6S6r-7-OF0xFjPztm4XQ1cgCxkjCtUyNihoSVuaq8U0Mod44tySWkS4pqXYdjaaQfrsGu29MLQQJ8kscebLKA_DsNJP8ivJhk-YGokXGBIpPivIso3tcIiM_1tlyEnfpI0Od",
+                  imageUrl:
+                      "https://lh3.googleusercontent.com/aida-public/AB6AXuBcgLx1wB_YtTPx7L-WwIzghvzvQLj43G009Tgdx1uD4KLxn2vWlH6YUZ1Q-lGTQDvpN7xaz-2nVbwjmzbWH5ylkGSkDiW8LNpmC5ljF6E-YfV1jzZ722iWXWt54gfNS20E0rusxK9a6S6r-7-OF0xFjPztm4XQ1cgCxkjCtUyNihoSVuaq8U0Mod44tySWkS4pqXYdjaaQfrsGu29MLQQJ8kscebLKA_DsNJP8ivJhk-YGokXGBIpPivIso3tcIiM_1tlyEnfpI0Od",
                   cs: cs,
                 ),
                 const SizedBox(height: 12),
@@ -165,7 +203,8 @@ class OrderDetailsPage extends StatelessWidget {
                   title: "Rose Petal Macarons",
                   subtitle: "Box of 12",
                   price: "₹2,400",
-                  imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuCM8kvDF0eQhzkrDce4yaFTqilGBWhOLlO7wx60ONJurXiVrOtd_OxtCoHsnovhs-8sOoq92Ge3JOQgpTx1oNV_v1IzLMg43-0LwUsR9OzGAfZccvybEMZ22DzEIM-srgN-y7WK9b4AR1SDByB7KIYM2HGlZM-MoZp92RfDAUA8G4G0UdbTulmCbP2ZjUea_9_CaMYy7htLKkWx57MRNRlbGuIw8KS6KwLl8N_IJE6tln_1kG0Yew4Fdjq7GVdOV1cKn4T_Ya6-u7-M",
+                  imageUrl:
+                      "https://lh3.googleusercontent.com/aida-public/AB6AXuCM8kvDF0eQhzkrDce4yaFTqilGBWhOLlO7wx60ONJurXiVrOtd_OxtCoHsnovhs-8sOoq92Ge3JOQgpTx1oNV_v1IzLMg43-0LwUsR9OzGAfZccvybEMZ22DzEIM-srgN-y7WK9b4AR1SDByB7KIYM2HGlZM-MoZp92RfDAUA8G4G0UdbTulmCbP2ZjUea_9_CaMYy7htLKkWx57MRNRlbGuIw8KS6KwLl8N_IJE6tln_1kG0Yew4Fdjq7GVdOV1cKn4T_Ya6-u7-M",
                   cs: cs,
                 ),
                 const SizedBox(height: 32),
@@ -176,11 +215,11 @@ class OrderDetailsPage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: cs.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: cs.primary.withOpacity(0.1)),
+                    border: Border.all(color: cs.primary.withValues(alpha: 0.1)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.edit_note, color: cs.primary.withOpacity(0.4)),
+                      Icon(Icons.edit_note, color: cs.primary.withValues(alpha: 0.4)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -188,7 +227,7 @@ class OrderDetailsPage extends StatelessWidget {
                           style: GoogleFonts.notoSerif(
                             fontSize: 13,
                             fontStyle: FontStyle.italic,
-                            color: cs.onSurface.withOpacity(0.8),
+                            color: cs.onSurface.withValues(alpha: 0.8),
                           ),
                         ),
                       ),
@@ -210,11 +249,7 @@ class OrderDetailsPage extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    cs.surface.withOpacity(0),
-                    cs.surface,
-                    cs.surface,
-                  ],
+                  colors: [cs.surface.withValues(alpha: 0.0), cs.surface, cs.surface],
                 ),
               ),
               child: Row(
@@ -240,8 +275,14 @@ class OrderDetailsPage extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -283,7 +324,7 @@ class _SlimProgressIndicator extends StatelessWidget {
           child: LinearProgressIndicator(
             value: 0.65,
             minHeight: 4,
-            backgroundColor: cs.primary.withOpacity(0.1),
+            backgroundColor: cs.primary.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
           ),
         ),
@@ -293,7 +334,7 @@ class _SlimProgressIndicator extends StatelessWidget {
           style: GoogleFonts.notoSerif(
             fontSize: 12,
             fontStyle: FontStyle.italic,
-            color: cs.secondary.withOpacity(0.5),
+            color: cs.secondary.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -322,7 +363,12 @@ class _SelectionTile extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.network(imageUrl, width: 64, height: 64, fit: BoxFit.cover),
+          child: Image.network(
+            imageUrl,
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -341,7 +387,7 @@ class _SelectionTile extends StatelessWidget {
                 subtitle,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
-                  color: cs.secondary.withOpacity(0.5),
+                  color: cs.secondary.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -380,18 +426,26 @@ class _ElegantAction extends StatelessWidget {
       decoration: BoxDecoration(
         color: isPrimary ? cs.primary : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: !isPrimary ? Border.all(color: cs.primary.withOpacity(0.1)) : null,
-        boxShadow: isPrimary ? [
-          BoxShadow(
-            color: cs.primary.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ] : null,
+        border: !isPrimary
+            ? Border.all(color: cs.primary.withValues(alpha: 0.1))
+            : null,
+        boxShadow: isPrimary
+            ? [
+                BoxShadow(
+                  color: cs.primary.withValues(alpha: 0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
       ),
       child: TextButton.icon(
         onPressed: () {},
-        icon: Icon(icon, size: 20, color: isPrimary ? Colors.white : cs.primary),
+        icon: Icon(
+          icon,
+          size: 20,
+          color: isPrimary ? Colors.white : cs.primary,
+        ),
         label: Text(
           label,
           style: GoogleFonts.plusJakartaSans(

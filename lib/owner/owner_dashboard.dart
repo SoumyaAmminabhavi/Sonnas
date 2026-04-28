@@ -12,8 +12,6 @@ const Color _primaryColor = Color(0xFFFF4D8D); // Vibrant pink
 const Color _primaryContainer = Color(0xFFFFB6D3); // Pastel pink accent
 const Color _secondaryColor = Color(0xFF701235); // Deep berry for text/contrast
 const Color _surfaceLow = Color(0xFFFFF5F9); // Lighter surface
-const Color _errorColor = Color(0xFFE91E63);
-const Color _errorContainer = Color(0xFFF8BBD0);
 
 // Images
 const _profileUrl =
@@ -46,7 +44,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         return Scaffold(
           backgroundColor: _bgColor,
           appBar: AppBar(
-            backgroundColor: _bgColor.withOpacity(0.9),
+            backgroundColor: _bgColor.withValues(alpha: 0.9),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
@@ -156,7 +154,7 @@ class _TopNavText extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             color: isSelected
                 ? _primaryColor
-                : _secondaryColor.withOpacity(0.6),
+                : _secondaryColor.withValues(alpha: 0.6),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 12,
             letterSpacing: 1.5,
@@ -181,7 +179,7 @@ class _Sidebar extends StatelessWidget {
         color: Colors.white, // Pure white sidebar for contrast
         boxShadow: [
           BoxShadow(
-            color: _primaryColor.withOpacity(0.08),
+            color: _primaryColor.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(10, 0),
           ),
@@ -312,9 +310,9 @@ class _MobileBottomNav extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: _bgColor.withOpacity(0.95),
+      backgroundColor: _bgColor.withValues(alpha: 0.95),
       selectedItemColor: _primaryColor,
-      unselectedItemColor: _secondaryColor.withOpacity(0.6),
+      unselectedItemColor: _secondaryColor.withValues(alpha: 0.6),
       selectedLabelStyle: GoogleFonts.plusJakartaSans(
         fontSize: 9,
         fontWeight: FontWeight.bold,
@@ -354,166 +352,166 @@ class _MainContent extends StatelessWidget {
           horizontal: isDesktop ? 48.0 : 24.0,
           vertical: 32.0,
         ),
-      children: [
-        // Welcome Header
-        Text(
-          "OWNER OVERVIEW",
-          style: GoogleFonts.plusJakartaSans(
-            color: _primaryColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-            letterSpacing: 2.0,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "Hello, Sonna.",
-          style: GoogleFonts.notoSerif(
-            color: _secondaryColor,
-            fontSize: isDesktop ? 48 : 36,
-            height: 1.1,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          width: 48,
-          height: 1,
-          color: _secondaryColor.withOpacity(0.3),
-        ),
-        const SizedBox(height: 48),
-        _buildPerformanceChart(context, isDesktop),
-        const SizedBox(height: 48),
-
-        // Recent Orders Header
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Recent Orders",
-                  style: GoogleFonts.notoSerif(
-                    color: _secondaryColor,
-                    fontSize: 24,
-                  ),
-                ),
-                Text(
-                  "Latest activity from the boutique",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.6),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+        children: [
+          // Welcome Header
+          Text(
+            "OWNER OVERVIEW",
+            style: GoogleFonts.plusJakartaSans(
+              color: _primaryColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              letterSpacing: 2.0,
             ),
-            InkWell(
-              onTap: onViewAllOrders,
-              child: Container(
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: _primaryContainer, width: 2),
-                  ),
-                ),
-                padding: const EdgeInsets.only(bottom: 2),
-                child: Text(
-                  "View All Archives",
-                  style: GoogleFonts.notoSerif(
-                    color: _primaryColor,
-                    fontStyle: FontStyle.italic,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Hello, Sonna.",
+            style: GoogleFonts.notoSerif(
+              color: _secondaryColor,
+              fontSize: isDesktop ? 48 : 36,
+              height: 1.1,
             ),
-          ],
-        ),
-        const SizedBox(height: 24),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: 48,
+            height: 1,
+            color: _secondaryColor.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 48),
+          _buildPerformanceChart(context, isDesktop),
+          const SizedBox(height: 48),
 
-        // Orders List
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
-            final isTwoCols = crossAxisCount == 2;
-
-            final orders = [
-              _OrderCard(
-                id: "#ORD-8821",
-                status: "IN PREPARATION",
-                statusColor: _primaryColor,
-                statusBg: _surfaceLow,
-                title: "Belgian Dark Chocolate Cake",
-                customer: "Customer: Mrs. Deshpande",
-                imageUrl: _imgOrder1,
-              ),
-              _OrderCard(
-                id: "#ORD-8822",
-                status: "PENDING PICKUP",
-                statusColor: _secondaryColor,
-                statusBg: const Color(0xFFFDBF97).withOpacity(0.2),
-                title: "Wild Strawberry Cake",
-                customer: "Customer: Mr. Kulkarni",
-                imageUrl: _imgOrder2,
-              ),
-              _OrderCard(
-                id: "#ORD-8823",
-                status: "IN PREPARATION",
-                statusColor: _primaryColor,
-                statusBg: _surfaceLow,
-                title: "Signature Macaron Box (24)",
-                customer: "Customer: Ms. Patil",
-                imageUrl: _imgOrder3,
-              ),
-              _OrderCard(
-                id: "#ORD-8824",
-                status: "CONFIRMED",
-                statusColor: _primaryColor,
-                statusBg: _primaryColor.withOpacity(0.1),
-                title: "Madagascar Vanilla Bean Mousse",
-                customer: "Customer: Marc Antoine",
-                imageUrl: _imgOrder4,
-              ),
-            ];
-
-            if (isTwoCols) {
-              return Column(
+          // Recent Orders Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(child: orders[0]),
-                      const SizedBox(width: 24),
-                      Expanded(child: orders[1]),
-                    ],
+                  Text(
+                    "Recent Orders",
+                    style: GoogleFonts.notoSerif(
+                      color: _secondaryColor,
+                      fontSize: 24,
+                    ),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(child: orders[2]),
-                      const SizedBox(width: 24),
-                      Expanded(child: orders[3]),
-                    ],
+                  Text(
+                    "Latest activity from the boutique",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: _secondaryColor.withValues(alpha: 0.6),
+                      fontSize: 14,
+                    ),
                   ),
                 ],
-              );
-            } else {
-              return Column(
-                children: orders
-                    .map(
-                      (o) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: o,
-                      ),
-                    )
-                    .toList(),
-              );
-            }
-          },
-        ),
-      ],
-    ),
-  );
-}
+              ),
+              InkWell(
+                onTap: onViewAllOrders,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: _primaryContainer, width: 2),
+                    ),
+                  ),
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    "View All Archives",
+                    style: GoogleFonts.notoSerif(
+                      color: _primaryColor,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Orders List
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
+              final isTwoCols = crossAxisCount == 2;
+
+              final orders = [
+                _OrderCard(
+                  id: "#ORD-8821",
+                  status: "IN PREPARATION",
+                  statusColor: _primaryColor,
+                  statusBg: _surfaceLow,
+                  title: "Belgian Dark Chocolate Cake",
+                  customer: "Customer: Mrs. Deshpande",
+                  imageUrl: _imgOrder1,
+                ),
+                _OrderCard(
+                  id: "#ORD-8822",
+                  status: "PENDING PICKUP",
+                  statusColor: _secondaryColor,
+                  statusBg: const Color(0xFFFDBF97).withValues(alpha: 0.2),
+                  title: "Wild Strawberry Cake",
+                  customer: "Customer: Mr. Kulkarni",
+                  imageUrl: _imgOrder2,
+                ),
+                _OrderCard(
+                  id: "#ORD-8823",
+                  status: "IN PREPARATION",
+                  statusColor: _primaryColor,
+                  statusBg: _surfaceLow,
+                  title: "Signature Macaron Box (24)",
+                  customer: "Customer: Ms. Patil",
+                  imageUrl: _imgOrder3,
+                ),
+                _OrderCard(
+                  id: "#ORD-8824",
+                  status: "CONFIRMED",
+                  statusColor: _primaryColor,
+                  statusBg: _primaryColor.withValues(alpha: 0.1),
+                  title: "Madagascar Vanilla Bean Mousse",
+                  customer: "Customer: Marc Antoine",
+                  imageUrl: _imgOrder4,
+                ),
+              ];
+
+              if (isTwoCols) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: orders[0]),
+                        const SizedBox(width: 24),
+                        Expanded(child: orders[1]),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(child: orders[2]),
+                        const SizedBox(width: 24),
+                        Expanded(child: orders[3]),
+                      ],
+                    ),
+                  ],
+                );
+              } else {
+                return Column(
+                  children: orders
+                      .map(
+                        (o) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: o,
+                        ),
+                      )
+                      .toList(),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildPerformanceChart(BuildContext context, bool isDesktop) {
     return Container(
@@ -524,7 +522,7 @@ class _MainContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withOpacity(0.04),
+            color: _secondaryColor.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -550,7 +548,7 @@ class _MainContent extends StatelessWidget {
                   Text(
                     "Revenue trend for the past week",
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withOpacity(0.5),
+                      color: _secondaryColor.withValues(alpha: 0.5),
                       fontSize: 12,
                     ),
                   ),
@@ -562,7 +560,7 @@ class _MainContent extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.05),
+                  color: _primaryColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -588,7 +586,7 @@ class _MainContent extends StatelessWidget {
                   horizontalInterval: 5,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: _secondaryColor.withOpacity(0.05),
+                      color: _secondaryColor.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     );
                   },
@@ -625,7 +623,7 @@ class _MainContent extends StatelessWidget {
                             child: Text(
                               days[value.toInt()],
                               style: GoogleFonts.plusJakartaSans(
-                                color: _secondaryColor.withOpacity(0.4),
+                                color: _secondaryColor.withValues(alpha: 0.4),
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -673,8 +671,8 @@ class _MainContent extends StatelessWidget {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          _primaryColor.withOpacity(0.2),
-                          _primaryColor.withOpacity(0.0),
+                          _primaryColor.withValues(alpha: 0.2),
+                          _primaryColor.withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -741,7 +739,7 @@ class _OrderCard extends StatelessWidget {
                       child: Text(
                         id,
                         style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withOpacity(0.4),
+                          color: _secondaryColor.withValues(alpha: 0.4),
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2.0,
@@ -786,7 +784,7 @@ class _OrderCard extends StatelessWidget {
                 Text(
                   customer,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.7),
+                    color: _secondaryColor.withValues(alpha: 0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -794,7 +792,7 @@ class _OrderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Icon(Icons.chevron_right, color: _secondaryColor.withOpacity(0.3)),
+          Icon(Icons.chevron_right, color: _secondaryColor.withValues(alpha: 0.3)),
         ],
       ),
     );

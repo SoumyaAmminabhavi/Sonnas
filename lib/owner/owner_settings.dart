@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'add_staff_page.dart';
 
 // Brand Colors - Sweet Pink Bakery Theme
-const Color _bgColor = Color(0xFFFFF0F6);
 const Color _primaryColor = Color(0xFFFF4D8D);
 const Color _secondaryColor = Color(0xFF701235);
 
@@ -76,7 +75,7 @@ class _SettingsContentState extends State<_SettingsContent> {
         const SizedBox(height: 24),
         Container(
           height: 1,
-          color: _secondaryColor.withOpacity(0.3),
+          color: _secondaryColor.withValues(alpha: 0.3),
         ),
         const SizedBox(height: 48),
 
@@ -215,7 +214,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 style: GoogleFonts.plusJakartaSans(color: _primaryColor),
               ),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: _primaryColor.withOpacity(0.5)),
+                side: BorderSide(color: _primaryColor.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -256,7 +255,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   label,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.6),
+                    color: _secondaryColor.withValues(alpha: 0.6),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -285,7 +284,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 child: Text(
                   label,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.6),
+                    color: _secondaryColor.withValues(alpha: 0.6),
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -330,7 +329,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   subtitle,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.6),
+                    color: _secondaryColor.withValues(alpha: 0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -353,7 +352,7 @@ class _SettingsContentState extends State<_SettingsContent> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: _primaryColor.withOpacity(0.1),
+            backgroundColor: _primaryColor.withValues(alpha: 0.1),
             child: Text(
               name[0],
               style: GoogleFonts.plusJakartaSans(
@@ -377,7 +376,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   role,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.6),
+                    color: _secondaryColor.withValues(alpha: 0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -387,7 +386,7 @@ class _SettingsContentState extends State<_SettingsContent> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: active ? Colors.green.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+              color: active ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -415,7 +414,7 @@ class _SettingsContentState extends State<_SettingsContent> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _secondaryColor.withOpacity(0.05),
+                color: _secondaryColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: _primaryColor, size: 24),
@@ -435,14 +434,14 @@ class _SettingsContentState extends State<_SettingsContent> {
                   Text(
                     subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withOpacity(0.6),
+                      color: _secondaryColor.withValues(alpha: 0.6),
                       fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: _secondaryColor.withOpacity(0.5)),
+            Icon(Icons.chevron_right, color: _secondaryColor.withValues(alpha: 0.5)),
           ],
         ),
       ),
@@ -467,10 +466,10 @@ class _SettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _secondaryColor.withOpacity(0.05)),
+        border: Border.all(color: _secondaryColor.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withOpacity(0.03),
+            color: _secondaryColor.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -496,7 +495,7 @@ class _SettingsCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(height: 1, color: _secondaryColor.withOpacity(0.05)),
+          Container(height: 1, color: _secondaryColor.withValues(alpha: 0.05)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
             child: child,

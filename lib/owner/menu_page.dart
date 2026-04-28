@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 // Brand Colors - Sweet Pink Bakery Theme
-const Color _bgColor = Color(0xFFFFF0F6);
 const Color _primaryColor = Color(0xFFFF4D8D);
 const Color _secondaryColor = Color(0xFF701235);
 
@@ -71,7 +70,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         const SizedBox(height: 24),
         Container(
           height: 1,
-          color: _secondaryColor.withOpacity(0.3),
+          color: _secondaryColor.withValues(alpha: 0.3),
         ),
         const SizedBox(height: 48),
 
@@ -278,7 +277,7 @@ class _InputField extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor.withOpacity(0.8),
+            color: _secondaryColor.withValues(alpha: 0.8),
             fontWeight: FontWeight.bold,
             fontSize: 12,
             letterSpacing: 1.0,
@@ -293,18 +292,18 @@ class _InputField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.plusJakartaSans(
-               color: _secondaryColor.withOpacity(0.3),
+               color: _secondaryColor.withValues(alpha: 0.3),
             ),
-            prefixIcon: maxLines == 1 ? Icon(icon, color: _primaryColor.withOpacity(0.6)) : null,
+            prefixIcon: maxLines == 1 ? Icon(icon, color: _primaryColor.withValues(alpha: 0.6)) : null,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _secondaryColor.withOpacity(0.1)),
+              borderSide: BorderSide(color: _secondaryColor.withValues(alpha: 0.1)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _secondaryColor.withOpacity(0.1)),
+              borderSide: BorderSide(color: _secondaryColor.withValues(alpha: 0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
