@@ -253,8 +253,8 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   if (interactiveId === "btn_custom") {
     await updateState(msg.from, "REQUESTING_CUSTOM", {
       selectedCake: "CUSTOM_CAKE",
-      selectedSize: "TBD",
-      selectedPrice: "TBD",
+      selectedSize: "Custom Design",
+      selectedPrice: "Pending Quote",
     });
     await sendTextMessage(
       msg.from,

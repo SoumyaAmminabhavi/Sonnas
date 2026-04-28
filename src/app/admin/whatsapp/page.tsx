@@ -292,8 +292,8 @@ export default function WhatsAppAdminPage() {
                           <h3 style={styles.cakeName}>{o.cakeName}</h3>
 
                           <div style={styles.orderMeta}>
-                            <span>📏 {o.size}</span>
-                            <span>💰 {o.price}</span>
+                            <span>📏 {o.size === "TBD" ? "Size Pending" : o.size}</span>
+                            <span>💰 {o.price === "TBD" ? "Quote Required" : o.price}</span>
                           </div>
                           {o.address && (
                             <div style={styles.orderNotes}>
@@ -898,13 +898,15 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     overflow: "hidden",
     border: "1px solid #E8DED4",
-    maxHeight: 200,
+    maxHeight: 500,
     backgroundColor: "#F7F3EF",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
   },
   previewImg: {
     width: "100%",
     height: "auto",
     display: "block",
-    objectFit: "contain" as const,
+    objectFit: "cover" as const,
+    maxHeight: 500,
   },
 };
