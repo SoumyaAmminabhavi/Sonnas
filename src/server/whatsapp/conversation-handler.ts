@@ -446,7 +446,7 @@ function filterCakes(type: "chocolate" | "vanilla" | "tea" | "seasonal") {
   }
 }
 
-const cakeRow = (c: (typeof products)[0]) => ({
+const cakeRow = (c: Cake) => ({
   id: `cake_${c.id}`,
   title: c.name.slice(0, 24),
   description: `From ${c.options?.[0]?.price ?? "₹750"}`,
