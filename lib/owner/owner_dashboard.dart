@@ -4,6 +4,7 @@ import 'menu_page.dart';
 import 'owner_settings.dart';
 import 'orders_page.dart';
 import 'payments_page.dart';
+import '../widgets/owner_sidebar.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 // Brand Colors - Sweet Pink Bakery Theme
@@ -109,7 +110,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           body: Row(
             children: [
               if (isDesktop)
-                _Sidebar(
+                OwnerSidebar(
                   currentIndex: _selectedIndex,
                   onTap: (index) {
                     setState(() => _selectedIndex = index);

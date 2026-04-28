@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/owner_sidebar.dart';
 
 // Brand Colors - Sweet Pink Bakery Theme
 const Color _bgColor = Color(0xFFFFF0F6);
@@ -29,63 +30,122 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _bgColor,
-      appBar: AppBar(
-        backgroundColor: _bgColor.withValues(alpha: 0.8),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _primaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Add New Staff",
-              style: GoogleFonts.notoSerif(
-                color: _primaryColor,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= 768;
+
+        return Scaffold(
+          backgroundColor: _bgColor,
+          appBar: isDesktop
+              ? AppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  scrolledUnderElevation: 0,
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: _primaryColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  title: Text(
+                    "Sonna's Patisserie & Cafe",
+                    style: GoogleFonts.notoSerif(
+                      color: const Color(0xFFD9B87A),
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                )
+              : AppBar(
+                  backgroundColor: _bgColor.withValues(alpha: 0.8),
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: _primaryColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Add New Staff",
+                        style: GoogleFonts.notoSerif(
+                          color: _primaryColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
+                        style: GoogleFonts.plusJakartaSans(
+                          color: _secondaryColor.withValues(alpha: 0.6),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          body: Row(
+            children: [
+              if (isDesktop)
+                OwnerSidebar(
+                  currentIndex: 4, // Active under Settings
+                  onTap: (index) {
+                    Navigator.pop(context);
+                  },
+                ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 600),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (isDesktop) ...[
+                             Text(
+                              "Add New Staff",
+                              style: GoogleFonts.notoSerif(
+                                color: _primaryColor,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
+                              style: GoogleFonts.plusJakartaSans(
+                                color: _secondaryColor.withValues(alpha: 0.6),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                          ],
+                          _buildBasicInfoSection(),
+                          const SizedBox(height: 40),
+                          _buildRoleSelectionSection(),
+                          const SizedBox(height: 40),
+                          _buildPermissionsSection(),
+                          const SizedBox(height: 40),
+                          _buildWorkDetailsSection(),
+                          const SizedBox(height: 40),
+                          _buildAccountSetupSection(),
+                          const SizedBox(height: 40),
+                          _buildActions(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            Text(
-              "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
-              style: GoogleFonts.plusJakartaSans(
-                color: _secondaryColor.withValues(alpha: 0.6),
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.0,
-              ),
-            ),
-          ],
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBasicInfoSection(),
-                const SizedBox(height: 40),
-                _buildRoleSelectionSection(),
-                const SizedBox(height: 40),
-                _buildPermissionsSection(),
-                const SizedBox(height: 40),
-                _buildWorkDetailsSection(),
-                const SizedBox(height: 40),
-                _buildAccountSetupSection(),
-                const SizedBox(height: 40),
-                _buildActions(),
-                const SizedBox(height: 40),
-              ],
-            ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
