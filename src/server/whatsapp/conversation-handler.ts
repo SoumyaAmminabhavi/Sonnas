@@ -445,14 +445,17 @@ async function handleCategorySelection(msg: IncomingMessage) {
     seasonal: "🍓 Seasonal Specials",
   };
 
+  const title = titles[category] ?? "Cakes";
+  const catName = categoryMap[category] ?? "Cakes";
+
   const allCakes = await safeGetCakes();
-  const filtered = allCakes.filter((p: any) => p.category === categoryMap[category] || p.category === category);
+  const filtered = allCakes.filter((p: any) => p.category === catName || p.category === category);
 
   await updateState(msg.from, "BROWSING_MENU");
   await sendInteractiveList(
     msg.from,
-    titles[category],
-    `Here are our signature ${titles[category].toLowerCase()} cakes:`,
+    title,
+    `Here are our signature ${title.toLowerCase()} cakes:`,
     "Select a Cake",
     [
       {
@@ -532,7 +535,7 @@ async function handleSizeSelection(
     return;
   }
 
-  const cake = await safeGetCakeByName(convo.selectedCake);
+  const cake = await safeGetCakeByName(convo.selectedCake || "");
   if (!cake) {
     await updateState(msg.from, "IDLE");
     await sendWelcome(msg.from);
@@ -624,7 +627,7 @@ async function handleInstructionsInput(
     where: { phone: msg.from },
   });
 
-  const cake = await safeGetCakeByName(updatedConvo?.selectedCake ?? "");
+  const cake = await safeGetCakeByName(updatedConvo?.selectedCake || "");
 
   await sendInteractiveButtons(
     msg.from,
