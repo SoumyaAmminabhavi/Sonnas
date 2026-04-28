@@ -30,12 +30,15 @@ class OrderDetailsPage extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              "Sonna's Patisserie & Cafe",
+              isDesktop ? "Sonna's Patisserie & Cafe" : "Order Details",
               style: GoogleFonts.notoSerif(
-                color: const Color.fromARGB(255, 146, 6, 53),
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
+                color: isDesktop
+                    ? const Color.fromARGB(255, 146, 6, 53)
+                    : cs.primary,
+                fontStyle: isDesktop ? FontStyle.italic : FontStyle.normal,
+                fontWeight: isDesktop ? FontWeight.w600 : FontWeight.bold,
+                fontSize: isDesktop ? 20 : 18,
+                letterSpacing: isDesktop ? -0.5 : 0,
               ),
             ),
           ),
@@ -52,7 +55,7 @@ class OrderDetailsPage extends StatelessWidget {
                 child: Stack(
                   children: [
                     SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 40, 24, 120),
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
                       child: Center(
                         child: Container(
                           constraints: const BoxConstraints(maxWidth: 850),
@@ -88,7 +91,9 @@ class OrderDetailsPage extends StatelessWidget {
                                     "Scheduled for Pickup today at 2:30 PM",
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 13,
-                                      color: cs.secondary.withValues(alpha: 0.6),
+                                      color: cs.secondary.withValues(
+                                        alpha: 0.6,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -103,12 +108,13 @@ class OrderDetailsPage extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: cs.surfaceContainerLow
-                                      .withValues(alpha: 0.5),
+                                  color: cs.surfaceContainerLow.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                      color:
-                                          cs.primary.withValues(alpha: 0.05)),
+                                    color: cs.primary.withValues(alpha: 0.05),
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -136,8 +142,9 @@ class OrderDetailsPage extends StatelessWidget {
                                             "Premium Boutique Member",
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 11,
-                                              color: cs.primary
-                                                  .withValues(alpha: 0.7),
+                                              color: cs.primary.withValues(
+                                                alpha: 0.7,
+                                              ),
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -211,14 +218,15 @@ class OrderDetailsPage extends StatelessWidget {
                                   color: cs.surface,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                      color:
-                                          cs.primary.withValues(alpha: 0.1)),
+                                    color: cs.primary.withValues(alpha: 0.1),
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(Icons.edit_note,
-                                        color:
-                                            cs.primary.withValues(alpha: 0.4)),
+                                    Icon(
+                                      Icons.edit_note,
+                                      color: cs.primary.withValues(alpha: 0.4),
+                                    ),
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
@@ -226,8 +234,9 @@ class OrderDetailsPage extends StatelessWidget {
                                         style: GoogleFonts.notoSerif(
                                           fontSize: 13,
                                           fontStyle: FontStyle.italic,
-                                          color: cs.onSurface
-                                              .withValues(alpha: 0.8),
+                                          color: cs.onSurface.withValues(
+                                            alpha: 0.8,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -254,30 +263,35 @@ class OrderDetailsPage extends StatelessWidget {
                             colors: [
                               cs.surface.withValues(alpha: 0.0),
                               cs.surface,
-                              cs.surface
+                              cs.surface,
                             ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _ElegantAction(
-                                icon: Icons.download_outlined,
-                                label: "INVOICE",
-                                cs: cs,
-                                isPrimary: false,
-                              ),
+                        child: Center(
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 450),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _ElegantAction(
+                                    icon: Icons.download_outlined,
+                                    label: "INVOICE",
+                                    cs: cs,
+                                    isPrimary: false,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _ElegantAction(
+                                    icon: Icons.chat_bubble_outline,
+                                    label: "CONTACT",
+                                    cs: cs,
+                                    isPrimary: true,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _ElegantAction(
-                                icon: Icons.chat_bubble_outline,
-                                label: "CONTACT",
-                                cs: cs,
-                                isPrimary: true,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),

@@ -28,141 +28,153 @@ class _PaymentsPageState extends State<PaymentsPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDesktop = MediaQuery.of(context).size.width >= 768;
+    final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return Scaffold(
       backgroundColor: cs.surface,
-      body: ListView(
+      body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(
-          horizontal: isDesktop ? 48.0 : 24.0,
-          vertical: 32.0,
+          horizontal: isDesktop ? 40.0 : 20.0,
+          vertical: 16.0,
         ),
-        children: [
-          _buildHeroSection(context, isDesktop),
-          const SizedBox(height: 48),
-          _buildTabs(context),
-          const SizedBox(height: 32),
-          AnimatedBuilder(
-            animation: _tabController,
-            builder: (context, child) {
-              if (_tabController.index == 0) {
-                return _buildPendingGrid(context, isDesktop);
-              } else {
-                return _buildCompletedGrid(context, isDesktop);
-              }
-            },
-          ),
-          const SizedBox(height: 64),
-          _buildHistorySection(context),
-        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildCompactHero(context, isDesktop),
+            const SizedBox(height: 16),
+            if (isDesktop)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTabs(context),
+                        const SizedBox(height: 24),
+                        _buildPaymentList(context),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 48),
+                  Expanded(
+                    flex: 2,
+                    child: _buildHistorySection(context, isCompact: true),
+                  ),
+                ],
+              )
+            else
+              Column(
+                children: [
+                  _buildTabs(context),
+                  const SizedBox(height: 24),
+                  _buildPaymentList(context),
+                  const SizedBox(height: 48),
+                  _buildHistorySection(context, isCompact: false),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHeroSection(BuildContext context, bool isDesktop) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+  Widget _buildCompactHero(BuildContext context, bool isDesktop) {
+    final cs = Theme.of(context).colorScheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          flex: 7,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "ATELIER REVENUE",
-                style: GoogleFonts.plusJakartaSans(
-                  color: cs.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 2.0,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: cs.secondary.withValues(alpha: 0.03),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "FINANCIAL OVERVIEW",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                    letterSpacing: 2.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              RichText(
-                text: TextSpan(
+                const SizedBox(height: 4),
+                Text(
+                  "Atelier Revenue",
                   style: GoogleFonts.notoSerif(
                     color: cs.onSurface,
-                    fontSize: isDesktop ? 64 : 40,
-                    fontWeight: FontWeight.w600,
-                    height: 1.1,
+                    fontSize: isDesktop ? 32 : 28,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 40,
+                  runSpacing: 16,
                   children: [
-                    const TextSpan(text: "Financial\n"),
-                    TextSpan(
-                      text: "Overview",
-                      style: GoogleFonts.notoSerif(
-                        fontStyle: FontStyle.italic,
-                        color: cs.primary,
-                      ),
-                    ),
+                    _buildCompactStat(context, "WEEKLY GROSS", "₹12,480", cs.onSurface),
+                    _buildCompactStat(context, "PENDING", "₹286", cs.primary),
                   ],
                 ),
-              ),
-              const SizedBox(height: 40),
-              Row(
-                children: [
-                  _buildStat(context, "WEEKLY GROSS", "₹12,480", cs.onSurface),
-                  const SizedBox(width: 48),
-                  _buildStat(context, "PENDING", "₹286", cs.primary),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        if (isDesktop)
-          Expanded(
-            flex: 5,
-            child: Stack(
-              clipBehavior: Clip.none,
+          if (isDesktop)
+            Container(
+              height: 100,
+              width: 1,
+              color: Colors.black.withValues(alpha: 0.05),
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+            ),
+          if (isDesktop)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Positioned(
-                  bottom: -32,
-                  left: -32,
-                  child: Container(
-                    width: 160,
-                    height: 160,
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
-                    ),
+                Text(
+                  "Month of October",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.secondary.withValues(alpha: 0.4),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                Transform.rotate(
-                  angle: 0.035, // 2 degrees in radians
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: cs.secondary.withValues(alpha: 0.1),
-                          blurRadius: 40,
-                          offset: const Offset(0, 20),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: AspectRatio(
-                        aspectRatio: 4 / 5,
-                        child: Image.network(
-                          "https://lh3.googleusercontent.com/aida-public/AB6AXuDLgTd3sT9MGvor_eOWALRzNAkMhYFIfuN4m2hav6d1I_IQ0rtw2Akg4gL_LwpijH6guIKyHN7OlZgQvfHjvk0mYuEtR6bF68iZyzBM-sbDt-ArO5pd6L0g0XYIy3GPDyIGo38l-OuQG9SuhAb--HSh3jkLR_uDTTc9NeChlAhlSVt-mFqikgv7WWf8etKb_3NRufxRzWfLAduneoPWi-SvPwZokI21ZYnqK8niPOo6UeQOkbq0EvGaGm5Ove7Lwsyk0cL-rkuNDPkv",
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: cs.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                  child: Text(
+                    "LIVE DATA",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildStat(
+  Widget _buildCompactStat(
     BuildContext context,
     String label,
     String value,
@@ -174,20 +186,18 @@ class _PaymentsPageState extends State<PaymentsPage>
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF825433).withValues(alpha: 0.6),
+            color: Colors.black26,
             fontWeight: FontWeight.bold,
-            fontSize: 10,
-            letterSpacing: 1.5,
+            fontSize: 9,
+            letterSpacing: 1.2,
           ),
         ),
-        const SizedBox(height: 8),
         Text(
           value,
           style: GoogleFonts.notoSerif(
             color: valueColor,
-            fontSize: 32,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
-            letterSpacing: -1.0,
           ),
         ),
       ],
@@ -196,231 +206,128 @@ class _PaymentsPageState extends State<PaymentsPage>
 
   Widget _buildTabs(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFFD8C1C6).withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
+    return TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      tabAlignment: TabAlignment.start,
+      indicatorColor: cs.primary,
+      indicatorWeight: 3,
+      dividerColor: Colors.transparent,
+      labelColor: cs.primary,
+      unselectedLabelColor: cs.secondary.withValues(alpha: 0.4),
+      labelStyle: GoogleFonts.plusJakartaSans(
+        fontWeight: FontWeight.bold,
+        fontSize: 12,
+        letterSpacing: 1.2,
       ),
-      child: TabBar(
-        controller: _tabController,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        indicatorColor: cs.primary,
-        indicatorWeight: 2,
-        dividerColor: Colors.transparent,
-        labelColor: cs.primary,
-        unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
-        labelStyle: GoogleFonts.plusJakartaSans(
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-          letterSpacing: 1.5,
-        ),
-        tabs: const [
-          Tab(text: "PENDING"),
-          Tab(text: "COMPLETED"),
-        ],
-      ),
+      tabs: const [
+        Tab(text: "PENDING PAYMENTS"),
+        Tab(text: "COMPLETED TODAY"),
+      ],
     );
   }
 
-  Widget _buildPendingGrid(BuildContext context, bool isDesktop) {
+  Widget _buildPaymentList(BuildContext context) {
     final pendingItems = [
-      {
-        "id": "#8825",
-        "name": "Madame Dupont",
-        "amount": "₹142",
-        "description": "Custom Macaron Tower (Large)",
-      },
-      {
-        "id": "#8826",
-        "name": "Julian Vane",
-        "amount": "₹54",
-        "description": "Petit Four Selection x 2",
-      },
-      {
-        "id": "#8827",
-        "name": "Sophie Laurent",
-        "amount": "₹90",
-        "description": "Signature Cake & Champagne",
-      },
+      {"id": "#8825", "name": "Madame Dupont", "amount": "₹142", "desc": "Macaron Tower"},
+      {"id": "#8826", "name": "Julian Vane", "amount": "₹54", "desc": "Petit Four x2"},
+      {"id": "#8827", "name": "Sophie Laurent", "amount": "₹90", "desc": "Signature Cake"},
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 1100
-            ? 3
-            : constraints.maxWidth > 700
-            ? 2
-            : 1;
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 24,
-            mainAxisExtent: 320,
-          ),
-          itemCount: pendingItems.length,
-          itemBuilder: (context, index) {
-            final item = pendingItems[index];
-            return _buildPaymentCard(context, item);
-          },
-        );
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: pendingItems.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final item = pendingItems[index];
+        return _buildCompactCard(context, item);
       },
     );
   }
 
-  Widget _buildPaymentCard(BuildContext context, Map<String, String> item) {
+  Widget _buildCompactCard(BuildContext context, Map<String, String> item) {
     final cs = Theme.of(context).colorScheme;
-
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "ORDER ${item['id']}",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.black26,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  item['name']!,
+                  style: GoogleFonts.notoSerif(
+                    color: cs.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  item['desc']!,
+                  style: GoogleFonts.notoSerif(
+                    color: cs.secondary.withValues(alpha: 0.5),
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "ORDER ${item['id']}",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary.withValues(alpha: 0.4),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    item['name']!,
-                    style: GoogleFonts.notoSerif(
-                      color: cs.onSurface,
-                      fontSize: 24,
-                    ),
-                  ),
-                ],
+              Text(
+                item['amount']!,
+                style: GoogleFonts.notoSerif(
+                  color: cs.onSurface,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Icon(
-                Icons.receipt_long,
-                color: cs.primaryContainer.withValues(alpha: 0.4),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  minimumSize: const Size(80, 32),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text(
+                  "MARK AS PAID",
+                  style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            item['amount']!,
-            style: GoogleFonts.notoSerif(
-              color: cs.onSurface,
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -1.0,
-            ),
-          ),
-          Text(
-            item['description']!,
-            style: GoogleFonts.notoSerif(
-              color: cs.secondary.withValues(alpha: 0.6),
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 32),
-          Container(
-            width: double.infinity,
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              gradient: LinearGradient(
-                colors: [cs.primary, cs.primaryContainer],
-              ),
-            ),
-            child: TextButton(
-              onPressed: () {},
-              child: Text(
-                "MARK AS PAID",
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.5,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildCompletedGrid(BuildContext context, bool isDesktop) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(64.0),
-        child: Column(
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "No Completed Payments for Today",
-              style: GoogleFonts.plusJakartaSans(
-                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHistorySection(BuildContext context) {
+  Widget _buildHistorySection(BuildContext context, {required bool isCompact}) {
     final cs = Theme.of(context).colorScheme;
-
     final historyItems = [
-      {
-        "recipient": "Laurant Boulangerie",
-        "ref": "INV-9902",
-        "date": "Oct 24, 2023",
-        "amount": "₹1,240",
-      },
-      {
-        "recipient": "Jean-Luc Coffee Roasters",
-        "ref": "INV-9901",
-        "date": "Oct 22, 2023",
-        "amount": "₹845",
-      },
-      {
-        "recipient": "Atelier Uniforms",
-        "ref": "INV-9888",
-        "date": "Oct 19, 2023",
-        "amount": "₹430",
-      },
+      {"name": "Laurant Boulangerie", "date": "Oct 24", "amount": "₹1,240"},
+      {"name": "Jean-Luc Coffee", "date": "Oct 22", "amount": "₹845"},
+      {"name": "Atelier Uniforms", "date": "Oct 19", "amount": "₹430"},
     ];
 
     return Column(
@@ -428,166 +335,73 @@ class _PaymentsPageState extends State<PaymentsPage>
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Payment History",
-                  style: GoogleFonts.notoSerif(
-                    color: cs.onSurface,
-                    fontSize: 28,
-                  ),
-                ),
-                Text(
-                  "Archived transactions for the month of October",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: cs.secondary.withValues(alpha: 0.6),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: cs.primaryContainer.withValues(alpha: 0.3),
-                    width: 2,
-                  ),
-                ),
+            Text(
+              "Recent History",
+              style: GoogleFonts.notoSerif(
+                color: cs.onSurface,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Text(
-                "View Full Ledger",
-                style: GoogleFonts.notoSerif(
-                  color: cs.primary,
-                  fontStyle: FontStyle.italic,
-                  fontSize: 14,
-                ),
+            ),
+            Text(
+              "View All",
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.primary,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
         Container(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(16),
+            color: cs.primary.withValues(alpha: 0.02),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
           ),
           child: Column(
-            children: [
-              _buildTableHeader(context),
-              ...historyItems.map((item) => _buildTableRow(context, item)),
-            ],
+            children: historyItems.map((item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['name']!,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          item['date']!,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            color: Colors.black38,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    item['amount']!,
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            )).toList(),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildTableHeader(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFFD8C1C6).withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 3, child: _headerText("RECIPIENT", cs)),
-          Expanded(flex: 2, child: _headerText("REFERENCE", cs)),
-          Expanded(flex: 2, child: _headerText("DATE", cs)),
-          Expanded(
-            flex: 2,
-            child: _headerText("AMOUNT", cs, textAlign: TextAlign.right),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerText(
-    String text,
-    ColorScheme cs, {
-    TextAlign textAlign = TextAlign.left,
-  }) {
-    return Text(
-      text,
-      textAlign: textAlign,
-      style: GoogleFonts.plusJakartaSans(
-        color: cs.secondary.withValues(alpha: 0.5),
-        fontSize: 10,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.5,
-      ),
-    );
-  }
-
-  Widget _buildTableRow(BuildContext context, Map<String, String> item) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFFD8C1C6).withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              item['recipient']!,
-              style: GoogleFonts.notoSerif(
-                color: cs.onSurface,
-                fontSize: 18,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item['ref']!,
-              style: GoogleFonts.plusJakartaSans(
-                color: cs.secondary.withValues(alpha: 0.7),
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item['date']!,
-              style: GoogleFonts.plusJakartaSans(
-                color: cs.secondary.withValues(alpha: 0.7),
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              item['amount']!,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.notoSerif(
-                color: cs.onSurface,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

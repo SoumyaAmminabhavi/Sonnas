@@ -776,6 +776,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                           );
                         },
                       );
+                      if (!mounted) return;
                       if (time != null && controller != null) {
                         controller.text = time.format(context);
                       }

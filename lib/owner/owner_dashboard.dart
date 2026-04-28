@@ -96,17 +96,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     setState(() => _selectedIndex = index);
                   },
                 ),
-          floatingActionButton: _selectedIndex == 3
-              ? FloatingActionButton(
-                  backgroundColor: _primaryColor,
-                  onPressed: () {
-                    // Save menu item
-                  },
-                  elevation: 8,
-                  shape: const CircleBorder(),
-                  child: const Icon(Icons.check, color: Colors.white, size: 32),
-                )
-              : null,
+          floatingActionButton: null,
           body: Row(
             children: [
               if (isDesktop)
@@ -125,7 +115,10 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     : _selectedIndex == 2
                     ? const PaymentsPage()
                     : _selectedIndex == 3
-                    ? const MenuPage()
+                    ? MenuPage(
+                        onTabChanged: (index) =>
+                            setState(() => _selectedIndex = index),
+                      )
                     : _selectedIndex == 4
                     ? OwnerSettingsPage(
                         onTabChanged: (index) =>
@@ -585,90 +578,143 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: _secondaryColor.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: _secondaryColor.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
+          // Image
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             child: Image.network(
               imageUrl,
-              width: 80,
-              height: 80,
+              width: 90,
+              height: 90,
               fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 16),
+
+          // Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Flexible(
-                      child: Text(
-                        id,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withValues(alpha: 0.4),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2.0,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      id,
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 10,
+                        fontStyle: FontStyle.italic,
+                        color: _secondaryColor.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          status,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: statusColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: statusBg.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        status.toUpperCase(),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: GoogleFonts.notoSerif(
-                    color: _secondaryColor,
-                    fontSize: 18,
-                  ),
-                ),
                 const SizedBox(height: 4),
                 Text(
                   customer,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withValues(alpha: 0.7),
-                    fontSize: 14,
+                  style: GoogleFonts.notoSerif(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _secondaryColor,
                   ),
                 ),
+                const SizedBox(height: 6),
+                _CompactInfoRow(
+                    icon: Icons.cake_outlined, text: title, color: _secondaryColor),
+                const SizedBox(height: 2),
+                _CompactInfoRow(
+                    icon: Icons.schedule_outlined,
+                    text: "Pickup at 2:30 PM",
+                    color: _secondaryColor),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          Icon(Icons.chevron_right, color: _secondaryColor.withValues(alpha: 0.3)),
+
+          // Action
+          const SizedBox(width: 8),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: Icon(Icons.more_vert,
+                    color: _secondaryColor.withValues(alpha: 0.3)),
+                onPressed: () {},
+              ),
+              Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _primaryColor,
+                ),
+                padding: const EdgeInsets.all(8),
+                child: const Icon(Icons.edit_note, size: 18, color: Colors.white),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _CompactInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+
+  const _CompactInfoRow({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color.withValues(alpha: 0.4)),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: color.withValues(alpha: 0.6),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
