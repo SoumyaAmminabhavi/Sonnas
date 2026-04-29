@@ -719,7 +719,7 @@ async function handleSizeSelection(
 
   await sendTextMessage(
     msg.from,
-    "📍 *Delivery Address*\n\nPlease provide your full delivery address (e.g., House No, Building, Area)."
+    "📍 *Delivery Address*\n\nPlease provide your full delivery address (House No, Building, Area).\n\n💡 *Tip:* You can also send your *GPS Location* using the attachment icon (📎) for more accurate delivery!"
   );
 }
 
@@ -729,10 +729,24 @@ async function handleAddressInput(
   msg: IncomingMessage,
   _convo: Conversation
 ) {
-  const address = msg.text?.trim() ?? "";
+  let address = msg.text?.trim() ?? "";
+
+  // If user sent a location instead of text
+  if (msg.type === "location" && msg.location) {
+    const { latitude, longitude, name, address: locAddress } = msg.location;
+    // Create a Google Maps link
+    const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    address = locAddress ? `${locAddress}\n📍 ${mapsUrl}` : `📍 GPS Location: ${mapsUrl}`;
+    
+    if (name) {
+      address = `📍 ${name}\n${address}`;
+    }
+    
+    console.log(`[WhatsApp] Received GPS location: ${latitude}, ${longitude}`);
+  }
 
   if (!address) {
-    await sendTextMessage(msg.from, "Please provide a valid address to continue.");
+    await sendTextMessage(msg.from, "Please provide a valid address or send your location to continue.");
     return;
   }
 
@@ -743,7 +757,7 @@ async function handleAddressInput(
 
   await sendTextMessage(
     msg.from,
-    "📝 *Special Instructions*\n\nAny landmarks or special notes for our delivery partner? (e.g., Gate code, call on arrival)\n\nReply *'None'* or *'Skip'* if you have none."
+    "✅ Address saved!\n\n📝 *Special Instructions*\n\nAny landmarks or special notes? (e.g., Gate code, call on arrival)\n\nReply *'None'* or *'Skip'* if you have none."
   );
 }
 
