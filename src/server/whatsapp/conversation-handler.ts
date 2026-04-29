@@ -609,7 +609,7 @@ async function handleCakeSelection(msg: IncomingMessage) {
     console.warn(`[WhatsApp] handleCakeSelection: Failed to find cake. interactiveId="${msg.interactiveId}", text="${msg.text}"`);
     await sendTextMessage(
       msg.from,
-      `I couldn't find that cake. 🤔 (ID: ${msg.interactiveId?.replace("cake_", "") || "none"})\n\nReply *Menu* to see our full list, or type the name of a cake!`
+      `I couldn't find that cake. 🤔 (ID: ${msg.interactiveId?.replace("cake_", "") ?? "none"})\n\nReply *Menu* to see our full list, or type the name of a cake!`
     );
     return;
   }
