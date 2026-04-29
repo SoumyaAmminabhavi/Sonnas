@@ -763,8 +763,8 @@ async function sendDeliveryDateOptions(to: string) {
     `📅 *When do you need the cake?*\n\nPlease select a delivery date:`,
     [
       { id: "date_today", title: `Today (${formatDate(today)})` },
-      { id: "date_tomorrow", title: `Tomorrow (${formatDate(tomorrow)})` },
-      { id: "date_dayafter", title: `${formatDate(dayAfter)}` },
+      { id: "date_tomorrow", title: `Tmrw (${formatDate(tomorrow)})` },
+      { id: "date_dayafter", title: formatDate(dayAfter) },
     ]
   );
 }
