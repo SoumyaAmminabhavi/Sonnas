@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SupabaseService {
   static String get supabaseUrl => dotenv.get('SUPABASE_URL', fallback: '');
@@ -32,6 +33,35 @@ class SupabaseService {
     String p = price.toString();
     if (p.startsWith('₹')) return p;
     return "₹$p";
+  }
+
+  // Format phone for display (adds + if missing)
+  static String formatPhone(String? phone) {
+    if (phone == null || phone.isEmpty) return 'Contact hidden';
+    final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.length >= 10 && !phone.startsWith('+')) {
+      // Assuming India (91) if it starts with 91 or is 10 digits
+      if (clean.startsWith('91')) return '+$clean';
+      if (clean.length == 10) return '+91$clean';
+    }
+    return phone.startsWith('+') ? phone : '+$phone';
+  }
+
+  // Launch WhatsApp Chat
+  static Future<void> launchWhatsApp(String? phone, String message) async {
+    if (phone == null || phone.isEmpty) return;
+    
+    // Clean phone number (remove non-digits except +)
+    var cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    
+    // Ensure it has a country code (prefix 91 if missing and 10 digits)
+    if (cleanPhone.length == 10) cleanPhone = "91$cleanPhone";
+    
+    final Uri url = Uri.parse("https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}");
+    
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint('Could not launch WhatsApp for $cleanPhone');
+    }
   }
 
   // Real-time stream for WhatsApp Orders (Matching Prisma 'WhatsAppOrder')

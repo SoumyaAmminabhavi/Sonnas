@@ -172,7 +172,7 @@ class OrderDetailsPage extends StatelessWidget {
                                                 ),
                                               ),
                                               Text(
-                                                order['phone'] ?? 'Contact hidden',
+                                                SupabaseService.formatPhone(order['phone'] ?? conversation?['phone']),
                                                 style: GoogleFonts.plusJakartaSans(
                                                   fontSize: 11,
                                                   color: cs.primary.withValues(
@@ -373,7 +373,14 @@ class OrderDetailsPage extends StatelessWidget {
                                         cs: cs,
                                         isPrimary: true,
                                         onPressed: () {
-                                          // Logic to contact via WhatsApp
+                                          final phone = order['phone'] ?? conversation?['phone'];
+                                          final name = order['customerName'] ?? conversation?['name'] ?? 'there';
+                                          final cake = order['cakeName'] ?? 'your cake';
+                                          
+                                          SupabaseService.launchWhatsApp(
+                                            phone, 
+                                            "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).",
+                                          );
                                         },
                                       ),
                                     ),
