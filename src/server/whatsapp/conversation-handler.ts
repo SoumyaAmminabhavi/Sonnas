@@ -544,7 +544,18 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const catName = categoryMap[category] ?? "Cakes";
 
   const allCakes = await safeGetCakes();
+  console.log(`[WhatsApp] Category filter: catName="${catName}", category="${category}", total cakes=${allCakes.length}`);
+  console.log(`[WhatsApp] Cake categories in DB:`, allCakes.map(c => c.category));
   const filtered = allCakes.filter((p) => p.category === catName || p.category === category);
+  console.log(`[WhatsApp] Filtered cakes: ${filtered.length}`);
+
+  if (filtered.length === 0) {
+    // No cakes in this category — show full menu instead
+    await updateState(msg.from, "BROWSING_MENU");
+    await sendTextMessage(msg.from, "No cakes found in that category. Here's our full menu:");
+    await sendMenu(msg.from);
+    return;
+  }
 
   await updateState(msg.from, "BROWSING_MENU");
   await sendInteractiveList(
