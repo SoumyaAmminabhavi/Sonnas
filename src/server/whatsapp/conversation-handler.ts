@@ -37,6 +37,15 @@ let cakeCache: Cake[] | null = null;
 let lastCacheUpdate = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * Force clear the cake menu cache (used by admin panel)
+ */
+export function clearMenuCache() {
+  cakeCache = null;
+  lastCacheUpdate = 0;
+  console.log("[WhatsApp] Menu cache cleared via Admin Panel.");
+}
+
 async function safeGetCakes(): Promise<Cake[]> {
   const now = Date.now();
   if (cakeCache && (now - lastCacheUpdate < CACHE_TTL)) {

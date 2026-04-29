@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { clearMenuCache } from "~/server/whatsapp/conversation-handler";
 
 import {
   createTRPCRouter,
@@ -39,7 +40,7 @@ export const cakeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.cake.create({
+      const result = await ctx.db.cake.create({
         data: {
           name: input.name,
           description: input.description ?? "",
@@ -50,6 +51,11 @@ export const cakeRouter = createTRPCRouter({
         },
         include: { options: true },
       });
+
+      // Clear WhatsApp bot cache
+      clearMenuCache();
+
+      return result;
     }),
 
   update: publicProcedure
@@ -75,7 +81,7 @@ export const cakeRouter = createTRPCRouter({
         where: { cakeId: input.id },
       });
 
-      return ctx.db.cake.update({
+      const result = await ctx.db.cake.update({
         where: { id: input.id },
         data: {
           name: input.name,
@@ -91,13 +97,23 @@ export const cakeRouter = createTRPCRouter({
         },
         include: { options: true },
       });
+
+      // Clear WhatsApp bot cache
+      clearMenuCache();
+
+      return result;
     }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.cake.delete({
+      const result = await ctx.db.cake.delete({
         where: { id: input.id },
       });
+      
+      // Clear WhatsApp bot cache
+      clearMenuCache();
+      
+      return result;
     }),
 });
