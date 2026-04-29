@@ -107,6 +107,7 @@ model WhatsAppConversation {
     selectedQuantity Int?     @default(1)
     
     customImageUrl   String?
+    selectedDeliveryDate String?
     
     lastMessageAt  DateTime @default(now())
     createdAt      DateTime @default(now())

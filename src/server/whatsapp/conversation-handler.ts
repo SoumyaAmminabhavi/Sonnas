@@ -104,6 +104,7 @@ type ConversationState =
   | "SELECTING_SIZE"
   | "ASKING_ADDRESS"
   | "ASKING_INSTRUCTIONS"
+  | "ASKING_DELIVERY_DATE"
   | "CONFIRMING"
   | "REQUESTING_CUSTOM";
 
@@ -118,6 +119,7 @@ interface Conversation {
   selectedAddress?: string | null;
   selectedNotes?: string | null;
   selectedQuantity?: number | null;
+  selectedDeliveryDate?: string | null;
   customImageUrl?: string | null;
 }
 
@@ -198,6 +200,7 @@ async function updateState(
     selectedAddress?: string | null;
     selectedNotes?: string | null;
     selectedQuantity?: number | null;
+    selectedDeliveryDate?: string | null;
     customImageUrl?: string | null;
   } = {}
 ) {
@@ -358,20 +361,12 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     }
     
     if (category === "INSTRUCTIONS" && state !== "ASKING_INSTRUCTIONS") {
-      await updateState(msg.from, "CONFIRMING", { selectedNotes: msg.text });
+      await updateState(msg.from, "ASKING_DELIVERY_DATE", { selectedNotes: msg.text });
       const updated = await db.whatsAppConversation.findUnique({ where: { phone: msg.from } });
       
-      // If we already have cake/size/address, go to confirmation
+      // If we already have cake/size/address, go to delivery date selection
       if (updated?.selectedCake && updated?.selectedSize && updated?.selectedAddress) {
-        const cake = await safeGetCakeByName(updated.selectedCake);
-        await sendInteractiveButtons(
-          msg.from,
-          `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updated.selectedSize}\n📍 Address: ${updated.selectedAddress}\n📝 Notes: ${msg.text}\n\nShall I place this order?`,
-          [
-            { id: "btn_confirm", title: "✅ Confirm Order" },
-            { id: "btn_cancel", title: "❌ Cancel" },
-          ]
-        );
+        await sendDeliveryDateOptions(msg.from);
         return;
       }
     }
@@ -402,6 +397,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
     case "ASKING_INSTRUCTIONS":
       await handleInstructionsInput(msg, convo);
+      break;
+
+    case "ASKING_DELIVERY_DATE":
+      await handleDeliveryDateInput(msg, convo);
       break;
 
     case "REQUESTING_CUSTOM":
@@ -729,9 +728,71 @@ async function handleInstructionsInput(
 
   const notes = isSkip ? null : input;
 
+  // Move to asking delivery date
+  await updateState(msg.from, "ASKING_DELIVERY_DATE", {
+    selectedNotes: notes,
+  });
+
+  await sendDeliveryDateOptions(msg.from);
+}
+
+// ─── Send delivery date options ────────────────────────────────────────────
+
+async function sendDeliveryDateOptions(to: string) {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfter = new Date(today);
+  dayAfter.setDate(dayAfter.getDate() + 2);
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+
+  await sendInteractiveButtons(
+    to,
+    `📅 *When do you need the cake?*\n\nPlease select a delivery date:`,
+    [
+      { id: "date_today", title: `Today (${formatDate(today)})` },
+      { id: "date_tomorrow", title: `Tomorrow (${formatDate(tomorrow)})` },
+      { id: "date_dayafter", title: `${formatDate(dayAfter)}` },
+    ]
+  );
+}
+
+// ─── Handle delivery date input ────────────────────────────────────────────
+
+async function handleDeliveryDateInput(
+  msg: IncomingMessage,
+  _convo: Conversation
+) {
+  let deliveryDate = "";
+
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayAfter = new Date(today);
+  dayAfter.setDate(dayAfter.getDate() + 2);
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+
+  if (msg.interactiveId === "date_today") {
+    deliveryDate = `Today (${formatDate(today)})`;
+  } else if (msg.interactiveId === "date_tomorrow") {
+    deliveryDate = `Tomorrow (${formatDate(tomorrow)})`;
+  } else if (msg.interactiveId === "date_dayafter") {
+    deliveryDate = formatDate(dayAfter);
+  } else if (msg.text?.trim()) {
+    // User typed a custom date
+    deliveryDate = msg.text.trim();
+  } else {
+    await sendTextMessage(msg.from, "Please select a delivery date or type your preferred date.");
+    return;
+  }
+
   // Move to confirmation
   await updateState(msg.from, "CONFIRMING", {
-    selectedNotes: notes,
+    selectedDeliveryDate: deliveryDate,
   });
 
   const updatedConvo = await db.whatsAppConversation.findUnique({
@@ -742,7 +803,7 @@ async function handleInstructionsInput(
 
   await sendInteractiveButtons(
     msg.from,
-    `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updatedConvo?.selectedSize}\n💰 Price: ${updatedConvo?.selectedPrice}\n📍 Address: ${updatedConvo?.selectedAddress}\n📝 Notes: ${notes ?? "_None_"}\n\nShall I place this order?`,
+    `📋 *Order Summary*\n\n🎂 *${cake?.name}*\n📏 Size: ${updatedConvo?.selectedSize}\n💰 Price: ${updatedConvo?.selectedPrice}\n📍 Address: ${updatedConvo?.selectedAddress}\n📝 Notes: ${updatedConvo?.selectedNotes ?? "_None_"}\n📅 Delivery: *${deliveryDate}*\n\nShall I place this order?`,
     [
       { id: "btn_confirm", title: "✅ Confirm Order" },
       { id: "btn_cancel", title: "❌ Cancel" },
@@ -841,11 +902,14 @@ async function handleConfirmation(
       price: convo.selectedPrice,
       address: convo.selectedAddress,
       notes: convo.selectedNotes,
+      deliveryDate: existingConvo?.selectedDeliveryDate,
       status: "PENDING",
       isCustom: convo.selectedCake === "CUSTOM_CAKE",
       customImageUrl: convo.customImageUrl,
     },
   });
+
+  const deliveryInfo = existingConvo?.selectedDeliveryDate ?? "To be confirmed";
 
   // Reset conversation state
   await updateState(msg.from, "IDLE", {
@@ -854,12 +918,13 @@ async function handleConfirmation(
     selectedPrice: null,
     selectedAddress: null,
     selectedNotes: null,
+    selectedDeliveryDate: null,
     customImageUrl: null,
   });
 
   await sendTextMessage(
     msg.from,
-    `✅ *Order Placed Successfully!*\n\n🧾 Order #: *${orderNumber}*\n🎂 ${convo.selectedCake}\n📏 ${convo.selectedSize}\n💰 ${convo.selectedPrice}\n\n📞 We'll reach out shortly to confirm delivery details.\n\nReply *Status* anytime to check your order.\nReply *Menu* to order more!\n\n_Thank you for choosing Sonna's!_ 💕`
+    `✅ *Order Placed Successfully!*\n\n🧾 Order #: *${orderNumber}*\n🎂 ${convo.selectedCake}\n📏 ${convo.selectedSize}\n💰 ${convo.selectedPrice}\n📅 Delivery: *${deliveryInfo}*\n\n📞 We'll reach out shortly to confirm.\nYou'll receive updates as your order progresses! 🔔\n\nReply *Status* anytime to check your order.\nReply *Menu* to order more!\n\n_Thank you for choosing Sonna's!_ 💕`
   );
 }
 
