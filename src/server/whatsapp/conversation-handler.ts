@@ -835,15 +835,6 @@ async function handleDeliveryDateInput(
 ) {
   let deliveryDate = "";
 
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const dayAfter = new Date(today);
-  dayAfter.setDate(dayAfter.getDate() + 2);
-
-  const formatDate = (d: Date) =>
-    d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
-
   if (msg.interactiveId?.startsWith("date_")) {
     const datePart = msg.interactiveId.replace("date_", "");
     const d = new Date(datePart);

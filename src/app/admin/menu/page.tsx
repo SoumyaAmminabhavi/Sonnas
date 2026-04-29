@@ -62,13 +62,20 @@ export default function AdminMenuPage() {
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  const openModal = (cake?: { id: string; name: string; description: string | null; image: string; options: CakeOptionInput[] }) => {
+  const openModal = (cake?: { 
+    id: string; 
+    name: string; 
+    description: string | null; 
+    category?: string | null; 
+    image: string; 
+    options: CakeOptionInput[] 
+  }) => {
     if (cake) {
       setFormData({
         id: cake.id,
         name: cake.name,
         description: cake.description ?? "",
-        category: (cake as any).category ?? "Chocolate Cakes",
+        category: cake.category ?? "Chocolate Cakes",
         image: cake.image,
         options: cake.options.map((o) => ({
           id: o.id,
@@ -174,7 +181,7 @@ export default function AdminMenuPage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-heading text-[#2B2B2B]">{cake.name}</h3>
                     <span className="text-[10px] bg-[#F4C2C2]/20 text-[#F4C2C2] px-2 py-1 rounded-full uppercase tracking-wider font-bold">
-                      {(cake as any).category ?? "General"}
+                      {(cake as { category?: string | null }).category ?? "General"}
                     </span>
                   </div>
                   <p className="text-sm text-[#9A9A9A] mb-4 line-clamp-2">{cake.description}</p>
