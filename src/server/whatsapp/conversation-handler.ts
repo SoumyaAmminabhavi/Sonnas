@@ -31,23 +31,43 @@ interface Cake {
   options: CakeOption[];
 }
 
-// ─── DB Helpers ─────────────────────────────────────────────────────────────
+// ─── DB Helpers with Caching ─────────────────────────────────────────────
+
+let cakeCache: Cake[] | null = null;
+let lastCacheUpdate = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 async function safeGetCakes(): Promise<Cake[]> {
-  console.log("[WhatsApp] Attempting to fetch cakes from DB...");
+  const now = Date.now();
+  if (cakeCache && (now - lastCacheUpdate < CACHE_TTL)) {
+    console.log("[WhatsApp] Using cached cake menu.");
+    return cakeCache;
+  }
+
+  console.log("[WhatsApp] Cache expired or missing. Fetching cakes from DB...");
   try {
     const result = await withTimeout(
       db.cake.findMany({ include: { options: true } }),
       DB_TIMEOUT
     );
-    return (result as unknown as Cake[]) ?? (products as unknown as Cake[]);
-  } catch {
-    console.warn("[WhatsApp] DB Menu fetch failed, using fallback.");
+    
+    if (result) {
+      cakeCache = result as unknown as Cake[];
+      lastCacheUpdate = now;
+      return cakeCache;
+    }
     return products as unknown as Cake[];
+  } catch (e) {
+    console.warn("[WhatsApp] DB Menu fetch failed, using fallback.", e);
+    return cakeCache ?? (products as unknown as Cake[]);
   }
 }
 
 async function safeGetCakeByName(name: string): Promise<Cake | null> {
+  const cakes = await safeGetCakes();
+  const found = cakes.find(c => c.name === name);
+  if (found) return found;
+
   try {
     const result = await withTimeout(
       db.cake.findFirst({
@@ -64,6 +84,11 @@ async function safeGetCakeByName(name: string): Promise<Cake | null> {
 
 async function safeGetCakeById(id: string): Promise<Cake | null> {
   console.log(`[WhatsApp] safeGetCakeById: looking for ID "${id}"`);
+  
+  const cakes = await safeGetCakes();
+  const cached = cakes.find(c => c.id === id || c.id.toString() === id);
+  if (cached) return cached;
+
   try {
     if (id.length > 5) {
       const result = await withTimeout(
@@ -77,12 +102,10 @@ async function safeGetCakeById(id: string): Promise<Cake | null> {
       console.warn(`[WhatsApp] Cake ID "${id}" not found in DB, trying local products...`);
     }
     
-    // Try local products as fallback
     const localId = parseInt(id, 10);
     const found = products.find((p) => p.id === localId || p.id.toString() === id);
     if (found) return found as unknown as Cake;
     
-    // Try fuzzy match by name if id is a name? No, safeGetCakeByName handles that.
     return null;
   } catch (e) {
     console.error(`[WhatsApp] safeGetCakeById error for "${id}":`, e);
