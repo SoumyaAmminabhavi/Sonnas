@@ -786,22 +786,34 @@ async function handleInstructionsInput(
 // ─── Send delivery date options ────────────────────────────────────────────
 
 async function sendDeliveryDateOptions(to: string) {
+  const rows = [];
   const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const dayAfter = new Date(today);
-  dayAfter.setDate(dayAfter.getDate() + 2);
 
-  const formatDate = (d: Date) =>
-    d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+  for (let i = 0; i < 10; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    
+    const id = `date_${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+    const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+    const dateStr = d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
-  await sendInteractiveButtons(
+    rows.push({
+      id,
+      title: label,
+      description: i <= 1 ? dateStr : undefined
+    });
+  }
+
+  await sendInteractiveList(
     to,
-    `📅 *When do you need the cake?*\n\nPlease select a delivery date:`,
+    "📅 Select Delivery Date",
+    "Please choose when you'd like your cake delivered:",
+    "View Dates",
     [
-      { id: "date_today", title: `Today (${formatDate(today)})` },
-      { id: "date_tomorrow", title: `Tmrw (${formatDate(tomorrow)})` },
-      { id: "date_dayafter", title: formatDate(dayAfter) },
+      {
+        title: "Available Dates",
+        rows
+      }
     ]
   );
 }
@@ -823,12 +835,10 @@ async function handleDeliveryDateInput(
   const formatDate = (d: Date) =>
     d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
 
-  if (msg.interactiveId === "date_today") {
-    deliveryDate = `Today (${formatDate(today)})`;
-  } else if (msg.interactiveId === "date_tomorrow") {
-    deliveryDate = `Tomorrow (${formatDate(tomorrow)})`;
-  } else if (msg.interactiveId === "date_dayafter") {
-    deliveryDate = formatDate(dayAfter);
+  if (msg.interactiveId?.startsWith("date_")) {
+    const datePart = msg.interactiveId.replace("date_", "");
+    const d = new Date(datePart);
+    deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
   } else if (msg.text?.trim()) {
     // User typed a custom date
     deliveryDate = msg.text.trim();
