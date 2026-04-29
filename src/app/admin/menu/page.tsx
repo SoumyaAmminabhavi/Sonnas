@@ -17,6 +17,7 @@ interface CakeFormData {
   id?: string;
   name: string;
   description: string;
+  category: string;
   image: string;
   options: CakeOptionInput[];
 }
@@ -24,6 +25,7 @@ interface CakeFormData {
 const INITIAL_FORM: CakeFormData = {
   name: "",
   description: "",
+  category: "Chocolate Cakes",
   image: "",
   options: [{ size: "", serves: "", price: "" }],
 };
@@ -66,6 +68,7 @@ export default function AdminMenuPage() {
         id: cake.id,
         name: cake.name,
         description: cake.description ?? "",
+        category: (cake as any).category ?? "Chocolate Cakes",
         image: cake.image,
         options: cake.options.map((o) => ({
           id: o.id,
@@ -110,9 +113,9 @@ export default function AdminMenuPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditing && formData.id) {
-      updateMutation.mutate(formData as { id: string; name: string; image: string; options: CakeOptionInput[]; description?: string });
+      updateMutation.mutate(formData as { id: string; name: string; image: string; options: CakeOptionInput[]; description?: string; category?: string });
     } else {
-      createMutation.mutate(formData as { name: string; image: string; options: CakeOptionInput[]; description?: string });
+      createMutation.mutate(formData as { name: string; image: string; options: CakeOptionInput[]; description?: string; category?: string });
     }
   };
 
@@ -168,7 +171,12 @@ export default function AdminMenuPage() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-heading text-[#2B2B2B] mb-2">{cake.name}</h3>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-lg font-heading text-[#2B2B2B]">{cake.name}</h3>
+                    <span className="text-[10px] bg-[#F4C2C2]/20 text-[#F4C2C2] px-2 py-1 rounded-full uppercase tracking-wider font-bold">
+                      {(cake as any).category ?? "General"}
+                    </span>
+                  </div>
                   <p className="text-sm text-[#9A9A9A] mb-4 line-clamp-2">{cake.description}</p>
                   <div className="space-y-2">
                     {cake.options.map((opt) => (
@@ -208,6 +216,22 @@ export default function AdminMenuPage() {
                       placeholder="e.g. Belgian Chocolate Truffle"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#6E6E6E]">Category</label>
+                    <select
+                      className="w-full p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none bg-white"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    >
+                      <option value="Chocolate Cakes">Chocolate Cakes</option>
+                      <option value="Vanilla Cakes">Vanilla Cakes</option>
+                      <option value="Tea Cakes">Tea Cakes</option>
+                      <option value="Seasonal Cakes">Seasonal Cakes</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#6E6E6E]">Image</label>
                     <div className="flex gap-2">

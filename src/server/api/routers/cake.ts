@@ -18,10 +18,11 @@ export const cakeRouter = createTRPCRouter({
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      return ctx.db.cake.findUnique({
+      const cake = await ctx.db.cake.findUnique({
         where: { id: input.id },
         include: { options: true },
       });
+      return cake;
     }),
 
   create: publicProcedure
@@ -29,6 +30,7 @@ export const cakeRouter = createTRPCRouter({
       z.object({
         name: z.string().min(1, "Cake name is required"),
         description: z.string().optional(),
+        category: z.string().default("Chocolate Cakes"),
         image: z.string().min(1, "Image is required"),
         options: z.array(
           z.object({
@@ -44,6 +46,7 @@ export const cakeRouter = createTRPCRouter({
         data: {
           name: input.name,
           description: input.description ?? "",
+          category: input.category,
           image: input.image,
           options: {
             create: input.options,
@@ -64,6 +67,7 @@ export const cakeRouter = createTRPCRouter({
         id: z.string(),
         name: z.string().min(1),
         description: z.string().optional(),
+        category: z.string().optional(),
         image: z.string().min(1),
         options: z.array(
           z.object({
@@ -86,6 +90,7 @@ export const cakeRouter = createTRPCRouter({
         data: {
           name: input.name,
           description: input.description ?? "",
+          category: input.category,
           image: input.image,
           options: {
             create: input.options.map(opt => ({
