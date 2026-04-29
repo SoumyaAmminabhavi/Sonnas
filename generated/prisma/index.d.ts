@@ -7146,6 +7146,7 @@ export namespace Prisma {
     name: string | null
     description: string | null
     image: string | null
+    category: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7155,6 +7156,7 @@ export namespace Prisma {
     name: string | null
     description: string | null
     image: string | null
+    category: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -7164,6 +7166,7 @@ export namespace Prisma {
     name: number
     description: number
     image: number
+    category: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -7175,6 +7178,7 @@ export namespace Prisma {
     name?: true
     description?: true
     image?: true
+    category?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7184,6 +7188,7 @@ export namespace Prisma {
     name?: true
     description?: true
     image?: true
+    category?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -7193,6 +7198,7 @@ export namespace Prisma {
     name?: true
     description?: true
     image?: true
+    category?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -7275,6 +7281,7 @@ export namespace Prisma {
     name: string
     description: string | null
     image: string
+    category: string
     createdAt: Date
     updatedAt: Date
     _count: CakeCountAggregateOutputType | null
@@ -7301,6 +7308,7 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     image?: boolean
+    category?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     options?: boolean | Cake$optionsArgs<ExtArgs>
@@ -7312,6 +7320,7 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     image?: boolean
+    category?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["cake"]>
@@ -7321,6 +7330,7 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     image?: boolean
+    category?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["cake"]>
@@ -7330,11 +7340,12 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     image?: boolean
+    category?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type CakeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "image" | "createdAt" | "updatedAt", ExtArgs["result"]["cake"]>
+  export type CakeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "image" | "category" | "createdAt" | "updatedAt", ExtArgs["result"]["cake"]>
   export type CakeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     options?: boolean | Cake$optionsArgs<ExtArgs>
     _count?: boolean | CakeCountOutputTypeDefaultArgs<ExtArgs>
@@ -7352,6 +7363,7 @@ export namespace Prisma {
       name: string
       description: string | null
       image: string
+      category: string
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["cake"]>
@@ -7782,6 +7794,7 @@ export namespace Prisma {
     readonly name: FieldRef<"Cake", 'String'>
     readonly description: FieldRef<"Cake", 'String'>
     readonly image: FieldRef<"Cake", 'String'>
+    readonly category: FieldRef<"Cake", 'String'>
     readonly createdAt: FieldRef<"Cake", 'DateTime'>
     readonly updatedAt: FieldRef<"Cake", 'DateTime'>
   }
@@ -9278,8 +9291,18 @@ export namespace Prisma {
 
   export type AggregateWhatsAppConversation = {
     _count: WhatsAppConversationCountAggregateOutputType | null
+    _avg: WhatsAppConversationAvgAggregateOutputType | null
+    _sum: WhatsAppConversationSumAggregateOutputType | null
     _min: WhatsAppConversationMinAggregateOutputType | null
     _max: WhatsAppConversationMaxAggregateOutputType | null
+  }
+
+  export type WhatsAppConversationAvgAggregateOutputType = {
+    selectedQuantity: number | null
+  }
+
+  export type WhatsAppConversationSumAggregateOutputType = {
+    selectedQuantity: number | null
   }
 
   export type WhatsAppConversationMinAggregateOutputType = {
@@ -9290,7 +9313,10 @@ export namespace Prisma {
     selectedCake: string | null
     selectedSize: string | null
     selectedPrice: string | null
+    selectedAddress: string | null
     selectedNotes: string | null
+    selectedQuantity: number | null
+    customImageUrl: string | null
     lastMessageAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -9304,7 +9330,10 @@ export namespace Prisma {
     selectedCake: string | null
     selectedSize: string | null
     selectedPrice: string | null
+    selectedAddress: string | null
     selectedNotes: string | null
+    selectedQuantity: number | null
+    customImageUrl: string | null
     lastMessageAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -9318,13 +9347,24 @@ export namespace Prisma {
     selectedCake: number
     selectedSize: number
     selectedPrice: number
+    selectedAddress: number
     selectedNotes: number
+    selectedQuantity: number
+    customImageUrl: number
     lastMessageAt: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
+
+  export type WhatsAppConversationAvgAggregateInputType = {
+    selectedQuantity?: true
+  }
+
+  export type WhatsAppConversationSumAggregateInputType = {
+    selectedQuantity?: true
+  }
 
   export type WhatsAppConversationMinAggregateInputType = {
     id?: true
@@ -9334,7 +9374,10 @@ export namespace Prisma {
     selectedCake?: true
     selectedSize?: true
     selectedPrice?: true
+    selectedAddress?: true
     selectedNotes?: true
+    selectedQuantity?: true
+    customImageUrl?: true
     lastMessageAt?: true
     createdAt?: true
     updatedAt?: true
@@ -9348,7 +9391,10 @@ export namespace Prisma {
     selectedCake?: true
     selectedSize?: true
     selectedPrice?: true
+    selectedAddress?: true
     selectedNotes?: true
+    selectedQuantity?: true
+    customImageUrl?: true
     lastMessageAt?: true
     createdAt?: true
     updatedAt?: true
@@ -9362,7 +9408,10 @@ export namespace Prisma {
     selectedCake?: true
     selectedSize?: true
     selectedPrice?: true
+    selectedAddress?: true
     selectedNotes?: true
+    selectedQuantity?: true
+    customImageUrl?: true
     lastMessageAt?: true
     createdAt?: true
     updatedAt?: true
@@ -9407,6 +9456,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: WhatsAppConversationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WhatsAppConversationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: WhatsAppConversationMinAggregateInputType
@@ -9437,6 +9498,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: WhatsAppConversationCountAggregateInputType | true
+    _avg?: WhatsAppConversationAvgAggregateInputType
+    _sum?: WhatsAppConversationSumAggregateInputType
     _min?: WhatsAppConversationMinAggregateInputType
     _max?: WhatsAppConversationMaxAggregateInputType
   }
@@ -9449,11 +9512,16 @@ export namespace Prisma {
     selectedCake: string | null
     selectedSize: string | null
     selectedPrice: string | null
+    selectedAddress: string | null
     selectedNotes: string | null
+    selectedQuantity: number | null
+    customImageUrl: string | null
     lastMessageAt: Date
     createdAt: Date
     updatedAt: Date
     _count: WhatsAppConversationCountAggregateOutputType | null
+    _avg: WhatsAppConversationAvgAggregateOutputType | null
+    _sum: WhatsAppConversationSumAggregateOutputType | null
     _min: WhatsAppConversationMinAggregateOutputType | null
     _max: WhatsAppConversationMaxAggregateOutputType | null
   }
@@ -9480,7 +9548,10 @@ export namespace Prisma {
     selectedCake?: boolean
     selectedSize?: boolean
     selectedPrice?: boolean
+    selectedAddress?: boolean
     selectedNotes?: boolean
+    selectedQuantity?: boolean
+    customImageUrl?: boolean
     lastMessageAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9496,7 +9567,10 @@ export namespace Prisma {
     selectedCake?: boolean
     selectedSize?: boolean
     selectedPrice?: boolean
+    selectedAddress?: boolean
     selectedNotes?: boolean
+    selectedQuantity?: boolean
+    customImageUrl?: boolean
     lastMessageAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9510,7 +9584,10 @@ export namespace Prisma {
     selectedCake?: boolean
     selectedSize?: boolean
     selectedPrice?: boolean
+    selectedAddress?: boolean
     selectedNotes?: boolean
+    selectedQuantity?: boolean
+    customImageUrl?: boolean
     lastMessageAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9524,13 +9601,16 @@ export namespace Prisma {
     selectedCake?: boolean
     selectedSize?: boolean
     selectedPrice?: boolean
+    selectedAddress?: boolean
     selectedNotes?: boolean
+    selectedQuantity?: boolean
+    customImageUrl?: boolean
     lastMessageAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WhatsAppConversationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "phone" | "name" | "state" | "selectedCake" | "selectedSize" | "selectedPrice" | "selectedNotes" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppConversation"]>
+  export type WhatsAppConversationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "phone" | "name" | "state" | "selectedCake" | "selectedSize" | "selectedPrice" | "selectedAddress" | "selectedNotes" | "selectedQuantity" | "customImageUrl" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppConversation"]>
   export type WhatsAppConversationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     orders?: boolean | WhatsAppConversation$ordersArgs<ExtArgs>
     _count?: boolean | WhatsAppConversationCountOutputTypeDefaultArgs<ExtArgs>
@@ -9551,7 +9631,10 @@ export namespace Prisma {
       selectedCake: string | null
       selectedSize: string | null
       selectedPrice: string | null
+      selectedAddress: string | null
       selectedNotes: string | null
+      selectedQuantity: number | null
+      customImageUrl: string | null
       lastMessageAt: Date
       createdAt: Date
       updatedAt: Date
@@ -9986,7 +10069,10 @@ export namespace Prisma {
     readonly selectedCake: FieldRef<"WhatsAppConversation", 'String'>
     readonly selectedSize: FieldRef<"WhatsAppConversation", 'String'>
     readonly selectedPrice: FieldRef<"WhatsAppConversation", 'String'>
+    readonly selectedAddress: FieldRef<"WhatsAppConversation", 'String'>
     readonly selectedNotes: FieldRef<"WhatsAppConversation", 'String'>
+    readonly selectedQuantity: FieldRef<"WhatsAppConversation", 'Int'>
+    readonly customImageUrl: FieldRef<"WhatsAppConversation", 'String'>
     readonly lastMessageAt: FieldRef<"WhatsAppConversation", 'DateTime'>
     readonly createdAt: FieldRef<"WhatsAppConversation", 'DateTime'>
     readonly updatedAt: FieldRef<"WhatsAppConversation", 'DateTime'>
@@ -10449,8 +10535,11 @@ export namespace Prisma {
     size: string | null
     price: string | null
     quantity: number | null
+    address: string | null
     notes: string | null
     status: string | null
+    isCustom: boolean | null
+    customImageUrl: string | null
     deliveryDate: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -10465,8 +10554,11 @@ export namespace Prisma {
     size: string | null
     price: string | null
     quantity: number | null
+    address: string | null
     notes: string | null
     status: string | null
+    isCustom: boolean | null
+    customImageUrl: string | null
     deliveryDate: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -10481,8 +10573,11 @@ export namespace Prisma {
     size: number
     price: number
     quantity: number
+    address: number
     notes: number
     status: number
+    isCustom: number
+    customImageUrl: number
     deliveryDate: number
     createdAt: number
     updatedAt: number
@@ -10507,8 +10602,11 @@ export namespace Prisma {
     size?: true
     price?: true
     quantity?: true
+    address?: true
     notes?: true
     status?: true
+    isCustom?: true
+    customImageUrl?: true
     deliveryDate?: true
     createdAt?: true
     updatedAt?: true
@@ -10523,8 +10621,11 @@ export namespace Prisma {
     size?: true
     price?: true
     quantity?: true
+    address?: true
     notes?: true
     status?: true
+    isCustom?: true
+    customImageUrl?: true
     deliveryDate?: true
     createdAt?: true
     updatedAt?: true
@@ -10539,8 +10640,11 @@ export namespace Prisma {
     size?: true
     price?: true
     quantity?: true
+    address?: true
     notes?: true
     status?: true
+    isCustom?: true
+    customImageUrl?: true
     deliveryDate?: true
     createdAt?: true
     updatedAt?: true
@@ -10642,8 +10746,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity: number
+    address: string | null
     notes: string | null
     status: string
+    isCustom: boolean
+    customImageUrl: string | null
     deliveryDate: string | null
     createdAt: Date
     updatedAt: Date
@@ -10677,8 +10784,11 @@ export namespace Prisma {
     size?: boolean
     price?: boolean
     quantity?: boolean
+    address?: boolean
     notes?: boolean
     status?: boolean
+    isCustom?: boolean
+    customImageUrl?: boolean
     deliveryDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10694,8 +10804,11 @@ export namespace Prisma {
     size?: boolean
     price?: boolean
     quantity?: boolean
+    address?: boolean
     notes?: boolean
     status?: boolean
+    isCustom?: boolean
+    customImageUrl?: boolean
     deliveryDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10711,8 +10824,11 @@ export namespace Prisma {
     size?: boolean
     price?: boolean
     quantity?: boolean
+    address?: boolean
     notes?: boolean
     status?: boolean
+    isCustom?: boolean
+    customImageUrl?: boolean
     deliveryDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10728,14 +10844,17 @@ export namespace Prisma {
     size?: boolean
     price?: boolean
     quantity?: boolean
+    address?: boolean
     notes?: boolean
     status?: boolean
+    isCustom?: boolean
+    customImageUrl?: boolean
     deliveryDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WhatsAppOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderNumber" | "phone" | "customerName" | "cakeName" | "size" | "price" | "quantity" | "notes" | "status" | "deliveryDate" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppOrder"]>
+  export type WhatsAppOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderNumber" | "phone" | "customerName" | "cakeName" | "size" | "price" | "quantity" | "address" | "notes" | "status" | "isCustom" | "customImageUrl" | "deliveryDate" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppOrder"]>
   export type WhatsAppOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
   }
@@ -10760,8 +10879,11 @@ export namespace Prisma {
       size: string
       price: string
       quantity: number
+      address: string | null
       notes: string | null
       status: string
+      isCustom: boolean
+      customImageUrl: string | null
       deliveryDate: string | null
       createdAt: Date
       updatedAt: Date
@@ -11197,8 +11319,11 @@ export namespace Prisma {
     readonly size: FieldRef<"WhatsAppOrder", 'String'>
     readonly price: FieldRef<"WhatsAppOrder", 'String'>
     readonly quantity: FieldRef<"WhatsAppOrder", 'Int'>
+    readonly address: FieldRef<"WhatsAppOrder", 'String'>
     readonly notes: FieldRef<"WhatsAppOrder", 'String'>
     readonly status: FieldRef<"WhatsAppOrder", 'String'>
+    readonly isCustom: FieldRef<"WhatsAppOrder", 'Boolean'>
+    readonly customImageUrl: FieldRef<"WhatsAppOrder", 'String'>
     readonly deliveryDate: FieldRef<"WhatsAppOrder", 'String'>
     readonly createdAt: FieldRef<"WhatsAppOrder", 'DateTime'>
     readonly updatedAt: FieldRef<"WhatsAppOrder", 'DateTime'>
@@ -11695,6 +11820,7 @@ export namespace Prisma {
     name: 'name',
     description: 'description',
     image: 'image',
+    category: 'category',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -11721,7 +11847,10 @@ export namespace Prisma {
     selectedCake: 'selectedCake',
     selectedSize: 'selectedSize',
     selectedPrice: 'selectedPrice',
+    selectedAddress: 'selectedAddress',
     selectedNotes: 'selectedNotes',
+    selectedQuantity: 'selectedQuantity',
+    customImageUrl: 'customImageUrl',
     lastMessageAt: 'lastMessageAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -11739,8 +11868,11 @@ export namespace Prisma {
     size: 'size',
     price: 'price',
     quantity: 'quantity',
+    address: 'address',
     notes: 'notes',
     status: 'status',
+    isCustom: 'isCustom',
+    customImageUrl: 'customImageUrl',
     deliveryDate: 'deliveryDate',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -11817,6 +11949,13 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -12154,6 +12293,7 @@ export namespace Prisma {
     name?: StringFilter<"Cake"> | string
     description?: StringNullableFilter<"Cake"> | string | null
     image?: StringFilter<"Cake"> | string
+    category?: StringFilter<"Cake"> | string
     createdAt?: DateTimeFilter<"Cake"> | Date | string
     updatedAt?: DateTimeFilter<"Cake"> | Date | string
     options?: CakeOptionListRelationFilter
@@ -12164,6 +12304,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrderInput | SortOrder
     image?: SortOrder
+    category?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     options?: CakeOptionOrderByRelationAggregateInput
@@ -12177,6 +12318,7 @@ export namespace Prisma {
     name?: StringFilter<"Cake"> | string
     description?: StringNullableFilter<"Cake"> | string | null
     image?: StringFilter<"Cake"> | string
+    category?: StringFilter<"Cake"> | string
     createdAt?: DateTimeFilter<"Cake"> | Date | string
     updatedAt?: DateTimeFilter<"Cake"> | Date | string
     options?: CakeOptionListRelationFilter
@@ -12187,6 +12329,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrderInput | SortOrder
     image?: SortOrder
+    category?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CakeCountOrderByAggregateInput
@@ -12202,6 +12345,7 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Cake"> | string
     description?: StringNullableWithAggregatesFilter<"Cake"> | string | null
     image?: StringWithAggregatesFilter<"Cake"> | string
+    category?: StringWithAggregatesFilter<"Cake"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Cake"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Cake"> | Date | string
   }
@@ -12272,7 +12416,10 @@ export namespace Prisma {
     selectedCake?: StringNullableFilter<"WhatsAppConversation"> | string | null
     selectedSize?: StringNullableFilter<"WhatsAppConversation"> | string | null
     selectedPrice?: StringNullableFilter<"WhatsAppConversation"> | string | null
+    selectedAddress?: StringNullableFilter<"WhatsAppConversation"> | string | null
     selectedNotes?: StringNullableFilter<"WhatsAppConversation"> | string | null
+    selectedQuantity?: IntNullableFilter<"WhatsAppConversation"> | number | null
+    customImageUrl?: StringNullableFilter<"WhatsAppConversation"> | string | null
     lastMessageAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     createdAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
@@ -12287,7 +12434,10 @@ export namespace Prisma {
     selectedCake?: SortOrderInput | SortOrder
     selectedSize?: SortOrderInput | SortOrder
     selectedPrice?: SortOrderInput | SortOrder
+    selectedAddress?: SortOrderInput | SortOrder
     selectedNotes?: SortOrderInput | SortOrder
+    selectedQuantity?: SortOrderInput | SortOrder
+    customImageUrl?: SortOrderInput | SortOrder
     lastMessageAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -12305,7 +12455,10 @@ export namespace Prisma {
     selectedCake?: StringNullableFilter<"WhatsAppConversation"> | string | null
     selectedSize?: StringNullableFilter<"WhatsAppConversation"> | string | null
     selectedPrice?: StringNullableFilter<"WhatsAppConversation"> | string | null
+    selectedAddress?: StringNullableFilter<"WhatsAppConversation"> | string | null
     selectedNotes?: StringNullableFilter<"WhatsAppConversation"> | string | null
+    selectedQuantity?: IntNullableFilter<"WhatsAppConversation"> | number | null
+    customImageUrl?: StringNullableFilter<"WhatsAppConversation"> | string | null
     lastMessageAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     createdAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
@@ -12320,13 +12473,18 @@ export namespace Prisma {
     selectedCake?: SortOrderInput | SortOrder
     selectedSize?: SortOrderInput | SortOrder
     selectedPrice?: SortOrderInput | SortOrder
+    selectedAddress?: SortOrderInput | SortOrder
     selectedNotes?: SortOrderInput | SortOrder
+    selectedQuantity?: SortOrderInput | SortOrder
+    customImageUrl?: SortOrderInput | SortOrder
     lastMessageAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WhatsAppConversationCountOrderByAggregateInput
+    _avg?: WhatsAppConversationAvgOrderByAggregateInput
     _max?: WhatsAppConversationMaxOrderByAggregateInput
     _min?: WhatsAppConversationMinOrderByAggregateInput
+    _sum?: WhatsAppConversationSumOrderByAggregateInput
   }
 
   export type WhatsAppConversationScalarWhereWithAggregatesInput = {
@@ -12340,7 +12498,10 @@ export namespace Prisma {
     selectedCake?: StringNullableWithAggregatesFilter<"WhatsAppConversation"> | string | null
     selectedSize?: StringNullableWithAggregatesFilter<"WhatsAppConversation"> | string | null
     selectedPrice?: StringNullableWithAggregatesFilter<"WhatsAppConversation"> | string | null
+    selectedAddress?: StringNullableWithAggregatesFilter<"WhatsAppConversation"> | string | null
     selectedNotes?: StringNullableWithAggregatesFilter<"WhatsAppConversation"> | string | null
+    selectedQuantity?: IntNullableWithAggregatesFilter<"WhatsAppConversation"> | number | null
+    customImageUrl?: StringNullableWithAggregatesFilter<"WhatsAppConversation"> | string | null
     lastMessageAt?: DateTimeWithAggregatesFilter<"WhatsAppConversation"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"WhatsAppConversation"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WhatsAppConversation"> | Date | string
@@ -12358,8 +12519,11 @@ export namespace Prisma {
     size?: StringFilter<"WhatsAppOrder"> | string
     price?: StringFilter<"WhatsAppOrder"> | string
     quantity?: IntFilter<"WhatsAppOrder"> | number
+    address?: StringNullableFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableFilter<"WhatsAppOrder"> | string | null
     status?: StringFilter<"WhatsAppOrder"> | string
+    isCustom?: BoolFilter<"WhatsAppOrder"> | boolean
+    customImageUrl?: StringNullableFilter<"WhatsAppOrder"> | string | null
     deliveryDate?: StringNullableFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
@@ -12375,8 +12539,11 @@ export namespace Prisma {
     size?: SortOrder
     price?: SortOrder
     quantity?: SortOrder
+    address?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     status?: SortOrder
+    isCustom?: SortOrder
+    customImageUrl?: SortOrderInput | SortOrder
     deliveryDate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -12395,8 +12562,11 @@ export namespace Prisma {
     size?: StringFilter<"WhatsAppOrder"> | string
     price?: StringFilter<"WhatsAppOrder"> | string
     quantity?: IntFilter<"WhatsAppOrder"> | number
+    address?: StringNullableFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableFilter<"WhatsAppOrder"> | string | null
     status?: StringFilter<"WhatsAppOrder"> | string
+    isCustom?: BoolFilter<"WhatsAppOrder"> | boolean
+    customImageUrl?: StringNullableFilter<"WhatsAppOrder"> | string | null
     deliveryDate?: StringNullableFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
@@ -12412,8 +12582,11 @@ export namespace Prisma {
     size?: SortOrder
     price?: SortOrder
     quantity?: SortOrder
+    address?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     status?: SortOrder
+    isCustom?: SortOrder
+    customImageUrl?: SortOrderInput | SortOrder
     deliveryDate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -12436,8 +12609,11 @@ export namespace Prisma {
     size?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
     price?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
     quantity?: IntWithAggregatesFilter<"WhatsAppOrder"> | number
+    address?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     status?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
+    isCustom?: BoolWithAggregatesFilter<"WhatsAppOrder"> | boolean
+    customImageUrl?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     deliveryDate?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WhatsAppOrder"> | Date | string
@@ -12769,6 +12945,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     image: string
+    category?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     options?: CakeOptionCreateNestedManyWithoutCakeInput
@@ -12779,6 +12956,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     image: string
+    category?: string
     createdAt?: Date | string
     updatedAt?: Date | string
     options?: CakeOptionUncheckedCreateNestedManyWithoutCakeInput
@@ -12789,6 +12967,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     image?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     options?: CakeOptionUpdateManyWithoutCakeNestedInput
@@ -12799,6 +12978,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     image?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     options?: CakeOptionUncheckedUpdateManyWithoutCakeNestedInput
@@ -12809,6 +12989,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     image: string
+    category?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -12818,6 +12999,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     image?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12827,6 +13009,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     image?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12894,7 +13077,10 @@ export namespace Prisma {
     selectedCake?: string | null
     selectedSize?: string | null
     selectedPrice?: string | null
+    selectedAddress?: string | null
     selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12909,7 +13095,10 @@ export namespace Prisma {
     selectedCake?: string | null
     selectedSize?: string | null
     selectedPrice?: string | null
+    selectedAddress?: string | null
     selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12924,7 +13113,10 @@ export namespace Prisma {
     selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
     selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
     selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
     selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12939,7 +13131,10 @@ export namespace Prisma {
     selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
     selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
     selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
     selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12954,7 +13149,10 @@ export namespace Prisma {
     selectedCake?: string | null
     selectedSize?: string | null
     selectedPrice?: string | null
+    selectedAddress?: string | null
     selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -12968,7 +13166,10 @@ export namespace Prisma {
     selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
     selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
     selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
     selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12982,7 +13183,10 @@ export namespace Prisma {
     selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
     selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
     selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
     selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12996,8 +13200,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity?: number
+    address?: string | null
     notes?: string | null
     status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13013,8 +13220,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity?: number
+    address?: string | null
     notes?: string | null
     status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13028,8 +13238,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13045,8 +13258,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13061,8 +13277,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity?: number
+    address?: string | null
     notes?: string | null
     status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13076,8 +13295,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13092,8 +13314,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -13487,6 +13712,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     image?: SortOrder
+    category?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13496,6 +13722,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     image?: SortOrder
+    category?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13505,6 +13732,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     image?: SortOrder
+    category?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -13556,10 +13784,17 @@ export namespace Prisma {
     selectedCake?: SortOrder
     selectedSize?: SortOrder
     selectedPrice?: SortOrder
+    selectedAddress?: SortOrder
     selectedNotes?: SortOrder
+    selectedQuantity?: SortOrder
+    customImageUrl?: SortOrder
     lastMessageAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type WhatsAppConversationAvgOrderByAggregateInput = {
+    selectedQuantity?: SortOrder
   }
 
   export type WhatsAppConversationMaxOrderByAggregateInput = {
@@ -13570,7 +13805,10 @@ export namespace Prisma {
     selectedCake?: SortOrder
     selectedSize?: SortOrder
     selectedPrice?: SortOrder
+    selectedAddress?: SortOrder
     selectedNotes?: SortOrder
+    selectedQuantity?: SortOrder
+    customImageUrl?: SortOrder
     lastMessageAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13584,10 +13822,22 @@ export namespace Prisma {
     selectedCake?: SortOrder
     selectedSize?: SortOrder
     selectedPrice?: SortOrder
+    selectedAddress?: SortOrder
     selectedNotes?: SortOrder
+    selectedQuantity?: SortOrder
+    customImageUrl?: SortOrder
     lastMessageAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type WhatsAppConversationSumOrderByAggregateInput = {
+    selectedQuantity?: SortOrder
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type WhatsAppConversationScalarRelationFilter = {
@@ -13604,8 +13854,11 @@ export namespace Prisma {
     size?: SortOrder
     price?: SortOrder
     quantity?: SortOrder
+    address?: SortOrder
     notes?: SortOrder
     status?: SortOrder
+    isCustom?: SortOrder
+    customImageUrl?: SortOrder
     deliveryDate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13624,8 +13877,11 @@ export namespace Prisma {
     size?: SortOrder
     price?: SortOrder
     quantity?: SortOrder
+    address?: SortOrder
     notes?: SortOrder
     status?: SortOrder
+    isCustom?: SortOrder
+    customImageUrl?: SortOrder
     deliveryDate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13640,8 +13896,11 @@ export namespace Prisma {
     size?: SortOrder
     price?: SortOrder
     quantity?: SortOrder
+    address?: SortOrder
     notes?: SortOrder
     status?: SortOrder
+    isCustom?: SortOrder
+    customImageUrl?: SortOrder
     deliveryDate?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -13649,6 +13908,14 @@ export namespace Prisma {
 
   export type WhatsAppOrderSumOrderByAggregateInput = {
     quantity?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type UserCreateNestedOneWithoutPostsInput = {
@@ -13955,6 +14222,10 @@ export namespace Prisma {
     connect?: WhatsAppConversationWhereUniqueInput
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type WhatsAppConversationUpdateOneRequiredWithoutOrdersNestedInput = {
     create?: XOR<WhatsAppConversationCreateWithoutOrdersInput, WhatsAppConversationUncheckedCreateWithoutOrdersInput>
     connectOrCreate?: WhatsAppConversationCreateOrConnectWithoutOrdersInput
@@ -14149,6 +14420,19 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type UserCreateWithoutPostsInput = {
@@ -14548,6 +14832,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     image: string
+    category?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -14557,6 +14842,7 @@ export namespace Prisma {
     name: string
     description?: string | null
     image: string
+    category?: string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -14582,6 +14868,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     image?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14591,6 +14878,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     image?: StringFieldUpdateOperationsInput | string
+    category?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -14603,8 +14891,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity?: number
+    address?: string | null
     notes?: string | null
     status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14618,8 +14909,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity?: number
+    address?: string | null
     notes?: string | null
     status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14663,8 +14957,11 @@ export namespace Prisma {
     size?: StringFilter<"WhatsAppOrder"> | string
     price?: StringFilter<"WhatsAppOrder"> | string
     quantity?: IntFilter<"WhatsAppOrder"> | number
+    address?: StringNullableFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableFilter<"WhatsAppOrder"> | string | null
     status?: StringFilter<"WhatsAppOrder"> | string
+    isCustom?: BoolFilter<"WhatsAppOrder"> | boolean
+    customImageUrl?: StringNullableFilter<"WhatsAppOrder"> | string | null
     deliveryDate?: StringNullableFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
@@ -14678,7 +14975,10 @@ export namespace Prisma {
     selectedCake?: string | null
     selectedSize?: string | null
     selectedPrice?: string | null
+    selectedAddress?: string | null
     selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14692,7 +14992,10 @@ export namespace Prisma {
     selectedCake?: string | null
     selectedSize?: string | null
     selectedPrice?: string | null
+    selectedAddress?: string | null
     selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14722,7 +15025,10 @@ export namespace Prisma {
     selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
     selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
     selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
     selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14736,7 +15042,10 @@ export namespace Prisma {
     selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
     selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
     selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
     selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14889,8 +15198,11 @@ export namespace Prisma {
     size: string
     price: string
     quantity?: number
+    address?: string | null
     notes?: string | null
     status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14904,8 +15216,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14919,8 +15234,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14934,8 +15252,11 @@ export namespace Prisma {
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

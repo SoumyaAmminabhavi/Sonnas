@@ -240,6 +240,53 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
+  // ── Direct order from website ("Hi! I'd like to order: CakeName") ──────
+  const orderMatch = input.match(/(?:i(?:'|')?d like to order:\s*|order:\s*)(.+)/i);
+  if (orderMatch) {
+    const cakeName = orderMatch[1]!.trim();
+    const cakes = await safeGetCakes();
+    const selectedProduct = cakes.find(
+      (p) =>
+        p.name.toLowerCase() === cakeName.toLowerCase() ||
+        p.name.toLowerCase().includes(cakeName.toLowerCase()) ||
+        cakeName.toLowerCase().includes(p.name.toLowerCase())
+    ) ?? null;
+
+    if (selectedProduct) {
+      await updateState(msg.from, "SELECTING_SIZE", {
+        selectedCake: selectedProduct.name,
+        selectedSize: null,
+        selectedPrice: null,
+      });
+
+      // Send product image
+      if (selectedProduct.image) {
+        await sendImageMessage(
+          msg.from,
+          selectedProduct.image,
+          `*${selectedProduct.name}*\n\n${selectedProduct.description ?? ""}`
+        );
+      }
+
+      const options = selectedProduct.options ?? [];
+      const buttons = options.slice(0, 2).map((opt, idx) => ({
+        id: `size_${idx}`,
+        title: `${opt.size} — ${opt.price}`,
+      }));
+      buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
+
+      await sendInteractiveButtons(
+        msg.from,
+        `Hi ${msg.name ?? "there"}! 👋\n\nGreat choice! Choose your size for *${selectedProduct.name}*:`,
+        buttons
+      );
+      return;
+    }
+    // If cake not found, fall through to welcome
+    await sendWelcome(msg.from, msg.name);
+    return;
+  }
+
   if (input === "menu" || input === "cakes" || interactiveId === "btn_menu") {
     await updateState(msg.from, "BROWSING_MENU", {
       selectedCake: null,
@@ -559,10 +606,12 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   const options = selectedProduct.options ?? [];
-  const buttons = options.map((opt, idx) => ({
+  // WhatsApp allows max 3 buttons — use up to 2 sizes + Back to Menu
+  const buttons = options.slice(0, 2).map((opt, idx) => ({
     id: `size_${idx}`,
     title: `${opt.size} — ${opt.price}`,
   }));
+  buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
   await sendInteractiveButtons(
     msg.from,

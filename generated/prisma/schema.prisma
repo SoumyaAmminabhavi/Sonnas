@@ -75,6 +75,7 @@ model Cake {
   name        String
   description String?
   image       String
+  category    String   @default("General")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -94,14 +95,19 @@ model CakeOption {
 // ─── WhatsApp Automation ────────────────────────────────────────────────────
 
 model WhatsAppConversation {
-  id            String   @id @default(cuid())
-  phone         String   @unique
-  name          String?
-  state         String   @default("IDLE")
-  selectedCake  String?
-  selectedSize  String?
-  selectedPrice String?
-  selectedNotes String?
+  id               String  @id @default(cuid())
+  phone            String  @unique
+  name             String?
+  state            String  @default("IDLE")
+  selectedCake     String?
+  selectedSize     String?
+  selectedPrice    String?
+  selectedAddress  String?
+  selectedNotes    String?
+  selectedQuantity Int?    @default(1)
+
+  customImageUrl String?
+
   lastMessageAt DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -110,16 +116,21 @@ model WhatsAppConversation {
 }
 
 model WhatsAppOrder {
-  id           String   @id @default(cuid())
-  orderNumber  String   @unique
+  id           String  @id @default(cuid())
+  orderNumber  String  @unique
   phone        String
   customerName String?
   cakeName     String
   size         String
   price        String
-  quantity     Int      @default(1)
+  quantity     Int     @default(1)
+  address      String?
   notes        String?
-  status       String   @default("PENDING")
+  status       String  @default("PENDING")
+
+  isCustom       Boolean @default(false)
+  customImageUrl String?
+
   deliveryDate String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -171,6 +171,7 @@ exports.Prisma.CakeScalarFieldEnum = {
   name: 'name',
   description: 'description',
   image: 'image',
+  category: 'category',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -191,7 +192,10 @@ exports.Prisma.WhatsAppConversationScalarFieldEnum = {
   selectedCake: 'selectedCake',
   selectedSize: 'selectedSize',
   selectedPrice: 'selectedPrice',
+  selectedAddress: 'selectedAddress',
   selectedNotes: 'selectedNotes',
+  selectedQuantity: 'selectedQuantity',
+  customImageUrl: 'customImageUrl',
   lastMessageAt: 'lastMessageAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -206,8 +210,11 @@ exports.Prisma.WhatsAppOrderScalarFieldEnum = {
   size: 'size',
   price: 'price',
   quantity: 'quantity',
+  address: 'address',
   notes: 'notes',
   status: 'status',
+  isCustom: 'isCustom',
+  customImageUrl: 'customImageUrl',
   deliveryDate: 'deliveryDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

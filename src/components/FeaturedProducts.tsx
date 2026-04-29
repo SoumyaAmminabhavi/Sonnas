@@ -64,7 +64,7 @@ export const FeaturedProducts = () => {
                     </div>
                   )}
                   <a 
-                    href={`https://wa.me/${env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi Sonna's! I am interested in ordering the ${cake.name}.`)}`}
+                    href={`https://wa.me/${env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I'd like to order: ${cake.name}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-xs text-xs uppercase tracking-widest text-text-muted border-b border-transparent hover:border-rose hover:text-rose transition-default cursor-pointer inline-flex items-center gap-2"
