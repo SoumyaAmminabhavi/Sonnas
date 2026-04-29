@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
+import '../services/supabase_service.dart';
 
 // Brand Colors - Sweet Pink Bakery Theme
 const Color _primaryColor = Color(0xFFFF4D8D);
@@ -97,65 +98,103 @@ class _MenuPageState extends State<MenuPage> {
             },
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                      isDesktop ? 48 : 24, 20, isDesktop ? 48 : 24, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "OUR MENU",
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _primaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 9,
-                          letterSpacing: 2.0,
-                        ),
+          body: FutureBuilder<List<Map<String, dynamic>>>(
+            future: SupabaseService.fetchMenu(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) debugPrint('DEBUG: Cakes Count: ${snapshot.data?.length}');
+              if (snapshot.hasError) debugPrint('DEBUG: Menu Error: ${snapshot.error}');
+              
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              final List<Map<String, dynamic>> rawCakes = snapshot.data ?? [];
+              final List<_MenuItem> items = rawCakes.map((data) {
+                // Handle nested options for price/size
+                final options = data['CakeOption'] as List? ?? [];
+                final basePrice = options.isNotEmpty ? "₹${options[0]['price']}" : "N/A";
+                final baseServes = options.isNotEmpty ? "Serves ${options[0]['serves']}" : "";
+
+                return _MenuItem(
+                  name: data['name'] ?? 'Untitled Cake',
+                  category: data['category'] ?? 'General',
+                  price: basePrice,
+                  description: data['description'] ?? '',
+                  serves: baseServes,
+                  weight: "Standard",
+                  imageUrl: SupabaseService.getPublicUrl(data['image']),
+                );
+              }).toList();
+
+              return CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          isDesktop ? 48 : 24, 20, isDesktop ? 48 : 24, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "OUR MENU",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: _primaryColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Atelier Collection",
+                            style: GoogleFonts.notoSerif(
+                              color: _secondaryColor,
+                              fontSize: isDesktop ? 32 : 24,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${items.length} items cataloged",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: _secondaryColor.withValues(alpha: 0.4),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Divider(color: _secondaryColor.withValues(alpha: 0.05)),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Atelier Collection",
-                        style: GoogleFonts.notoSerif(
-                          color: _secondaryColor,
-                          fontSize: isDesktop ? 32 : 24,
-                          fontStyle: FontStyle.italic,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: EdgeInsets.fromLTRB(
+                        isDesktop ? 48 : 16, 16, isDesktop ? 48 : 16, 100),
+                    sliver: SliverGrid(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = items[index];
+                          debugPrint('DEBUG: Menu Item Image URL: ${item.imageUrl}');
+                          return _MenuItemCard(item: item);
+                        },
+                        childCount: items.length,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "${_items.length} items cataloged",
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withValues(alpha: 0.4),
-                          fontSize: 12,
-                        ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 130, 
                       ),
-                      const SizedBox(height: 16),
-                      Divider(color: _secondaryColor.withValues(alpha: 0.05)),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                    isDesktop ? 48 : 16, 16, isDesktop ? 48 : 16, 100),
-                sliver: SliverGrid(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _MenuItemCard(item: _items[index]),
-                    childCount: _items.length,
-                  ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 130, // Fixed height for a horizontal look
-                  ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         );
       },
@@ -209,10 +248,17 @@ class _MenuItemCard extends StatelessWidget {
             child: SizedBox(
               width: 110,
               height: double.infinity,
-              child: item.imageUrl.isNotEmpty
+              child: item.imageUrl.startsWith('http')
                   ? Image.network(
                       item.imageUrl,
                       fit: BoxFit.cover,
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          color: _secondaryColor.withValues(alpha: 0.05),
+                          child: const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
+                        );
+                      },
                       errorBuilder: (_, _, _) => _placeholder(),
                     )
                   : _placeholder(),

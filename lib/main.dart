@@ -4,8 +4,32 @@ import 'package:google_fonts/google_fonts.dart';
 import 'owner/owner_dashboard.dart';
 import 'owner/menu_page.dart';
 
-void main() {
-  runApp(const PatisserieApp());
+import 'services/supabase_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+void main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    
+    // Load environment variables
+    await dotenv.load(fileName: ".env");
+    
+    // Explicit initialization in main
+    await Supabase.initialize(
+      url: SupabaseService.supabaseUrl,
+      anonKey: SupabaseService.supabaseAnonKey,
+    );
+    
+    runApp(const PatisserieApp());
+  } catch (e) {
+    debugPrint('Critical Initialization Error: $e');
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(child: Text('Initialization Error: $e')),
+      ),
+    ));
+  }
 }
 
 class PatisserieApp extends StatelessWidget {
@@ -212,11 +236,8 @@ class LandingPage extends StatelessWidget {
                     _ContactGlassIcon(
                       icon: Icons.photo_camera_outlined,
                       cs: cs,
-                      onPressed: () => _showContactInfo(
-                        context,
-                        "Instagram",
-                        "@sonnas__",
-                      ),
+                      onPressed: () =>
+                          _showContactInfo(context, "Instagram", "@sonnas__"),
                     ),
                     const SizedBox(width: 24),
                     _ContactGlassIcon(
@@ -325,7 +346,9 @@ class LandingPage extends StatelessWidget {
                 // Scroll down arrow
                 Icon(
                   Icons.keyboard_double_arrow_down,
-                  color: const Color(0xFFFFB6D3), // outline-variant (Pastel Pink)
+                  color: const Color(
+                    0xFFFFB6D3,
+                  ), // outline-variant (Pastel Pink)
                 ),
                 const SizedBox(height: 100), // Space for bottom nav
               ],
@@ -360,7 +383,9 @@ class _ContactGlassIcon extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: cs.surface.withValues(alpha: 0.5),
-        border: Border.all(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFFD8C1C6).withValues(alpha: 0.3),
+        ),
       ),
       child: ClipOval(
         child: BackdropFilter(
@@ -376,7 +401,6 @@ class _ContactGlassIcon extends StatelessWidget {
     );
   }
 }
-
 
 class ModernDrawer extends StatelessWidget {
   const ModernDrawer({super.key});
@@ -428,7 +452,9 @@ class ModernDrawer extends StatelessWidget {
 
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Divider(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
+                child: Divider(
+                  color: const Color(0xFFD8C1C6).withValues(alpha: 0.3),
+                ),
               ),
 
               _DrawerItem(icon: Icons.info_outline, label: "Business Info"),

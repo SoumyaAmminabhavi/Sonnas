@@ -1,27 +1,46 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  // These will be filled when your friend sends the credentials
-  static const String _supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String _supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  static String get supabaseUrl => dotenv.get('SUPABASE_URL', fallback: '');
+  static String get supabaseAnonKey => dotenv.get('SUPABASE_ANON_KEY', fallback: '');
 
   static Future<void> initialize() async {
     await Supabase.initialize(
-      url: _supabaseUrl,
-      anonKey: _supabaseAnonKey,
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
     );
   }
 
   static SupabaseClient get client => Supabase.instance.client;
 
-  // Example: Fetching Orders
+  // Helper to get public URL for images in the 'cakes' bucket
+  static String getPublicUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    // Already a full web link — use directly
+    if (path.startsWith('https://') || path.startsWith('http://')) return path;
+    // Local device paths (e.g. whatsapp://) can't be loaded — skip them
+    if (!path.contains('/') || path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
+    
+    return client.storage.from('cakes').getPublicUrl(path);
+  }
+
+  // Real-time stream for WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
+  static Stream<List<Map<String, dynamic>>> getOrdersStream() {
+    return client
+        .from('WhatsAppOrder')
+        .stream(primaryKey: ['id'])
+        .order('createdAt', ascending: false);
+  }
+
+  // Fetching WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
   static Future<List<Map<String, dynamic>>> fetchOrders() async {
     try {
       final data = await client
-          .from('orders')
+          .from('WhatsAppOrder')
           .select()
-          .order('created_at', ascending: false);
+          .order('createdAt', ascending: false);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
       debugPrint('Error fetching orders: $e');
@@ -29,13 +48,30 @@ class SupabaseService {
     }
   }
 
-  // Example: Fetching Menu Items
+  // Fetching Menu Cakes (Matching Prisma 'Cake' and 'CakeOption')
   static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {
-      final data = await client.from('menu_items').select();
+      // Fetch cakes with their related options
+      final data = await client
+          .from('Cake')
+          .select('*, CakeOption(*)');
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
       debugPrint('Error fetching menu: $e');
+      return [];
+    }
+  }
+
+  // Fetching Conversations for CRM purposes
+  static Future<List<Map<String, dynamic>>> fetchConversations() async {
+    try {
+      final data = await client
+          .from('WhatsAppConversation')
+          .select()
+          .order('lastMessageAt', ascending: false);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Error fetching conversations: $e');
       return [];
     }
   }

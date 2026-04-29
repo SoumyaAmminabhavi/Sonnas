@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'order_details_page.dart';
+import '../services/supabase_service.dart';
 
 class ManageOrdersPage extends StatefulWidget {
   final ValueChanged<int>? onTabChanged;
@@ -117,45 +118,57 @@ class _OrdersList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final orders = [
-      _OrderData(
-        orderId: "#1234",
-        customerName: "Clarisse d'Aubigne",
-        status: "In Preparation",
-        item: "Valrhona Ganache Signature Cake",
-        time: "Pickup at 2:30 PM",
-        imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuD7Gq6HWxTdg7A6sa8OvUP1JcXAw0vz0eI2EgDEc9Eslf0i8VnMVRb_U_EHAMDTeKfhBTt76lvg7av1LhtaOwID67IDxGjhfcT1mbTj8H4qxfQGQ7oEnkHQPVspmQ720rsydY97x98wPQ-XtJQ1Y1dGQysPSmJu5SIkw_4tzVzzxvxEg5tUkJJRDS05viIfPr3bTJNVDtycTyxeXoNv3_X_jQcpYB-tZMJnM6f_0pLswGschltTUdlHnuDxpjnjF0hQQJyPW3BndGuJ",
-        statusBg: cs.primaryContainer.withValues(alpha: 0.9),
-        statusFg: cs.onPrimaryContainer,
-      ),
-      _OrderData(
-        orderId: "#1245",
-        customerName: "Julien Mercier",
-        status: "Ready for Pickup",
-        item: "Spring Palette Macaron Box (24)",
-        time: "Pickup at 4:15 PM",
-        imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuAPSKFQqtZpwtXveJNr2d1V7tki9SvDwgoH4vFaWnqY9H7Zq-9PQTu_f3xsONjHxNG_UakkYMBEcBJL143MHo7uGp-S_Uv0aQMUpRM6UBi0bxrYlsaqLduyNaBeAn4QwTvZ8H0P4EmXzbpomz2Tuv9hrxNX90MgsnPJFgEHskhzh3D48Wom5CDl4Qsz03I3Yst0PBueJT7nkQqRbdcivgBj00OiIRNeQe5iAfmx3TcZoHYheeREYO-07qovWenzsbddoXsBIXAQAhcm",
-        statusBg: const Color(0xFFFFB6D3).withValues(alpha: 0.9), // Pastel Pink
-        statusFg: cs.onSecondary,
-      ),
-      _OrderData(
-        orderId: "#1248",
-        customerName: "The Ritz-Carlton Concierge",
-        status: "In Preparation",
-        item: "Boulangerie Morning Selection (50pcs)",
-        time: "Delivery at 6:00 AM (Tomorrow)",
-        imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuB2nj5HtmD6PTym29duFSO0D_Exy79sufWG0R6Icg0IEEgwZazg2A9idNWaWHQHOo5Jgo4YgkOgsdtEpu03Vcg6m659JJvSOLaa2DnYpevUxby6G6ZuMGXpKydG5nsI0ddtlG4DZiI0P4o-KNc32lbZEZPyCCuMKxR9uRKa92rhJ4orJRIVb88D_3t_Dkkx_iFIszRkWF4vg_YRha0TE_007IwHf4P7XSMvyawZ5Z9XeWTjHfrkxI6B3TGK9SrkH5S9mBwDUleyG8px",
-        statusBg: cs.primaryContainer.withValues(alpha: 0.9),
-        statusFg: cs.onPrimaryContainer,
-      ),
-    ];
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: SupabaseService.getOrdersStream(),
+      builder: (context, snapshot) {
+        debugPrint('DEBUG: Orders Stream State: ${snapshot.connectionState}');
+        if (snapshot.hasError) debugPrint('DEBUG: Orders Stream Error: ${snapshot.error}');
+        if (snapshot.hasData) debugPrint('DEBUG: Orders Count: ${snapshot.data?.length}');
 
-    return ListView.separated(
-      padding: const EdgeInsets.all(24),
-      itemCount: orders.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
-      itemBuilder: (context, index) =>
-          _OrderCompactCard(cs: cs, data: orders[index], onTabChanged: onTabChanged),
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        final List<Map<String, dynamic>> rawOrders = snapshot.data ?? [];
+        
+        if (rawOrders.isEmpty) {
+          return const Center(child: Text("No active orders found."));
+        }
+
+        final orders = rawOrders.map((data) {
+          final status = data['status'] ?? 'PENDING';
+          Color statusBg = cs.primaryContainer.withValues(alpha: 0.9);
+          Color statusFg = cs.onPrimaryContainer;
+
+          if (status == 'COMPLETED') {
+            statusBg = const Color(0xFFFFB6D3).withValues(alpha: 0.9);
+            statusFg = cs.onSecondary;
+          }
+
+          return _OrderData(
+            orderId: "#${data['orderNumber'] ?? '---'}",
+            customerName: data['customerName'] ?? 'Anonymous',
+            status: status,
+            item: data['cakeName'] ?? 'Custom Cake',
+            time: data['deliveryDate'] ?? 'Not scheduled',
+            imageUrl: SupabaseService.getPublicUrl(data['customImageUrl']),
+            statusBg: statusBg,
+            statusFg: statusFg,
+          );
+        }).toList();
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(24),
+          itemCount: orders.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 16),
+          itemBuilder: (context, index) =>
+              _OrderCompactCard(cs: cs, data: orders[index], onTabChanged: onTabChanged),
+        );
+      },
     );
   }
 }
@@ -227,11 +240,27 @@ class _OrderCompactCard extends StatelessWidget {
             // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                data.imageUrl,
-                width: 90,
-                height: 90,
-                fit: BoxFit.cover,
+              child: Builder(
+                builder: (context) {
+                  final url = data.imageUrl;
+                  return url.startsWith('http') 
+                    ? Image.network(
+                        url,
+                        width: 90,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            width: 90, height: 90,
+                            color: cs.secondaryContainer.withValues(alpha: 0.1),
+                            child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => _ImagePlaceholder(cs: cs),
+                      )
+                    : _ImagePlaceholder(cs: cs);
+                }
               ),
             ),
             const SizedBox(width: 16),
@@ -351,6 +380,30 @@ class _CompactInfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  final ColorScheme cs;
+  const _ImagePlaceholder({required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 90,
+      height: 90,
+      decoration: BoxDecoration(
+        color: cs.primaryContainer.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.cake_outlined,
+          color: cs.primary.withValues(alpha: 0.3),
+          size: 32,
+        ),
+      ),
     );
   }
 }
