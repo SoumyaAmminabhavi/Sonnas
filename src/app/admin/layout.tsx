@@ -85,7 +85,7 @@ export default function AdminRootLayout({
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 relative">
+      <main className="flex-1 relative overflow-y-auto">
         {children}
       </main>
     </div>
