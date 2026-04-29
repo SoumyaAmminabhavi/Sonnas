@@ -116,7 +116,9 @@ class _MenuPageState extends State<MenuPage> {
               final List<_MenuItem> items = rawCakes.map((data) {
                 // Handle nested options for price/size
                 final options = data['CakeOption'] as List? ?? [];
-                final basePrice = options.isNotEmpty ? "₹${options[0]['price']}" : "N/A";
+                final basePrice = options.isNotEmpty 
+                    ? SupabaseService.formatPrice(options[0]['price']) 
+                    : "N/A";
                 final baseServes = options.isNotEmpty ? "Serves ${options[0]['serves']}" : "";
 
                 return _MenuItem(

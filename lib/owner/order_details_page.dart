@@ -189,7 +189,7 @@ class OrderDetailsPage extends StatelessWidget {
                                               CrossAxisAlignment.end,
                                           children: [
                                             Text(
-                                              "${order['price'] ?? '0'}",
+                                              SupabaseService.formatPrice(order['price']),
                                               style: GoogleFonts.notoSerif(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.bold,
@@ -244,7 +244,7 @@ class OrderDetailsPage extends StatelessWidget {
                                       return _SelectionTile(
                                         title: order['cakeName'] ?? 'Custom Creation',
                                         subtitle: "${order['size'] ?? 'Standard'} • ${order['quantity'] ?? 1} Units",
-                                        price: "${order['price'] ?? '0'}",
+                                        price: SupabaseService.formatPrice(order['price']),
                                         imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
                                         cs: cs,
                                       );

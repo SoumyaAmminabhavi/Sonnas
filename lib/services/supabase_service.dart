@@ -26,6 +26,14 @@ class SupabaseService {
     return client.storage.from('cakes').getPublicUrl(path);
   }
 
+  // Format price consistently (ensures one ₹ symbol)
+  static String formatPrice(dynamic price) {
+    if (price == null) return "₹0";
+    String p = price.toString();
+    if (p.startsWith('₹')) return p;
+    return "₹$p";
+  }
+
   // Real-time stream for WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
   static Stream<List<Map<String, dynamic>>> getOrdersStream() {
     return client
