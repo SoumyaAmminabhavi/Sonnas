@@ -63,6 +63,7 @@ async function safeGetCakeByName(name: string): Promise<Cake | null> {
 }
 
 async function safeGetCakeById(id: string): Promise<Cake | null> {
+  console.log(`[WhatsApp] safeGetCakeById: looking for ID "${id}"`);
   try {
     if (id.length > 5) {
       const result = await withTimeout(
@@ -72,19 +73,27 @@ async function safeGetCakeById(id: string): Promise<Cake | null> {
         }),
         DB_TIMEOUT
       );
-      return (result as unknown as Cake) ?? null;
+      if (result) return result as unknown as Cake;
+      console.warn(`[WhatsApp] Cake ID "${id}" not found in DB, trying local products...`);
     }
+    
+    // Try local products as fallback
     const localId = parseInt(id, 10);
-    return (products.find((p) => p.id === localId) as unknown as Cake) ?? null;
-  } catch {
+    const found = products.find((p) => p.id === localId || p.id.toString() === id);
+    if (found) return found as unknown as Cake;
+    
+    // Try fuzzy match by name if id is a name? No, safeGetCakeByName handles that.
+    return null;
+  } catch (e) {
+    console.error(`[WhatsApp] safeGetCakeById error for "${id}":`, e);
     const localId = parseInt(id, 10);
-    return (products.find((p) => p.id === localId) as unknown as Cake) ?? null;
+    return (products.find((p) => p.id === localId || p.id.toString() === id) as unknown as Cake) ?? null;
   }
 }
 
 // ─── DB Resilience ─────────────────────────────────────────────────────────
 
-const DB_TIMEOUT = 3000; // 3 seconds
+const DB_TIMEOUT = 5000; // 5 seconds
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
@@ -597,9 +606,10 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   if (!selectedProduct) {
+    console.warn(`[WhatsApp] handleCakeSelection: Failed to find cake. interactiveId="${msg.interactiveId}", text="${msg.text}"`);
     await sendTextMessage(
       msg.from,
-      "I couldn't find that cake. 🤔\n\nReply *Menu* to see our full list, or type the name of a cake!"
+      `I couldn't find that cake. 🤔 (ID: ${msg.interactiveId?.replace("cake_", "") || "none"})\n\nReply *Menu* to see our full list, or type the name of a cake!`
     );
     return;
   }
