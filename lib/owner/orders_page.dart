@@ -139,34 +139,54 @@ class _OrdersList extends StatelessWidget {
           return const Center(child: Text("No active orders found."));
         }
 
-        final orders = rawOrders.map((data) {
-          final status = data['status'] ?? 'PENDING';
-          Color statusBg = cs.primaryContainer.withValues(alpha: 0.9);
-          Color statusFg = cs.onPrimaryContainer;
+        return FutureBuilder<List<Map<String, dynamic>>>(
+          future: SupabaseService.fetchMenu(), // Fetch menu for image lookups
+          builder: (context, menuSnapshot) {
+            final menu = menuSnapshot.data ?? [];
+            
+            final orders = rawOrders.map((data) {
+              final status = data['status'] ?? 'PENDING';
+              Color statusBg = cs.primaryContainer.withValues(alpha: 0.9);
+              Color statusFg = cs.onPrimaryContainer;
 
-          if (status == 'COMPLETED') {
-            statusBg = const Color(0xFFFFB6D3).withValues(alpha: 0.9);
-            statusFg = cs.onSecondary;
-          }
+              if (status == 'COMPLETED') {
+                statusBg = const Color(0xFFFFB6D3).withValues(alpha: 0.9);
+                statusFg = cs.onSecondary;
+              }
 
-          return _OrderData(
-            orderId: "#${data['orderNumber'] ?? '---'}",
-            customerName: data['customerName'] ?? 'Anonymous',
-            status: status,
-            item: data['cakeName'] ?? 'Custom Cake',
-            time: data['deliveryDate'] ?? 'Not scheduled',
-            imageUrl: SupabaseService.getPublicUrl(data['customImageUrl']),
-            statusBg: statusBg,
-            statusFg: statusFg,
-          );
-        }).toList();
+              // SMART IMAGE LOOKUP:
+              // 1. Try custom image from WhatsApp first
+              // 2. If empty, find matching cake in menu and use its image
+              String imageUrl = data['customImageUrl'] ?? '';
+              if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+                final String orderedCake = data['cakeName'] ?? '';
+                final matchingCake = menu.firstWhere(
+                  (c) => (c['name'] as String).toLowerCase() == orderedCake.toLowerCase(),
+                  orElse: () => {},
+                );
+                imageUrl = matchingCake['image'] ?? '';
+              }
 
-        return ListView.separated(
-          padding: const EdgeInsets.all(24),
-          itemCount: orders.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) =>
-              _OrderCompactCard(cs: cs, data: orders[index], onTabChanged: onTabChanged),
+              return _OrderData(
+                orderId: "#${data['orderNumber'] ?? '---'}",
+                customerName: data['customerName'] ?? 'Anonymous',
+                status: status,
+                item: data['cakeName'] ?? 'Custom Cake',
+                time: data['deliveryDate'] ?? 'Not scheduled',
+                imageUrl: SupabaseService.getPublicUrl(imageUrl),
+                statusBg: statusBg,
+                statusFg: statusFg,
+              );
+            }).toList();
+
+            return ListView.separated(
+              padding: const EdgeInsets.all(24),
+              itemCount: orders.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) =>
+                  _OrderCompactCard(cs: cs, data: orders[index], onTabChanged: onTabChanged),
+            );
+          },
         );
       },
     );
