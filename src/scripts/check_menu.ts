@@ -9,10 +9,9 @@ async function main() {
     console.log('Cake count:', count);
     
     const cakes = await prisma.cake.findMany({
-      include: { options: true },
-      take: 5
+      select: { name: true, category: true }
     });
-    console.log('Sample cakes:', JSON.stringify(cakes, null, 2));
+    console.log('All Cakes:', JSON.stringify(cakes, null, 2));
   } catch (e) {
     console.error('Error fetching cakes:', e);
   } finally {

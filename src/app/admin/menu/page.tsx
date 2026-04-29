@@ -181,7 +181,7 @@ export default function AdminMenuPage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-heading text-[#2B2B2B]">{cake.name}</h3>
                     <span className="text-[10px] bg-[#F4C2C2]/20 text-[#F4C2C2] px-2 py-1 rounded-full uppercase tracking-wider font-bold">
-                      {(cake as { category?: string | null }).category ?? "General"}
+                      {cake.category ? cake.category : "General"}
                     </span>
                   </div>
                   <p className="text-sm text-[#9A9A9A] mb-4 line-clamp-2">{cake.description}</p>
