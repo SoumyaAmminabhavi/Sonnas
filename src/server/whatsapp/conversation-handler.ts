@@ -241,7 +241,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   }
 
   // ── Direct order from website ("Hi! I'd like to order: CakeName") ──────
-  const orderMatch = input.match(/(?:i(?:'|')?d like to order:\s*|order:\s*)(.+)/i);
+  const orderMatch = /(?:i(?:'|')?d like to order:\s*|order:\s*)(.+)/i.exec(input);
   if (orderMatch) {
     const cakeName = orderMatch[1]!.trim();
     const cakes = await safeGetCakes();

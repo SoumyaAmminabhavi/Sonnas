@@ -11,4 +11,4 @@ async function main() {
   console.log('Order Details:', JSON.stringify(order, null, 2));
 }
 
-main().finally(() => prisma.$disconnect());
+void main().finally(() => prisma.$disconnect());
