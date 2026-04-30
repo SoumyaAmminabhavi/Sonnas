@@ -8,46 +8,30 @@ function AdminNavbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const navItems = [
-    { name: "Orders", href: "/admin/whatsapp", icon: "📋" },
-    { name: "Menu", href: "/admin/menu", icon: "🧁" },
-  ];
+  const isOrdersPage = pathname === "/admin/whatsapp";
+  const isMenuPage = pathname === "/admin/menu";
 
   return (
-    <nav className="flex items-center gap-4">
-      {navItems.map((item) => {
-        const isActive = pathname === item.href;
-        const isOrders = item.name === "Orders";
-        
-        return (
-          <div key={item.name} className="flex items-center gap-1">
-            <LinkNext
-              href={item.href}
-              className={`flex items-center gap-2 px-6 py-2 rounded-full transition-all ${
-                isActive
-                  ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
-                  : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span className="text-sm font-medium">{item.name}</span>
-            </LinkNext>
-            
-            {isOrders && isActive && (
-              <LinkNext
-                href={pathname + (searchParams.get("sidebar") === "collapsed" ? "" : "?sidebar=collapsed")}
-                className="p-2 hover:bg-white/5 rounded-full text-[#F4C2C2] transition-colors"
-                title={searchParams.get("sidebar") === "collapsed" ? "Show Filters" : "Hide Filters"}
-              >
-                <span className="text-lg">
-                  {searchParams.get("sidebar") === "collapsed" ? "→" : "←"}
-                </span>
-              </LinkNext>
-            )}
-          </div>
-        );
-      })}
-    </nav>
+    <div className="flex items-center gap-4">
+      {isMenuPage ? (
+        <LinkNext
+          href="/admin/whatsapp"
+          className="flex items-center gap-2 px-6 py-2 rounded-full transition-all bg-white/5 text-[#9A9A9A] hover:bg-[#F4C2C2] hover:text-[#2B2B2B] hover:font-bold hover:shadow-lg"
+        >
+          <span className="text-lg">📋</span>
+          <span className="text-sm font-medium">Orders</span>
+        </LinkNext>
+      ) : isOrdersPage ? (
+        <LinkNext
+          href="/admin/menu"
+          className="flex items-center gap-2 px-6 py-2 rounded-full transition-all bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg hover:bg-white/10 hover:text-white"
+          title="Back to Menu"
+        >
+          <span className="text-lg">← 🧁</span>
+          <span className="text-sm font-medium">Menu</span>
+        </LinkNext>
+      ) : null}
+    </div>
   );
 }
 
