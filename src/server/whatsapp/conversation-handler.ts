@@ -46,6 +46,17 @@ export function clearMenuCache() {
   console.log("[WhatsApp] Menu cache cleared via Admin Panel.");
 }
 
+// ─── Conversation State Cache ─────────────────────────────────────────────
+// Eliminates the DB read on every incoming message.
+// The Map is keyed by phone number and holds the full conversation object.
+
+const convoCache = new Map<string, Conversation>();
+
+function updateConvoCache(phone: string, data: Partial<Conversation>) {
+  const existing = convoCache.get(phone) ?? { phone, state: "IDLE" } as Conversation;
+  convoCache.set(phone, { ...existing, ...data });
+}
+
 async function safeGetCakes(): Promise<Cake[]> {
   const now = Date.now();
   if (cakeCache && (now - lastCacheUpdate < CACHE_TTL)) {
@@ -197,35 +208,47 @@ function generateOrderNumber(): string {
 // ─── Get or create conversation ────────────────────────────────────────────
 
 async function getConversation(phone: string, name?: string): Promise<Conversation> {
+  // ── Cache hit: skip DB entirely ──────────────────────────────────────────
+  const cached = convoCache.get(phone);
+  if (cached) {
+    // Patch the name if we didn't have it before (fire-and-forget)
+    if (name && !cached.name) {
+      cached.name = name;
+      convoCache.set(phone, cached);
+      void db.whatsAppConversation.update({ where: { phone }, data: { name } }).catch(() => null);
+    }
+    console.log(`[WhatsApp] Conversation cache hit for ${phone} (state: ${cached.state})`);
+    return cached;
+  }
+
+  // ── Cache miss: load from DB and warm the cache ──────────────────────────
+  console.log(`[WhatsApp] Conversation cache miss for ${phone}. Loading from DB...`);
   try {
     let convo = await withTimeout(
-      db.whatsAppConversation.findUnique({
-        where: { phone },
-      }),
+      db.whatsAppConversation.findUnique({ where: { phone } }),
       DB_TIMEOUT
     );
 
     if (!convo) {
       convo = await withTimeout(
-        db.whatsAppConversation.create({
-          data: { phone, name },
-        }),
+        db.whatsAppConversation.create({ data: { phone, name } }),
         DB_TIMEOUT
       );
     } else if (name && !convo.name) {
       convo = await withTimeout(
-        db.whatsAppConversation.update({
-          where: { phone },
-          data: { name },
-        }),
+        db.whatsAppConversation.update({ where: { phone }, data: { name } }),
         DB_TIMEOUT
       );
     }
 
-    return convo as unknown as Conversation;
+    const result = convo as unknown as Conversation;
+    convoCache.set(phone, result);
+    return result;
   } catch {
     // Return a dummy object to allow the bot to continue with default state
-    return { phone, state: "IDLE", name: name ?? "Customer" } as unknown as Conversation;
+    const fallback = { phone, state: "IDLE", name: name ?? "Customer" } as unknown as Conversation;
+    convoCache.set(phone, fallback);
+    return fallback;
   }
 }
 
@@ -245,21 +268,17 @@ async function updateState(
     customImageUrl?: string | null;
   } = {}
 ) {
-  try {
-    await withTimeout(
-      db.whatsAppConversation.update({
-        where: { phone },
-        data: {
-          state,
-          lastMessageAt: new Date(),
-          ...extra,
-        },
-      }),
-      DB_TIMEOUT
-    );
-  } catch (e) {
-    console.error("[WhatsApp] updateState failed:", e);
-  }
+  // Update in-memory cache immediately (instant read for next message)
+  updateConvoCache(phone, { state, ...extra });
+
+  // Persist to DB in the background — don't block the reply
+  void withTimeout(
+    db.whatsAppConversation.update({
+      where: { phone },
+      data: { state, lastMessageAt: new Date(), ...extra },
+    }),
+    DB_TIMEOUT
+  ).catch((e) => console.error("[WhatsApp] updateState DB write failed:", e));
 }
 
 // ─── Main handler ──────────────────────────────────────────────────────────
@@ -403,7 +422,8 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     
     if (category === "INSTRUCTIONS" && state !== "ASKING_INSTRUCTIONS") {
       await updateState(msg.from, "ASKING_DELIVERY_DATE", { selectedNotes: msg.text });
-      const updated = await db.whatsAppConversation.findUnique({ where: { phone: msg.from } });
+      // Read from cache — no extra DB round-trip needed
+      const updated = convoCache.get(msg.from);
       
       // If we already have cake/size/address, go to delivery date selection
       if (updated?.selectedCake && updated?.selectedSize && updated?.selectedAddress) {
@@ -852,9 +872,8 @@ async function handleDeliveryDateInput(
     selectedDeliveryDate: deliveryDate,
   });
 
-  const updatedConvo = await db.whatsAppConversation.findUnique({
-    where: { phone: msg.from },
-  });
+  // Read from cache — no extra DB round-trip needed
+  const updatedConvo = convoCache.get(msg.from);
 
   const cake = await safeGetCakeByName(updatedConvo?.selectedCake ?? "");
 
@@ -945,9 +964,8 @@ async function handleConfirmation(
   // Create the order
   const orderNumber = generateOrderNumber();
 
-  const existingConvo = await db.whatsAppConversation.findUnique({
-    where: { phone: msg.from },
-  });
+  // Read from cache — no extra DB round-trip needed
+  const existingConvo = convoCache.get(msg.from);
 
   await db.whatsAppOrder.create({
     data: {
