@@ -16,48 +16,13 @@ class MenuPage extends StatefulWidget {
 }
 
 class _MenuPageState extends State<MenuPage> {
-  // Dummy menu items – replace with real data source later
-  final List<_MenuItem> _items = [
-    _MenuItem(
-      name: "Sonna's Classic Chocolate",
-      category: "Chocolate Based",
-      price: "₹675",
-      description: "Chocolate Whipped Ganache",
-      serves: "Serves 4–6",
-      weight: "600 grams",
-      imageUrl:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuByamhClb3gDhF3nngRFpLvkbtTTHarLWuqt4-agAtERKXjlvCqO0UX3yoFz8JcqTxXexzX6nYk_VgLcK0PhyPJcetaMu0wIt5XswIYgIbUVmdoLWucs7HsL6WEwnGYbjBT8Dju38uIOlCwkRSaksxz6v2pSSi1xjhD_tiuMHQWhwmm3o8mBSZGVB41NEqCjepzdUc_TgIx4FsF49JV6XFveVlL76uJKML55RWk6tpcySzc2TFE1MfrNg1sUXJ6BKv69tr904uK6oSO",
-    ),
-    _MenuItem(
-      name: "Rose Petal Macarons",
-      category: "French Collection",
-      price: "₹480",
-      description: "Delicate almond shell with rose cream",
-      serves: "Box of 12",
-      weight: "300 grams",
-      imageUrl:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuCM8kvDF0eQhzkrDce4yaFTqilGBWhOLlO7wx60ONJurXiVrOtd_OxtCoHsnovhs-8sOoq92Ge3JOQgpTx1oNV_v1IzLMg43-0LwUsR9OzGAfZccvybEMZ22DzEIM-srgN-y7WK9b4AR1SDByB7KIYM2HGlZM-MoZp92RfDAUA8G4G0UdbTulmCbP2ZjUea_9_CaMYy7htLKkWx57MRNRlbGuIw8KS6KwLl8N_IJE6tln_1kG0Yew4Fdjq7GVdOV1cKn4T_Ya6-u7-M",
-    ),
-    _MenuItem(
-      name: "Wild Strawberry Tart",
-      category: "Seasonal Specials",
-      price: "₹550",
-      description: "Fresh strawberries on vanilla custard",
-      serves: "Serves 2–4",
-      weight: "400 grams",
-      imageUrl:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuBgLiZjc9axvI-eFs8vO1zzxXSfph_zKSHA9tUul1gcWpf1QEOdqEipFJuCWmE0P8H9Mq_9T6s6P2dAUoW4WGiI94z-4QrxdHl7AYmzfzGCy5GOgFQAo4TmUwJnSFPSTtkV8bBW20fV0MurGRSB4jnPK111Qxuv2yiTQ2CIfFHGRGyXA1CZbUmlIs-v6A3RHMYNqdsl0PoOJJxyZ_lFRObqOKAnKPqc_4mCp1DvHn01byvns9Mc3JHBquVh_j04E5LWBNRgrLU-tRzQ",
-    ),
-    _MenuItem(
-      name: "Valrhona Signature Noir",
-      category: "Chocolate Based",
-      price: "₹920",
-      description: "Single-origin 72% dark chocolate mousse",
-      serves: "Serves 6–8",
-      weight: "800 grams",
-      imageUrl:
-          "https://lh3.googleusercontent.com/aida-public/AB6AXuBcgLx1wB_YtTPx7L-WwIzghvzvQLj43G009Tgdx1uD4KLxn2vWlH6YUZ1Q-lGTQDvpN7xaz-2nVbwjmzbWH5ylkGSkDiW8LNpmC5ljF6E-YfV1jzZ722iWXWt54gfNS20E0rusxK9a6S6r-7-OF0xFjPztm4XQ1cgCxkjCtUyNihoSVuaq8U0Mod44tySWkS4pqXYdjaaQfrsGu29MLQQJ8kscebLKA_DsNJP8ivJhk-YGokXGBIpPivIso3tcIiM_1tlyEnfpI0Od",
-    ),
+  Set<String> _selectedCategories = {'All'};
+  final List<String> _categories = [
+    'All',
+    'Chocolate Cakes',
+    'Vanilla Cakes',
+    'Tea Cakes',
+    'Seasonal Cakes',
   ];
 
   @override
@@ -81,7 +46,7 @@ class _MenuPageState extends State<MenuPage> {
             elevation: 6,
             shape: const CircleBorder(),
             onPressed: () async {
-              final result = await Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => AddMenuPage(
@@ -89,18 +54,12 @@ class _MenuPageState extends State<MenuPage> {
                   ),
                 ),
               );
-              if (result is _MenuItem) {
-                setState(() => _items.add(result));
-              }
             },
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
           body: FutureBuilder<List<Map<String, dynamic>>>(
             future: SupabaseService.fetchMenu(),
             builder: (context, snapshot) {
-              if (snapshot.hasData) debugPrint('DEBUG: Cakes Count: ${snapshot.data?.length}');
-              if (snapshot.hasError) debugPrint('DEBUG: Menu Error: ${snapshot.error}');
-              
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -110,8 +69,7 @@ class _MenuPageState extends State<MenuPage> {
               }
 
               final List<Map<String, dynamic>> rawCakes = snapshot.data ?? [];
-              final List<_MenuItem> items = rawCakes.map((data) {
-                // Handle nested options for price/size
+              final List<_MenuItem> allItems = rawCakes.map((data) {
                 final options = data['CakeOption'] as List? ?? [];
                 final basePrice = options.isNotEmpty 
                     ? SupabaseService.formatPrice(options[0]['price']) 
@@ -127,6 +85,23 @@ class _MenuPageState extends State<MenuPage> {
                   weight: "Standard",
                   imageUrl: SupabaseService.getPublicUrl(data['image']),
                 );
+              }).toList();
+
+              // Filtering logic
+              final List<_MenuItem> items = allItems.where((item) {
+                if (_selectedCategories.contains('All')) return true;
+                
+                return _selectedCategories.any((filter) {
+                  final cat = item.category.toLowerCase();
+                  final f = filter.toLowerCase();
+                  
+                  if (f.contains('chocolate')) return cat.contains('chocolate');
+                  if (f.contains('vanilla')) return cat.contains('vanilla');
+                  if (f.contains('tea')) return cat.contains('tea');
+                  if (f.contains('seasonal')) return cat.contains('seasonal');
+                  
+                  return cat.contains(f);
+                });
               }).toList();
 
               return CustomScrollView(
@@ -165,12 +140,66 @@ class _MenuPageState extends State<MenuPage> {
                               fontSize: 12,
                             ),
                           ),
+                          const SizedBox(height: 24),
+                          
+                          // Category Filter Chips
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: _categories.map((category) {
+                                final isSelected = _selectedCategories.contains(category);
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: FilterChip(
+                                    selected: isSelected,
+                                    label: Text(
+                                      category.toUpperCase(),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 10,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                        letterSpacing: 1.0,
+                                        color: isSelected ? Colors.white : cs.secondary,
+                                      ),
+                                    ),
+                                    onSelected: (val) {
+                                      setState(() {
+                                        if (category == 'All') {
+                                          _selectedCategories = {'All'};
+                                        } else {
+                                          _selectedCategories.remove('All');
+                                          if (val) {
+                                            _selectedCategories.add(category);
+                                          } else {
+                                            _selectedCategories.remove(category);
+                                          }
+                                          if (_selectedCategories.isEmpty) {
+                                            _selectedCategories = {'All'};
+                                          }
+                                        }
+                                      });
+                                    },
+                                    selectedColor: cs.primary,
+                                    backgroundColor: cs.surfaceContainer,
+                                    checkmarkColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                      side: BorderSide(
+                                        color: isSelected ? cs.primary : cs.secondary.withValues(alpha: 0.1),
+                                      ),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           Divider(color: cs.secondary.withValues(alpha: 0.05)),
                         ],
                       ),
                     ),
                   ),
+
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                         isDesktop ? 48 : 16, 16, isDesktop ? 48 : 16, 100),

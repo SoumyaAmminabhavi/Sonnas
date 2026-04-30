@@ -286,7 +286,7 @@ class OrderDetailsPage extends StatelessWidget {
                                   // Note
                                   if (order['notes'] != null && order['notes'].toString().isNotEmpty) ...[
                                     Text(
-                                      "ARTISAN NOTES",
+                                      "SPECIAL INSTRUCTIONS",
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w800,
