@@ -13,6 +13,7 @@ function AdminNavbar() {
 
   return (
     <div className="flex items-center gap-4">
+      {/* Orders / Arrow Toggle */}
       {isMenuPage ? (
         <LinkNext
           href="/admin/whatsapp"
@@ -27,10 +28,22 @@ function AdminNavbar() {
           className="flex items-center gap-2 px-6 py-2 rounded-full transition-all bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg hover:bg-white/10 hover:text-white"
           title="Back to Menu"
         >
-          <span className="text-lg">← 🧁</span>
-          <span className="text-sm font-medium">Menu</span>
+          <span className="text-lg">←</span>
         </LinkNext>
       ) : null}
+
+      {/* Persistent Menu Button */}
+      <LinkNext
+        href="/admin/menu"
+        className={`flex items-center gap-2 px-6 py-2 rounded-full transition-all ${
+          isMenuPage
+            ? "bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg"
+            : "text-[#9A9A9A] hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        <span className="text-lg">🧁</span>
+        <span className="text-sm font-medium">Menu</span>
+      </LinkNext>
     </div>
   );
 }
