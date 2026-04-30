@@ -10,6 +10,7 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
+// trigger build
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
