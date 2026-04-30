@@ -86,6 +86,32 @@ class SupabaseService {
     }
   }
 
+  // Real-time stream for Menu Cakes
+  static Stream<List<Map<String, dynamic>>> getMenuStream() {
+    return client
+        .from('Cake')
+        .stream(primaryKey: ['id'])
+        .map((data) => data.map((item) => Map<String, dynamic>.from(item)).toList());
+  }
+
+  // Real-time stream for a single order by number
+  static Stream<Map<String, dynamic>?> getSingleOrderStream(String orderNumber) {
+    return client
+        .from('WhatsAppOrder')
+        .stream(primaryKey: ['id'])
+        .eq('orderNumber', orderNumber)
+        .map((data) => data.isNotEmpty ? data.first : null);
+  }
+
+  // Real-time stream for a single cake by id
+  static Stream<Map<String, dynamic>?> getSingleCakeStream(String id) {
+    return client
+        .from('Cake')
+        .stream(primaryKey: ['id'])
+        .eq('id', id)
+        .map((data) => data.isNotEmpty ? data.first : null);
+  }
+
   // Fetching Menu Cakes (Matching Prisma 'Cake' and 'CakeOption')
   static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {

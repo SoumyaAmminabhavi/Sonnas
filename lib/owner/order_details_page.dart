@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
-
 import '../services/supabase_service.dart';
-
-// Brand Colors - Sweet Pink Bakery Theme
 
 class OrderDetailsPage extends StatelessWidget {
   final String orderId;
@@ -15,385 +12,169 @@ class OrderDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-
-    // Clean order number for database query (removing '#' if present)
     final cleanId = orderId.replaceFirst('#', '');
 
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: SupabaseService.client
-          .from('WhatsAppOrder')
-          .select('*, WhatsAppConversation(*)')
-          .eq('orderNumber', cleanId)
-          .maybeSingle(),
-      builder: (context, snapshot) {
-        final order = snapshot.data;
-        final conversation = order?['WhatsAppConversation'];
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: SupabaseService.getSingleOrderStream(cleanId),
+      builder: (context, streamSnapshot) {
+        final streamOrder = streamSnapshot.data;
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= 768;
+        return FutureBuilder<Map<String, dynamic>?>(
+          future: streamOrder != null
+              ? SupabaseService.client
+                  .from('WhatsAppOrder')
+                  .select('*, WhatsAppConversation(*)')
+                  .eq('id', streamOrder['id'])
+                  .maybeSingle()
+              : Future.value(null),
+          builder: (context, futureSnapshot) {
+            final order = futureSnapshot.data ?? streamOrder;
+            final conversation = order?['WhatsAppConversation'];
 
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: const Center(child: CircularProgressIndicator()),
-              );
+            if (streamSnapshot.connectionState == ConnectionState.waiting && order == null) {
+              return Scaffold(backgroundColor: cs.surface, body: const Center(child: CircularProgressIndicator()));
             }
 
             if (order == null) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Center(child: Text("Order not found: $orderId")),
-              );
+              return Scaffold(backgroundColor: cs.surface, body: Center(child: Text("Order not found: $orderId")));
             }
 
-            return Scaffold(
-              backgroundColor: cs.surface,
-              appBar: AppBar(
-                backgroundColor: cs.surface.withValues(alpha: 0.9),
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                leading: IconButton(
-                  icon: Icon(Icons.arrow_back, color: cs.primary),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                title: Text(
-                  isDesktop ? "Sonna's Patisserie & Cafe" : "Order Details",
-                  style: GoogleFonts.notoSerif(
-                    color: isDesktop
-                        ? const Color.fromARGB(255, 146, 6, 53)
-                        : cs.primary,
-                    fontStyle: isDesktop ? FontStyle.italic : FontStyle.normal,
-                    fontWeight: isDesktop ? FontWeight.w600 : FontWeight.bold,
-                    fontSize: isDesktop ? 20 : 18,
-                    letterSpacing: isDesktop ? -0.5 : 0,
-                  ),
-                ),
-              ),
-              body: Row(
-                children: [
-                  if (isDesktop)
-                    OwnerSidebar(
-                      currentIndex: 1, // Active under Orders
-                      onTap: (index) {
-                        Navigator.pop(context, index);
-                      },
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth >= 768;
+
+                return Scaffold(
+                  backgroundColor: cs.surface,
+                  appBar: AppBar(
+                    backgroundColor: cs.surface.withValues(alpha: 0.9),
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    leading: IconButton(
+                      icon: Icon(Icons.arrow_back, color: cs.primary),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
-                          child: Center(
-                            child: Container(
-                              constraints: const BoxConstraints(maxWidth: 850),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 24),
-                                  // Poetic Header
-                                  Column(
+                    title: Text(
+                      isDesktop ? "Sonna's Patisserie & Cafe" : "Order Details",
+                      style: GoogleFonts.notoSerif(
+                        color: isDesktop ? const Color.fromARGB(255, 146, 6, 53) : cs.primary,
+                        fontStyle: isDesktop ? FontStyle.italic : FontStyle.normal,
+                        fontWeight: isDesktop ? FontWeight.w600 : FontWeight.bold,
+                        fontSize: isDesktop ? 20 : 18,
+                        letterSpacing: isDesktop ? -0.5 : 0,
+                      ),
+                    ),
+                  ),
+                  body: Row(
+                    children: [
+                      if (isDesktop)
+                        OwnerSidebar(
+                          currentIndex: 1,
+                          onTap: (index) => Navigator.pop(context, index),
+                        ),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            SingleChildScrollView(
+                              padding: const EdgeInsets.fromLTRB(24, 0, 24, 120),
+                              child: Center(
+                                child: Container(
+                                  constraints: const BoxConstraints(maxWidth: 850),
+                                  child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        "ATELIER RECEIPT",
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 3.0,
-                                          color: cs.primary.withValues(alpha: 0.5),
-                                        ),
+                                      const SizedBox(height: 24),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text("ATELIER RECEIPT", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 3.0, color: cs.primary.withValues(alpha: 0.5))),
+                                          const SizedBox(height: 8),
+                                          Text("Order $orderId", style: GoogleFonts.notoSerif(fontSize: 42, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, color: cs.onSurface, letterSpacing: -1)),
+                                          Text(order['deliveryDate'] != null ? "Scheduled for ${order['deliveryDate']}" : "Date not scheduled yet", style: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.secondary.withValues(alpha: 0.6))),
+                                        ],
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        "Order $orderId",
-                                        style: GoogleFonts.notoSerif(
-                                          fontSize: 42,
-                                          fontWeight: FontWeight.bold,
-                                          fontStyle: FontStyle.italic,
-                                          color: cs.onSurface,
-                                          letterSpacing: -1,
-                                        ),
+                                      const SizedBox(height: 32),
+                                      _SlimProgressIndicator(cs: cs, status: order['status'] ?? 'PENDING'),
+                                      const SizedBox(height: 32),
+                                      _CustomerInfoCard(name: order['customerName'] ?? conversation?['name'] ?? 'Guest Customer', phone: order['phone'] ?? conversation?['phone'] ?? 'Contact hidden', cs: cs),
+                                      const SizedBox(height: 32),
+                                      _SectionTitle(title: "Artisan Selection", cs: cs),
+                                      const SizedBox(height: 16),
+                                      FutureBuilder<List<Map<String, dynamic>>>(
+                                        future: SupabaseService.fetchMenu(),
+                                        builder: (context, menuSnapshot) {
+                                          final menu = menuSnapshot.data ?? [];
+                                          String displayImageUrl = order['customImageUrl'] ?? '';
+                                          if (displayImageUrl.isEmpty || displayImageUrl.startsWith('whatsapp://')) {
+                                            final String cakeName = order['cakeName'] ?? '';
+                                            final matchingCake = menu.firstWhere((c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(), orElse: () => {});
+                                            displayImageUrl = matchingCake['image'] ?? '';
+                                          }
+                                          return _OrderItemCard(
+                                            title: order['cakeName'] ?? 'Custom Creation',
+                                            subtitle: "${order['size'] ?? 'Standard'} • ${order['quantity'] ?? 1} Units",
+                                            price: SupabaseService.formatPrice(order['price']),
+                                            imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
+                                            cs: cs,
+                                          );
+                                        },
                                       ),
-                                      Text(
-                                        order['deliveryDate'] != null 
-                                          ? "Scheduled for ${order['deliveryDate']}"
-                                          : "Date not scheduled yet",
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
-                                          color: cs.secondary.withValues(
-                                            alpha: 0.6,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 32),
-
-                                  // Slim Progress Bar
-                                  _SlimProgressIndicator(
-                                    cs: cs, 
-                                    status: order['status'] ?? 'PENDING'
-                                  ),
-                                  const SizedBox(height: 32),
-
-                                  // Quick Info Row (Customer & Summary)
-                                  Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: cs.surfaceContainerLow.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      borderRadius: BorderRadius.circular(24),
-                                      border: Border.all(
-                                        color: cs.primary.withValues(alpha: 0.05),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 24,
-                                          backgroundColor: cs.primary.withValues(alpha: 0.1),
-                                          child: Icon(Icons.person_outline, color: cs.primary),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                      if (order['notes'] != null && order['notes'].toString().isNotEmpty) ...[
+                                        const SizedBox(height: 32),
+                                        _SectionTitle(title: "Special Instructions", cs: cs),
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.primary.withValues(alpha: 0.1))),
+                                          child: Row(
                                             children: [
-                                              Text(
-                                                order['customerName'] ?? conversation?['name'] ?? 'Guest Customer',
-                                                style: GoogleFonts.notoSerif(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: cs.onSurface,
-                                                ),
-                                              ),
-                                              Text(
-                                                SupabaseService.formatPhone(order['phone'] ?? conversation?['phone']),
-                                                style: GoogleFonts.plusJakartaSans(
-                                                  fontSize: 11,
-                                                  color: cs.primary.withValues(
-                                                    alpha: 0.7,
-                                                  ),
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                                              Icon(Icons.edit_note, color: cs.primary.withValues(alpha: 0.4)),
+                                              const SizedBox(width: 12),
+                                              Expanded(child: Text("\"${order['notes']}\"", style: GoogleFonts.notoSerif(fontSize: 13, fontStyle: FontStyle.italic, color: cs.onSurface.withValues(alpha: 0.8)))),
                                             ],
                                           ),
                                         ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              SupabaseService.formatPrice(order['price']),
-                                              style: GoogleFonts.notoSerif(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                                color: cs.primary,
-                                              ),
-                                            ),
-                                            Text(
-                                              "QTY: ${order['quantity'] ?? 1}",
-                                              style: GoogleFonts.plusJakartaSans(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 1.0,
-                                                color: cs.secondary.withValues(alpha: 0.5),
-                                              ),
-                                            ),
-                                          ],
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 0, left: 0, right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+                                decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [cs.surface.withValues(alpha: 0.0), cs.surface, cs.surface])),
+                                child: Center(
+                                  child: Container(
+                                    constraints: const BoxConstraints(maxWidth: 850),
+                                    child: Row(
+                                      children: [
+                                        Expanded(child: _ElegantAction(icon: Icons.check_circle_outline, label: "CONFIRM", cs: cs, isPrimary: true)),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: _ElegantAction(
+                                            icon: Icons.chat_bubble_outline, label: "CONTACT", cs: cs, isPrimary: false,
+                                            onPressed: () {
+                                              final phone = order['phone'] ?? conversation?['phone'];
+                                              final name = order['customerName'] ?? conversation?['name'] ?? 'there';
+                                              final cake = order['cakeName'] ?? 'your cake';
+                                              SupabaseService.launchWhatsApp(phone, "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).");
+                                            },
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(height: 32),
-
-                                  // Selection Header
-                                  Text(
-                                    "ATELIER SELECTION",
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 2.0,
-                                      color: cs.secondary.withValues(alpha: 0.4),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-
-                                  // Item Tile with Smart Lookup
-                                  FutureBuilder<List<Map<String, dynamic>>>(
-                                    future: SupabaseService.fetchMenu(),
-                                    builder: (context, menuSnapshot) {
-                                      final menu = menuSnapshot.data ?? [];
-                                      String displayImageUrl = order['customImageUrl'] ?? '';
-                                      
-                                      // If no custom image, find in menu
-                                      if (displayImageUrl.isEmpty || displayImageUrl.startsWith('whatsapp://')) {
-                                        final String cakeName = order['cakeName'] ?? '';
-                                        final matchingCake = menu.firstWhere(
-                                          (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
-                                          orElse: () => {},
-                                        );
-                                        displayImageUrl = matchingCake['image'] ?? '';
-                                      }
-
-                                      return _SelectionTile(
-                                        title: order['cakeName'] ?? 'Custom Creation',
-                                        subtitle: "${order['size'] ?? 'Standard'} • ${order['quantity'] ?? 1} Units",
-                                        price: SupabaseService.formatPrice(order['price']),
-                                        imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
-                                        cs: cs,
-                                      );
-                                    }
-                                  ),
-                                  
-                                  const SizedBox(height: 32),
-
-                                  // Address (If available)
-                                  if (order['address'] != null && order['address'].toString().isNotEmpty) ...[
-                                    Text(
-                                      "DELIVERY DESTINATION",
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 2.0,
-                                        color: cs.secondary.withValues(alpha: 0.4),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: cs.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
-                                      ),
-                                      child: Text(
-                                        order['address'],
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 13,
-                                          color: cs.onSurface.withValues(alpha: 0.7),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 32),
-                                  ],
-
-                                  // Note
-                                  if (order['notes'] != null && order['notes'].toString().isNotEmpty) ...[
-                                    Text(
-                                      "SPECIAL INSTRUCTIONS",
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 2.0,
-                                        color: cs.secondary.withValues(alpha: 0.4),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: cs.surface,
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: cs.primary.withValues(alpha: 0.1),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.edit_note,
-                                            color: cs.primary.withValues(alpha: 0.4),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              "\"${order['notes']}\"",
-                                              style: GoogleFonts.notoSerif(
-                                                fontSize: 13,
-                                                fontStyle: FontStyle.italic,
-                                                color: cs.onSurface.withValues(
-                                                  alpha: 0.8,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Sticky Bottom Actions
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  cs.surface.withValues(alpha: 0.0),
-                                  cs.surface,
-                                  cs.surface,
-                                ],
-                              ),
-                            ),
-                            child: Center(
-                              child: Container(
-                                constraints: const BoxConstraints(maxWidth: 450),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: _ElegantAction(
-                                        icon: Icons.download_outlined,
-                                        label: "INVOICE",
-                                        cs: cs,
-                                        isPrimary: false,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _ElegantAction(
-                                        icon: Icons.chat_bubble_outline,
-                                        label: "CONTACT",
-                                        cs: cs,
-                                        isPrimary: true,
-                                        onPressed: () {
-                                          final phone = order['phone'] ?? conversation?['phone'];
-                                          final name = order['customerName'] ?? conversation?['name'] ?? 'there';
-                                          final cake = order['cakeName'] ?? 'your cake';
-                                          
-                                          SupabaseService.launchWhatsApp(
-                                            phone, 
-                                            "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).",
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
                                 ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );
@@ -433,23 +214,8 @@ class _SlimProgressIndicator extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              statusText,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-                letterSpacing: 1.0,
-              ),
-            ),
-            Text(
-              "${(progress * 100).toInt()}%",
-              style: GoogleFonts.notoSerif(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-              ),
-            ),
+            Text(statusText, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 1.0)),
+            Text("${(progress * 100).toInt()}%", style: GoogleFonts.notoSerif(fontSize: 12, fontWeight: FontWeight.bold, color: cs.primary)),
           ],
         ),
         const SizedBox(height: 8),
@@ -463,27 +229,76 @@ class _SlimProgressIndicator extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          poeticNote,
-          style: GoogleFonts.notoSerif(
-            fontSize: 12,
-            fontStyle: FontStyle.italic,
-            color: cs.secondary.withValues(alpha: 0.5),
-          ),
-        ),
+        Text(poeticNote, style: GoogleFonts.notoSerif(fontSize: 12, fontStyle: FontStyle.italic, color: cs.secondary.withValues(alpha: 0.5))),
       ],
     );
   }
 }
 
-class _SelectionTile extends StatelessWidget {
+class _StatusChip extends StatelessWidget {
+  final String status;
+  final ColorScheme cs;
+  const _StatusChip({required this.status, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+      child: Text(status.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 1.0)),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+  final ColorScheme cs;
+  const _SectionTitle({required this.title, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(title.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: cs.secondary.withValues(alpha: 0.4)));
+  }
+}
+
+class _CustomerInfoCard extends StatelessWidget {
+  final String name;
+  final String phone;
+  final ColorScheme cs;
+  const _CustomerInfoCard({required this.name, required this.phone, required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: cs.surfaceContainerLow.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          CircleAvatar(backgroundColor: cs.primary.withValues(alpha: 0.1), child: Icon(Icons.person_outline, color: cs.primary)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: GoogleFonts.notoSerif(fontSize: 18, fontWeight: FontWeight.bold, color: cs.secondary)),
+                Text(phone, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.secondary.withValues(alpha: 0.6))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderItemCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String price;
   final String imageUrl;
   final ColorScheme cs;
 
-  const _SelectionTile({
+  const _OrderItemCard({
     required this.title,
     required this.subtitle,
     required this.price,
@@ -498,25 +313,11 @@ class _SelectionTile extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: SizedBox(
-            width: 64,
-            height: 64,
+            width: 64, height: 64,
             child: Image.network(
               imageUrl,
               fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    value: loadingProgress.expectedTotalBytes != null
-                        ? loadingProgress.cumulativeBytesLoaded /
-                            loadingProgress.expectedTotalBytes!
-                        : null,
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) =>
-                  const _ImagePlaceholder(),
+              errorBuilder: (context, error, stackTrace) => const _ImagePlaceholder(),
             ),
           ),
         ),
@@ -525,32 +326,12 @@ class _SelectionTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.notoSerif(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  color: cs.secondary.withValues(alpha: 0.5),
-                ),
-              ),
+              Text(title, style: GoogleFonts.notoSerif(fontSize: 15, fontWeight: FontWeight.bold, color: cs.onSurface)),
+              Text(subtitle, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
             ],
           ),
         ),
-        Text(
-          price,
-          style: GoogleFonts.notoSerif(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: cs.primary,
-          ),
-        ),
+        Text(price, style: GoogleFonts.notoSerif(fontSize: 15, fontWeight: FontWeight.bold, color: cs.primary)),
       ],
     );
   }
@@ -564,13 +345,7 @@ class _ImagePlaceholder extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       color: cs.primary.withValues(alpha: 0.05),
-      child: Center(
-        child: Icon(
-          Icons.cake_outlined,
-          color: cs.primary.withValues(alpha: 0.2),
-          size: 24,
-        ),
-      ),
+      child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2), size: 24)),
     );
   }
 }
@@ -597,35 +372,13 @@ class _ElegantAction extends StatelessWidget {
       decoration: BoxDecoration(
         color: isPrimary ? cs.primary : cs.surface,
         borderRadius: BorderRadius.circular(16),
-        border: !isPrimary
-            ? Border.all(color: cs.primary.withValues(alpha: 0.1))
-            : null,
-        boxShadow: isPrimary
-            ? [
-                BoxShadow(
-                  color: cs.primary.withValues(alpha: 0.2),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
+        border: !isPrimary ? Border.all(color: cs.primary.withValues(alpha: 0.1)) : null,
+        boxShadow: isPrimary ? [BoxShadow(color: cs.primary.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8))] : null,
       ),
       child: TextButton.icon(
         onPressed: onPressed ?? () {},
-        icon: Icon(
-          icon,
-          size: 20,
-          color: isPrimary ? Colors.white : cs.primary,
-        ),
-        label: Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.5,
-            color: isPrimary ? Colors.white : cs.primary,
-          ),
-        ),
+        icon: Icon(icon, size: 20, color: isPrimary ? Colors.white : cs.primary),
+        label: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: isPrimary ? Colors.white : cs.primary)),
       ),
     );
   }

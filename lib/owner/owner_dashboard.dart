@@ -6,6 +6,7 @@ import 'orders_page.dart';
 import 'payments_page.dart';
 import '../widgets/owner_sidebar.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../services/supabase_service.dart';
 
 // Image constants for dashboard
 const String _imgOrder1 = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop";
@@ -240,82 +241,96 @@ class _MainContent extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Orders List
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
-              final isTwoCols = crossAxisCount == 2;
-
-              final orders = [
-                _OrderCard(
-                  id: "#ORD-8821",
-                  status: "IN PREPARATION",
-                  statusColor: cs.primary,
-                  statusBg: cs.surfaceContainerLow,
-                  title: "Belgian Dark Chocolate Cake",
-                  customer: "Customer: Mrs. Deshpande",
-                  imageUrl: _imgOrder1,
-                ),
-                _OrderCard(
-                  id: "#ORD-8822",
-                  status: "PENDING PICKUP",
-                  statusColor: cs.secondary,
-                  statusBg: const Color(0xFFFDBF97).withValues(alpha: 0.2),
-                  title: "Wild Strawberry Cake",
-                  customer: "Customer: Mr. Kulkarni",
-                  imageUrl: _imgOrder2,
-                ),
-                _OrderCard(
-                  id: "#ORD-8823",
-                  status: "IN PREPARATION",
-                  statusColor: cs.primary,
-                  statusBg: cs.surfaceContainerLow,
-                  title: "Signature Macaron Box (24)",
-                  customer: "Customer: Ms. Patil",
-                  imageUrl: _imgOrder3,
-                ),
-                _OrderCard(
-                  id: "#ORD-8824",
-                  status: "CONFIRMED",
-                  statusColor: cs.primary,
-                  statusBg: cs.primary.withValues(alpha: 0.1),
-                  title: "Madagascar Vanilla Bean Mousse",
-                  customer: "Customer: Marc Antoine",
-                  imageUrl: _imgOrder4,
-                ),
-              ];
-
-              if (isTwoCols) {
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: orders[0]),
-                        const SizedBox(width: 24),
-                        Expanded(child: orders[1]),
-                      ],
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: SupabaseService.getOrdersStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              final rawOrders = (snapshot.data ?? []).take(4).toList();
+              
+              if (rawOrders.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(48.0),
+                    child: Text(
+                      "No active orders found.",
+                      style: GoogleFonts.notoSerif(color: cs.secondary.withValues(alpha: 0.5)),
                     ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(child: orders[2]),
-                        const SizedBox(width: 24),
-                        Expanded(child: orders[3]),
-                      ],
-                    ),
-                  ],
-                );
-              } else {
-                return Column(
-                  children: orders
-                      .map(
-                        (o) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: o,
-                        ),
-                      )
-                      .toList(),
+                  ),
                 );
               }
+
+              return FutureBuilder<List<Map<String, dynamic>>>(
+                future: SupabaseService.fetchMenu(),
+                builder: (context, menuSnapshot) {
+                  final menu = menuSnapshot.data ?? [];
+                  
+                  final orders = rawOrders.map((data) {
+                    final status = data['status'] ?? 'PENDING';
+                    Color statusColor = cs.primary;
+                    
+                    if (status == 'COMPLETED') {
+                      statusColor = cs.secondary;
+                    }
+
+                    String imageUrl = data['customImageUrl'] ?? '';
+                    if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+                      final String orderedCake = data['cakeName'] ?? '';
+                      final matchingCake = menu.firstWhere(
+                        (c) => (c['name'] as String).toLowerCase() == orderedCake.toLowerCase(),
+                        orElse: () => {},
+                      );
+                      imageUrl = matchingCake['image'] ?? '';
+                    }
+
+                    return _OrderCard(
+                      id: "#${data['orderNumber'] ?? '---'}",
+                      status: status,
+                      statusColor: statusColor,
+                      statusBg: statusColor.withValues(alpha: 0.1),
+                      title: data['cakeName'] ?? 'Custom Creation',
+                      customer: data['customerName'] ?? 'Anonymous',
+                      imageUrl: SupabaseService.getPublicUrl(imageUrl),
+                    );
+                  }).toList();
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
+                      
+                      if (crossAxisCount == 2) {
+                        List<Widget> rows = [];
+                        for (var i = 0; i < orders.length; i += 2) {
+                          rows.add(
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 24),
+                              child: Row(
+                                children: [
+                                  Expanded(child: orders[i]),
+                                  const SizedBox(width: 24),
+                                  Expanded(
+                                    child: i + 1 < orders.length ? orders[i + 1] : const SizedBox(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+                        return Column(children: rows);
+                      }
+
+                      return Column(
+                        children: orders.map((o) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: o,
+                        )).toList(),
+                      );
+                    },
+                  );
+                },
+              );
             },
           ),
         ],
@@ -546,6 +561,18 @@ class _OrderCard extends StatelessWidget {
               width: 90,
               height: 90,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 90,
+                height: 90,
+                color: cs.primary.withValues(alpha: 0.05),
+                child: Center(
+                  child: Icon(
+                    Icons.cake_outlined,
+                    color: cs.primary.withValues(alpha: 0.2),
+                    size: 32,
+                  ),
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -557,12 +584,16 @@ class _OrderCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      id,
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 10,
-                        fontStyle: FontStyle.italic,
-                        color: cs.secondary.withValues(alpha: 0.5),
+                    Flexible(
+                      child: Text(
+                        id,
+                        style: GoogleFonts.notoSerif(
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                          color: cs.secondary.withValues(alpha: 0.5),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -592,6 +623,8 @@ class _OrderCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: cs.secondary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
                 _CompactInfoRow(

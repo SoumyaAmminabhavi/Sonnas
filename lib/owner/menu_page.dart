@@ -57,8 +57,8 @@ class _MenuPageState extends State<MenuPage> {
             },
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
-          body: FutureBuilder<List<Map<String, dynamic>>>(
-            future: SupabaseService.fetchMenu(),
+          body: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: SupabaseService.getMenuStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -68,7 +68,10 @@ class _MenuPageState extends State<MenuPage> {
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
 
-              final List<Map<String, dynamic>> rawCakes = snapshot.data ?? [];
+              return FutureBuilder<List<Map<String, dynamic>>>(
+                future: SupabaseService.fetchMenu(), // To get CakeOptions
+                builder: (context, menuSnapshot) {
+                  final List<Map<String, dynamic>> rawCakes = menuSnapshot.data ?? snapshot.data ?? [];
               final List<_MenuItem> allItems = rawCakes.map((data) {
                 final options = data['CakeOption'] as List? ?? [];
                 final basePrice = options.isNotEmpty 
@@ -222,13 +225,15 @@ class _MenuPageState extends State<MenuPage> {
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
+                );
+              },
+            );
+          },
+        ),
+      );
+    },
+  );
+}
 }
 
 class _MenuItem {
