@@ -22,6 +22,7 @@ export const whatsappRouter = createTRPCRouter({
       const orders = await ctx.db.whatsAppOrder.findMany({
         where: input.status ? { status: input.status } : undefined,
         orderBy: { createdAt: "desc" },
+        include: { items: true },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
       });
@@ -40,6 +41,7 @@ export const whatsappRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return ctx.db.whatsAppOrder.findUnique({
         where: { id: input.id },
+        include: { items: true },
       });
     }),
 
@@ -62,14 +64,22 @@ export const whatsappRouter = createTRPCRouter({
       const order = await ctx.db.whatsAppOrder.update({
         where: { id: input.id },
         data: { status: input.status },
+        include: { items: true },
       });
 
       // Notify the customer via WhatsApp
       if (input.notifyCustomer) {
+        const firstItem = order.items[0];
+        const cakeName = firstItem?.cakeName ?? "Cake";
+        const size = firstItem?.size ?? "Standard";
+        const itemsList = order.items.length > 1 
+          ? `*${cakeName}* and ${order.items.length - 1} more items`
+          : `*${cakeName}* (${size})`;
+
         const statusMessages: Record<string, string> = {
-          CONFIRMED: `✅ *Order Confirmed!*\n\n🧾 #${order.orderNumber}\n🎂 ${order.cakeName} (${order.size})\n\nWe'll start preparing your order soon!`,
-          PREPARING: `👩‍🍳 *Now Preparing!*\n\n🧾 #${order.orderNumber}\n🎂 ${order.cakeName}\n\nOur bakers are working their magic! ✨`,
-          READY: `📦 *Order Ready!*\n\n🧾 #${order.orderNumber}\n🎂 ${order.cakeName} (${order.size})\n\nYour cake is ready for pickup/delivery! 🎉`,
+          CONFIRMED: `✅ *Order Confirmed!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nWe'll start preparing your order soon!`,
+          PREPARING: `👩‍🍳 *Now Preparing!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nOur bakers are working their magic! ✨`,
+          READY: `📦 *Order Ready!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nYour cake is ready for pickup/delivery! 🎉`,
           DELIVERED: `🎉 *Order Delivered!*\n\n🧾 #${order.orderNumber}\n\nEnjoy your cake! We'd love to hear your feedback 💕\n\nReply *Menu* to order again!`,
           CANCELLED: `❌ *Order Cancelled*\n\n🧾 #${order.orderNumber}\n\nYour order has been cancelled. If you have any questions, please call us at ${env.NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED}.`,
         };
@@ -124,20 +134,22 @@ export const whatsappRouter = createTRPCRouter({
       }),
       ctx.db.whatsAppConversation.count(),
       ctx.db.whatsAppOrder.findMany({
-        select: { price: true, cakeName: true },
+        select: { totalPrice: true, items: true },
       }),
     ]);
 
     // Calculate revenue (parse ₹ prices)
     const totalRevenue = allOrders.reduce((sum, o) => {
-      const amount = parseInt(o.price.replace(/[^\d]/g, ""), 10);
+      const amount = parseInt((o.totalPrice ?? "0").replace(/[^\d]/g, ""), 10);
       return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
 
     // Find most popular cake
     const cakeCounts: Record<string, number> = {};
     allOrders.forEach((o) => {
-      cakeCounts[o.cakeName] = (cakeCounts[o.cakeName] ?? 0) + 1;
+      o.items.forEach(item => {
+        cakeCounts[item.cakeName] = (cakeCounts[item.cakeName] ?? 0) + 1;
+      });
     });
     const popularCake =
       Object.entries(cakeCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ??

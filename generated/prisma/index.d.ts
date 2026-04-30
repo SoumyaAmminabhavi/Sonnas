@@ -54,10 +54,20 @@ export type CakeOption = $Result.DefaultSelection<Prisma.$CakeOptionPayload>
  */
 export type WhatsAppConversation = $Result.DefaultSelection<Prisma.$WhatsAppConversationPayload>
 /**
+ * Model WhatsAppCartItem
+ * 
+ */
+export type WhatsAppCartItem = $Result.DefaultSelection<Prisma.$WhatsAppCartItemPayload>
+/**
  * Model WhatsAppOrder
  * 
  */
 export type WhatsAppOrder = $Result.DefaultSelection<Prisma.$WhatsAppOrderPayload>
+/**
+ * Model WhatsAppOrderItem
+ * 
+ */
+export type WhatsAppOrderItem = $Result.DefaultSelection<Prisma.$WhatsAppOrderItemPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -258,6 +268,16 @@ export class PrismaClient<
   get whatsAppConversation(): Prisma.WhatsAppConversationDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.whatsAppCartItem`: Exposes CRUD operations for the **WhatsAppCartItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WhatsAppCartItems
+    * const whatsAppCartItems = await prisma.whatsAppCartItem.findMany()
+    * ```
+    */
+  get whatsAppCartItem(): Prisma.WhatsAppCartItemDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.whatsAppOrder`: Exposes CRUD operations for the **WhatsAppOrder** model.
     * Example usage:
     * ```ts
@@ -266,6 +286,16 @@ export class PrismaClient<
     * ```
     */
   get whatsAppOrder(): Prisma.WhatsAppOrderDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.whatsAppOrderItem`: Exposes CRUD operations for the **WhatsAppOrderItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WhatsAppOrderItems
+    * const whatsAppOrderItems = await prisma.whatsAppOrderItem.findMany()
+    * ```
+    */
+  get whatsAppOrderItem(): Prisma.WhatsAppOrderItemDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -715,7 +745,9 @@ export namespace Prisma {
     Cake: 'Cake',
     CakeOption: 'CakeOption',
     WhatsAppConversation: 'WhatsAppConversation',
-    WhatsAppOrder: 'WhatsAppOrder'
+    WhatsAppCartItem: 'WhatsAppCartItem',
+    WhatsAppOrder: 'WhatsAppOrder',
+    WhatsAppOrderItem: 'WhatsAppOrderItem'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -734,7 +766,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "post" | "account" | "session" | "user" | "verificationToken" | "cake" | "cakeOption" | "whatsAppConversation" | "whatsAppOrder"
+      modelProps: "post" | "account" | "session" | "user" | "verificationToken" | "cake" | "cakeOption" | "whatsAppConversation" | "whatsAppCartItem" | "whatsAppOrder" | "whatsAppOrderItem"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1330,6 +1362,80 @@ export namespace Prisma {
           }
         }
       }
+      WhatsAppCartItem: {
+        payload: Prisma.$WhatsAppCartItemPayload<ExtArgs>
+        fields: Prisma.WhatsAppCartItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WhatsAppCartItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WhatsAppCartItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>
+          }
+          findFirst: {
+            args: Prisma.WhatsAppCartItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WhatsAppCartItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>
+          }
+          findMany: {
+            args: Prisma.WhatsAppCartItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>[]
+          }
+          create: {
+            args: Prisma.WhatsAppCartItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>
+          }
+          createMany: {
+            args: Prisma.WhatsAppCartItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WhatsAppCartItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>[]
+          }
+          delete: {
+            args: Prisma.WhatsAppCartItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>
+          }
+          update: {
+            args: Prisma.WhatsAppCartItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.WhatsAppCartItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WhatsAppCartItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WhatsAppCartItemUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>[]
+          }
+          upsert: {
+            args: Prisma.WhatsAppCartItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppCartItemPayload>
+          }
+          aggregate: {
+            args: Prisma.WhatsAppCartItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWhatsAppCartItem>
+          }
+          groupBy: {
+            args: Prisma.WhatsAppCartItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WhatsAppCartItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WhatsAppCartItemCountArgs<ExtArgs>
+            result: $Utils.Optional<WhatsAppCartItemCountAggregateOutputType> | number
+          }
+        }
+      }
       WhatsAppOrder: {
         payload: Prisma.$WhatsAppOrderPayload<ExtArgs>
         fields: Prisma.WhatsAppOrderFieldRefs
@@ -1401,6 +1507,80 @@ export namespace Prisma {
           count: {
             args: Prisma.WhatsAppOrderCountArgs<ExtArgs>
             result: $Utils.Optional<WhatsAppOrderCountAggregateOutputType> | number
+          }
+        }
+      }
+      WhatsAppOrderItem: {
+        payload: Prisma.$WhatsAppOrderItemPayload<ExtArgs>
+        fields: Prisma.WhatsAppOrderItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WhatsAppOrderItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WhatsAppOrderItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>
+          }
+          findFirst: {
+            args: Prisma.WhatsAppOrderItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WhatsAppOrderItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>
+          }
+          findMany: {
+            args: Prisma.WhatsAppOrderItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>[]
+          }
+          create: {
+            args: Prisma.WhatsAppOrderItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>
+          }
+          createMany: {
+            args: Prisma.WhatsAppOrderItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WhatsAppOrderItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>[]
+          }
+          delete: {
+            args: Prisma.WhatsAppOrderItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>
+          }
+          update: {
+            args: Prisma.WhatsAppOrderItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.WhatsAppOrderItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WhatsAppOrderItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WhatsAppOrderItemUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>[]
+          }
+          upsert: {
+            args: Prisma.WhatsAppOrderItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WhatsAppOrderItemPayload>
+          }
+          aggregate: {
+            args: Prisma.WhatsAppOrderItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWhatsAppOrderItem>
+          }
+          groupBy: {
+            args: Prisma.WhatsAppOrderItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WhatsAppOrderItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WhatsAppOrderItemCountArgs<ExtArgs>
+            result: $Utils.Optional<WhatsAppOrderItemCountAggregateOutputType> | number
           }
         }
       }
@@ -1508,7 +1688,9 @@ export namespace Prisma {
     cake?: CakeOmit
     cakeOption?: CakeOptionOmit
     whatsAppConversation?: WhatsAppConversationOmit
+    whatsAppCartItem?: WhatsAppCartItemOmit
     whatsAppOrder?: WhatsAppOrderOmit
+    whatsAppOrderItem?: WhatsAppOrderItemOmit
   }
 
   /* Types for Logging */
@@ -1669,10 +1851,12 @@ export namespace Prisma {
    */
 
   export type WhatsAppConversationCountOutputType = {
+    cart: number
     orders: number
   }
 
   export type WhatsAppConversationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cart?: boolean | WhatsAppConversationCountOutputTypeCountCartArgs
     orders?: boolean | WhatsAppConversationCountOutputTypeCountOrdersArgs
   }
 
@@ -1690,8 +1874,46 @@ export namespace Prisma {
   /**
    * WhatsAppConversationCountOutputType without action
    */
+  export type WhatsAppConversationCountOutputTypeCountCartArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WhatsAppCartItemWhereInput
+  }
+
+  /**
+   * WhatsAppConversationCountOutputType without action
+   */
   export type WhatsAppConversationCountOutputTypeCountOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WhatsAppOrderWhereInput
+  }
+
+
+  /**
+   * Count Type WhatsAppOrderCountOutputType
+   */
+
+  export type WhatsAppOrderCountOutputType = {
+    items: number
+  }
+
+  export type WhatsAppOrderCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | WhatsAppOrderCountOutputTypeCountItemsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WhatsAppOrderCountOutputType without action
+   */
+  export type WhatsAppOrderCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderCountOutputType
+     */
+    select?: WhatsAppOrderCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WhatsAppOrderCountOutputType without action
+   */
+  export type WhatsAppOrderCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WhatsAppOrderItemWhereInput
   }
 
 
@@ -9563,6 +9785,7 @@ export namespace Prisma {
     lastMessageAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cart?: boolean | WhatsAppConversation$cartArgs<ExtArgs>
     orders?: boolean | WhatsAppConversation$ordersArgs<ExtArgs>
     _count?: boolean | WhatsAppConversationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["whatsAppConversation"]>
@@ -9623,6 +9846,7 @@ export namespace Prisma {
 
   export type WhatsAppConversationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "phone" | "name" | "state" | "selectedCake" | "selectedSize" | "selectedPrice" | "selectedAddress" | "selectedNotes" | "selectedQuantity" | "customImageUrl" | "selectedDeliveryDate" | "lastMessageAt" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppConversation"]>
   export type WhatsAppConversationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cart?: boolean | WhatsAppConversation$cartArgs<ExtArgs>
     orders?: boolean | WhatsAppConversation$ordersArgs<ExtArgs>
     _count?: boolean | WhatsAppConversationCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -9632,6 +9856,7 @@ export namespace Prisma {
   export type $WhatsAppConversationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "WhatsAppConversation"
     objects: {
+      cart: Prisma.$WhatsAppCartItemPayload<ExtArgs>[]
       orders: Prisma.$WhatsAppOrderPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -10044,6 +10269,7 @@ export namespace Prisma {
    */
   export interface Prisma__WhatsAppConversationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    cart<T extends WhatsAppConversation$cartArgs<ExtArgs> = {}>(args?: Subset<T, WhatsAppConversation$cartArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     orders<T extends WhatsAppConversation$ordersArgs<ExtArgs> = {}>(args?: Subset<T, WhatsAppConversation$ordersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -10477,6 +10703,30 @@ export namespace Prisma {
   }
 
   /**
+   * WhatsAppConversation.cart
+   */
+  export type WhatsAppConversation$cartArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    where?: WhatsAppCartItemWhereInput
+    orderBy?: WhatsAppCartItemOrderByWithRelationInput | WhatsAppCartItemOrderByWithRelationInput[]
+    cursor?: WhatsAppCartItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WhatsAppCartItemScalarFieldEnum | WhatsAppCartItemScalarFieldEnum[]
+  }
+
+  /**
    * WhatsAppConversation.orders
    */
   export type WhatsAppConversation$ordersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10520,23 +10770,1131 @@ export namespace Prisma {
 
 
   /**
+   * Model WhatsAppCartItem
+   */
+
+  export type AggregateWhatsAppCartItem = {
+    _count: WhatsAppCartItemCountAggregateOutputType | null
+    _avg: WhatsAppCartItemAvgAggregateOutputType | null
+    _sum: WhatsAppCartItemSumAggregateOutputType | null
+    _min: WhatsAppCartItemMinAggregateOutputType | null
+    _max: WhatsAppCartItemMaxAggregateOutputType | null
+  }
+
+  export type WhatsAppCartItemAvgAggregateOutputType = {
+    quantity: number | null
+  }
+
+  export type WhatsAppCartItemSumAggregateOutputType = {
+    quantity: number | null
+  }
+
+  export type WhatsAppCartItemMinAggregateOutputType = {
+    id: string | null
+    phone: string | null
+    cakeName: string | null
+    size: string | null
+    price: string | null
+    quantity: number | null
+    createdAt: Date | null
+  }
+
+  export type WhatsAppCartItemMaxAggregateOutputType = {
+    id: string | null
+    phone: string | null
+    cakeName: string | null
+    size: string | null
+    price: string | null
+    quantity: number | null
+    createdAt: Date | null
+  }
+
+  export type WhatsAppCartItemCountAggregateOutputType = {
+    id: number
+    phone: number
+    cakeName: number
+    size: number
+    price: number
+    quantity: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type WhatsAppCartItemAvgAggregateInputType = {
+    quantity?: true
+  }
+
+  export type WhatsAppCartItemSumAggregateInputType = {
+    quantity?: true
+  }
+
+  export type WhatsAppCartItemMinAggregateInputType = {
+    id?: true
+    phone?: true
+    cakeName?: true
+    size?: true
+    price?: true
+    quantity?: true
+    createdAt?: true
+  }
+
+  export type WhatsAppCartItemMaxAggregateInputType = {
+    id?: true
+    phone?: true
+    cakeName?: true
+    size?: true
+    price?: true
+    quantity?: true
+    createdAt?: true
+  }
+
+  export type WhatsAppCartItemCountAggregateInputType = {
+    id?: true
+    phone?: true
+    cakeName?: true
+    size?: true
+    price?: true
+    quantity?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type WhatsAppCartItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WhatsAppCartItem to aggregate.
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppCartItems to fetch.
+     */
+    orderBy?: WhatsAppCartItemOrderByWithRelationInput | WhatsAppCartItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WhatsAppCartItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppCartItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppCartItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WhatsAppCartItems
+    **/
+    _count?: true | WhatsAppCartItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WhatsAppCartItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WhatsAppCartItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WhatsAppCartItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WhatsAppCartItemMaxAggregateInputType
+  }
+
+  export type GetWhatsAppCartItemAggregateType<T extends WhatsAppCartItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateWhatsAppCartItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWhatsAppCartItem[P]>
+      : GetScalarType<T[P], AggregateWhatsAppCartItem[P]>
+  }
+
+
+
+
+  export type WhatsAppCartItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WhatsAppCartItemWhereInput
+    orderBy?: WhatsAppCartItemOrderByWithAggregationInput | WhatsAppCartItemOrderByWithAggregationInput[]
+    by: WhatsAppCartItemScalarFieldEnum[] | WhatsAppCartItemScalarFieldEnum
+    having?: WhatsAppCartItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WhatsAppCartItemCountAggregateInputType | true
+    _avg?: WhatsAppCartItemAvgAggregateInputType
+    _sum?: WhatsAppCartItemSumAggregateInputType
+    _min?: WhatsAppCartItemMinAggregateInputType
+    _max?: WhatsAppCartItemMaxAggregateInputType
+  }
+
+  export type WhatsAppCartItemGroupByOutputType = {
+    id: string
+    phone: string
+    cakeName: string
+    size: string
+    price: string
+    quantity: number
+    createdAt: Date
+    _count: WhatsAppCartItemCountAggregateOutputType | null
+    _avg: WhatsAppCartItemAvgAggregateOutputType | null
+    _sum: WhatsAppCartItemSumAggregateOutputType | null
+    _min: WhatsAppCartItemMinAggregateOutputType | null
+    _max: WhatsAppCartItemMaxAggregateOutputType | null
+  }
+
+  type GetWhatsAppCartItemGroupByPayload<T extends WhatsAppCartItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WhatsAppCartItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WhatsAppCartItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WhatsAppCartItemGroupByOutputType[P]>
+            : GetScalarType<T[P], WhatsAppCartItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WhatsAppCartItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    phone?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    createdAt?: boolean
+    conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["whatsAppCartItem"]>
+
+  export type WhatsAppCartItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    phone?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    createdAt?: boolean
+    conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["whatsAppCartItem"]>
+
+  export type WhatsAppCartItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    phone?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    createdAt?: boolean
+    conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["whatsAppCartItem"]>
+
+  export type WhatsAppCartItemSelectScalar = {
+    id?: boolean
+    phone?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    createdAt?: boolean
+  }
+
+  export type WhatsAppCartItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "phone" | "cakeName" | "size" | "price" | "quantity" | "createdAt", ExtArgs["result"]["whatsAppCartItem"]>
+  export type WhatsAppCartItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+  }
+  export type WhatsAppCartItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+  }
+  export type WhatsAppCartItemIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+  }
+
+  export type $WhatsAppCartItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WhatsAppCartItem"
+    objects: {
+      conversation: Prisma.$WhatsAppConversationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      phone: string
+      cakeName: string
+      size: string
+      price: string
+      quantity: number
+      createdAt: Date
+    }, ExtArgs["result"]["whatsAppCartItem"]>
+    composites: {}
+  }
+
+  type WhatsAppCartItemGetPayload<S extends boolean | null | undefined | WhatsAppCartItemDefaultArgs> = $Result.GetResult<Prisma.$WhatsAppCartItemPayload, S>
+
+  type WhatsAppCartItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WhatsAppCartItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WhatsAppCartItemCountAggregateInputType | true
+    }
+
+  export interface WhatsAppCartItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WhatsAppCartItem'], meta: { name: 'WhatsAppCartItem' } }
+    /**
+     * Find zero or one WhatsAppCartItem that matches the filter.
+     * @param {WhatsAppCartItemFindUniqueArgs} args - Arguments to find a WhatsAppCartItem
+     * @example
+     * // Get one WhatsAppCartItem
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WhatsAppCartItemFindUniqueArgs>(args: SelectSubset<T, WhatsAppCartItemFindUniqueArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WhatsAppCartItem that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WhatsAppCartItemFindUniqueOrThrowArgs} args - Arguments to find a WhatsAppCartItem
+     * @example
+     * // Get one WhatsAppCartItem
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WhatsAppCartItemFindUniqueOrThrowArgs>(args: SelectSubset<T, WhatsAppCartItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WhatsAppCartItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemFindFirstArgs} args - Arguments to find a WhatsAppCartItem
+     * @example
+     * // Get one WhatsAppCartItem
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WhatsAppCartItemFindFirstArgs>(args?: SelectSubset<T, WhatsAppCartItemFindFirstArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WhatsAppCartItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemFindFirstOrThrowArgs} args - Arguments to find a WhatsAppCartItem
+     * @example
+     * // Get one WhatsAppCartItem
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WhatsAppCartItemFindFirstOrThrowArgs>(args?: SelectSubset<T, WhatsAppCartItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WhatsAppCartItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WhatsAppCartItems
+     * const whatsAppCartItems = await prisma.whatsAppCartItem.findMany()
+     * 
+     * // Get first 10 WhatsAppCartItems
+     * const whatsAppCartItems = await prisma.whatsAppCartItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const whatsAppCartItemWithIdOnly = await prisma.whatsAppCartItem.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WhatsAppCartItemFindManyArgs>(args?: SelectSubset<T, WhatsAppCartItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WhatsAppCartItem.
+     * @param {WhatsAppCartItemCreateArgs} args - Arguments to create a WhatsAppCartItem.
+     * @example
+     * // Create one WhatsAppCartItem
+     * const WhatsAppCartItem = await prisma.whatsAppCartItem.create({
+     *   data: {
+     *     // ... data to create a WhatsAppCartItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends WhatsAppCartItemCreateArgs>(args: SelectSubset<T, WhatsAppCartItemCreateArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WhatsAppCartItems.
+     * @param {WhatsAppCartItemCreateManyArgs} args - Arguments to create many WhatsAppCartItems.
+     * @example
+     * // Create many WhatsAppCartItems
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WhatsAppCartItemCreateManyArgs>(args?: SelectSubset<T, WhatsAppCartItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WhatsAppCartItems and returns the data saved in the database.
+     * @param {WhatsAppCartItemCreateManyAndReturnArgs} args - Arguments to create many WhatsAppCartItems.
+     * @example
+     * // Create many WhatsAppCartItems
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WhatsAppCartItems and only return the `id`
+     * const whatsAppCartItemWithIdOnly = await prisma.whatsAppCartItem.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WhatsAppCartItemCreateManyAndReturnArgs>(args?: SelectSubset<T, WhatsAppCartItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WhatsAppCartItem.
+     * @param {WhatsAppCartItemDeleteArgs} args - Arguments to delete one WhatsAppCartItem.
+     * @example
+     * // Delete one WhatsAppCartItem
+     * const WhatsAppCartItem = await prisma.whatsAppCartItem.delete({
+     *   where: {
+     *     // ... filter to delete one WhatsAppCartItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WhatsAppCartItemDeleteArgs>(args: SelectSubset<T, WhatsAppCartItemDeleteArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WhatsAppCartItem.
+     * @param {WhatsAppCartItemUpdateArgs} args - Arguments to update one WhatsAppCartItem.
+     * @example
+     * // Update one WhatsAppCartItem
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WhatsAppCartItemUpdateArgs>(args: SelectSubset<T, WhatsAppCartItemUpdateArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WhatsAppCartItems.
+     * @param {WhatsAppCartItemDeleteManyArgs} args - Arguments to filter WhatsAppCartItems to delete.
+     * @example
+     * // Delete a few WhatsAppCartItems
+     * const { count } = await prisma.whatsAppCartItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WhatsAppCartItemDeleteManyArgs>(args?: SelectSubset<T, WhatsAppCartItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WhatsAppCartItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WhatsAppCartItems
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WhatsAppCartItemUpdateManyArgs>(args: SelectSubset<T, WhatsAppCartItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WhatsAppCartItems and returns the data updated in the database.
+     * @param {WhatsAppCartItemUpdateManyAndReturnArgs} args - Arguments to update many WhatsAppCartItems.
+     * @example
+     * // Update many WhatsAppCartItems
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WhatsAppCartItems and only return the `id`
+     * const whatsAppCartItemWithIdOnly = await prisma.whatsAppCartItem.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WhatsAppCartItemUpdateManyAndReturnArgs>(args: SelectSubset<T, WhatsAppCartItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WhatsAppCartItem.
+     * @param {WhatsAppCartItemUpsertArgs} args - Arguments to update or create a WhatsAppCartItem.
+     * @example
+     * // Update or create a WhatsAppCartItem
+     * const whatsAppCartItem = await prisma.whatsAppCartItem.upsert({
+     *   create: {
+     *     // ... data to create a WhatsAppCartItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WhatsAppCartItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WhatsAppCartItemUpsertArgs>(args: SelectSubset<T, WhatsAppCartItemUpsertArgs<ExtArgs>>): Prisma__WhatsAppCartItemClient<$Result.GetResult<Prisma.$WhatsAppCartItemPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WhatsAppCartItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemCountArgs} args - Arguments to filter WhatsAppCartItems to count.
+     * @example
+     * // Count the number of WhatsAppCartItems
+     * const count = await prisma.whatsAppCartItem.count({
+     *   where: {
+     *     // ... the filter for the WhatsAppCartItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends WhatsAppCartItemCountArgs>(
+      args?: Subset<T, WhatsAppCartItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WhatsAppCartItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WhatsAppCartItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WhatsAppCartItemAggregateArgs>(args: Subset<T, WhatsAppCartItemAggregateArgs>): Prisma.PrismaPromise<GetWhatsAppCartItemAggregateType<T>>
+
+    /**
+     * Group by WhatsAppCartItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppCartItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WhatsAppCartItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WhatsAppCartItemGroupByArgs['orderBy'] }
+        : { orderBy?: WhatsAppCartItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WhatsAppCartItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWhatsAppCartItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WhatsAppCartItem model
+   */
+  readonly fields: WhatsAppCartItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WhatsAppCartItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WhatsAppCartItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    conversation<T extends WhatsAppConversationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WhatsAppConversationDefaultArgs<ExtArgs>>): Prisma__WhatsAppConversationClient<$Result.GetResult<Prisma.$WhatsAppConversationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WhatsAppCartItem model
+   */
+  interface WhatsAppCartItemFieldRefs {
+    readonly id: FieldRef<"WhatsAppCartItem", 'String'>
+    readonly phone: FieldRef<"WhatsAppCartItem", 'String'>
+    readonly cakeName: FieldRef<"WhatsAppCartItem", 'String'>
+    readonly size: FieldRef<"WhatsAppCartItem", 'String'>
+    readonly price: FieldRef<"WhatsAppCartItem", 'String'>
+    readonly quantity: FieldRef<"WhatsAppCartItem", 'Int'>
+    readonly createdAt: FieldRef<"WhatsAppCartItem", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WhatsAppCartItem findUnique
+   */
+  export type WhatsAppCartItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppCartItem to fetch.
+     */
+    where: WhatsAppCartItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppCartItem findUniqueOrThrow
+   */
+  export type WhatsAppCartItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppCartItem to fetch.
+     */
+    where: WhatsAppCartItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppCartItem findFirst
+   */
+  export type WhatsAppCartItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppCartItem to fetch.
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppCartItems to fetch.
+     */
+    orderBy?: WhatsAppCartItemOrderByWithRelationInput | WhatsAppCartItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WhatsAppCartItems.
+     */
+    cursor?: WhatsAppCartItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppCartItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppCartItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WhatsAppCartItems.
+     */
+    distinct?: WhatsAppCartItemScalarFieldEnum | WhatsAppCartItemScalarFieldEnum[]
+  }
+
+  /**
+   * WhatsAppCartItem findFirstOrThrow
+   */
+  export type WhatsAppCartItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppCartItem to fetch.
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppCartItems to fetch.
+     */
+    orderBy?: WhatsAppCartItemOrderByWithRelationInput | WhatsAppCartItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WhatsAppCartItems.
+     */
+    cursor?: WhatsAppCartItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppCartItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppCartItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WhatsAppCartItems.
+     */
+    distinct?: WhatsAppCartItemScalarFieldEnum | WhatsAppCartItemScalarFieldEnum[]
+  }
+
+  /**
+   * WhatsAppCartItem findMany
+   */
+  export type WhatsAppCartItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppCartItems to fetch.
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppCartItems to fetch.
+     */
+    orderBy?: WhatsAppCartItemOrderByWithRelationInput | WhatsAppCartItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WhatsAppCartItems.
+     */
+    cursor?: WhatsAppCartItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppCartItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppCartItems.
+     */
+    skip?: number
+    distinct?: WhatsAppCartItemScalarFieldEnum | WhatsAppCartItemScalarFieldEnum[]
+  }
+
+  /**
+   * WhatsAppCartItem create
+   */
+  export type WhatsAppCartItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WhatsAppCartItem.
+     */
+    data: XOR<WhatsAppCartItemCreateInput, WhatsAppCartItemUncheckedCreateInput>
+  }
+
+  /**
+   * WhatsAppCartItem createMany
+   */
+  export type WhatsAppCartItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WhatsAppCartItems.
+     */
+    data: WhatsAppCartItemCreateManyInput | WhatsAppCartItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WhatsAppCartItem createManyAndReturn
+   */
+  export type WhatsAppCartItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * The data used to create many WhatsAppCartItems.
+     */
+    data: WhatsAppCartItemCreateManyInput | WhatsAppCartItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WhatsAppCartItem update
+   */
+  export type WhatsAppCartItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WhatsAppCartItem.
+     */
+    data: XOR<WhatsAppCartItemUpdateInput, WhatsAppCartItemUncheckedUpdateInput>
+    /**
+     * Choose, which WhatsAppCartItem to update.
+     */
+    where: WhatsAppCartItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppCartItem updateMany
+   */
+  export type WhatsAppCartItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WhatsAppCartItems.
+     */
+    data: XOR<WhatsAppCartItemUpdateManyMutationInput, WhatsAppCartItemUncheckedUpdateManyInput>
+    /**
+     * Filter which WhatsAppCartItems to update
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * Limit how many WhatsAppCartItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WhatsAppCartItem updateManyAndReturn
+   */
+  export type WhatsAppCartItemUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * The data used to update WhatsAppCartItems.
+     */
+    data: XOR<WhatsAppCartItemUpdateManyMutationInput, WhatsAppCartItemUncheckedUpdateManyInput>
+    /**
+     * Filter which WhatsAppCartItems to update
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * Limit how many WhatsAppCartItems to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WhatsAppCartItem upsert
+   */
+  export type WhatsAppCartItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WhatsAppCartItem to update in case it exists.
+     */
+    where: WhatsAppCartItemWhereUniqueInput
+    /**
+     * In case the WhatsAppCartItem found by the `where` argument doesn't exist, create a new WhatsAppCartItem with this data.
+     */
+    create: XOR<WhatsAppCartItemCreateInput, WhatsAppCartItemUncheckedCreateInput>
+    /**
+     * In case the WhatsAppCartItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WhatsAppCartItemUpdateInput, WhatsAppCartItemUncheckedUpdateInput>
+  }
+
+  /**
+   * WhatsAppCartItem delete
+   */
+  export type WhatsAppCartItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+    /**
+     * Filter which WhatsAppCartItem to delete.
+     */
+    where: WhatsAppCartItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppCartItem deleteMany
+   */
+  export type WhatsAppCartItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WhatsAppCartItems to delete
+     */
+    where?: WhatsAppCartItemWhereInput
+    /**
+     * Limit how many WhatsAppCartItems to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WhatsAppCartItem without action
+   */
+  export type WhatsAppCartItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppCartItem
+     */
+    select?: WhatsAppCartItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppCartItem
+     */
+    omit?: WhatsAppCartItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppCartItemInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model WhatsAppOrder
    */
 
   export type AggregateWhatsAppOrder = {
     _count: WhatsAppOrderCountAggregateOutputType | null
-    _avg: WhatsAppOrderAvgAggregateOutputType | null
-    _sum: WhatsAppOrderSumAggregateOutputType | null
     _min: WhatsAppOrderMinAggregateOutputType | null
     _max: WhatsAppOrderMaxAggregateOutputType | null
-  }
-
-  export type WhatsAppOrderAvgAggregateOutputType = {
-    quantity: number | null
-  }
-
-  export type WhatsAppOrderSumAggregateOutputType = {
-    quantity: number | null
   }
 
   export type WhatsAppOrderMinAggregateOutputType = {
@@ -10544,10 +11902,7 @@ export namespace Prisma {
     orderNumber: string | null
     phone: string | null
     customerName: string | null
-    cakeName: string | null
-    size: string | null
-    price: string | null
-    quantity: number | null
+    totalPrice: string | null
     address: string | null
     notes: string | null
     status: string | null
@@ -10563,10 +11918,7 @@ export namespace Prisma {
     orderNumber: string | null
     phone: string | null
     customerName: string | null
-    cakeName: string | null
-    size: string | null
-    price: string | null
-    quantity: number | null
+    totalPrice: string | null
     address: string | null
     notes: string | null
     status: string | null
@@ -10582,10 +11934,7 @@ export namespace Prisma {
     orderNumber: number
     phone: number
     customerName: number
-    cakeName: number
-    size: number
-    price: number
-    quantity: number
+    totalPrice: number
     address: number
     notes: number
     status: number
@@ -10598,23 +11947,12 @@ export namespace Prisma {
   }
 
 
-  export type WhatsAppOrderAvgAggregateInputType = {
-    quantity?: true
-  }
-
-  export type WhatsAppOrderSumAggregateInputType = {
-    quantity?: true
-  }
-
   export type WhatsAppOrderMinAggregateInputType = {
     id?: true
     orderNumber?: true
     phone?: true
     customerName?: true
-    cakeName?: true
-    size?: true
-    price?: true
-    quantity?: true
+    totalPrice?: true
     address?: true
     notes?: true
     status?: true
@@ -10630,10 +11968,7 @@ export namespace Prisma {
     orderNumber?: true
     phone?: true
     customerName?: true
-    cakeName?: true
-    size?: true
-    price?: true
-    quantity?: true
+    totalPrice?: true
     address?: true
     notes?: true
     status?: true
@@ -10649,10 +11984,7 @@ export namespace Prisma {
     orderNumber?: true
     phone?: true
     customerName?: true
-    cakeName?: true
-    size?: true
-    price?: true
-    quantity?: true
+    totalPrice?: true
     address?: true
     notes?: true
     status?: true
@@ -10702,18 +12034,6 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Select which fields to average
-    **/
-    _avg?: WhatsAppOrderAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: WhatsAppOrderSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
      * Select which fields to find the minimum value
     **/
     _min?: WhatsAppOrderMinAggregateInputType
@@ -10744,8 +12064,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: WhatsAppOrderCountAggregateInputType | true
-    _avg?: WhatsAppOrderAvgAggregateInputType
-    _sum?: WhatsAppOrderSumAggregateInputType
     _min?: WhatsAppOrderMinAggregateInputType
     _max?: WhatsAppOrderMaxAggregateInputType
   }
@@ -10755,10 +12073,7 @@ export namespace Prisma {
     orderNumber: string
     phone: string
     customerName: string | null
-    cakeName: string
-    size: string
-    price: string
-    quantity: number
+    totalPrice: string | null
     address: string | null
     notes: string | null
     status: string
@@ -10768,8 +12083,6 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     _count: WhatsAppOrderCountAggregateOutputType | null
-    _avg: WhatsAppOrderAvgAggregateOutputType | null
-    _sum: WhatsAppOrderSumAggregateOutputType | null
     _min: WhatsAppOrderMinAggregateOutputType | null
     _max: WhatsAppOrderMaxAggregateOutputType | null
   }
@@ -10793,10 +12106,7 @@ export namespace Prisma {
     orderNumber?: boolean
     phone?: boolean
     customerName?: boolean
-    cakeName?: boolean
-    size?: boolean
-    price?: boolean
-    quantity?: boolean
+    totalPrice?: boolean
     address?: boolean
     notes?: boolean
     status?: boolean
@@ -10805,7 +12115,9 @@ export namespace Prisma {
     deliveryDate?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    items?: boolean | WhatsAppOrder$itemsArgs<ExtArgs>
     conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+    _count?: boolean | WhatsAppOrderCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["whatsAppOrder"]>
 
   export type WhatsAppOrderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -10813,10 +12125,7 @@ export namespace Prisma {
     orderNumber?: boolean
     phone?: boolean
     customerName?: boolean
-    cakeName?: boolean
-    size?: boolean
-    price?: boolean
-    quantity?: boolean
+    totalPrice?: boolean
     address?: boolean
     notes?: boolean
     status?: boolean
@@ -10833,10 +12142,7 @@ export namespace Prisma {
     orderNumber?: boolean
     phone?: boolean
     customerName?: boolean
-    cakeName?: boolean
-    size?: boolean
-    price?: boolean
-    quantity?: boolean
+    totalPrice?: boolean
     address?: boolean
     notes?: boolean
     status?: boolean
@@ -10853,10 +12159,7 @@ export namespace Prisma {
     orderNumber?: boolean
     phone?: boolean
     customerName?: boolean
-    cakeName?: boolean
-    size?: boolean
-    price?: boolean
-    quantity?: boolean
+    totalPrice?: boolean
     address?: boolean
     notes?: boolean
     status?: boolean
@@ -10867,9 +12170,11 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WhatsAppOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderNumber" | "phone" | "customerName" | "cakeName" | "size" | "price" | "quantity" | "address" | "notes" | "status" | "isCustom" | "customImageUrl" | "deliveryDate" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppOrder"]>
+  export type WhatsAppOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderNumber" | "phone" | "customerName" | "totalPrice" | "address" | "notes" | "status" | "isCustom" | "customImageUrl" | "deliveryDate" | "createdAt" | "updatedAt", ExtArgs["result"]["whatsAppOrder"]>
   export type WhatsAppOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | WhatsAppOrder$itemsArgs<ExtArgs>
     conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
+    _count?: boolean | WhatsAppOrderCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WhatsAppOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     conversation?: boolean | WhatsAppConversationDefaultArgs<ExtArgs>
@@ -10881,6 +12186,7 @@ export namespace Prisma {
   export type $WhatsAppOrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "WhatsAppOrder"
     objects: {
+      items: Prisma.$WhatsAppOrderItemPayload<ExtArgs>[]
       conversation: Prisma.$WhatsAppConversationPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -10888,10 +12194,7 @@ export namespace Prisma {
       orderNumber: string
       phone: string
       customerName: string | null
-      cakeName: string
-      size: string
-      price: string
-      quantity: number
+      totalPrice: string | null
       address: string | null
       notes: string | null
       status: string
@@ -11294,6 +12597,7 @@ export namespace Prisma {
    */
   export interface Prisma__WhatsAppOrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    items<T extends WhatsAppOrder$itemsArgs<ExtArgs> = {}>(args?: Subset<T, WhatsAppOrder$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     conversation<T extends WhatsAppConversationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WhatsAppConversationDefaultArgs<ExtArgs>>): Prisma__WhatsAppConversationClient<$Result.GetResult<Prisma.$WhatsAppConversationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -11328,10 +12632,7 @@ export namespace Prisma {
     readonly orderNumber: FieldRef<"WhatsAppOrder", 'String'>
     readonly phone: FieldRef<"WhatsAppOrder", 'String'>
     readonly customerName: FieldRef<"WhatsAppOrder", 'String'>
-    readonly cakeName: FieldRef<"WhatsAppOrder", 'String'>
-    readonly size: FieldRef<"WhatsAppOrder", 'String'>
-    readonly price: FieldRef<"WhatsAppOrder", 'String'>
-    readonly quantity: FieldRef<"WhatsAppOrder", 'Int'>
+    readonly totalPrice: FieldRef<"WhatsAppOrder", 'String'>
     readonly address: FieldRef<"WhatsAppOrder", 'String'>
     readonly notes: FieldRef<"WhatsAppOrder", 'String'>
     readonly status: FieldRef<"WhatsAppOrder", 'String'>
@@ -11736,6 +13037,30 @@ export namespace Prisma {
   }
 
   /**
+   * WhatsAppOrder.items
+   */
+  export type WhatsAppOrder$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    where?: WhatsAppOrderItemWhereInput
+    orderBy?: WhatsAppOrderItemOrderByWithRelationInput | WhatsAppOrderItemOrderByWithRelationInput[]
+    cursor?: WhatsAppOrderItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WhatsAppOrderItemScalarFieldEnum | WhatsAppOrderItemScalarFieldEnum[]
+  }
+
+  /**
    * WhatsAppOrder without action
    */
   export type WhatsAppOrderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11751,6 +13076,1111 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: WhatsAppOrderInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WhatsAppOrderItem
+   */
+
+  export type AggregateWhatsAppOrderItem = {
+    _count: WhatsAppOrderItemCountAggregateOutputType | null
+    _avg: WhatsAppOrderItemAvgAggregateOutputType | null
+    _sum: WhatsAppOrderItemSumAggregateOutputType | null
+    _min: WhatsAppOrderItemMinAggregateOutputType | null
+    _max: WhatsAppOrderItemMaxAggregateOutputType | null
+  }
+
+  export type WhatsAppOrderItemAvgAggregateOutputType = {
+    quantity: number | null
+  }
+
+  export type WhatsAppOrderItemSumAggregateOutputType = {
+    quantity: number | null
+  }
+
+  export type WhatsAppOrderItemMinAggregateOutputType = {
+    id: string | null
+    orderId: string | null
+    cakeName: string | null
+    size: string | null
+    price: string | null
+    quantity: number | null
+  }
+
+  export type WhatsAppOrderItemMaxAggregateOutputType = {
+    id: string | null
+    orderId: string | null
+    cakeName: string | null
+    size: string | null
+    price: string | null
+    quantity: number | null
+  }
+
+  export type WhatsAppOrderItemCountAggregateOutputType = {
+    id: number
+    orderId: number
+    cakeName: number
+    size: number
+    price: number
+    quantity: number
+    _all: number
+  }
+
+
+  export type WhatsAppOrderItemAvgAggregateInputType = {
+    quantity?: true
+  }
+
+  export type WhatsAppOrderItemSumAggregateInputType = {
+    quantity?: true
+  }
+
+  export type WhatsAppOrderItemMinAggregateInputType = {
+    id?: true
+    orderId?: true
+    cakeName?: true
+    size?: true
+    price?: true
+    quantity?: true
+  }
+
+  export type WhatsAppOrderItemMaxAggregateInputType = {
+    id?: true
+    orderId?: true
+    cakeName?: true
+    size?: true
+    price?: true
+    quantity?: true
+  }
+
+  export type WhatsAppOrderItemCountAggregateInputType = {
+    id?: true
+    orderId?: true
+    cakeName?: true
+    size?: true
+    price?: true
+    quantity?: true
+    _all?: true
+  }
+
+  export type WhatsAppOrderItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WhatsAppOrderItem to aggregate.
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppOrderItems to fetch.
+     */
+    orderBy?: WhatsAppOrderItemOrderByWithRelationInput | WhatsAppOrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WhatsAppOrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppOrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppOrderItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WhatsAppOrderItems
+    **/
+    _count?: true | WhatsAppOrderItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WhatsAppOrderItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WhatsAppOrderItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WhatsAppOrderItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WhatsAppOrderItemMaxAggregateInputType
+  }
+
+  export type GetWhatsAppOrderItemAggregateType<T extends WhatsAppOrderItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateWhatsAppOrderItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWhatsAppOrderItem[P]>
+      : GetScalarType<T[P], AggregateWhatsAppOrderItem[P]>
+  }
+
+
+
+
+  export type WhatsAppOrderItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WhatsAppOrderItemWhereInput
+    orderBy?: WhatsAppOrderItemOrderByWithAggregationInput | WhatsAppOrderItemOrderByWithAggregationInput[]
+    by: WhatsAppOrderItemScalarFieldEnum[] | WhatsAppOrderItemScalarFieldEnum
+    having?: WhatsAppOrderItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WhatsAppOrderItemCountAggregateInputType | true
+    _avg?: WhatsAppOrderItemAvgAggregateInputType
+    _sum?: WhatsAppOrderItemSumAggregateInputType
+    _min?: WhatsAppOrderItemMinAggregateInputType
+    _max?: WhatsAppOrderItemMaxAggregateInputType
+  }
+
+  export type WhatsAppOrderItemGroupByOutputType = {
+    id: string
+    orderId: string
+    cakeName: string
+    size: string
+    price: string
+    quantity: number
+    _count: WhatsAppOrderItemCountAggregateOutputType | null
+    _avg: WhatsAppOrderItemAvgAggregateOutputType | null
+    _sum: WhatsAppOrderItemSumAggregateOutputType | null
+    _min: WhatsAppOrderItemMinAggregateOutputType | null
+    _max: WhatsAppOrderItemMaxAggregateOutputType | null
+  }
+
+  type GetWhatsAppOrderItemGroupByPayload<T extends WhatsAppOrderItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WhatsAppOrderItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WhatsAppOrderItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WhatsAppOrderItemGroupByOutputType[P]>
+            : GetScalarType<T[P], WhatsAppOrderItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WhatsAppOrderItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    orderId?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    order?: boolean | WhatsAppOrderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["whatsAppOrderItem"]>
+
+  export type WhatsAppOrderItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    orderId?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    order?: boolean | WhatsAppOrderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["whatsAppOrderItem"]>
+
+  export type WhatsAppOrderItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    orderId?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+    order?: boolean | WhatsAppOrderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["whatsAppOrderItem"]>
+
+  export type WhatsAppOrderItemSelectScalar = {
+    id?: boolean
+    orderId?: boolean
+    cakeName?: boolean
+    size?: boolean
+    price?: boolean
+    quantity?: boolean
+  }
+
+  export type WhatsAppOrderItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "orderId" | "cakeName" | "size" | "price" | "quantity", ExtArgs["result"]["whatsAppOrderItem"]>
+  export type WhatsAppOrderItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | WhatsAppOrderDefaultArgs<ExtArgs>
+  }
+  export type WhatsAppOrderItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | WhatsAppOrderDefaultArgs<ExtArgs>
+  }
+  export type WhatsAppOrderItemIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    order?: boolean | WhatsAppOrderDefaultArgs<ExtArgs>
+  }
+
+  export type $WhatsAppOrderItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WhatsAppOrderItem"
+    objects: {
+      order: Prisma.$WhatsAppOrderPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      orderId: string
+      cakeName: string
+      size: string
+      price: string
+      quantity: number
+    }, ExtArgs["result"]["whatsAppOrderItem"]>
+    composites: {}
+  }
+
+  type WhatsAppOrderItemGetPayload<S extends boolean | null | undefined | WhatsAppOrderItemDefaultArgs> = $Result.GetResult<Prisma.$WhatsAppOrderItemPayload, S>
+
+  type WhatsAppOrderItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WhatsAppOrderItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WhatsAppOrderItemCountAggregateInputType | true
+    }
+
+  export interface WhatsAppOrderItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WhatsAppOrderItem'], meta: { name: 'WhatsAppOrderItem' } }
+    /**
+     * Find zero or one WhatsAppOrderItem that matches the filter.
+     * @param {WhatsAppOrderItemFindUniqueArgs} args - Arguments to find a WhatsAppOrderItem
+     * @example
+     * // Get one WhatsAppOrderItem
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WhatsAppOrderItemFindUniqueArgs>(args: SelectSubset<T, WhatsAppOrderItemFindUniqueArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WhatsAppOrderItem that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WhatsAppOrderItemFindUniqueOrThrowArgs} args - Arguments to find a WhatsAppOrderItem
+     * @example
+     * // Get one WhatsAppOrderItem
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WhatsAppOrderItemFindUniqueOrThrowArgs>(args: SelectSubset<T, WhatsAppOrderItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WhatsAppOrderItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemFindFirstArgs} args - Arguments to find a WhatsAppOrderItem
+     * @example
+     * // Get one WhatsAppOrderItem
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WhatsAppOrderItemFindFirstArgs>(args?: SelectSubset<T, WhatsAppOrderItemFindFirstArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WhatsAppOrderItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemFindFirstOrThrowArgs} args - Arguments to find a WhatsAppOrderItem
+     * @example
+     * // Get one WhatsAppOrderItem
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WhatsAppOrderItemFindFirstOrThrowArgs>(args?: SelectSubset<T, WhatsAppOrderItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WhatsAppOrderItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WhatsAppOrderItems
+     * const whatsAppOrderItems = await prisma.whatsAppOrderItem.findMany()
+     * 
+     * // Get first 10 WhatsAppOrderItems
+     * const whatsAppOrderItems = await prisma.whatsAppOrderItem.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const whatsAppOrderItemWithIdOnly = await prisma.whatsAppOrderItem.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WhatsAppOrderItemFindManyArgs>(args?: SelectSubset<T, WhatsAppOrderItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WhatsAppOrderItem.
+     * @param {WhatsAppOrderItemCreateArgs} args - Arguments to create a WhatsAppOrderItem.
+     * @example
+     * // Create one WhatsAppOrderItem
+     * const WhatsAppOrderItem = await prisma.whatsAppOrderItem.create({
+     *   data: {
+     *     // ... data to create a WhatsAppOrderItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends WhatsAppOrderItemCreateArgs>(args: SelectSubset<T, WhatsAppOrderItemCreateArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WhatsAppOrderItems.
+     * @param {WhatsAppOrderItemCreateManyArgs} args - Arguments to create many WhatsAppOrderItems.
+     * @example
+     * // Create many WhatsAppOrderItems
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WhatsAppOrderItemCreateManyArgs>(args?: SelectSubset<T, WhatsAppOrderItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WhatsAppOrderItems and returns the data saved in the database.
+     * @param {WhatsAppOrderItemCreateManyAndReturnArgs} args - Arguments to create many WhatsAppOrderItems.
+     * @example
+     * // Create many WhatsAppOrderItems
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WhatsAppOrderItems and only return the `id`
+     * const whatsAppOrderItemWithIdOnly = await prisma.whatsAppOrderItem.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WhatsAppOrderItemCreateManyAndReturnArgs>(args?: SelectSubset<T, WhatsAppOrderItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WhatsAppOrderItem.
+     * @param {WhatsAppOrderItemDeleteArgs} args - Arguments to delete one WhatsAppOrderItem.
+     * @example
+     * // Delete one WhatsAppOrderItem
+     * const WhatsAppOrderItem = await prisma.whatsAppOrderItem.delete({
+     *   where: {
+     *     // ... filter to delete one WhatsAppOrderItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WhatsAppOrderItemDeleteArgs>(args: SelectSubset<T, WhatsAppOrderItemDeleteArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WhatsAppOrderItem.
+     * @param {WhatsAppOrderItemUpdateArgs} args - Arguments to update one WhatsAppOrderItem.
+     * @example
+     * // Update one WhatsAppOrderItem
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WhatsAppOrderItemUpdateArgs>(args: SelectSubset<T, WhatsAppOrderItemUpdateArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WhatsAppOrderItems.
+     * @param {WhatsAppOrderItemDeleteManyArgs} args - Arguments to filter WhatsAppOrderItems to delete.
+     * @example
+     * // Delete a few WhatsAppOrderItems
+     * const { count } = await prisma.whatsAppOrderItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WhatsAppOrderItemDeleteManyArgs>(args?: SelectSubset<T, WhatsAppOrderItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WhatsAppOrderItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WhatsAppOrderItems
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WhatsAppOrderItemUpdateManyArgs>(args: SelectSubset<T, WhatsAppOrderItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WhatsAppOrderItems and returns the data updated in the database.
+     * @param {WhatsAppOrderItemUpdateManyAndReturnArgs} args - Arguments to update many WhatsAppOrderItems.
+     * @example
+     * // Update many WhatsAppOrderItems
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WhatsAppOrderItems and only return the `id`
+     * const whatsAppOrderItemWithIdOnly = await prisma.whatsAppOrderItem.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WhatsAppOrderItemUpdateManyAndReturnArgs>(args: SelectSubset<T, WhatsAppOrderItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WhatsAppOrderItem.
+     * @param {WhatsAppOrderItemUpsertArgs} args - Arguments to update or create a WhatsAppOrderItem.
+     * @example
+     * // Update or create a WhatsAppOrderItem
+     * const whatsAppOrderItem = await prisma.whatsAppOrderItem.upsert({
+     *   create: {
+     *     // ... data to create a WhatsAppOrderItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WhatsAppOrderItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WhatsAppOrderItemUpsertArgs>(args: SelectSubset<T, WhatsAppOrderItemUpsertArgs<ExtArgs>>): Prisma__WhatsAppOrderItemClient<$Result.GetResult<Prisma.$WhatsAppOrderItemPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WhatsAppOrderItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemCountArgs} args - Arguments to filter WhatsAppOrderItems to count.
+     * @example
+     * // Count the number of WhatsAppOrderItems
+     * const count = await prisma.whatsAppOrderItem.count({
+     *   where: {
+     *     // ... the filter for the WhatsAppOrderItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends WhatsAppOrderItemCountArgs>(
+      args?: Subset<T, WhatsAppOrderItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WhatsAppOrderItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WhatsAppOrderItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WhatsAppOrderItemAggregateArgs>(args: Subset<T, WhatsAppOrderItemAggregateArgs>): Prisma.PrismaPromise<GetWhatsAppOrderItemAggregateType<T>>
+
+    /**
+     * Group by WhatsAppOrderItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WhatsAppOrderItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WhatsAppOrderItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WhatsAppOrderItemGroupByArgs['orderBy'] }
+        : { orderBy?: WhatsAppOrderItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WhatsAppOrderItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWhatsAppOrderItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WhatsAppOrderItem model
+   */
+  readonly fields: WhatsAppOrderItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WhatsAppOrderItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WhatsAppOrderItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    order<T extends WhatsAppOrderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WhatsAppOrderDefaultArgs<ExtArgs>>): Prisma__WhatsAppOrderClient<$Result.GetResult<Prisma.$WhatsAppOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WhatsAppOrderItem model
+   */
+  interface WhatsAppOrderItemFieldRefs {
+    readonly id: FieldRef<"WhatsAppOrderItem", 'String'>
+    readonly orderId: FieldRef<"WhatsAppOrderItem", 'String'>
+    readonly cakeName: FieldRef<"WhatsAppOrderItem", 'String'>
+    readonly size: FieldRef<"WhatsAppOrderItem", 'String'>
+    readonly price: FieldRef<"WhatsAppOrderItem", 'String'>
+    readonly quantity: FieldRef<"WhatsAppOrderItem", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WhatsAppOrderItem findUnique
+   */
+  export type WhatsAppOrderItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppOrderItem to fetch.
+     */
+    where: WhatsAppOrderItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppOrderItem findUniqueOrThrow
+   */
+  export type WhatsAppOrderItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppOrderItem to fetch.
+     */
+    where: WhatsAppOrderItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppOrderItem findFirst
+   */
+  export type WhatsAppOrderItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppOrderItem to fetch.
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppOrderItems to fetch.
+     */
+    orderBy?: WhatsAppOrderItemOrderByWithRelationInput | WhatsAppOrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WhatsAppOrderItems.
+     */
+    cursor?: WhatsAppOrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppOrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppOrderItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WhatsAppOrderItems.
+     */
+    distinct?: WhatsAppOrderItemScalarFieldEnum | WhatsAppOrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * WhatsAppOrderItem findFirstOrThrow
+   */
+  export type WhatsAppOrderItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppOrderItem to fetch.
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppOrderItems to fetch.
+     */
+    orderBy?: WhatsAppOrderItemOrderByWithRelationInput | WhatsAppOrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WhatsAppOrderItems.
+     */
+    cursor?: WhatsAppOrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppOrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppOrderItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WhatsAppOrderItems.
+     */
+    distinct?: WhatsAppOrderItemScalarFieldEnum | WhatsAppOrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * WhatsAppOrderItem findMany
+   */
+  export type WhatsAppOrderItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * Filter, which WhatsAppOrderItems to fetch.
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WhatsAppOrderItems to fetch.
+     */
+    orderBy?: WhatsAppOrderItemOrderByWithRelationInput | WhatsAppOrderItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WhatsAppOrderItems.
+     */
+    cursor?: WhatsAppOrderItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WhatsAppOrderItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WhatsAppOrderItems.
+     */
+    skip?: number
+    distinct?: WhatsAppOrderItemScalarFieldEnum | WhatsAppOrderItemScalarFieldEnum[]
+  }
+
+  /**
+   * WhatsAppOrderItem create
+   */
+  export type WhatsAppOrderItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WhatsAppOrderItem.
+     */
+    data: XOR<WhatsAppOrderItemCreateInput, WhatsAppOrderItemUncheckedCreateInput>
+  }
+
+  /**
+   * WhatsAppOrderItem createMany
+   */
+  export type WhatsAppOrderItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WhatsAppOrderItems.
+     */
+    data: WhatsAppOrderItemCreateManyInput | WhatsAppOrderItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WhatsAppOrderItem createManyAndReturn
+   */
+  export type WhatsAppOrderItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * The data used to create many WhatsAppOrderItems.
+     */
+    data: WhatsAppOrderItemCreateManyInput | WhatsAppOrderItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WhatsAppOrderItem update
+   */
+  export type WhatsAppOrderItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WhatsAppOrderItem.
+     */
+    data: XOR<WhatsAppOrderItemUpdateInput, WhatsAppOrderItemUncheckedUpdateInput>
+    /**
+     * Choose, which WhatsAppOrderItem to update.
+     */
+    where: WhatsAppOrderItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppOrderItem updateMany
+   */
+  export type WhatsAppOrderItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WhatsAppOrderItems.
+     */
+    data: XOR<WhatsAppOrderItemUpdateManyMutationInput, WhatsAppOrderItemUncheckedUpdateManyInput>
+    /**
+     * Filter which WhatsAppOrderItems to update
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * Limit how many WhatsAppOrderItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WhatsAppOrderItem updateManyAndReturn
+   */
+  export type WhatsAppOrderItemUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * The data used to update WhatsAppOrderItems.
+     */
+    data: XOR<WhatsAppOrderItemUpdateManyMutationInput, WhatsAppOrderItemUncheckedUpdateManyInput>
+    /**
+     * Filter which WhatsAppOrderItems to update
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * Limit how many WhatsAppOrderItems to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WhatsAppOrderItem upsert
+   */
+  export type WhatsAppOrderItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WhatsAppOrderItem to update in case it exists.
+     */
+    where: WhatsAppOrderItemWhereUniqueInput
+    /**
+     * In case the WhatsAppOrderItem found by the `where` argument doesn't exist, create a new WhatsAppOrderItem with this data.
+     */
+    create: XOR<WhatsAppOrderItemCreateInput, WhatsAppOrderItemUncheckedCreateInput>
+    /**
+     * In case the WhatsAppOrderItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WhatsAppOrderItemUpdateInput, WhatsAppOrderItemUncheckedUpdateInput>
+  }
+
+  /**
+   * WhatsAppOrderItem delete
+   */
+  export type WhatsAppOrderItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
+    /**
+     * Filter which WhatsAppOrderItem to delete.
+     */
+    where: WhatsAppOrderItemWhereUniqueInput
+  }
+
+  /**
+   * WhatsAppOrderItem deleteMany
+   */
+  export type WhatsAppOrderItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WhatsAppOrderItems to delete
+     */
+    where?: WhatsAppOrderItemWhereInput
+    /**
+     * Limit how many WhatsAppOrderItems to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WhatsAppOrderItem without action
+   */
+  export type WhatsAppOrderItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WhatsAppOrderItem
+     */
+    select?: WhatsAppOrderItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WhatsAppOrderItem
+     */
+    omit?: WhatsAppOrderItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WhatsAppOrderItemInclude<ExtArgs> | null
   }
 
 
@@ -11873,15 +14303,25 @@ export namespace Prisma {
   export type WhatsAppConversationScalarFieldEnum = (typeof WhatsAppConversationScalarFieldEnum)[keyof typeof WhatsAppConversationScalarFieldEnum]
 
 
+  export const WhatsAppCartItemScalarFieldEnum: {
+    id: 'id',
+    phone: 'phone',
+    cakeName: 'cakeName',
+    size: 'size',
+    price: 'price',
+    quantity: 'quantity',
+    createdAt: 'createdAt'
+  };
+
+  export type WhatsAppCartItemScalarFieldEnum = (typeof WhatsAppCartItemScalarFieldEnum)[keyof typeof WhatsAppCartItemScalarFieldEnum]
+
+
   export const WhatsAppOrderScalarFieldEnum: {
     id: 'id',
     orderNumber: 'orderNumber',
     phone: 'phone',
     customerName: 'customerName',
-    cakeName: 'cakeName',
-    size: 'size',
-    price: 'price',
-    quantity: 'quantity',
+    totalPrice: 'totalPrice',
     address: 'address',
     notes: 'notes',
     status: 'status',
@@ -11893,6 +14333,18 @@ export namespace Prisma {
   };
 
   export type WhatsAppOrderScalarFieldEnum = (typeof WhatsAppOrderScalarFieldEnum)[keyof typeof WhatsAppOrderScalarFieldEnum]
+
+
+  export const WhatsAppOrderItemScalarFieldEnum: {
+    id: 'id',
+    orderId: 'orderId',
+    cakeName: 'cakeName',
+    size: 'size',
+    price: 'price',
+    quantity: 'quantity'
+  };
+
+  export type WhatsAppOrderItemScalarFieldEnum = (typeof WhatsAppOrderItemScalarFieldEnum)[keyof typeof WhatsAppOrderItemScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -12438,6 +14890,7 @@ export namespace Prisma {
     lastMessageAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     createdAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
+    cart?: WhatsAppCartItemListRelationFilter
     orders?: WhatsAppOrderListRelationFilter
   }
 
@@ -12457,6 +14910,7 @@ export namespace Prisma {
     lastMessageAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cart?: WhatsAppCartItemOrderByRelationAggregateInput
     orders?: WhatsAppOrderOrderByRelationAggregateInput
   }
 
@@ -12479,6 +14933,7 @@ export namespace Prisma {
     lastMessageAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     createdAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppConversation"> | Date | string
+    cart?: WhatsAppCartItemListRelationFilter
     orders?: WhatsAppOrderListRelationFilter
   }, "id" | "phone">
 
@@ -12526,6 +14981,73 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"WhatsAppConversation"> | Date | string
   }
 
+  export type WhatsAppCartItemWhereInput = {
+    AND?: WhatsAppCartItemWhereInput | WhatsAppCartItemWhereInput[]
+    OR?: WhatsAppCartItemWhereInput[]
+    NOT?: WhatsAppCartItemWhereInput | WhatsAppCartItemWhereInput[]
+    id?: StringFilter<"WhatsAppCartItem"> | string
+    phone?: StringFilter<"WhatsAppCartItem"> | string
+    cakeName?: StringFilter<"WhatsAppCartItem"> | string
+    size?: StringFilter<"WhatsAppCartItem"> | string
+    price?: StringFilter<"WhatsAppCartItem"> | string
+    quantity?: IntFilter<"WhatsAppCartItem"> | number
+    createdAt?: DateTimeFilter<"WhatsAppCartItem"> | Date | string
+    conversation?: XOR<WhatsAppConversationScalarRelationFilter, WhatsAppConversationWhereInput>
+  }
+
+  export type WhatsAppCartItemOrderByWithRelationInput = {
+    id?: SortOrder
+    phone?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    createdAt?: SortOrder
+    conversation?: WhatsAppConversationOrderByWithRelationInput
+  }
+
+  export type WhatsAppCartItemWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WhatsAppCartItemWhereInput | WhatsAppCartItemWhereInput[]
+    OR?: WhatsAppCartItemWhereInput[]
+    NOT?: WhatsAppCartItemWhereInput | WhatsAppCartItemWhereInput[]
+    phone?: StringFilter<"WhatsAppCartItem"> | string
+    cakeName?: StringFilter<"WhatsAppCartItem"> | string
+    size?: StringFilter<"WhatsAppCartItem"> | string
+    price?: StringFilter<"WhatsAppCartItem"> | string
+    quantity?: IntFilter<"WhatsAppCartItem"> | number
+    createdAt?: DateTimeFilter<"WhatsAppCartItem"> | Date | string
+    conversation?: XOR<WhatsAppConversationScalarRelationFilter, WhatsAppConversationWhereInput>
+  }, "id">
+
+  export type WhatsAppCartItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    phone?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    createdAt?: SortOrder
+    _count?: WhatsAppCartItemCountOrderByAggregateInput
+    _avg?: WhatsAppCartItemAvgOrderByAggregateInput
+    _max?: WhatsAppCartItemMaxOrderByAggregateInput
+    _min?: WhatsAppCartItemMinOrderByAggregateInput
+    _sum?: WhatsAppCartItemSumOrderByAggregateInput
+  }
+
+  export type WhatsAppCartItemScalarWhereWithAggregatesInput = {
+    AND?: WhatsAppCartItemScalarWhereWithAggregatesInput | WhatsAppCartItemScalarWhereWithAggregatesInput[]
+    OR?: WhatsAppCartItemScalarWhereWithAggregatesInput[]
+    NOT?: WhatsAppCartItemScalarWhereWithAggregatesInput | WhatsAppCartItemScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WhatsAppCartItem"> | string
+    phone?: StringWithAggregatesFilter<"WhatsAppCartItem"> | string
+    cakeName?: StringWithAggregatesFilter<"WhatsAppCartItem"> | string
+    size?: StringWithAggregatesFilter<"WhatsAppCartItem"> | string
+    price?: StringWithAggregatesFilter<"WhatsAppCartItem"> | string
+    quantity?: IntWithAggregatesFilter<"WhatsAppCartItem"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WhatsAppCartItem"> | Date | string
+  }
+
   export type WhatsAppOrderWhereInput = {
     AND?: WhatsAppOrderWhereInput | WhatsAppOrderWhereInput[]
     OR?: WhatsAppOrderWhereInput[]
@@ -12534,10 +15056,7 @@ export namespace Prisma {
     orderNumber?: StringFilter<"WhatsAppOrder"> | string
     phone?: StringFilter<"WhatsAppOrder"> | string
     customerName?: StringNullableFilter<"WhatsAppOrder"> | string | null
-    cakeName?: StringFilter<"WhatsAppOrder"> | string
-    size?: StringFilter<"WhatsAppOrder"> | string
-    price?: StringFilter<"WhatsAppOrder"> | string
-    quantity?: IntFilter<"WhatsAppOrder"> | number
+    totalPrice?: StringNullableFilter<"WhatsAppOrder"> | string | null
     address?: StringNullableFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableFilter<"WhatsAppOrder"> | string | null
     status?: StringFilter<"WhatsAppOrder"> | string
@@ -12546,6 +15065,7 @@ export namespace Prisma {
     deliveryDate?: StringNullableFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
+    items?: WhatsAppOrderItemListRelationFilter
     conversation?: XOR<WhatsAppConversationScalarRelationFilter, WhatsAppConversationWhereInput>
   }
 
@@ -12554,10 +15074,7 @@ export namespace Prisma {
     orderNumber?: SortOrder
     phone?: SortOrder
     customerName?: SortOrderInput | SortOrder
-    cakeName?: SortOrder
-    size?: SortOrder
-    price?: SortOrder
-    quantity?: SortOrder
+    totalPrice?: SortOrderInput | SortOrder
     address?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     status?: SortOrder
@@ -12566,6 +15083,7 @@ export namespace Prisma {
     deliveryDate?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    items?: WhatsAppOrderItemOrderByRelationAggregateInput
     conversation?: WhatsAppConversationOrderByWithRelationInput
   }
 
@@ -12577,10 +15095,7 @@ export namespace Prisma {
     NOT?: WhatsAppOrderWhereInput | WhatsAppOrderWhereInput[]
     phone?: StringFilter<"WhatsAppOrder"> | string
     customerName?: StringNullableFilter<"WhatsAppOrder"> | string | null
-    cakeName?: StringFilter<"WhatsAppOrder"> | string
-    size?: StringFilter<"WhatsAppOrder"> | string
-    price?: StringFilter<"WhatsAppOrder"> | string
-    quantity?: IntFilter<"WhatsAppOrder"> | number
+    totalPrice?: StringNullableFilter<"WhatsAppOrder"> | string | null
     address?: StringNullableFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableFilter<"WhatsAppOrder"> | string | null
     status?: StringFilter<"WhatsAppOrder"> | string
@@ -12589,6 +15104,7 @@ export namespace Prisma {
     deliveryDate?: StringNullableFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
+    items?: WhatsAppOrderItemListRelationFilter
     conversation?: XOR<WhatsAppConversationScalarRelationFilter, WhatsAppConversationWhereInput>
   }, "id" | "orderNumber">
 
@@ -12597,10 +15113,7 @@ export namespace Prisma {
     orderNumber?: SortOrder
     phone?: SortOrder
     customerName?: SortOrderInput | SortOrder
-    cakeName?: SortOrder
-    size?: SortOrder
-    price?: SortOrder
-    quantity?: SortOrder
+    totalPrice?: SortOrderInput | SortOrder
     address?: SortOrderInput | SortOrder
     notes?: SortOrderInput | SortOrder
     status?: SortOrder
@@ -12610,10 +15123,8 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WhatsAppOrderCountOrderByAggregateInput
-    _avg?: WhatsAppOrderAvgOrderByAggregateInput
     _max?: WhatsAppOrderMaxOrderByAggregateInput
     _min?: WhatsAppOrderMinOrderByAggregateInput
-    _sum?: WhatsAppOrderSumOrderByAggregateInput
   }
 
   export type WhatsAppOrderScalarWhereWithAggregatesInput = {
@@ -12624,10 +15135,7 @@ export namespace Prisma {
     orderNumber?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
     phone?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
     customerName?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
-    cakeName?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
-    size?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
-    price?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
-    quantity?: IntWithAggregatesFilter<"WhatsAppOrder"> | number
+    totalPrice?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     address?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     status?: StringWithAggregatesFilter<"WhatsAppOrder"> | string
@@ -12636,6 +15144,68 @@ export namespace Prisma {
     deliveryDate?: StringNullableWithAggregatesFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WhatsAppOrder"> | Date | string
+  }
+
+  export type WhatsAppOrderItemWhereInput = {
+    AND?: WhatsAppOrderItemWhereInput | WhatsAppOrderItemWhereInput[]
+    OR?: WhatsAppOrderItemWhereInput[]
+    NOT?: WhatsAppOrderItemWhereInput | WhatsAppOrderItemWhereInput[]
+    id?: StringFilter<"WhatsAppOrderItem"> | string
+    orderId?: StringFilter<"WhatsAppOrderItem"> | string
+    cakeName?: StringFilter<"WhatsAppOrderItem"> | string
+    size?: StringFilter<"WhatsAppOrderItem"> | string
+    price?: StringFilter<"WhatsAppOrderItem"> | string
+    quantity?: IntFilter<"WhatsAppOrderItem"> | number
+    order?: XOR<WhatsAppOrderScalarRelationFilter, WhatsAppOrderWhereInput>
+  }
+
+  export type WhatsAppOrderItemOrderByWithRelationInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    order?: WhatsAppOrderOrderByWithRelationInput
+  }
+
+  export type WhatsAppOrderItemWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WhatsAppOrderItemWhereInput | WhatsAppOrderItemWhereInput[]
+    OR?: WhatsAppOrderItemWhereInput[]
+    NOT?: WhatsAppOrderItemWhereInput | WhatsAppOrderItemWhereInput[]
+    orderId?: StringFilter<"WhatsAppOrderItem"> | string
+    cakeName?: StringFilter<"WhatsAppOrderItem"> | string
+    size?: StringFilter<"WhatsAppOrderItem"> | string
+    price?: StringFilter<"WhatsAppOrderItem"> | string
+    quantity?: IntFilter<"WhatsAppOrderItem"> | number
+    order?: XOR<WhatsAppOrderScalarRelationFilter, WhatsAppOrderWhereInput>
+  }, "id">
+
+  export type WhatsAppOrderItemOrderByWithAggregationInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    _count?: WhatsAppOrderItemCountOrderByAggregateInput
+    _avg?: WhatsAppOrderItemAvgOrderByAggregateInput
+    _max?: WhatsAppOrderItemMaxOrderByAggregateInput
+    _min?: WhatsAppOrderItemMinOrderByAggregateInput
+    _sum?: WhatsAppOrderItemSumOrderByAggregateInput
+  }
+
+  export type WhatsAppOrderItemScalarWhereWithAggregatesInput = {
+    AND?: WhatsAppOrderItemScalarWhereWithAggregatesInput | WhatsAppOrderItemScalarWhereWithAggregatesInput[]
+    OR?: WhatsAppOrderItemScalarWhereWithAggregatesInput[]
+    NOT?: WhatsAppOrderItemScalarWhereWithAggregatesInput | WhatsAppOrderItemScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"WhatsAppOrderItem"> | string
+    orderId?: StringWithAggregatesFilter<"WhatsAppOrderItem"> | string
+    cakeName?: StringWithAggregatesFilter<"WhatsAppOrderItem"> | string
+    size?: StringWithAggregatesFilter<"WhatsAppOrderItem"> | string
+    price?: StringWithAggregatesFilter<"WhatsAppOrderItem"> | string
+    quantity?: IntWithAggregatesFilter<"WhatsAppOrderItem"> | number
   }
 
   export type PostCreateInput = {
@@ -13104,6 +15674,7 @@ export namespace Prisma {
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    cart?: WhatsAppCartItemCreateNestedManyWithoutConversationInput
     orders?: WhatsAppOrderCreateNestedManyWithoutConversationInput
   }
 
@@ -13123,6 +15694,7 @@ export namespace Prisma {
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    cart?: WhatsAppCartItemUncheckedCreateNestedManyWithoutConversationInput
     orders?: WhatsAppOrderUncheckedCreateNestedManyWithoutConversationInput
   }
 
@@ -13142,6 +15714,7 @@ export namespace Prisma {
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cart?: WhatsAppCartItemUpdateManyWithoutConversationNestedInput
     orders?: WhatsAppOrderUpdateManyWithoutConversationNestedInput
   }
 
@@ -13161,6 +15734,7 @@ export namespace Prisma {
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cart?: WhatsAppCartItemUncheckedUpdateManyWithoutConversationNestedInput
     orders?: WhatsAppOrderUncheckedUpdateManyWithoutConversationNestedInput
   }
 
@@ -13218,14 +15792,80 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type WhatsAppOrderCreateInput = {
+  export type WhatsAppCartItemCreateInput = {
     id?: string
-    orderNumber: string
-    customerName?: string | null
     cakeName: string
     size: string
     price: string
     quantity?: number
+    createdAt?: Date | string
+    conversation: WhatsAppConversationCreateNestedOneWithoutCartInput
+  }
+
+  export type WhatsAppCartItemUncheckedCreateInput = {
+    id?: string
+    phone: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+    createdAt?: Date | string
+  }
+
+  export type WhatsAppCartItemUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    conversation?: WhatsAppConversationUpdateOneRequiredWithoutCartNestedInput
+  }
+
+  export type WhatsAppCartItemUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppCartItemCreateManyInput = {
+    id?: string
+    phone: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+    createdAt?: Date | string
+  }
+
+  export type WhatsAppCartItemUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppCartItemUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppOrderCreateInput = {
+    id?: string
+    orderNumber: string
+    customerName?: string | null
+    totalPrice?: string | null
     address?: string | null
     notes?: string | null
     status?: string
@@ -13234,6 +15874,7 @@ export namespace Prisma {
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    items?: WhatsAppOrderItemCreateNestedManyWithoutOrderInput
     conversation: WhatsAppConversationCreateNestedOneWithoutOrdersInput
   }
 
@@ -13242,10 +15883,7 @@ export namespace Prisma {
     orderNumber: string
     phone: string
     customerName?: string | null
-    cakeName: string
-    size: string
-    price: string
-    quantity?: number
+    totalPrice?: string | null
     address?: string | null
     notes?: string | null
     status?: string
@@ -13254,16 +15892,14 @@ export namespace Prisma {
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    items?: WhatsAppOrderItemUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type WhatsAppOrderUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     orderNumber?: StringFieldUpdateOperationsInput | string
     customerName?: NullableStringFieldUpdateOperationsInput | string | null
-    cakeName?: StringFieldUpdateOperationsInput | string
-    size?: StringFieldUpdateOperationsInput | string
-    price?: StringFieldUpdateOperationsInput | string
-    quantity?: IntFieldUpdateOperationsInput | number
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -13272,6 +15908,7 @@ export namespace Prisma {
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: WhatsAppOrderItemUpdateManyWithoutOrderNestedInput
     conversation?: WhatsAppConversationUpdateOneRequiredWithoutOrdersNestedInput
   }
 
@@ -13280,10 +15917,7 @@ export namespace Prisma {
     orderNumber?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     customerName?: NullableStringFieldUpdateOperationsInput | string | null
-    cakeName?: StringFieldUpdateOperationsInput | string
-    size?: StringFieldUpdateOperationsInput | string
-    price?: StringFieldUpdateOperationsInput | string
-    quantity?: IntFieldUpdateOperationsInput | number
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -13292,6 +15926,7 @@ export namespace Prisma {
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: WhatsAppOrderItemUncheckedUpdateManyWithoutOrderNestedInput
   }
 
   export type WhatsAppOrderCreateManyInput = {
@@ -13299,10 +15934,7 @@ export namespace Prisma {
     orderNumber: string
     phone: string
     customerName?: string | null
-    cakeName: string
-    size: string
-    price: string
-    quantity?: number
+    totalPrice?: string | null
     address?: string | null
     notes?: string | null
     status?: string
@@ -13317,10 +15949,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     orderNumber?: StringFieldUpdateOperationsInput | string
     customerName?: NullableStringFieldUpdateOperationsInput | string | null
-    cakeName?: StringFieldUpdateOperationsInput | string
-    size?: StringFieldUpdateOperationsInput | string
-    price?: StringFieldUpdateOperationsInput | string
-    quantity?: IntFieldUpdateOperationsInput | number
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -13336,10 +15965,7 @@ export namespace Prisma {
     orderNumber?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     customerName?: NullableStringFieldUpdateOperationsInput | string | null
-    cakeName?: StringFieldUpdateOperationsInput | string
-    size?: StringFieldUpdateOperationsInput | string
-    price?: StringFieldUpdateOperationsInput | string
-    quantity?: IntFieldUpdateOperationsInput | number
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -13348,6 +15974,68 @@ export namespace Prisma {
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppOrderItemCreateInput = {
+    id?: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+    order: WhatsAppOrderCreateNestedOneWithoutItemsInput
+  }
+
+  export type WhatsAppOrderItemUncheckedCreateInput = {
+    id?: string
+    orderId: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+  }
+
+  export type WhatsAppOrderItemUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    order?: WhatsAppOrderUpdateOneRequiredWithoutItemsNestedInput
+  }
+
+  export type WhatsAppOrderItemUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type WhatsAppOrderItemCreateManyInput = {
+    id?: string
+    orderId: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+  }
+
+  export type WhatsAppOrderItemUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type WhatsAppOrderItemUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderId?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -13792,10 +16480,20 @@ export namespace Prisma {
     cakeId?: SortOrder
   }
 
+  export type WhatsAppCartItemListRelationFilter = {
+    every?: WhatsAppCartItemWhereInput
+    some?: WhatsAppCartItemWhereInput
+    none?: WhatsAppCartItemWhereInput
+  }
+
   export type WhatsAppOrderListRelationFilter = {
     every?: WhatsAppOrderWhereInput
     some?: WhatsAppOrderWhereInput
     none?: WhatsAppOrderWhereInput
+  }
+
+  export type WhatsAppCartItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type WhatsAppOrderOrderByRelationAggregateInput = {
@@ -13864,14 +16562,62 @@ export namespace Prisma {
     selectedQuantity?: SortOrder
   }
 
+  export type WhatsAppConversationScalarRelationFilter = {
+    is?: WhatsAppConversationWhereInput
+    isNot?: WhatsAppConversationWhereInput
+  }
+
+  export type WhatsAppCartItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    phone?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WhatsAppCartItemAvgOrderByAggregateInput = {
+    quantity?: SortOrder
+  }
+
+  export type WhatsAppCartItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    phone?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WhatsAppCartItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    phone?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type WhatsAppCartItemSumOrderByAggregateInput = {
+    quantity?: SortOrder
+  }
+
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type WhatsAppConversationScalarRelationFilter = {
-    is?: WhatsAppConversationWhereInput
-    isNot?: WhatsAppConversationWhereInput
+  export type WhatsAppOrderItemListRelationFilter = {
+    every?: WhatsAppOrderItemWhereInput
+    some?: WhatsAppOrderItemWhereInput
+    none?: WhatsAppOrderItemWhereInput
+  }
+
+  export type WhatsAppOrderItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type WhatsAppOrderCountOrderByAggregateInput = {
@@ -13879,10 +16625,7 @@ export namespace Prisma {
     orderNumber?: SortOrder
     phone?: SortOrder
     customerName?: SortOrder
-    cakeName?: SortOrder
-    size?: SortOrder
-    price?: SortOrder
-    quantity?: SortOrder
+    totalPrice?: SortOrder
     address?: SortOrder
     notes?: SortOrder
     status?: SortOrder
@@ -13893,19 +16636,12 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type WhatsAppOrderAvgOrderByAggregateInput = {
-    quantity?: SortOrder
-  }
-
   export type WhatsAppOrderMaxOrderByAggregateInput = {
     id?: SortOrder
     orderNumber?: SortOrder
     phone?: SortOrder
     customerName?: SortOrder
-    cakeName?: SortOrder
-    size?: SortOrder
-    price?: SortOrder
-    quantity?: SortOrder
+    totalPrice?: SortOrder
     address?: SortOrder
     notes?: SortOrder
     status?: SortOrder
@@ -13921,10 +16657,7 @@ export namespace Prisma {
     orderNumber?: SortOrder
     phone?: SortOrder
     customerName?: SortOrder
-    cakeName?: SortOrder
-    size?: SortOrder
-    price?: SortOrder
-    quantity?: SortOrder
+    totalPrice?: SortOrder
     address?: SortOrder
     notes?: SortOrder
     status?: SortOrder
@@ -13935,16 +16668,52 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type WhatsAppOrderSumOrderByAggregateInput = {
-    quantity?: SortOrder
-  }
-
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type WhatsAppOrderScalarRelationFilter = {
+    is?: WhatsAppOrderWhereInput
+    isNot?: WhatsAppOrderWhereInput
+  }
+
+  export type WhatsAppOrderItemCountOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+  }
+
+  export type WhatsAppOrderItemAvgOrderByAggregateInput = {
+    quantity?: SortOrder
+  }
+
+  export type WhatsAppOrderItemMaxOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+  }
+
+  export type WhatsAppOrderItemMinOrderByAggregateInput = {
+    id?: SortOrder
+    orderId?: SortOrder
+    cakeName?: SortOrder
+    size?: SortOrder
+    price?: SortOrder
+    quantity?: SortOrder
+  }
+
+  export type WhatsAppOrderItemSumOrderByAggregateInput = {
+    quantity?: SortOrder
   }
 
   export type UserCreateNestedOneWithoutPostsInput = {
@@ -14203,6 +16972,13 @@ export namespace Prisma {
     update?: XOR<XOR<CakeUpdateToOneWithWhereWithoutOptionsInput, CakeUpdateWithoutOptionsInput>, CakeUncheckedUpdateWithoutOptionsInput>
   }
 
+  export type WhatsAppCartItemCreateNestedManyWithoutConversationInput = {
+    create?: XOR<WhatsAppCartItemCreateWithoutConversationInput, WhatsAppCartItemUncheckedCreateWithoutConversationInput> | WhatsAppCartItemCreateWithoutConversationInput[] | WhatsAppCartItemUncheckedCreateWithoutConversationInput[]
+    connectOrCreate?: WhatsAppCartItemCreateOrConnectWithoutConversationInput | WhatsAppCartItemCreateOrConnectWithoutConversationInput[]
+    createMany?: WhatsAppCartItemCreateManyConversationInputEnvelope
+    connect?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+  }
+
   export type WhatsAppOrderCreateNestedManyWithoutConversationInput = {
     create?: XOR<WhatsAppOrderCreateWithoutConversationInput, WhatsAppOrderUncheckedCreateWithoutConversationInput> | WhatsAppOrderCreateWithoutConversationInput[] | WhatsAppOrderUncheckedCreateWithoutConversationInput[]
     connectOrCreate?: WhatsAppOrderCreateOrConnectWithoutConversationInput | WhatsAppOrderCreateOrConnectWithoutConversationInput[]
@@ -14210,11 +16986,32 @@ export namespace Prisma {
     connect?: WhatsAppOrderWhereUniqueInput | WhatsAppOrderWhereUniqueInput[]
   }
 
+  export type WhatsAppCartItemUncheckedCreateNestedManyWithoutConversationInput = {
+    create?: XOR<WhatsAppCartItemCreateWithoutConversationInput, WhatsAppCartItemUncheckedCreateWithoutConversationInput> | WhatsAppCartItemCreateWithoutConversationInput[] | WhatsAppCartItemUncheckedCreateWithoutConversationInput[]
+    connectOrCreate?: WhatsAppCartItemCreateOrConnectWithoutConversationInput | WhatsAppCartItemCreateOrConnectWithoutConversationInput[]
+    createMany?: WhatsAppCartItemCreateManyConversationInputEnvelope
+    connect?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+  }
+
   export type WhatsAppOrderUncheckedCreateNestedManyWithoutConversationInput = {
     create?: XOR<WhatsAppOrderCreateWithoutConversationInput, WhatsAppOrderUncheckedCreateWithoutConversationInput> | WhatsAppOrderCreateWithoutConversationInput[] | WhatsAppOrderUncheckedCreateWithoutConversationInput[]
     connectOrCreate?: WhatsAppOrderCreateOrConnectWithoutConversationInput | WhatsAppOrderCreateOrConnectWithoutConversationInput[]
     createMany?: WhatsAppOrderCreateManyConversationInputEnvelope
     connect?: WhatsAppOrderWhereUniqueInput | WhatsAppOrderWhereUniqueInput[]
+  }
+
+  export type WhatsAppCartItemUpdateManyWithoutConversationNestedInput = {
+    create?: XOR<WhatsAppCartItemCreateWithoutConversationInput, WhatsAppCartItemUncheckedCreateWithoutConversationInput> | WhatsAppCartItemCreateWithoutConversationInput[] | WhatsAppCartItemUncheckedCreateWithoutConversationInput[]
+    connectOrCreate?: WhatsAppCartItemCreateOrConnectWithoutConversationInput | WhatsAppCartItemCreateOrConnectWithoutConversationInput[]
+    upsert?: WhatsAppCartItemUpsertWithWhereUniqueWithoutConversationInput | WhatsAppCartItemUpsertWithWhereUniqueWithoutConversationInput[]
+    createMany?: WhatsAppCartItemCreateManyConversationInputEnvelope
+    set?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    disconnect?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    delete?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    connect?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    update?: WhatsAppCartItemUpdateWithWhereUniqueWithoutConversationInput | WhatsAppCartItemUpdateWithWhereUniqueWithoutConversationInput[]
+    updateMany?: WhatsAppCartItemUpdateManyWithWhereWithoutConversationInput | WhatsAppCartItemUpdateManyWithWhereWithoutConversationInput[]
+    deleteMany?: WhatsAppCartItemScalarWhereInput | WhatsAppCartItemScalarWhereInput[]
   }
 
   export type WhatsAppOrderUpdateManyWithoutConversationNestedInput = {
@@ -14231,6 +17028,20 @@ export namespace Prisma {
     deleteMany?: WhatsAppOrderScalarWhereInput | WhatsAppOrderScalarWhereInput[]
   }
 
+  export type WhatsAppCartItemUncheckedUpdateManyWithoutConversationNestedInput = {
+    create?: XOR<WhatsAppCartItemCreateWithoutConversationInput, WhatsAppCartItemUncheckedCreateWithoutConversationInput> | WhatsAppCartItemCreateWithoutConversationInput[] | WhatsAppCartItemUncheckedCreateWithoutConversationInput[]
+    connectOrCreate?: WhatsAppCartItemCreateOrConnectWithoutConversationInput | WhatsAppCartItemCreateOrConnectWithoutConversationInput[]
+    upsert?: WhatsAppCartItemUpsertWithWhereUniqueWithoutConversationInput | WhatsAppCartItemUpsertWithWhereUniqueWithoutConversationInput[]
+    createMany?: WhatsAppCartItemCreateManyConversationInputEnvelope
+    set?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    disconnect?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    delete?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    connect?: WhatsAppCartItemWhereUniqueInput | WhatsAppCartItemWhereUniqueInput[]
+    update?: WhatsAppCartItemUpdateWithWhereUniqueWithoutConversationInput | WhatsAppCartItemUpdateWithWhereUniqueWithoutConversationInput[]
+    updateMany?: WhatsAppCartItemUpdateManyWithWhereWithoutConversationInput | WhatsAppCartItemUpdateManyWithWhereWithoutConversationInput[]
+    deleteMany?: WhatsAppCartItemScalarWhereInput | WhatsAppCartItemScalarWhereInput[]
+  }
+
   export type WhatsAppOrderUncheckedUpdateManyWithoutConversationNestedInput = {
     create?: XOR<WhatsAppOrderCreateWithoutConversationInput, WhatsAppOrderUncheckedCreateWithoutConversationInput> | WhatsAppOrderCreateWithoutConversationInput[] | WhatsAppOrderUncheckedCreateWithoutConversationInput[]
     connectOrCreate?: WhatsAppOrderCreateOrConnectWithoutConversationInput | WhatsAppOrderCreateOrConnectWithoutConversationInput[]
@@ -14245,14 +17056,56 @@ export namespace Prisma {
     deleteMany?: WhatsAppOrderScalarWhereInput | WhatsAppOrderScalarWhereInput[]
   }
 
+  export type WhatsAppConversationCreateNestedOneWithoutCartInput = {
+    create?: XOR<WhatsAppConversationCreateWithoutCartInput, WhatsAppConversationUncheckedCreateWithoutCartInput>
+    connectOrCreate?: WhatsAppConversationCreateOrConnectWithoutCartInput
+    connect?: WhatsAppConversationWhereUniqueInput
+  }
+
+  export type WhatsAppConversationUpdateOneRequiredWithoutCartNestedInput = {
+    create?: XOR<WhatsAppConversationCreateWithoutCartInput, WhatsAppConversationUncheckedCreateWithoutCartInput>
+    connectOrCreate?: WhatsAppConversationCreateOrConnectWithoutCartInput
+    upsert?: WhatsAppConversationUpsertWithoutCartInput
+    connect?: WhatsAppConversationWhereUniqueInput
+    update?: XOR<XOR<WhatsAppConversationUpdateToOneWithWhereWithoutCartInput, WhatsAppConversationUpdateWithoutCartInput>, WhatsAppConversationUncheckedUpdateWithoutCartInput>
+  }
+
+  export type WhatsAppOrderItemCreateNestedManyWithoutOrderInput = {
+    create?: XOR<WhatsAppOrderItemCreateWithoutOrderInput, WhatsAppOrderItemUncheckedCreateWithoutOrderInput> | WhatsAppOrderItemCreateWithoutOrderInput[] | WhatsAppOrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: WhatsAppOrderItemCreateOrConnectWithoutOrderInput | WhatsAppOrderItemCreateOrConnectWithoutOrderInput[]
+    createMany?: WhatsAppOrderItemCreateManyOrderInputEnvelope
+    connect?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+  }
+
   export type WhatsAppConversationCreateNestedOneWithoutOrdersInput = {
     create?: XOR<WhatsAppConversationCreateWithoutOrdersInput, WhatsAppConversationUncheckedCreateWithoutOrdersInput>
     connectOrCreate?: WhatsAppConversationCreateOrConnectWithoutOrdersInput
     connect?: WhatsAppConversationWhereUniqueInput
   }
 
+  export type WhatsAppOrderItemUncheckedCreateNestedManyWithoutOrderInput = {
+    create?: XOR<WhatsAppOrderItemCreateWithoutOrderInput, WhatsAppOrderItemUncheckedCreateWithoutOrderInput> | WhatsAppOrderItemCreateWithoutOrderInput[] | WhatsAppOrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: WhatsAppOrderItemCreateOrConnectWithoutOrderInput | WhatsAppOrderItemCreateOrConnectWithoutOrderInput[]
+    createMany?: WhatsAppOrderItemCreateManyOrderInputEnvelope
+    connect?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+  }
+
   export type BoolFieldUpdateOperationsInput = {
     set?: boolean
+  }
+
+  export type WhatsAppOrderItemUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<WhatsAppOrderItemCreateWithoutOrderInput, WhatsAppOrderItemUncheckedCreateWithoutOrderInput> | WhatsAppOrderItemCreateWithoutOrderInput[] | WhatsAppOrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: WhatsAppOrderItemCreateOrConnectWithoutOrderInput | WhatsAppOrderItemCreateOrConnectWithoutOrderInput[]
+    upsert?: WhatsAppOrderItemUpsertWithWhereUniqueWithoutOrderInput | WhatsAppOrderItemUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: WhatsAppOrderItemCreateManyOrderInputEnvelope
+    set?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    disconnect?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    delete?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    connect?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    update?: WhatsAppOrderItemUpdateWithWhereUniqueWithoutOrderInput | WhatsAppOrderItemUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: WhatsAppOrderItemUpdateManyWithWhereWithoutOrderInput | WhatsAppOrderItemUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: WhatsAppOrderItemScalarWhereInput | WhatsAppOrderItemScalarWhereInput[]
   }
 
   export type WhatsAppConversationUpdateOneRequiredWithoutOrdersNestedInput = {
@@ -14261,6 +17114,34 @@ export namespace Prisma {
     upsert?: WhatsAppConversationUpsertWithoutOrdersInput
     connect?: WhatsAppConversationWhereUniqueInput
     update?: XOR<XOR<WhatsAppConversationUpdateToOneWithWhereWithoutOrdersInput, WhatsAppConversationUpdateWithoutOrdersInput>, WhatsAppConversationUncheckedUpdateWithoutOrdersInput>
+  }
+
+  export type WhatsAppOrderItemUncheckedUpdateManyWithoutOrderNestedInput = {
+    create?: XOR<WhatsAppOrderItemCreateWithoutOrderInput, WhatsAppOrderItemUncheckedCreateWithoutOrderInput> | WhatsAppOrderItemCreateWithoutOrderInput[] | WhatsAppOrderItemUncheckedCreateWithoutOrderInput[]
+    connectOrCreate?: WhatsAppOrderItemCreateOrConnectWithoutOrderInput | WhatsAppOrderItemCreateOrConnectWithoutOrderInput[]
+    upsert?: WhatsAppOrderItemUpsertWithWhereUniqueWithoutOrderInput | WhatsAppOrderItemUpsertWithWhereUniqueWithoutOrderInput[]
+    createMany?: WhatsAppOrderItemCreateManyOrderInputEnvelope
+    set?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    disconnect?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    delete?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    connect?: WhatsAppOrderItemWhereUniqueInput | WhatsAppOrderItemWhereUniqueInput[]
+    update?: WhatsAppOrderItemUpdateWithWhereUniqueWithoutOrderInput | WhatsAppOrderItemUpdateWithWhereUniqueWithoutOrderInput[]
+    updateMany?: WhatsAppOrderItemUpdateManyWithWhereWithoutOrderInput | WhatsAppOrderItemUpdateManyWithWhereWithoutOrderInput[]
+    deleteMany?: WhatsAppOrderItemScalarWhereInput | WhatsAppOrderItemScalarWhereInput[]
+  }
+
+  export type WhatsAppOrderCreateNestedOneWithoutItemsInput = {
+    create?: XOR<WhatsAppOrderCreateWithoutItemsInput, WhatsAppOrderUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: WhatsAppOrderCreateOrConnectWithoutItemsInput
+    connect?: WhatsAppOrderWhereUniqueInput
+  }
+
+  export type WhatsAppOrderUpdateOneRequiredWithoutItemsNestedInput = {
+    create?: XOR<WhatsAppOrderCreateWithoutItemsInput, WhatsAppOrderUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: WhatsAppOrderCreateOrConnectWithoutItemsInput
+    upsert?: WhatsAppOrderUpsertWithoutItemsInput
+    connect?: WhatsAppOrderWhereUniqueInput
+    update?: XOR<XOR<WhatsAppOrderUpdateToOneWithWhereWithoutItemsInput, WhatsAppOrderUpdateWithoutItemsInput>, WhatsAppOrderUncheckedUpdateWithoutItemsInput>
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -14912,14 +17793,39 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type WhatsAppOrderCreateWithoutConversationInput = {
+  export type WhatsAppCartItemCreateWithoutConversationInput = {
     id?: string
-    orderNumber: string
-    customerName?: string | null
     cakeName: string
     size: string
     price: string
     quantity?: number
+    createdAt?: Date | string
+  }
+
+  export type WhatsAppCartItemUncheckedCreateWithoutConversationInput = {
+    id?: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+    createdAt?: Date | string
+  }
+
+  export type WhatsAppCartItemCreateOrConnectWithoutConversationInput = {
+    where: WhatsAppCartItemWhereUniqueInput
+    create: XOR<WhatsAppCartItemCreateWithoutConversationInput, WhatsAppCartItemUncheckedCreateWithoutConversationInput>
+  }
+
+  export type WhatsAppCartItemCreateManyConversationInputEnvelope = {
+    data: WhatsAppCartItemCreateManyConversationInput | WhatsAppCartItemCreateManyConversationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WhatsAppOrderCreateWithoutConversationInput = {
+    id?: string
+    orderNumber: string
+    customerName?: string | null
+    totalPrice?: string | null
     address?: string | null
     notes?: string | null
     status?: string
@@ -14928,16 +17834,14 @@ export namespace Prisma {
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    items?: WhatsAppOrderItemCreateNestedManyWithoutOrderInput
   }
 
   export type WhatsAppOrderUncheckedCreateWithoutConversationInput = {
     id?: string
     orderNumber: string
     customerName?: string | null
-    cakeName: string
-    size: string
-    price: string
-    quantity?: number
+    totalPrice?: string | null
     address?: string | null
     notes?: string | null
     status?: string
@@ -14946,6 +17850,7 @@ export namespace Prisma {
     deliveryDate?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    items?: WhatsAppOrderItemUncheckedCreateNestedManyWithoutOrderInput
   }
 
   export type WhatsAppOrderCreateOrConnectWithoutConversationInput = {
@@ -14956,6 +17861,35 @@ export namespace Prisma {
   export type WhatsAppOrderCreateManyConversationInputEnvelope = {
     data: WhatsAppOrderCreateManyConversationInput | WhatsAppOrderCreateManyConversationInput[]
     skipDuplicates?: boolean
+  }
+
+  export type WhatsAppCartItemUpsertWithWhereUniqueWithoutConversationInput = {
+    where: WhatsAppCartItemWhereUniqueInput
+    update: XOR<WhatsAppCartItemUpdateWithoutConversationInput, WhatsAppCartItemUncheckedUpdateWithoutConversationInput>
+    create: XOR<WhatsAppCartItemCreateWithoutConversationInput, WhatsAppCartItemUncheckedCreateWithoutConversationInput>
+  }
+
+  export type WhatsAppCartItemUpdateWithWhereUniqueWithoutConversationInput = {
+    where: WhatsAppCartItemWhereUniqueInput
+    data: XOR<WhatsAppCartItemUpdateWithoutConversationInput, WhatsAppCartItemUncheckedUpdateWithoutConversationInput>
+  }
+
+  export type WhatsAppCartItemUpdateManyWithWhereWithoutConversationInput = {
+    where: WhatsAppCartItemScalarWhereInput
+    data: XOR<WhatsAppCartItemUpdateManyMutationInput, WhatsAppCartItemUncheckedUpdateManyWithoutConversationInput>
+  }
+
+  export type WhatsAppCartItemScalarWhereInput = {
+    AND?: WhatsAppCartItemScalarWhereInput | WhatsAppCartItemScalarWhereInput[]
+    OR?: WhatsAppCartItemScalarWhereInput[]
+    NOT?: WhatsAppCartItemScalarWhereInput | WhatsAppCartItemScalarWhereInput[]
+    id?: StringFilter<"WhatsAppCartItem"> | string
+    phone?: StringFilter<"WhatsAppCartItem"> | string
+    cakeName?: StringFilter<"WhatsAppCartItem"> | string
+    size?: StringFilter<"WhatsAppCartItem"> | string
+    price?: StringFilter<"WhatsAppCartItem"> | string
+    quantity?: IntFilter<"WhatsAppCartItem"> | number
+    createdAt?: DateTimeFilter<"WhatsAppCartItem"> | Date | string
   }
 
   export type WhatsAppOrderUpsertWithWhereUniqueWithoutConversationInput = {
@@ -14982,10 +17916,7 @@ export namespace Prisma {
     orderNumber?: StringFilter<"WhatsAppOrder"> | string
     phone?: StringFilter<"WhatsAppOrder"> | string
     customerName?: StringNullableFilter<"WhatsAppOrder"> | string | null
-    cakeName?: StringFilter<"WhatsAppOrder"> | string
-    size?: StringFilter<"WhatsAppOrder"> | string
-    price?: StringFilter<"WhatsAppOrder"> | string
-    quantity?: IntFilter<"WhatsAppOrder"> | number
+    totalPrice?: StringNullableFilter<"WhatsAppOrder"> | string | null
     address?: StringNullableFilter<"WhatsAppOrder"> | string | null
     notes?: StringNullableFilter<"WhatsAppOrder"> | string | null
     status?: StringFilter<"WhatsAppOrder"> | string
@@ -14994,6 +17925,124 @@ export namespace Prisma {
     deliveryDate?: StringNullableFilter<"WhatsAppOrder"> | string | null
     createdAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
     updatedAt?: DateTimeFilter<"WhatsAppOrder"> | Date | string
+  }
+
+  export type WhatsAppConversationCreateWithoutCartInput = {
+    id?: string
+    phone: string
+    name?: string | null
+    state?: string
+    selectedCake?: string | null
+    selectedSize?: string | null
+    selectedPrice?: string | null
+    selectedAddress?: string | null
+    selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
+    selectedDeliveryDate?: string | null
+    lastMessageAt?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orders?: WhatsAppOrderCreateNestedManyWithoutConversationInput
+  }
+
+  export type WhatsAppConversationUncheckedCreateWithoutCartInput = {
+    id?: string
+    phone: string
+    name?: string | null
+    state?: string
+    selectedCake?: string | null
+    selectedSize?: string | null
+    selectedPrice?: string | null
+    selectedAddress?: string | null
+    selectedNotes?: string | null
+    selectedQuantity?: number | null
+    customImageUrl?: string | null
+    selectedDeliveryDate?: string | null
+    lastMessageAt?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orders?: WhatsAppOrderUncheckedCreateNestedManyWithoutConversationInput
+  }
+
+  export type WhatsAppConversationCreateOrConnectWithoutCartInput = {
+    where: WhatsAppConversationWhereUniqueInput
+    create: XOR<WhatsAppConversationCreateWithoutCartInput, WhatsAppConversationUncheckedCreateWithoutCartInput>
+  }
+
+  export type WhatsAppConversationUpsertWithoutCartInput = {
+    update: XOR<WhatsAppConversationUpdateWithoutCartInput, WhatsAppConversationUncheckedUpdateWithoutCartInput>
+    create: XOR<WhatsAppConversationCreateWithoutCartInput, WhatsAppConversationUncheckedCreateWithoutCartInput>
+    where?: WhatsAppConversationWhereInput
+  }
+
+  export type WhatsAppConversationUpdateToOneWithWhereWithoutCartInput = {
+    where?: WhatsAppConversationWhereInput
+    data: XOR<WhatsAppConversationUpdateWithoutCartInput, WhatsAppConversationUncheckedUpdateWithoutCartInput>
+  }
+
+  export type WhatsAppConversationUpdateWithoutCartInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: StringFieldUpdateOperationsInput | string
+    selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedDeliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
+    lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: WhatsAppOrderUpdateManyWithoutConversationNestedInput
+  }
+
+  export type WhatsAppConversationUncheckedUpdateWithoutCartInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    state?: StringFieldUpdateOperationsInput | string
+    selectedCake?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedSize?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedAddress?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedNotes?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedQuantity?: NullableIntFieldUpdateOperationsInput | number | null
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    selectedDeliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
+    lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orders?: WhatsAppOrderUncheckedUpdateManyWithoutConversationNestedInput
+  }
+
+  export type WhatsAppOrderItemCreateWithoutOrderInput = {
+    id?: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+  }
+
+  export type WhatsAppOrderItemUncheckedCreateWithoutOrderInput = {
+    id?: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+  }
+
+  export type WhatsAppOrderItemCreateOrConnectWithoutOrderInput = {
+    where: WhatsAppOrderItemWhereUniqueInput
+    create: XOR<WhatsAppOrderItemCreateWithoutOrderInput, WhatsAppOrderItemUncheckedCreateWithoutOrderInput>
+  }
+
+  export type WhatsAppOrderItemCreateManyOrderInputEnvelope = {
+    data: WhatsAppOrderItemCreateManyOrderInput | WhatsAppOrderItemCreateManyOrderInput[]
+    skipDuplicates?: boolean
   }
 
   export type WhatsAppConversationCreateWithoutOrdersInput = {
@@ -15012,6 +18061,7 @@ export namespace Prisma {
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    cart?: WhatsAppCartItemCreateNestedManyWithoutConversationInput
   }
 
   export type WhatsAppConversationUncheckedCreateWithoutOrdersInput = {
@@ -15030,11 +18080,40 @@ export namespace Prisma {
     lastMessageAt?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    cart?: WhatsAppCartItemUncheckedCreateNestedManyWithoutConversationInput
   }
 
   export type WhatsAppConversationCreateOrConnectWithoutOrdersInput = {
     where: WhatsAppConversationWhereUniqueInput
     create: XOR<WhatsAppConversationCreateWithoutOrdersInput, WhatsAppConversationUncheckedCreateWithoutOrdersInput>
+  }
+
+  export type WhatsAppOrderItemUpsertWithWhereUniqueWithoutOrderInput = {
+    where: WhatsAppOrderItemWhereUniqueInput
+    update: XOR<WhatsAppOrderItemUpdateWithoutOrderInput, WhatsAppOrderItemUncheckedUpdateWithoutOrderInput>
+    create: XOR<WhatsAppOrderItemCreateWithoutOrderInput, WhatsAppOrderItemUncheckedCreateWithoutOrderInput>
+  }
+
+  export type WhatsAppOrderItemUpdateWithWhereUniqueWithoutOrderInput = {
+    where: WhatsAppOrderItemWhereUniqueInput
+    data: XOR<WhatsAppOrderItemUpdateWithoutOrderInput, WhatsAppOrderItemUncheckedUpdateWithoutOrderInput>
+  }
+
+  export type WhatsAppOrderItemUpdateManyWithWhereWithoutOrderInput = {
+    where: WhatsAppOrderItemScalarWhereInput
+    data: XOR<WhatsAppOrderItemUpdateManyMutationInput, WhatsAppOrderItemUncheckedUpdateManyWithoutOrderInput>
+  }
+
+  export type WhatsAppOrderItemScalarWhereInput = {
+    AND?: WhatsAppOrderItemScalarWhereInput | WhatsAppOrderItemScalarWhereInput[]
+    OR?: WhatsAppOrderItemScalarWhereInput[]
+    NOT?: WhatsAppOrderItemScalarWhereInput | WhatsAppOrderItemScalarWhereInput[]
+    id?: StringFilter<"WhatsAppOrderItem"> | string
+    orderId?: StringFilter<"WhatsAppOrderItem"> | string
+    cakeName?: StringFilter<"WhatsAppOrderItem"> | string
+    size?: StringFilter<"WhatsAppOrderItem"> | string
+    price?: StringFilter<"WhatsAppOrderItem"> | string
+    quantity?: IntFilter<"WhatsAppOrderItem"> | number
   }
 
   export type WhatsAppConversationUpsertWithoutOrdersInput = {
@@ -15064,6 +18143,7 @@ export namespace Prisma {
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cart?: WhatsAppCartItemUpdateManyWithoutConversationNestedInput
   }
 
   export type WhatsAppConversationUncheckedUpdateWithoutOrdersInput = {
@@ -15080,6 +18160,87 @@ export namespace Prisma {
     customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     selectedDeliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     lastMessageAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cart?: WhatsAppCartItemUncheckedUpdateManyWithoutConversationNestedInput
+  }
+
+  export type WhatsAppOrderCreateWithoutItemsInput = {
+    id?: string
+    orderNumber: string
+    customerName?: string | null
+    totalPrice?: string | null
+    address?: string | null
+    notes?: string | null
+    status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
+    deliveryDate?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    conversation: WhatsAppConversationCreateNestedOneWithoutOrdersInput
+  }
+
+  export type WhatsAppOrderUncheckedCreateWithoutItemsInput = {
+    id?: string
+    orderNumber: string
+    phone: string
+    customerName?: string | null
+    totalPrice?: string | null
+    address?: string | null
+    notes?: string | null
+    status?: string
+    isCustom?: boolean
+    customImageUrl?: string | null
+    deliveryDate?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WhatsAppOrderCreateOrConnectWithoutItemsInput = {
+    where: WhatsAppOrderWhereUniqueInput
+    create: XOR<WhatsAppOrderCreateWithoutItemsInput, WhatsAppOrderUncheckedCreateWithoutItemsInput>
+  }
+
+  export type WhatsAppOrderUpsertWithoutItemsInput = {
+    update: XOR<WhatsAppOrderUpdateWithoutItemsInput, WhatsAppOrderUncheckedUpdateWithoutItemsInput>
+    create: XOR<WhatsAppOrderCreateWithoutItemsInput, WhatsAppOrderUncheckedCreateWithoutItemsInput>
+    where?: WhatsAppOrderWhereInput
+  }
+
+  export type WhatsAppOrderUpdateToOneWithWhereWithoutItemsInput = {
+    where?: WhatsAppOrderWhereInput
+    data: XOR<WhatsAppOrderUpdateWithoutItemsInput, WhatsAppOrderUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type WhatsAppOrderUpdateWithoutItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    conversation?: WhatsAppConversationUpdateOneRequiredWithoutOrdersNestedInput
+  }
+
+  export type WhatsAppOrderUncheckedUpdateWithoutItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    phone?: StringFieldUpdateOperationsInput | string
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -15223,14 +18384,20 @@ export namespace Prisma {
     price?: StringFieldUpdateOperationsInput | string
   }
 
-  export type WhatsAppOrderCreateManyConversationInput = {
+  export type WhatsAppCartItemCreateManyConversationInput = {
     id?: string
-    orderNumber: string
-    customerName?: string | null
     cakeName: string
     size: string
     price: string
     quantity?: number
+    createdAt?: Date | string
+  }
+
+  export type WhatsAppOrderCreateManyConversationInput = {
+    id?: string
+    orderNumber: string
+    customerName?: string | null
+    totalPrice?: string | null
     address?: string | null
     notes?: string | null
     status?: string
@@ -15241,14 +18408,38 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
-  export type WhatsAppOrderUpdateWithoutConversationInput = {
+  export type WhatsAppCartItemUpdateWithoutConversationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    orderNumber?: StringFieldUpdateOperationsInput | string
-    customerName?: NullableStringFieldUpdateOperationsInput | string | null
     cakeName?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppCartItemUncheckedUpdateWithoutConversationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppCartItemUncheckedUpdateManyWithoutConversationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppOrderUpdateWithoutConversationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -15257,16 +18448,30 @@ export namespace Prisma {
     deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: WhatsAppOrderItemUpdateManyWithoutOrderNestedInput
   }
 
   export type WhatsAppOrderUncheckedUpdateWithoutConversationInput = {
     id?: StringFieldUpdateOperationsInput | string
     orderNumber?: StringFieldUpdateOperationsInput | string
     customerName?: NullableStringFieldUpdateOperationsInput | string | null
-    cakeName?: StringFieldUpdateOperationsInput | string
-    size?: StringFieldUpdateOperationsInput | string
-    price?: StringFieldUpdateOperationsInput | string
-    quantity?: IntFieldUpdateOperationsInput | number
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
+    address?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    isCustom?: BoolFieldUpdateOperationsInput | boolean
+    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: WhatsAppOrderItemUncheckedUpdateManyWithoutOrderNestedInput
+  }
+
+  export type WhatsAppOrderUncheckedUpdateManyWithoutConversationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    totalPrice?: NullableStringFieldUpdateOperationsInput | string | null
     address?: NullableStringFieldUpdateOperationsInput | string | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
@@ -15277,22 +18482,36 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type WhatsAppOrderUncheckedUpdateManyWithoutConversationInput = {
+  export type WhatsAppOrderItemCreateManyOrderInput = {
+    id?: string
+    cakeName: string
+    size: string
+    price: string
+    quantity?: number
+  }
+
+  export type WhatsAppOrderItemUpdateWithoutOrderInput = {
     id?: StringFieldUpdateOperationsInput | string
-    orderNumber?: StringFieldUpdateOperationsInput | string
-    customerName?: NullableStringFieldUpdateOperationsInput | string | null
     cakeName?: StringFieldUpdateOperationsInput | string
     size?: StringFieldUpdateOperationsInput | string
     price?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
-    address?: NullableStringFieldUpdateOperationsInput | string | null
-    notes?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: StringFieldUpdateOperationsInput | string
-    isCustom?: BoolFieldUpdateOperationsInput | boolean
-    customImageUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    deliveryDate?: NullableStringFieldUpdateOperationsInput | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WhatsAppOrderItemUncheckedUpdateWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type WhatsAppOrderItemUncheckedUpdateManyWithoutOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cakeName?: StringFieldUpdateOperationsInput | string
+    size?: StringFieldUpdateOperationsInput | string
+    price?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
   }
 
 

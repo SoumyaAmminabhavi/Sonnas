@@ -202,15 +202,22 @@ exports.Prisma.WhatsAppConversationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WhatsAppCartItemScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  cakeName: 'cakeName',
+  size: 'size',
+  price: 'price',
+  quantity: 'quantity',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.WhatsAppOrderScalarFieldEnum = {
   id: 'id',
   orderNumber: 'orderNumber',
   phone: 'phone',
   customerName: 'customerName',
-  cakeName: 'cakeName',
-  size: 'size',
-  price: 'price',
-  quantity: 'quantity',
+  totalPrice: 'totalPrice',
   address: 'address',
   notes: 'notes',
   status: 'status',
@@ -219,6 +226,15 @@ exports.Prisma.WhatsAppOrderScalarFieldEnum = {
   deliveryDate: 'deliveryDate',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WhatsAppOrderItemScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  cakeName: 'cakeName',
+  size: 'size',
+  price: 'price',
+  quantity: 'quantity'
 };
 
 exports.Prisma.SortOrder = {
@@ -246,7 +262,9 @@ exports.Prisma.ModelName = {
   Cake: 'Cake',
   CakeOption: 'CakeOption',
   WhatsAppConversation: 'WhatsAppConversation',
-  WhatsAppOrder: 'WhatsAppOrder'
+  WhatsAppCartItem: 'WhatsAppCartItem',
+  WhatsAppOrder: 'WhatsAppOrder',
+  WhatsAppOrderItem: 'WhatsAppOrderItem'
 };
 
 /**
