@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/supabase_service.dart';
+import 'package:intl/intl.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -30,58 +32,90 @@ class _PaymentsPageState extends State<PaymentsPage>
     final cs = theme.colorScheme;
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
-    return Scaffold(
-      backgroundColor: cs.surface,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(
-          horizontal: isDesktop ? 40.0 : 20.0,
-          vertical: 16.0,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildCompactHero(context, isDesktop),
-            const SizedBox(height: 16),
-            if (isDesktop)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildTabs(context),
-                        const SizedBox(height: 24),
-                        _buildPaymentList(context),
-                      ],
-                    ),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: SupabaseService.getOrdersStream(),
+      builder: (context, snapshot) {
+        final orders = snapshot.data ?? [];
+        final pendingOrders = orders.where((o) => (o['status'] ?? 'PENDING') == 'PENDING').toList();
+        final completedToday = orders.where((o) {
+          if ((o['status'] ?? 'PENDING') != 'COMPLETED') return false;
+          final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+          if (date == null) return false;
+          final now = DateTime.now();
+          return date.year == now.year && date.month == now.month && date.day == now.day;
+        }).toList();
+
+        double totalPending = 0;
+        for (var o in pendingOrders) {
+          totalPending += double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0;
+        }
+
+        double weeklyGross = 0;
+        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+        for (var o in orders) {
+          if ((o['status'] ?? 'PENDING') == 'COMPLETED') {
+            final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+            if (date != null && date.isAfter(sevenDaysAgo)) {
+              weeklyGross += double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0;
+            }
+          }
+        }
+
+        return Scaffold(
+          backgroundColor: cs.surface,
+          body: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: isDesktop ? 40.0 : 20.0,
+              vertical: 16.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCompactHero(context, isDesktop, weeklyGross, totalPending),
+                const SizedBox(height: 16),
+                if (isDesktop)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTabs(context),
+                            const SizedBox(height: 24),
+                            _buildPaymentList(context, pendingOrders, completedToday),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 48),
+                      Expanded(
+                        flex: 2,
+                        child: _buildHistorySection(context, isCompact: true, recentCompleted: completedToday),
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      _buildTabs(context),
+                      const SizedBox(height: 24),
+                      _buildPaymentList(context, pendingOrders, completedToday),
+                      const SizedBox(height: 48),
+                      _buildHistorySection(context, isCompact: false, recentCompleted: completedToday),
+                    ],
                   ),
-                  const SizedBox(width: 48),
-                  Expanded(
-                    flex: 2,
-                    child: _buildHistorySection(context, isCompact: true),
-                  ),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  _buildTabs(context),
-                  const SizedBox(height: 24),
-                  _buildPaymentList(context),
-                  const SizedBox(height: 48),
-                  _buildHistorySection(context, isCompact: false),
-                ],
-              ),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildCompactHero(BuildContext context, bool isDesktop) {
+  Widget _buildCompactHero(BuildContext context, bool isDesktop, double weeklyGross, double totalPending) {
     final cs = Theme.of(context).colorScheme;
+    final monthName = DateFormat('MMMM').format(DateTime.now());
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -125,8 +159,8 @@ class _PaymentsPageState extends State<PaymentsPage>
                   spacing: 40,
                   runSpacing: 16,
                   children: [
-                    _buildCompactStat(context, "WEEKLY GROSS", "₹12,480", cs.onSurface),
-                    _buildCompactStat(context, "PENDING", "₹286", cs.primary),
+                    _buildCompactStat(context, "WEEKLY GROSS", "₹${weeklyGross.toInt()}", cs.onSurface),
+                    _buildCompactStat(context, "PENDING", "₹${totalPending.toInt()}", cs.primary),
                   ],
                 ),
               ],
@@ -144,7 +178,7 @@ class _PaymentsPageState extends State<PaymentsPage>
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  "Month of October",
+                  "Month of $monthName",
                   style: GoogleFonts.plusJakartaSans(
                     color: cs.secondary.withValues(alpha: 0.4),
                     fontSize: 12,
@@ -228,27 +262,42 @@ class _PaymentsPageState extends State<PaymentsPage>
     );
   }
 
-  Widget _buildPaymentList(BuildContext context) {
-    final pendingItems = [
-      {"id": "#8825", "name": "Madame Dupont", "amount": "₹142", "desc": "Macaron Tower"},
-      {"id": "#8826", "name": "Julian Vane", "amount": "₹54", "desc": "Petit Four x2"},
-      {"id": "#8827", "name": "Sophie Laurent", "amount": "₹90", "desc": "Signature Cake"},
-    ];
+  Widget _buildPaymentList(BuildContext context, List<Map<String, dynamic>> pending, List<Map<String, dynamic>> completed) {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        final items = _tabController.index == 0 ? pending : completed;
+        
+        if (items.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(48.0),
+              child: Text(
+                "No payments found for this category.",
+                style: GoogleFonts.notoSerif(color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5)),
+              ),
+            ),
+          );
+        }
 
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: pendingItems.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final item = pendingItems[index];
-        return _buildCompactCard(context, item);
-      },
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            return _buildCompactCard(context, items[index]);
+          },
+        );
+      }
     );
   }
 
-  Widget _buildCompactCard(BuildContext context, Map<String, String> item) {
+  Widget _buildCompactCard(BuildContext context, Map<String, dynamic> item) {
     final cs = Theme.of(context).colorScheme;
+    final String status = item['status'] ?? 'PENDING';
+    final isCompleted = status == 'COMPLETED';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -263,7 +312,7 @@ class _PaymentsPageState extends State<PaymentsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "ORDER ${item['id']}",
+                  "ORDER #${item['orderNumber'] ?? '---'}",
                   style: GoogleFonts.plusJakartaSans(
                     color: cs.secondary.withValues(alpha: 0.3),
                     fontSize: 9,
@@ -271,7 +320,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                   ),
                 ),
                 Text(
-                  item['name']!,
+                  item['customerName'] ?? 'Anonymous',
                   style: GoogleFonts.notoSerif(
                     color: cs.onSurface,
                     fontSize: 18,
@@ -279,7 +328,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                   ),
                 ),
                 Text(
-                  item['desc']!,
+                  item['cakeName'] ?? 'Custom Creation',
                   style: GoogleFonts.notoSerif(
                     color: cs.secondary.withValues(alpha: 0.5),
                     fontSize: 11,
@@ -293,7 +342,7 @@ class _PaymentsPageState extends State<PaymentsPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                item['amount']!,
+                SupabaseService.formatPrice(item['totalPrice']),
                 style: GoogleFonts.notoSerif(
                   color: cs.onSurface,
                   fontSize: 20,
@@ -301,21 +350,48 @@ class _PaymentsPageState extends State<PaymentsPage>
                 ),
               ),
               const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.primary,
-                  foregroundColor: cs.onPrimary,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  minimumSize: const Size(80, 32),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              if (!isCompleted)
+                ElevatedButton(
+                  onPressed: () async {
+                    await SupabaseService.updatePaymentStatus(item['id'].toString(), 'COMPLETED');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Payment for #${item['orderNumber']} marked as completed"),
+                          backgroundColor: cs.primary,
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: const Size(80, 32),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(
+                    "MARK AS PAID",
+                    style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: cs.secondary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "PAID",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.secondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  "MARK AS PAID",
-                  style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold),
-                ),
-              ),
             ],
           ),
         ],
@@ -323,13 +399,11 @@ class _PaymentsPageState extends State<PaymentsPage>
     );
   }
 
-  Widget _buildHistorySection(BuildContext context, {required bool isCompact}) {
+  Widget _buildHistorySection(BuildContext context, {required bool isCompact, required List<Map<String, dynamic>> recentCompleted}) {
     final cs = Theme.of(context).colorScheme;
-    final historyItems = [
-      {"name": "Laurant Boulangerie", "date": "Oct 24", "amount": "₹1,240"},
-      {"name": "Jean-Luc Coffee", "date": "Oct 22", "amount": "₹845"},
-      {"name": "Atelier Uniforms", "date": "Oct 19", "amount": "₹430"},
-    ];
+    
+    // Sort and take top 5 for history
+    final historyItems = recentCompleted.take(5).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,54 +430,78 @@ class _PaymentsPageState extends State<PaymentsPage>
           ],
         ),
         const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: 0.02),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
-          ),
-          child: Column(
-            children: historyItems.map((item) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item['name']!,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: cs.onSurface,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          item['date']!,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 10,
-                            color: cs.secondary.withValues(alpha: 0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    item['amount']!,
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: cs.secondary,
-                    ),
-                  ),
-                ],
+        if (historyItems.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(24),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.02),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Center(
+              child: Text(
+                "No completed payments today.",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.4),
+                  fontSize: 12,
+                ),
               ),
-            )).toList(),
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.primary.withValues(alpha: 0.02),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+            ),
+            child: Column(
+              children: historyItems.map((item) {
+                final date = DateTime.tryParse(item['createdAt']?.toString() ?? '');
+                final dateStr = date != null ? DateFormat('MMM d, h:mm a').format(date) : 'Recently';
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item['customerName'] ?? 'Anonymous',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: cs.onSurface,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Text(
+                              dateStr,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 10,
+                                color: cs.secondary.withValues(alpha: 0.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        SupabaseService.formatPrice(item['totalPrice']),
+                        style: GoogleFonts.notoSerif(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: cs.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
           ),
-        ),
       ],
     );
-  }
+    }
 }

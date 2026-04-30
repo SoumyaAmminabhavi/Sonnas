@@ -23,7 +23,7 @@ class SupabaseService {
     // Already a full web link — use directly
     if (path.startsWith('https://') || path.startsWith('http://')) return path;
     // Local device paths (e.g. whatsapp://) can't be loaded — skip them
-    if (!path.contains('/') || path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
+    if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
     
     return client.storage.from('cakes').getPublicUrl(path);
   }
@@ -76,11 +76,17 @@ class SupabaseService {
 
 
   // Real-time stream for Sales Performance
-  static Stream<Map<int, double>> getSalesStream({SalesRange range = SalesRange.weekly}) {
+  static Stream<Map<int, double>> getSalesStream({
+    SalesRange range = SalesRange.weekly,
+    int? targetMonth,
+    int? targetYear,
+  }) {
     return getOrdersStream().map((orders) {
       final Map<int, double> salesData = {};
       final now = DateTime.now();
-      
+      final year = targetYear ?? now.year;
+      final month = targetMonth ?? now.month;
+
       // Initialize keys based on range
       if (range == SalesRange.today) {
         for (int i = 0; i < 24; i++) {
@@ -91,7 +97,9 @@ class SupabaseService {
           salesData[i] = 0.0;
         }
       } else if (range == SalesRange.monthly) {
-        for (int i = 0; i < 30; i++) {
+        // Find days in month
+        final lastDay = DateTime(year, month + 1, 0).day;
+        for (int i = 1; i <= lastDay; i++) {
           salesData[i] = 0.0;
         }
       } else if (range == SalesRange.yearly) {
@@ -107,7 +115,7 @@ class SupabaseService {
         final createdAt = DateTime.tryParse(createdAtStr);
         if (createdAt == null) continue;
         
-        final price = double.tryParse(order['price'].toString().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0;
+        final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
 
         if (range == SalesRange.today) {
           if (createdAt.year == now.year && createdAt.month == now.month && createdAt.day == now.day) {
@@ -121,15 +129,14 @@ class SupabaseService {
             salesData[weekday] = (salesData[weekday] ?? 0) + price;
           }
         } else if (range == SalesRange.monthly) {
-          final diff = now.difference(createdAt).inDays;
-          if (diff >= 0 && diff < 30) {
-            final dayOfMonth = 29 - diff; // Map 0-29 to X-axis
-            salesData[dayOfMonth] = (salesData[dayOfMonth] ?? 0) + price;
+          if (createdAt.year == year && createdAt.month == month) {
+            final day = createdAt.day;
+            salesData[day] = (salesData[day] ?? 0) + price;
           }
         } else if (range == SalesRange.yearly) {
-          if (createdAt.year == now.year) {
-            final month = createdAt.month;
-            salesData[month] = (salesData[month] ?? 0) + price;
+          if (createdAt.year == year) {
+            final m = createdAt.month;
+            salesData[m] = (salesData[m] ?? 0) + price;
           }
         }
       }
@@ -144,7 +151,7 @@ class SupabaseService {
       final Set<String> customers = {};
       
       for (var order in orders) {
-        final price = double.tryParse(order['price'].toString().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0;
+        final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
         totalRevenue += price;
         if (order['phone'] != null) customers.add(order['phone']);
       }
@@ -221,6 +228,46 @@ class SupabaseService {
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
       debugPrint('Error fetching conversations: $e');
+      return [];
+    }
+  }
+
+  // Update Order Status
+  static Future<void> updateOrderStatus(String id, String status) async {
+    try {
+      await client
+          .from('WhatsAppOrder')
+          .update({'status': status})
+          .eq('id', id);
+    } catch (e) {
+      debugPrint('Error updating order status: $e');
+    }
+  }
+
+  // Update Payment Status
+  static Future<void> updatePaymentStatus(String id, String status) async {
+    try {
+      // Try updating 'paymentStatus' column first
+      await client
+          .from('WhatsAppOrder')
+          .update({'paymentStatus': status})
+          .eq('id', id);
+    } catch (e) {
+      // Fallback: Use 'status' if 'paymentStatus' doesn't exist
+      await updateOrderStatus(id, status);
+    }
+  }
+
+  // Fetch items for a specific order
+  static Future<List<Map<String, dynamic>>> fetchOrderItems(String orderId) async {
+    try {
+      final data = await client
+          .from('WhatsAppOrderItem')
+          .select()
+          .eq('orderId', orderId);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Error fetching order items: $e');
       return [];
     }
   }

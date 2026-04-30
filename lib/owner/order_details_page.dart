@@ -103,22 +103,45 @@ class OrderDetailsPage extends StatelessWidget {
                                       const SizedBox(height: 32),
                                       _SectionTitle(title: "Artisan Selection", cs: cs),
                                       const SizedBox(height: 16),
-                                      FutureBuilder<List<Map<String, dynamic>>>(
-                                        future: SupabaseService.fetchMenu(),
-                                        builder: (context, menuSnapshot) {
-                                          final menu = menuSnapshot.data ?? [];
-                                          String displayImageUrl = order['customImageUrl'] ?? '';
-                                          if (displayImageUrl.isEmpty || displayImageUrl.startsWith('whatsapp://')) {
-                                            final String cakeName = order['cakeName'] ?? '';
-                                            final matchingCake = menu.firstWhere((c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(), orElse: () => {});
-                                            displayImageUrl = matchingCake['image'] ?? '';
+                                      FutureBuilder<List<dynamic>>(
+                                        future: Future.wait([
+                                          SupabaseService.fetchMenu(),
+                                          SupabaseService.fetchOrderItems(order['id']),
+                                        ]),
+                                        builder: (context, snapshot) {
+                                          final menu = snapshot.data?[0] ?? [];
+                                          final items = snapshot.data?[1] ?? [];
+                                          
+                                          if (items.isEmpty) {
+                                            // Fallback for custom orders without separate items
+                                            String displayImageUrl = order['customImageUrl'] ?? '';
+                                            return _OrderItemCard(
+                                              title: order['cakeName'] ?? 'Custom Creation',
+                                              subtitle: "${order['size'] ?? 'Standard'} • ${order['quantity'] ?? 1} Units",
+                                              price: SupabaseService.formatPrice(order['totalPrice']),
+                                              imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
+                                              cs: cs,
+                                            );
                                           }
-                                          return _OrderItemCard(
-                                            title: order['cakeName'] ?? 'Custom Creation',
-                                            subtitle: "${order['size'] ?? 'Standard'} • ${order['quantity'] ?? 1} Units",
-                                            price: SupabaseService.formatPrice(order['price']),
-                                            imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
-                                            cs: cs,
+
+                                          return Column(
+                                            children: items.map<Widget>((item) {
+                                              String displayImageUrl = '';
+                                              final String cakeName = item['cakeName'] ?? '';
+                                              final matchingCake = menu.firstWhere((c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(), orElse: () => <String, dynamic>{});
+                                              displayImageUrl = matchingCake['image'] ?? '';
+                                              
+                                              return Padding(
+                                                padding: const EdgeInsets.only(bottom: 12.0),
+                                                child: _OrderItemCard(
+                                                  title: cakeName,
+                                                  subtitle: "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
+                                                  price: SupabaseService.formatPrice(item['price']),
+                                                  imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
+                                                  cs: cs,
+                                                ),
+                                              );
+                                            }).toList(),
                                           );
                                         },
                                       ),

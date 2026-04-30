@@ -7,6 +7,7 @@ import 'payments_page.dart';
 import '../widgets/owner_sidebar.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/supabase_service.dart';
+import 'order_details_page.dart';
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -18,6 +19,8 @@ class OwnerDashboard extends StatefulWidget {
 class _OwnerDashboardState extends State<OwnerDashboard> {
   int _selectedIndex = 0;
   SalesRange _selectedRange = SalesRange.weekly;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +89,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     : _MainContent(
                         isDesktop: isDesktop,
                         selectedRange: _selectedRange,
+                        selectedMonth: _selectedMonth,
+                        selectedYear: _selectedYear,
                         onRangeChanged: (range) => setState(() => _selectedRange = range),
+                        onMonthChanged: (m) => setState(() => _selectedMonth = m),
+                        onYearChanged: (y) => setState(() => _selectedYear = y),
                         onViewAllOrders: () =>
                             setState(() => _selectedIndex = 1),
                       ),
@@ -139,13 +146,21 @@ class _MobileBottomNav extends StatelessWidget {
 class _MainContent extends StatelessWidget {
   final bool isDesktop;
   final SalesRange selectedRange;
+  final int selectedMonth;
+  final int selectedYear;
   final Function(SalesRange) onRangeChanged;
+  final Function(int) onMonthChanged;
+  final Function(int) onYearChanged;
   final VoidCallback onViewAllOrders;
 
   const _MainContent({
     required this.isDesktop,
     required this.selectedRange,
+    required this.selectedMonth,
+    required this.selectedYear,
     required this.onRangeChanged,
+    required this.onMonthChanged,
+    required this.onYearChanged,
     required this.onViewAllOrders,
   });
 
@@ -194,11 +209,32 @@ class _MainContent extends StatelessWidget {
           const SizedBox(height: 48),
 
           // Recent Orders Header
-          Row(
+          Flex(
+            direction: isDesktop ? Axis.horizontal : Axis.vertical,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: isDesktop ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              Column(
+              isDesktop ? Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Recent Orders",
+                      style: GoogleFonts.notoSerif(
+                        color: cs.secondary,
+                        fontSize: 24,
+                      ),
+                    ),
+                    Text(
+                      "Latest activity from the boutique",
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary.withValues(alpha: 0.6),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ) : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -217,6 +253,7 @@ class _MainContent extends StatelessWidget {
                   ),
                 ],
               ),
+              if (!isDesktop) const SizedBox(height: 12),
               InkWell(
                 onTap: onViewAllOrders,
                 child: Container(
@@ -268,31 +305,9 @@ class _MainContent extends StatelessWidget {
                   final menu = menuSnapshot.data ?? [];
                   
                   final orders = rawOrders.map((data) {
-                    final status = data['status'] ?? 'PENDING';
-                    Color statusColor = cs.primary;
-                    
-                    if (status == 'COMPLETED') {
-                      statusColor = cs.secondary;
-                    }
-
-                    String imageUrl = data['customImageUrl'] ?? '';
-                    if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
-                      final String orderedCake = data['cakeName'] ?? '';
-                      final matchingCake = menu.firstWhere(
-                        (c) => (c['name'] as String).toLowerCase() == orderedCake.toLowerCase(),
-                        orElse: () => {},
-                      );
-                      imageUrl = matchingCake['image'] ?? '';
-                    }
-
-                    return _OrderCard(
-                      id: "#${data['orderNumber'] ?? '---'}",
-                      status: status,
-                      statusColor: statusColor,
-                      statusBg: statusColor.withValues(alpha: 0.1),
-                      title: data['cakeName'] ?? 'Custom Creation',
-                      customer: data['customerName'] ?? 'Anonymous',
-                      imageUrl: SupabaseService.getPublicUrl(imageUrl),
+                    return _OrderCardReactive(
+                      data: data,
+                      cs: cs,
                     );
                   }).toList();
 
@@ -352,22 +367,22 @@ class _MainContent extends StatelessWidget {
             if (isNarrow) {
               return Column(
                 children: [
-                  _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs),
+                  _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
                   const SizedBox(height: 16),
-                  _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs),
+                  _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
                   const SizedBox(height: 16),
-                  _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs),
+                  _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
                 ],
               );
             }
 
             return Row(
               children: [
-                Expanded(child: _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs)),
+                Expanded(child: _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop)),
                 const SizedBox(width: 16),
-                Expanded(child: _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs)),
+                Expanded(child: _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop)),
                 const SizedBox(width: 16),
-                Expanded(child: _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs)),
+                Expanded(child: _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop)),
               ],
             );
           },
@@ -376,7 +391,7 @@ class _MainContent extends StatelessWidget {
     );
   }
 
-  Widget _statCard({required String title, required String value, required IconData icon, required ColorScheme cs}) {
+  Widget _statCard({required String title, required String value, required IconData icon, required ColorScheme cs, required bool isDesktop}) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -399,7 +414,7 @@ class _MainContent extends StatelessWidget {
             value,
             style: GoogleFonts.notoSerif(
               color: cs.secondary,
-              fontSize: 28,
+              fontSize: isDesktop ? 28 : 24,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -436,17 +451,40 @@ class _MainContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Flex(
+            direction: isDesktop ? Axis.horizontal : Axis.vertical,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.start,
             children: [
-              Column(
+              isDesktop ? Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Sales Performance",
+                      style: GoogleFonts.notoSerif(
+                        color: cs.secondary,
+                        fontSize: isDesktop ? 20 : 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "Revenue trend analysis",
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary.withValues(alpha: 0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ) : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Sales Performance",
                     style: GoogleFonts.notoSerif(
                       color: cs.secondary,
-                      fontSize: 20,
+                      fontSize: isDesktop ? 20 : 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -459,36 +497,72 @@ class _MainContent extends StatelessWidget {
                   ),
                 ],
               ),
-              // Range Selector
-              Container(
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: SalesRange.values.map((range) {
-                    final isSelected = selectedRange == range;
-                    return GestureDetector(
-                      onTap: () => onRangeChanged(range),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected ? cs.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          range.name.toUpperCase(),
-                          style: GoogleFonts.plusJakartaSans(
-                            color: isSelected ? Colors.white : cs.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 9,
-                            letterSpacing: 0.5,
+              if (!isDesktop) const SizedBox(height: 16),
+              // Range Selector & Date Pickers
+              Column(
+                crossAxisAlignment: isDesktop ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: SalesRange.values.map((range) {
+                        final isSelected = selectedRange == range;
+                        return GestureDetector(
+                          onTap: () => onRangeChanged(range),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? cs.primary : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              range.name.toUpperCase(),
+                              style: GoogleFonts.plusJakartaSans(
+                                color: isSelected ? Colors.white : cs.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 9,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
-                        ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  if (selectedRange == SalesRange.monthly || selectedRange == SalesRange.yearly)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (selectedRange == SalesRange.monthly)
+                            DropdownButton<int>(
+                              value: selectedMonth,
+                              underline: const SizedBox(),
+                              style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                              onChanged: (m) => m != null ? onMonthChanged(m) : null,
+                              items: List.generate(12, (i) => i + 1).map((m) {
+                                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                return DropdownMenuItem(value: m, child: Text(months[m - 1].toUpperCase()));
+                              }).toList(),
+                            ),
+                          const SizedBox(width: 8),
+                          DropdownButton<int>(
+                            value: selectedYear,
+                            underline: const SizedBox(),
+                            style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                            onChanged: (y) => y != null ? onYearChanged(y) : null,
+                            items: List.generate(5, (i) => DateTime.now().year - i).map((y) {
+                              return DropdownMenuItem(value: y, child: Text("$y"));
+                            }).toList(),
+                          ),
+                        ],
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -496,7 +570,11 @@ class _MainContent extends StatelessWidget {
           SizedBox(
             height: 220,
             child: StreamBuilder<Map<int, double>>(
-              stream: SupabaseService.getSalesStream(range: selectedRange),
+              stream: SupabaseService.getSalesStream(
+                range: selectedRange,
+                targetMonth: selectedMonth,
+                targetYear: selectedYear,
+              ),
               builder: (context, snapshot) {
                 final data = snapshot.data ?? {};
                 
@@ -608,6 +686,60 @@ class _MainContent extends StatelessWidget {
   }
 }
 
+class _OrderCardReactive extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final ColorScheme cs;
+
+  const _OrderCardReactive({
+    required this.data,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait([
+        SupabaseService.fetchMenu(),
+        SupabaseService.fetchOrderItems(data['id']),
+      ]),
+      builder: (context, snapshot) {
+        final menu = snapshot.data?[0] ?? [];
+        final items = snapshot.data?[1] ?? [];
+        
+        final status = data['status'] ?? 'PENDING';
+        Color statusColor = cs.primary;
+        if (status == 'COMPLETED') {
+          statusColor = cs.secondary;
+        }
+
+        String imageUrl = data['customImageUrl'] ?? '';
+        if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+          if (items.isNotEmpty) {
+            final String firstName = items[0]['cakeName'] ?? '';
+            final matchingCake = menu.firstWhere(
+              (c) => (c['name'] as String).toLowerCase() == firstName.toLowerCase(),
+              orElse: () => <String, dynamic>{},
+            );
+            imageUrl = matchingCake['image'] ?? '';
+          }
+        }
+
+        return _OrderCard(
+          id: "#${data['orderNumber'] ?? '---'}",
+          status: status,
+          statusColor: statusColor,
+          statusBg: statusColor.withValues(alpha: 0.1),
+          title: data['customerName'] ?? 'Boutique Order',
+          customer: data['totalPrice'] != null 
+              ? SupabaseService.formatPrice(data['totalPrice']) 
+              : (items.isNotEmpty ? SupabaseService.formatPrice(items[0]['price']) : '---'),
+          imageUrl: SupabaseService.getPublicUrl(imageUrl),
+        );
+      },
+    );
+  }
+}
+
 class _OrderCard extends StatelessWidget {
   final String id;
   final String status;
@@ -630,103 +762,116 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderDetailsPage(
+              orderId: id,
+            ),
           ),
-        ],
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              imageUrl,
-              width: 90,
-              height: 90,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: cs.secondary.withValues(alpha: 0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                imageUrl,
                 width: 90,
                 height: 90,
-                color: cs.primary.withValues(alpha: 0.05),
-                child: Center(
-                  child: Icon(
-                    Icons.cake_outlined,
-                    color: cs.primary.withValues(alpha: 0.2),
-                    size: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 90,
+                  height: 90,
+                  color: cs.primary.withValues(alpha: 0.05),
+                  child: Center(
+                    child: Icon(
+                      Icons.cake_outlined,
+                      color: cs.primary.withValues(alpha: 0.2),
+                      size: 32,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        id,
-                        style: GoogleFonts.notoSerif(
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                          color: cs.secondary.withValues(alpha: 0.5),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: statusBg.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        status.toUpperCase(),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          id,
+                          style: GoogleFonts.notoSerif(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: cs.secondary.withValues(alpha: 0.5),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: statusBg.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          status.toUpperCase(),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    customer,
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  customer,
-                  style: GoogleFonts.notoSerif(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  _CompactInfoRow(icon: Icons.cake_outlined, text: title, color: cs.secondary),
+                  const SizedBox(height: 2),
+                  _CompactInfoRow(
+                    icon: Icons.schedule_outlined,
+                    text: "Pickup at 2:30 PM",
                     color: cs.secondary,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                _CompactInfoRow(icon: Icons.cake_outlined, text: title, color: cs.secondary),
-                const SizedBox(height: 2),
-                _CompactInfoRow(
-                  icon: Icons.schedule_outlined,
-                  text: "Pickup at 2:30 PM",
-                  color: cs.secondary,
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

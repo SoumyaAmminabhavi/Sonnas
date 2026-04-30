@@ -76,7 +76,7 @@ class _MenuPageState extends State<MenuPage> {
                 final options = data['CakeOption'] as List? ?? [];
                 final basePrice = options.isNotEmpty 
                     ? SupabaseService.formatPrice(options[0]['price']) 
-                    : "N/A";
+                    : (data['price'] != null ? SupabaseService.formatPrice(data['price']) : "Price on Request");
                 final baseServes = options.isNotEmpty ? "Serves ${options[0]['serves']}" : "";
 
                 return _MenuItem(

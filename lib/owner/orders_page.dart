@@ -150,28 +150,12 @@ class _OrdersList extends StatelessWidget {
                 statusFg = cs.secondary;
               }
 
-              // SMART IMAGE LOOKUP:
-              // 1. Try custom image from WhatsApp first
-              // 2. If empty, find matching cake in menu and use its image
-              String imageUrl = data['customImageUrl'] ?? '';
-              if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
-                final String orderedCake = data['cakeName'] ?? '';
-                final matchingCake = menu.firstWhere(
-                  (c) => (c['name'] as String).toLowerCase() == orderedCake.toLowerCase(),
-                  orElse: () => {},
-                );
-                imageUrl = matchingCake['image'] ?? '';
-              }
-
-              return _OrderData(
-                orderId: "#${data['orderNumber'] ?? '---'}",
-                customerName: data['customerName'] ?? 'Anonymous',
-                status: status,
-                item: data['cakeName'] ?? 'Custom Cake',
-                time: data['deliveryDate'] ?? 'Not scheduled',
-                imageUrl: SupabaseService.getPublicUrl(imageUrl),
+              return _OrderTile(
+                data: data,
+                cs: cs,
                 statusBg: statusBg,
                 statusFg: statusFg,
+                onTabChanged: onTabChanged,
               );
             }).toList();
 
@@ -179,10 +163,199 @@ class _OrdersList extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               itemCount: orders.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) =>
-                  _OrderCompactCard(cs: cs, data: orders[index], onTabChanged: onTabChanged),
+              itemBuilder: (context, index) => orders[index],
             );
           },
+        );
+      },
+    );
+  }
+}
+
+class _OrderTile extends StatelessWidget {
+  final Map<String, dynamic> data;
+  final ColorScheme cs;
+  final Color statusBg;
+  final Color statusFg;
+  final ValueChanged<int>? onTabChanged;
+
+  const _OrderTile({
+    required this.data,
+    required this.cs,
+    required this.statusBg,
+    required this.statusFg,
+    this.onTabChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<dynamic>>(
+      future: Future.wait([
+        SupabaseService.fetchMenu(),
+        SupabaseService.fetchOrderItems(data['id']),
+      ]),
+      builder: (context, snapshot) {
+        final menu = snapshot.data?[0] ?? [];
+        final items = snapshot.data?[1] ?? [];
+        
+        String imageUrl = data['customImageUrl'] ?? '';
+        if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+          if (items.isNotEmpty) {
+            final String firstName = items[0]['cakeName'] ?? '';
+            final matchingCake = menu.firstWhere(
+              (c) => (c['name'] as String).toLowerCase() == firstName.toLowerCase(),
+              orElse: () => <String, dynamic>{},
+            );
+            imageUrl = matchingCake['image'] ?? '';
+          }
+        }
+
+        final String orderId = "#${data['orderNumber'] ?? '---'}";
+        final String customerName = data['customerName'] ?? 'Boutique Order';
+        final String status = data['status'] ?? 'PENDING';
+        final String price = data['totalPrice'] != null 
+            ? SupabaseService.formatPrice(data['totalPrice']) 
+            : (items.isNotEmpty ? SupabaseService.formatPrice(items[0]['price']) : '---');
+        final String time = data['deliveryDate'] ?? 'Not scheduled';
+
+        return InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderDetailsPage(
+                  orderId: orderId,
+                  onTabChanged: onTabChanged,
+                ),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainer,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.secondary.withValues(alpha: 0.04),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+              border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+            ),
+            child: Row(
+              children: [
+                // Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: Builder(
+                      builder: (context) {
+                        final url = SupabaseService.getPublicUrl(imageUrl);
+                        if (url.isEmpty) return _ImagePlaceholder(cs: cs);
+                        return Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return Container(
+                              color: cs.secondaryContainer.withValues(alpha: 0.1),
+                              child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => _ImagePlaceholder(cs: cs),
+                        );
+                      }
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              orderId,
+                              style: GoogleFonts.notoSerif(
+                                fontSize: 10,
+                                fontStyle: FontStyle.italic,
+                                color: cs.secondary.withValues(alpha: 0.5),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: statusBg,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              status,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: statusFg,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        customerName,
+                        style: GoogleFonts.notoSerif(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(Icons.cake_outlined, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
+                          const SizedBox(width: 4),
+                          Text(
+                            price,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: cs.secondary.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.access_time, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
+                          const SizedBox(width: 4),
+                          Text(
+                            time,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              color: cs.secondary.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, size: 12, color: cs.secondary.withValues(alpha: 0.2)),
+              ],
+            ),
+          ),
         );
       },
     );
