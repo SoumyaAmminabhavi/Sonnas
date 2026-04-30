@@ -58,17 +58,12 @@ export function clearMenuCache() {
 // Eliminates the DB read on every incoming message.
 // The Map is keyed by phone number and holds the full conversation object.
 
+// Conversation state cache
 const convoCache = new Map<string, Conversation>();
 
 function updateConvoCache(phone: string, data: Partial<Conversation>) {
   const existing = convoCache.get(phone) ?? { phone, state: "IDLE" } as Conversation;
   convoCache.set(phone, { ...existing, ...data });
-}
-
-// Helper to extract non-relation fields for Prisma updates
-function extractStateFields(data: any) {
-  const { cart, ...rest } = data;
-  return rest;
 }
 
 async function safeGetCakes(): Promise<Cake[]> {
@@ -297,8 +292,8 @@ async function updateState(
   // Update in-memory cache immediately (instant read for next message)
   updateConvoCache(phone, { state, ...extra });
 
-  // We extract _cart from extra because it's a relation and cannot be updated via a simple spread
-  const { cart: _cart, ...otherExtra } = extra;
+  // We extract cart relation to avoid Prisma update errors
+  const { cart: _, ...otherExtra } = extra;
 
   // Persist to DB in the background — don't block the reply
   void withTimeout(
@@ -472,6 +467,11 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     interactiveId === "btn_status"
   ) {
     await sendOrderStatus(msg.from);
+    return;
+  }
+
+  if (interactiveId === "btn_add_to_cart" || interactiveId === "btn_checkout" || interactiveId === "btn_checkout_now") {
+    await handleCartActions(msg, convo);
     return;
   }
 

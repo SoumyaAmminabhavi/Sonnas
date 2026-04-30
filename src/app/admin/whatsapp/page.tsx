@@ -65,20 +65,27 @@ type OrderStatus =
   | "DELIVERED"
   | "CANCELLED";
 
+interface AdminOrderItem {
+  id: string;
+  cakeName: string;
+  size: string;
+  price: string;
+  quantity: number;
+}
+
 interface AdminOrder {
   id: string;
   orderNumber: string;
   phone: string;
   customerName?: string | null;
-  cakeName: string;
-  size: string;
-  price: string;
+  totalPrice?: string | null;
   status: OrderStatus;
   address?: string | null;
   notes?: string | null;
-  isCustom?: boolean;
+  deliveryDate?: string | null;
   customImageUrl?: string | null;
   createdAt: string | Date;
+  items: AdminOrderItem[];
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -300,12 +307,29 @@ function WhatsAppAdminContent() {
                             </span>
                           </div>
 
-                          <h3 style={styles.cakeName}>{o.cakeName}</h3>
+                          <h3 style={styles.cakeName}>
+                            {o.items && o.items.length > 0 
+                              ? (o.items.length > 1 
+                                  ? `${o.items[0]?.cakeName} (+${o.items.length - 1})` 
+                                  : o.items[0]?.cakeName)
+                              : "No Items"}
+                          </h3>
 
                           <div style={styles.orderMeta}>
-                            <span>📏 {o.size === "TBD" ? "Size Pending" : o.size}</span>
-                            <span>💰 {o.price === "TBD" ? "Quote Required" : o.price}</span>
+                            <span>💰 {o.totalPrice ?? "Quote Pending"}</span>
+                            <span>📦 {o.items ? o.items.reduce((sum, item) => sum + item.quantity, 0) : 0} items</span>
                           </div>
+
+                          {isSelected && o.items && o.items.length > 0 && (
+                            <div style={{ marginBottom: 12, padding: '8px 12px', backgroundColor: '#F9F9F9', borderRadius: 8, fontSize: 12, color: '#5A3E36', border: '1px solid #E8DED4' }}>
+                              {o.items.map(item => (
+                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                  <span>• {item.cakeName} ({item.size})</span>
+                                  <span>x{item.quantity}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {o.address && (
                             <div style={styles.orderNotes}>
                               <span style={styles.notesIcon}>📍</span>
