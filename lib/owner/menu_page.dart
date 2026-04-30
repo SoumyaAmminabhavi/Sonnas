@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
-
+import 'menu_details_page.dart';
 
 // ─────────────────────────────────────────────
 //  MenuPage — the landing page (shows all items)
@@ -77,6 +77,7 @@ class _MenuPageState extends State<MenuPage> {
                 final baseServes = options.isNotEmpty ? "Serves ${options[0]['serves']}" : "";
 
                 return _MenuItem(
+                  id: data['id'],
                   name: data['name'] ?? 'Untitled Cake',
                   category: data['category'] ?? 'General',
                   price: basePrice,
@@ -231,6 +232,7 @@ class _MenuPageState extends State<MenuPage> {
 }
 
 class _MenuItem {
+  final String id;
   final String name;
   final String category;
   final String price;
@@ -240,6 +242,7 @@ class _MenuItem {
   final String imageUrl;
 
   _MenuItem({
+    required this.id,
     required this.name,
     required this.category,
     required this.price,
@@ -257,118 +260,122 @@ class _MenuItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MenuDetailsPage(cakeId: item.id),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-            child: SizedBox(
-              width: 110,
-              height: double.infinity,
-              child: item.imageUrl.startsWith('http')
-                  ? Image.network(
-                      item.imageUrl,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return Container(
-                          color: cs.secondary.withValues(alpha: 0.05),
-                          child: const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
-                        );
-                      },
-                      errorBuilder: (_, _, _) => _placeholder(cs),
-                    )
-                  : _placeholder(cs),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainer,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+          boxShadow: [
+            BoxShadow(
+              color: cs.secondary.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: cs.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              child: SizedBox(
+                width: 110,
+                height: double.infinity,
+                child: Image.network(
+                  item.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: cs.surface,
+                    child: Icon(Icons.cake, color: cs.primary.withValues(alpha: 0.2)),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.category.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 7,
+                              fontWeight: FontWeight.bold,
+                              color: cs.primary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                        child: Text(
-                          item.category.toUpperCase(),
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 7,
+                        Text(
+                          item.price,
+                          style: GoogleFonts.notoSerif(
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             color: cs.primary,
                           ),
                         ),
-                      ),
-                      Text(
-                        item.price,
-                        style: GoogleFonts.notoSerif(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: cs.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    item.name,
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: cs.secondary,
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.description,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      color: cs.secondary.withValues(alpha: 0.5),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Icon(Icons.people_outline, 
-                           size: 12, 
-                           color: cs.secondary.withValues(alpha: 0.3)),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.serves,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9,
-                          color: cs.secondary.withValues(alpha: 0.4),
-                        ),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.description,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        color: cs.secondary.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.people_outline, size: 10, color: cs.secondary.withValues(alpha: 0.3)),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.serves,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 9,
+                            color: cs.secondary.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
