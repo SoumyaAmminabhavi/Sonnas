@@ -892,7 +892,8 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error("[WhatsApp] Error in handleCartActions:", errorMsg);
-    await sendTextMessage(msg.from, "⚠️ Sorry, I encountered an error while processing your cart. Please try again or reply *Menu*.");
+    // Include the specific error for easier debugging
+    await sendTextMessage(msg.from, `⚠️ Error: *${errorMsg}*\n\nPlease try again or reply *Menu*.`);
   }
 }
 
