@@ -226,15 +226,15 @@ class _OrderCompactCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () async {
-        final result = await Navigator.push(
+        Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(orderId: data.orderId),
+            builder: (context) => OrderDetailsPage(
+              orderId: data.orderId,
+              onTabChanged: onTabChanged,
+            ),
           ),
         );
-        if (result is int && onTabChanged != null) {
-          onTabChanged!(result);
-        }
       },
       borderRadius: BorderRadius.circular(20),
       child: Container(

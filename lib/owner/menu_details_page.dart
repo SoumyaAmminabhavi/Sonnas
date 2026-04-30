@@ -5,8 +5,9 @@ import '../services/supabase_service.dart';
 
 class MenuDetailsPage extends StatelessWidget {
   final String cakeId;
+  final ValueChanged<int>? onTabChanged;
 
-  const MenuDetailsPage({super.key, required this.cakeId});
+  const MenuDetailsPage({super.key, required this.cakeId, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +70,8 @@ class MenuDetailsPage extends StatelessWidget {
                     OwnerSidebar(
                       currentIndex: 3, // Active under Menu
                       onTap: (index) {
-                        Navigator.pop(context, index);
+                        Navigator.pop(context);
+                        onTabChanged?.call(index);
                       },
                     ),
                   Expanded(
@@ -123,7 +125,7 @@ class MenuDetailsPage extends StatelessWidget {
                                   child: Image.network(
                                     imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
+                                    errorBuilder: (context, error, stackTrace) => Container(
                                       color: cs.surfaceContainer,
                                       child: Icon(Icons.restaurant, color: cs.primary, size: 48),
                                     ),
@@ -184,7 +186,7 @@ class MenuDetailsPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              ...options.map((opt) => _OptionCard(opt: opt, cs: cs)).toList(),
+                              ...options.map((opt) => _OptionCard(opt: opt, cs: cs)),
                               
                               if (options.isEmpty)
                                 Text(

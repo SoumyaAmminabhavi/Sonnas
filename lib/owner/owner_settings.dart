@@ -356,7 +356,7 @@ class _SettingsContentState extends State<_SettingsContent> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: cs.primary,
+            activeThumbColor: cs.primary,
           ),
         ],
       ),

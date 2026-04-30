@@ -5,8 +5,9 @@ import '../services/supabase_service.dart';
 
 class OrderDetailsPage extends StatelessWidget {
   final String orderId;
+  final ValueChanged<int>? onTabChanged;
 
-  const OrderDetailsPage({super.key, required this.orderId});
+  const OrderDetailsPage({super.key, required this.orderId, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +70,10 @@ class OrderDetailsPage extends StatelessWidget {
                       if (isDesktop)
                         OwnerSidebar(
                           currentIndex: 1,
-                          onTap: (index) => Navigator.pop(context, index),
+                          onTap: (index) {
+                            Navigator.pop(context);
+                            onTabChanged?.call(index);
+                          },
                         ),
                       Expanded(
                         child: Stack(
@@ -235,20 +239,6 @@ class _SlimProgressIndicator extends StatelessWidget {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final String status;
-  final ColorScheme cs;
-  const _StatusChip({required this.status, required this.cs});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-      child: Text(status.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 1.0)),
-    );
-  }
-}
 
 class _SectionTitle extends StatelessWidget {
   final String title;

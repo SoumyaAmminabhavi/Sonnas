@@ -352,22 +352,22 @@ class _MainContent extends StatelessWidget {
             if (isNarrow) {
               return Column(
                 children: [
-                  _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs),
+                  _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs),
                   const SizedBox(height: 16),
-                  _StatCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs),
+                  _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs),
                   const SizedBox(height: 16),
-                  _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs),
+                  _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs),
                 ],
               );
             }
 
             return Row(
               children: [
-                Expanded(child: _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs)),
+                Expanded(child: _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs)),
                 const SizedBox(width: 16),
-                Expanded(child: _StatCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs)),
+                Expanded(child: _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs)),
                 const SizedBox(width: 16),
-                Expanded(child: _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs)),
+                Expanded(child: _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs)),
               ],
             );
           },
@@ -376,7 +376,7 @@ class _MainContent extends StatelessWidget {
     );
   }
 
-  Widget _StatCard({required String title, required String value, required IconData icon, required ColorScheme cs}) {
+  Widget _statCard({required String title, required String value, required IconData icon, required ColorScheme cs}) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(

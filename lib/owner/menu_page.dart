@@ -211,8 +211,10 @@ class _MenuPageState extends State<MenuPage> {
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
                           final item = items[index];
-                          debugPrint('DEBUG: Menu Item Image URL: ${item.imageUrl}');
-                          return _MenuItemCard(item: item);
+                          return _MenuItemCard(
+                            item: item,
+                            onTabChanged: widget.onTabChanged,
+                          );
                         },
                         childCount: items.length,
                       ),
@@ -260,7 +262,8 @@ class _MenuItem {
 
 class _MenuItemCard extends StatelessWidget {
   final _MenuItem item;
-  const _MenuItemCard({required this.item});
+  final ValueChanged<int>? onTabChanged;
+  const _MenuItemCard({required this.item, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +273,10 @@ class _MenuItemCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MenuDetailsPage(cakeId: item.id),
+            builder: (_) => MenuDetailsPage(
+              cakeId: item.id,
+              onTabChanged: onTabChanged,
+            ),
           ),
         );
       },
@@ -297,7 +303,7 @@ class _MenuItemCard extends StatelessWidget {
                 child: Image.network(
                   item.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (context, error, stackTrace) => Container(
                     color: cs.surface,
                     child: Icon(Icons.cake, color: cs.primary.withValues(alpha: 0.2)),
                   ),
@@ -385,11 +391,7 @@ class _MenuItemCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder(ColorScheme cs) => Container(
-        color: cs.primary.withValues(alpha: 0.05),
-        child: Icon(Icons.cake_outlined,
-            size: 24, color: cs.primary.withValues(alpha: 0.2)),
-      );
+
 }
 
 class AddMenuPage extends StatelessWidget {

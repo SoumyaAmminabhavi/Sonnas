@@ -83,13 +83,21 @@ class SupabaseService {
       
       // Initialize keys based on range
       if (range == SalesRange.today) {
-        for (int i = 0; i < 24; i++) salesData[i] = 0.0;
+        for (int i = 0; i < 24; i++) {
+          salesData[i] = 0.0;
+        }
       } else if (range == SalesRange.weekly) {
-        for (int i = 0; i < 7; i++) salesData[i] = 0.0;
+        for (int i = 0; i < 7; i++) {
+          salesData[i] = 0.0;
+        }
       } else if (range == SalesRange.monthly) {
-        for (int i = 0; i < 30; i++) salesData[i] = 0.0;
+        for (int i = 0; i < 30; i++) {
+          salesData[i] = 0.0;
+        }
       } else if (range == SalesRange.yearly) {
-        for (int i = 1; i <= 12; i++) salesData[i] = 0.0;
+        for (int i = 1; i <= 12; i++) {
+          salesData[i] = 0.0;
+        }
       }
 
       for (var order in orders) {
