@@ -123,15 +123,7 @@ function WhatsAppAdminContent() {
     },
   });
 
-  // Extract unique delivery dates for the filter
-  const uniqueDates = useMemo(() => {
-    if (!ordersData?.orders) return [];
-    const dates = new Set<string>();
-    ordersData.orders.forEach(o => {
-      if (o.deliveryDate) dates.add(o.deliveryDate);
-    });
-    return Array.from(dates).sort();
-  }, [ordersData?.orders]);
+
 
   const filteredOrders = useMemo(() => {
     if (!ordersData?.orders) return [];
@@ -157,7 +149,14 @@ function WhatsAppAdminContent() {
       } else if (dateFilter === "TOMORROW") {
         filtered = filtered.filter(o => (o.deliveryDate ?? "").includes("Tomorrow") || o.deliveryDate === tomorrowStr);
       } else {
-        filtered = filtered.filter(o => o.deliveryDate === dateFilter);
+        // Handle calendar date picker (YYYY-MM-DD)
+        const selectedDate = new Date(dateFilter);
+        const formattedTarget = selectedDate.toLocaleDateString("en-IN", {
+          weekday: "long",
+          day: "numeric",
+          month: "short",
+        });
+        filtered = filtered.filter(o => o.deliveryDate === formattedTarget || o.deliveryDate === dateFilter);
       }
     }
     
@@ -219,26 +218,7 @@ function WhatsAppAdminContent() {
           </button>
 
           <div style={{ marginTop: 20, padding: "0 12px" }}>
-            <span style={styles.sidebarSubtitle}>📅 Filter by Date</span>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              style={{
-                ...styles.filterSelect,
-                width: "100%",
-                marginTop: 8,
-                backgroundColor: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#FFF",
-              }}
-            >
-              <option value="ALL">All Dates</option>
-              <option value="TODAY">Today</option>
-              <option value="TOMORROW">Tomorrow</option>
-              {uniqueDates.map(date => (
-                <option key={date} value={date}>{date}</option>
-              ))}
-            </select>
+            {/* Date filter removed from here */}
           </div>
         </nav>
 
@@ -312,11 +292,45 @@ function WhatsAppAdminContent() {
         {/* Orders Table */}
         <div style={styles.tableWrapper}>
           <div style={styles.tableHeader}>
-            <h2 style={styles.tableTitle}>
-              {statusFilter !== "ALL"
-                ? `${STATUS_CONFIG[statusFilter]?.emoji} ${STATUS_CONFIG[statusFilter]?.label} Orders`
-                : "📋 All Orders"}
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <h2 style={styles.tableTitle}>
+                {statusFilter !== "ALL"
+                  ? `${STATUS_CONFIG[statusFilter]?.emoji} ${STATUS_CONFIG[statusFilter]?.label} Orders`
+                  : "📋 All Orders"}
+              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+                <span style={{ fontSize: 13, color: '#9A9A9A' }}>📅</span>
+                <input 
+                  type="date" 
+                  value={dateFilter === "ALL" || dateFilter === "TODAY" || dateFilter === "TOMORROW" ? "" : dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value || "ALL")}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #E8DED4',
+                    fontSize: 13,
+                    color: '#5A3E36',
+                    outline: 'none',
+                    backgroundColor: '#FFFFFF'
+                  }}
+                />
+                {dateFilter !== "ALL" && (
+                  <button 
+                    onClick={() => setDateFilter("ALL")}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#D88C8C',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      padding: 4
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
             <span style={styles.orderCount}>{filteredOrders.length} orders</span>
           </div>
 
