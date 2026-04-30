@@ -13,7 +13,7 @@ function AdminNavbar() {
 
   return (
     <div className="flex items-center gap-4">
-      {/* Orders / Arrow Toggle */}
+      {/* Orders / Sidebar Toggle */}
       {isMenuPage ? (
         <LinkNext
           href="/admin/whatsapp"
@@ -24,11 +24,13 @@ function AdminNavbar() {
         </LinkNext>
       ) : isOrdersPage ? (
         <LinkNext
-          href="/admin/menu"
+          href={pathname + (searchParams.get("sidebar") === "collapsed" ? "" : "?sidebar=collapsed")}
           className="flex items-center gap-2 px-6 py-2 rounded-full transition-all bg-[#F4C2C2] text-[#2B2B2B] font-bold shadow-lg hover:bg-white/10 hover:text-white"
-          title="Back to Menu"
+          title={searchParams.get("sidebar") === "collapsed" ? "Show Sidebar" : "Hide Sidebar"}
         >
-          <span className="text-lg">←</span>
+          <span className="text-lg">
+            {searchParams.get("sidebar") === "collapsed" ? "→" : "←"}
+          </span>
         </LinkNext>
       ) : null}
 
