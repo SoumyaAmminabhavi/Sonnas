@@ -360,32 +360,14 @@ class _MainContent extends StatelessWidget {
       builder: (context, snapshot) {
         final stats = snapshot.data ?? {'totalOrders': 0, 'totalRevenue': 0.0, 'activeCustomers': 0};
         
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isNarrow = constraints.maxWidth < 600;
-            
-            if (isNarrow) {
-              return Column(
-                children: [
-                  _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
-                  const SizedBox(height: 16),
-                  _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
-                  const SizedBox(height: 16),
-                  _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(child: _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop)),
-                const SizedBox(width: 16),
-                Expanded(child: _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop)),
-                const SizedBox(width: 16),
-                Expanded(child: _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop)),
-              ],
-            );
-          },
+        return Row(
+          children: [
+            Expanded(child: _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop)),
+            const SizedBox(width: 8),
+            Expanded(child: _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop)),
+            const SizedBox(width: 8),
+            Expanded(child: _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop)),
+          ],
         );
       },
     );
@@ -393,7 +375,7 @@ class _MainContent extends StatelessWidget {
 
   Widget _statCard({required String title, required String value, required IconData icon, required ColorScheme cs, required bool isDesktop}) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isDesktop ? 24 : 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
@@ -408,8 +390,8 @@ class _MainContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: cs.primary, size: 20),
-          const SizedBox(height: 16),
+          Icon(icon, color: cs.primary, size: isDesktop ? 20 : 16),
+          SizedBox(height: isDesktop ? 16 : 8),
           Text(
             value,
             style: GoogleFonts.notoSerif(
@@ -422,9 +404,9 @@ class _MainContent extends StatelessWidget {
             title,
             style: GoogleFonts.plusJakartaSans(
               color: cs.secondary.withValues(alpha: 0.4),
-              fontSize: 10,
+              fontSize: isDesktop ? 10 : 8,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.0,
+              letterSpacing: isDesktop ? 1.0 : 0.5,
             ),
           ),
         ],
