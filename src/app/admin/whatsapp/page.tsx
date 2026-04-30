@@ -106,7 +106,7 @@ function WhatsAppAdminContent() {
       status: statusFilter === "ALL" ? undefined : statusFilter 
     });
   
-  const { data: conversations, refetch: refetchConvos, isLoading: convosLoading } = 
+  const { data: conversations, refetch: refetchConvos } = 
     api.whatsapp.getConversations.useQuery({ limit: 50 });
 
   const stats = statsQuery.data;
@@ -119,7 +119,7 @@ function WhatsAppAdminContent() {
     onSuccess: () => {
       setReplyText("");
       setReplyPhone(null);
-      refetchConvos();
+      void refetchConvos();
     },
   });
 
@@ -153,9 +153,9 @@ function WhatsAppAdminContent() {
       });
 
       if (dateFilter === "TODAY") {
-        filtered = filtered.filter(o => o.deliveryDate?.includes("Today") || o.deliveryDate === todayStr);
+        filtered = filtered.filter(o => (o.deliveryDate ?? "").includes("Today") || o.deliveryDate === todayStr);
       } else if (dateFilter === "TOMORROW") {
-        filtered = filtered.filter(o => o.deliveryDate?.includes("Tomorrow") || o.deliveryDate === tomorrowStr);
+        filtered = filtered.filter(o => (o.deliveryDate ?? "").includes("Tomorrow") || o.deliveryDate === tomorrowStr);
       } else {
         filtered = filtered.filter(o => o.deliveryDate === dateFilter);
       }
@@ -164,19 +164,11 @@ function WhatsAppAdminContent() {
     return filtered;
   }, [ordersData?.orders, dateFilter]);
 
-  const selectedOrder = filteredOrders.find((o) => o.id === selectedOrderId);
+
 
   // ─── Handlers ──────────────────────────────────────────────────────────
 
-  const handleStatusUpdate = async (id: string, status: OrderStatus) => {
-    if (!confirm(`Mark order as ${status}?`)) return;
-    await updateStatus.mutateAsync({ id, status });
-  };
 
-  const handleReply = async () => {
-    if (!replyPhone || !replyText.trim()) return;
-    await sendMessage.mutateAsync({ phone: replyPhone, message: replyText });
-  };
 
   return (
     <div style={styles.container}>
@@ -225,6 +217,29 @@ function WhatsAppAdminContent() {
           >
             ❌ Cancelled
           </button>
+
+          <div style={{ marginTop: 20, padding: "0 12px" }}>
+            <span style={styles.sidebarSubtitle}>📅 Filter by Date</span>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              style={{
+                ...styles.filterSelect,
+                width: "100%",
+                marginTop: 8,
+                backgroundColor: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#FFF",
+              }}
+            >
+              <option value="ALL">All Dates</option>
+              <option value="TODAY">Today</option>
+              <option value="TOMORROW">Tomorrow</option>
+              {uniqueDates.map(date => (
+                <option key={date} value={date}>{date}</option>
+              ))}
+            </select>
+          </div>
         </nav>
 
         {/* Recent Conversations */}

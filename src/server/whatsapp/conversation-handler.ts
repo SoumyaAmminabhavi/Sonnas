@@ -293,7 +293,7 @@ async function updateState(
   updateConvoCache(phone, { state, ...extra });
 
   // We extract cart relation to avoid Prisma update errors
-  const { cart: _, ...otherExtra } = extra;
+  const { cart: _cart, ...otherExtra } = extra;
 
   // Persist to DB in the background — don't block the reply
   void withTimeout(
