@@ -90,7 +90,7 @@ function WhatsAppAdminContent() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [replyPhone, setReplyPhone] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
-  
+
   const searchParams = useSearchParams();
   const isSidebarCollapsed = searchParams.get("sidebar") === "collapsed";
 
@@ -129,7 +129,7 @@ function WhatsAppAdminContent() {
   return (
     <div style={styles.container}>
       {/* ─── Sidebar ─────────────────────────────────────────── */}
-      <aside 
+      <aside
         style={{
           ...styles.sidebar,
           width: isSidebarCollapsed ? 0 : 280,
@@ -962,3 +962,5 @@ const styles: Record<string, React.CSSProperties> = {
     transition: "all 0.2s ease",
   },
 };
+
+// hi
