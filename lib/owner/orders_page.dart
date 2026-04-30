@@ -288,12 +288,16 @@ class _OrderCompactCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        data.orderId,
-                        style: GoogleFonts.notoSerif(
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                          color: cs.secondary.withValues(alpha: 0.5),
+                      Flexible(
+                        child: Text(
+                          data.orderId,
+                          style: GoogleFonts.notoSerif(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: cs.secondary.withValues(alpha: 0.5),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -323,6 +327,8 @@ class _OrderCompactCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: cs.secondary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
                   _CompactInfoRow(
@@ -332,37 +338,6 @@ class _OrderCompactCard extends StatelessWidget {
                       icon: Icons.schedule_outlined, text: data.time, cs: cs),
                 ],
               ),
-            ),
-
-            // Action
-            const SizedBox(width: 8),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.more_vert,
-                      color: cs.secondary.withValues(alpha: 0.3)),
-                  onPressed: () {},
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [cs.primary, cs.primaryContainer],
-                    ),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.edit_note,
-                        color: Colors.white, size: 20),
-                    onPressed: () {},
-                    padding: const EdgeInsets.all(8),
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

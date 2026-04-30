@@ -72,6 +72,50 @@ class SupabaseService {
         .order('createdAt', ascending: false);
   }
 
+  // Real-time stream for Sales Performance (last 7 days)
+  static Stream<Map<int, double>> getSalesStream() {
+    return getOrdersStream().map((orders) {
+      final Map<int, double> salesByDay = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+      final now = DateTime.now();
+      
+      for (var order in orders) {
+        final createdAtStr = order['createdAt'];
+        if (createdAtStr == null) continue;
+        
+        final createdAt = DateTime.tryParse(createdAtStr);
+        if (createdAt == null) continue;
+        
+        final diff = now.difference(createdAt).inDays;
+        if (diff >= 0 && diff < 7) {
+          final weekday = (createdAt.weekday - 1);
+          final price = double.tryParse(order['price'].toString().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0;
+          salesByDay[weekday] = (salesByDay[weekday] ?? 0) + price;
+        }
+      }
+      return salesByDay;
+    });
+  }
+
+  // Real-time Dashboard Stats
+  static Stream<Map<String, dynamic>> getDashboardStatsStream() {
+    return getOrdersStream().map((orders) {
+      double totalRevenue = 0;
+      final Set<String> customers = {};
+      
+      for (var order in orders) {
+        final price = double.tryParse(order['price'].toString().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0;
+        totalRevenue += price;
+        if (order['phone'] != null) customers.add(order['phone']);
+      }
+      
+      return {
+        'totalOrders': orders.length,
+        'totalRevenue': totalRevenue,
+        'activeCustomers': customers.length,
+      };
+    });
+  }
+
   // Fetching WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
   static Future<List<Map<String, dynamic>>> fetchOrders() async {
     try {

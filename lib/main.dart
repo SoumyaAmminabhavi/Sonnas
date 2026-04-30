@@ -72,7 +72,7 @@ class _PatisserieAppState extends State<PatisserieApp> {
           onSurfaceVariant: Color(0xFF964261),
           primaryContainer: Color(0xFFFFB6D3), // Pastel Pink
           onPrimaryContainer: Color(0xFF701235),
-          surfaceContainer: Color(0xFFFFF5F9),
+          surfaceContainer: Color(0xFFFFFFFF), // Pure White for Cards
           surfaceContainerLow: Color(0xFFFFF5F9),
           outlineVariant: Color(0xFFFFB6D3),
         ),
@@ -88,8 +88,8 @@ class _PatisserieAppState extends State<PatisserieApp> {
           onSurfaceVariant: Color(0xFFFFB6D3),
           primaryContainer: Color(0xFF701235), // Deep Berry
           onPrimaryContainer: Color(0xFFFFB6D3),
-          surfaceContainer: Color(0xFF25161C),
-          surfaceContainerLow: Color(0xFF2D1B22),
+          surfaceContainer: Color(0xFF2D1B22), // Slightly lighter for cards
+          surfaceContainerLow: Color(0xFF25161C),
           outlineVariant: Color(0xFF701235),
         ),
         textTheme: _textTheme(const Color(0xFFFFF0F6)),

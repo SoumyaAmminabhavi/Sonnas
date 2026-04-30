@@ -17,7 +17,7 @@ class OwnerSidebar extends StatelessWidget {
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: cs.surfaceContainer,
         boxShadow: [
           BoxShadow(
             color: cs.primary.withValues(alpha: 0.08),

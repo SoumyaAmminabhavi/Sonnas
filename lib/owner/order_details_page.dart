@@ -124,7 +124,7 @@ class OrderDetailsPage extends StatelessWidget {
                                         const SizedBox(height: 12),
                                         Container(
                                           padding: const EdgeInsets.all(20),
-                                          decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.primary.withValues(alpha: 0.1))),
+                                          decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.primary.withValues(alpha: 0.1))),
                                           child: Row(
                                             children: [
                                               Icon(Icons.edit_note, color: cs.primary.withValues(alpha: 0.4)),
