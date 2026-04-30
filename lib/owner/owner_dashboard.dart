@@ -52,32 +52,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 letterSpacing: -0.5,
               ),
             ),
-            actions: [
-              if (isDesktop) ...[
-                _TopNavText(text: "DASHBOARD", isSelected: _selectedIndex == 0, cs: cs),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = 3),
-                  child: _TopNavText(text: "MENU", isSelected: _selectedIndex == 3, cs: cs),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = 4),
-                  child: _TopNavText(text: "SETTINGS", isSelected: _selectedIndex == 4, cs: cs),
-                ),
-              ],
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: cs.primaryContainer, width: 2),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 16,
-                    backgroundImage: NetworkImage(_profileUrl),
-                  ),
-                ),
-              ),
-            ],
+            actions: const [],
           ),
           bottomNavigationBar: isDesktop
               ? null
@@ -125,34 +100,6 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
           ),
         );
       },
-    );
-  }
-}
-
-class _TopNavText extends StatelessWidget {
-  final String text;
-  final bool isSelected;
-  final ColorScheme cs;
-
-  const _TopNavText({required this.text, this.isSelected = false, required this.cs});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Center(
-        child: Text(
-          text,
-          style: GoogleFonts.plusJakartaSans(
-            color: isSelected
-                ? cs.primary
-                : cs.secondary.withValues(alpha: 0.6),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 12,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
     );
   }
 }
