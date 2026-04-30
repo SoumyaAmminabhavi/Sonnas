@@ -145,18 +145,16 @@ function WhatsAppAdminContent() {
       });
 
       if (dateFilter === "TODAY") {
-        filtered = filtered.filter(o => (o.deliveryDate ?? "").includes("Today") || o.deliveryDate === todayStr);
+        const todayStr = new Date().toISOString().split('T')[0];
+        filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr);
       } else if (dateFilter === "TOMORROW") {
-        filtered = filtered.filter(o => (o.deliveryDate ?? "").includes("Tomorrow") || o.deliveryDate === tomorrowStr);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === tomorrowStr);
       } else {
         // Handle calendar date picker (YYYY-MM-DD)
-        const selectedDate = new Date(dateFilter);
-        const formattedTarget = selectedDate.toLocaleDateString("en-IN", {
-          weekday: "long",
-          day: "numeric",
-          month: "short",
-        });
-        filtered = filtered.filter(o => o.deliveryDate === formattedTarget || o.deliveryDate === dateFilter);
+        filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === dateFilter);
       }
     }
     
