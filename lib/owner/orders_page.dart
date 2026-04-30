@@ -91,7 +91,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
                 ],
               ),
             ),
-            const Divider(height: 1, thickness: 0.5, color: Colors.black12, indent: 24, endIndent: 24),
+            Divider(height: 1, thickness: 0.5, color: cs.secondary.withValues(alpha: 0.1), indent: 24, endIndent: 24),
 
             // Orders List/Grid
             Expanded(
@@ -121,10 +121,6 @@ class _OrdersList extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: SupabaseService.getOrdersStream(),
       builder: (context, snapshot) {
-        debugPrint('DEBUG: Orders Stream State: ${snapshot.connectionState}');
-        if (snapshot.hasError) debugPrint('DEBUG: Orders Stream Error: ${snapshot.error}');
-        if (snapshot.hasData) debugPrint('DEBUG: Orders Count: ${snapshot.data?.length}');
-
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -146,12 +142,12 @@ class _OrdersList extends StatelessWidget {
             
             final orders = rawOrders.map((data) {
               final status = data['status'] ?? 'PENDING';
-              Color statusBg = cs.primaryContainer.withValues(alpha: 0.9);
-              Color statusFg = cs.onPrimaryContainer;
+              Color statusBg = cs.primaryContainer;
+              Color statusFg = cs.primary;
 
               if (status == 'COMPLETED') {
-                statusBg = const Color(0xFFFFB6D3).withValues(alpha: 0.9);
-                statusFg = cs.onSecondary;
+                statusBg = cs.secondaryContainer;
+                statusFg = cs.secondary;
               }
 
               // SMART IMAGE LOOKUP:
@@ -244,7 +240,7 @@ class _OrderCompactCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surfaceContainer,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(

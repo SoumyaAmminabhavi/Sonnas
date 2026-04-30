@@ -3,10 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 
-// Brand Colors - Sweet Pink Bakery Theme
-const Color _primaryColor = Color(0xFFFF4D8D);
-const Color _secondaryColor = Color(0xFF701235);
-const Color _bgColor = Color(0xFFFFF0F6);
 
 // ─────────────────────────────────────────────
 //  MenuPage — the landing page (shows all items)
@@ -66,6 +62,7 @@ class _MenuPageState extends State<MenuPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 768;
@@ -78,9 +75,9 @@ class _MenuPageState extends State<MenuPage> {
                     : 1;
 
         return Scaffold(
-          backgroundColor: _bgColor,
+          backgroundColor: cs.surface,
           floatingActionButton: FloatingActionButton(
-            backgroundColor: _primaryColor,
+            backgroundColor: cs.primary,
             elevation: 6,
             shape: const CircleBorder(),
             onPressed: () async {
@@ -144,7 +141,7 @@ class _MenuPageState extends State<MenuPage> {
                           Text(
                             "OUR MENU",
                             style: GoogleFonts.plusJakartaSans(
-                              color: _primaryColor,
+                              color: cs.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 9,
                               letterSpacing: 2.0,
@@ -154,7 +151,7 @@ class _MenuPageState extends State<MenuPage> {
                           Text(
                             "Atelier Collection",
                             style: GoogleFonts.notoSerif(
-                              color: _secondaryColor,
+                              color: cs.secondary,
                               fontSize: isDesktop ? 32 : 24,
                               fontStyle: FontStyle.italic,
                               fontWeight: FontWeight.bold,
@@ -164,12 +161,12 @@ class _MenuPageState extends State<MenuPage> {
                           Text(
                             "${items.length} items cataloged",
                             style: GoogleFonts.plusJakartaSans(
-                              color: _secondaryColor.withValues(alpha: 0.4),
+                              color: cs.secondary.withValues(alpha: 0.4),
                               fontSize: 12,
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Divider(color: _secondaryColor.withValues(alpha: 0.05)),
+                          Divider(color: cs.secondary.withValues(alpha: 0.05)),
                         ],
                       ),
                     ),
@@ -230,14 +227,15 @@ class _MenuItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _secondaryColor.withValues(alpha: 0.05)),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withValues(alpha: 0.03),
+            color: cs.secondary.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -257,13 +255,13 @@ class _MenuItemCard extends StatelessWidget {
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
                         return Container(
-                          color: _secondaryColor.withValues(alpha: 0.05),
+                          color: cs.secondary.withValues(alpha: 0.05),
                           child: const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))),
                         );
                       },
-                      errorBuilder: (_, _, _) => _placeholder(),
+                      errorBuilder: (_, _, _) => _placeholder(cs),
                     )
-                  : _placeholder(),
+                  : _placeholder(cs),
             ),
           ),
           Expanded(
@@ -278,7 +276,7 @@ class _MenuItemCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: _primaryColor.withValues(alpha: 0.08),
+                          color: cs.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -286,7 +284,7 @@ class _MenuItemCard extends StatelessWidget {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 7,
                             fontWeight: FontWeight.bold,
-                            color: _primaryColor,
+                            color: cs.primary,
                           ),
                         ),
                       ),
@@ -295,7 +293,7 @@ class _MenuItemCard extends StatelessWidget {
                         style: GoogleFonts.notoSerif(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: _primaryColor,
+                          color: cs.primary,
                         ),
                       ),
                     ],
@@ -306,7 +304,7 @@ class _MenuItemCard extends StatelessWidget {
                     style: GoogleFonts.notoSerif(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: _secondaryColor,
+                      color: cs.secondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -316,7 +314,7 @@ class _MenuItemCard extends StatelessWidget {
                     item.description,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      color: cs.secondary.withValues(alpha: 0.5),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -326,13 +324,13 @@ class _MenuItemCard extends StatelessWidget {
                     children: [
                       Icon(Icons.people_outline, 
                            size: 12, 
-                           color: _secondaryColor.withValues(alpha: 0.3)),
+                           color: cs.secondary.withValues(alpha: 0.3)),
                       const SizedBox(width: 4),
                       Text(
                         item.serves,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 9,
-                          color: _secondaryColor.withValues(alpha: 0.4),
+                          color: cs.secondary.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
@@ -346,44 +344,40 @@ class _MenuItemCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() => Container(
-        color: _primaryColor.withValues(alpha: 0.05),
+  Widget _placeholder(ColorScheme cs) => Container(
+        color: cs.primary.withValues(alpha: 0.05),
         child: Icon(Icons.cake_outlined,
-            size: 24, color: _primaryColor.withValues(alpha: 0.2)),
+            size: 24, color: cs.primary.withValues(alpha: 0.2)),
       );
 }
 
-// ─────────────────────────────────────────────
-//  AddMenuPage — opened when "+" is tapped
-// ─────────────────────────────────────────────
 class AddMenuPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
   const AddMenuPage({super.key, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 768;
 
         return Scaffold(
-          backgroundColor: _bgColor,
+          backgroundColor: cs.surface,
           appBar: AppBar(
-            backgroundColor: _bgColor.withValues(alpha: 0.95),
+            backgroundColor: cs.surface.withValues(alpha: 0.95),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: _primaryColor),
+              icon: Icon(Icons.arrow_back, color: cs.primary),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
               isDesktop ? "Sonna's Patisserie & Cafe" : "New Menu Item",
               style: GoogleFonts.notoSerif(
-                color: isDesktop
-                    ? const Color.fromARGB(255, 146, 6, 53)
-                    : _primaryColor,
-                fontStyle: isDesktop ? FontStyle.italic : FontStyle.normal,
-                fontWeight: isDesktop ? FontWeight.w600 : FontWeight.bold,
+                color: cs.primary,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
                 fontSize: isDesktop ? 20 : 18,
                 letterSpacing: isDesktop ? -0.5 : 0,
               ),
@@ -426,6 +420,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: EdgeInsets.symmetric(
         horizontal: widget.isDesktop ? 48.0 : 16.0,
@@ -441,7 +436,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                 Text(
                   "MENU ITEM",
                   style: GoogleFonts.plusJakartaSans(
-                    color: _primaryColor,
+                    color: cs.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                     letterSpacing: 2.0,
@@ -451,7 +446,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                 Text(
                   "Add New Cake",
                   style: GoogleFonts.notoSerif(
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     fontSize: widget.isDesktop ? 48 : 32,
                     height: 1.1,
                   ),
@@ -463,7 +458,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         const SizedBox(height: 24),
         Container(
           height: 1,
-          color: _secondaryColor.withValues(alpha: 0.3),
+          color: cs.secondary.withValues(alpha: 0.3),
         ),
         const SizedBox(height: 48),
 
@@ -607,7 +602,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryColor,
+                        backgroundColor: cs.primary,
                         padding:
                             const EdgeInsets.symmetric(vertical: 20),
                         shape: RoundedRectangleBorder(
@@ -643,10 +638,11 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Text(
       title,
       style: GoogleFonts.notoSerif(
-        color: _primaryColor,
+        color: cs.primary,
         fontSize: 20,
         fontStyle: FontStyle.italic,
       ),
@@ -669,13 +665,14 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor.withValues(alpha: 0.8),
+            color: cs.secondary.withValues(alpha: 0.8),
             fontWeight: FontWeight.bold,
             fontSize: 12,
             letterSpacing: 1.0,
@@ -684,30 +681,30 @@ class _InputField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           maxLines: maxLines,
-          style: GoogleFonts.plusJakartaSans(color: _secondaryColor),
+          style: GoogleFonts.plusJakartaSans(color: cs.secondary),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.3),
+              color: cs.secondary.withValues(alpha: 0.3),
             ),
             prefixIcon: maxLines == 1
-                ? Icon(icon, color: _primaryColor.withValues(alpha: 0.6))
+                ? Icon(icon, color: cs.primary.withValues(alpha: 0.6))
                 : null,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: cs.surfaceContainer,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide:
-                  BorderSide(color: _secondaryColor.withValues(alpha: 0.1)),
+                  BorderSide(color: cs.secondary.withValues(alpha: 0.1)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide:
-                  BorderSide(color: _secondaryColor.withValues(alpha: 0.1)),
+                  BorderSide(color: cs.secondary.withValues(alpha: 0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _primaryColor),
+              borderSide: BorderSide(color: cs.primary),
             ),
           ),
         ),

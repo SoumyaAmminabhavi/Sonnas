@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// Brand Colors aligned with OwnerDashboard
-const Color _primaryColor = Color(0xFFFF4D8D);
-const Color _primaryContainer = Color(0xFFFFB6D3);
-const Color _secondaryColor = Color(0xFF701235);
-
 class OwnerSidebar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -18,13 +13,14 @@ class OwnerSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         boxShadow: [
           BoxShadow(
-            color: _primaryColor.withValues(alpha: 0.08),
+            color: cs.primary.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(10, 0),
           ),
@@ -43,7 +39,7 @@ class OwnerSidebar extends StatelessWidget {
             child: Text(
               "Menu",
               style: GoogleFonts.notoSerif(
-                color: _primaryColor,
+                color: cs.primary,
                 fontStyle: FontStyle.italic,
                 fontSize: 18,
               ),
@@ -101,6 +97,7 @@ class _DrawerEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
@@ -112,8 +109,8 @@ class _DrawerEntry extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             gradient: isSelected
-                ? const LinearGradient(
-                    colors: [_primaryColor, _primaryContainer],
+                ? LinearGradient(
+                    colors: [cs.primary, cs.primaryContainer],
                   )
                 : null,
           ),
@@ -122,7 +119,7 @@ class _DrawerEntry extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isSelected ? Colors.white : _secondaryColor,
+                color: isSelected ? Colors.white : cs.secondary,
               ),
               const SizedBox(width: 16),
               Text(
@@ -131,7 +128,7 @@ class _DrawerEntry extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                   letterSpacing: 1.5,
-                  color: isSelected ? Colors.white : _secondaryColor,
+                  color: isSelected ? Colors.white : cs.secondary,
                 ),
               ),
             ],

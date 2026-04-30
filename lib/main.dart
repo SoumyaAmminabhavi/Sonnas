@@ -32,14 +32,36 @@ void main() async {
   }
 }
 
-class PatisserieApp extends StatelessWidget {
+final themeController = ValueNotifier<ThemeMode>(ThemeMode.light);
+
+class PatisserieApp extends StatefulWidget {
   const PatisserieApp({super.key});
+
+  @override
+  State<PatisserieApp> createState() => _PatisserieAppState();
+}
+
+class _PatisserieAppState extends State<PatisserieApp> {
+  @override
+  void initState() {
+    super.initState();
+    themeController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    themeController.removeListener(() {});
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sonna\'s Patisserie & Cafe',
       debugShowCheckedModeBanner: false,
+      themeMode: themeController.value,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.light(
@@ -52,26 +74,47 @@ class PatisserieApp extends StatelessWidget {
           onPrimaryContainer: Color(0xFF701235),
           surfaceContainer: Color(0xFFFFF5F9),
           surfaceContainerLow: Color(0xFFFFF5F9),
+          outlineVariant: Color(0xFFFFB6D3),
         ),
-        textTheme: TextTheme(
-          displayLarge: GoogleFonts.notoSerif(
-            color: const Color(0xFF701235),
-            fontWeight: FontWeight.w400,
-          ),
-          headlineLarge: GoogleFonts.notoSerif(
-            color: const Color(0xFF701235),
-            fontWeight: FontWeight.w400,
-          ),
-          bodyLarge: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF701235),
-          ),
-          labelSmall: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2.0,
-          ),
+        textTheme: _textTheme(const Color(0xFF701235)),
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFFFF4D8D), // Vibrant Pink
+          secondary: Color(0xFFFFB6D3), // Pastel Pink
+          surface: Color(0xFF1A0F14), // Deep Midnight Berry
+          onSurface: Color(0xFFFFF0F6), // Pale Pink text
+          onSurfaceVariant: Color(0xFFFFB6D3),
+          primaryContainer: Color(0xFF701235), // Deep Berry
+          onPrimaryContainer: Color(0xFFFFB6D3),
+          surfaceContainer: Color(0xFF25161C),
+          surfaceContainerLow: Color(0xFF2D1B22),
+          outlineVariant: Color(0xFF701235),
         ),
+        textTheme: _textTheme(const Color(0xFFFFF0F6)),
       ),
       home: const AppNavigation(),
+    );
+  }
+
+  TextTheme _textTheme(Color color) {
+    return TextTheme(
+      displayLarge: GoogleFonts.notoSerif(
+        color: color,
+        fontWeight: FontWeight.w400,
+      ),
+      headlineLarge: GoogleFonts.notoSerif(
+        color: color,
+        fontWeight: FontWeight.w400,
+      ),
+      bodyLarge: GoogleFonts.plusJakartaSans(
+        color: color,
+      ),
+      labelSmall: GoogleFonts.plusJakartaSans(
+        fontWeight: FontWeight.bold,
+        letterSpacing: 2.0,
+      ),
     );
   }
 }
@@ -346,9 +389,7 @@ class LandingPage extends StatelessWidget {
                 // Scroll down arrow
                 Icon(
                   Icons.keyboard_double_arrow_down,
-                  color: const Color(
-                    0xFFFFB6D3,
-                  ), // outline-variant (Pastel Pink)
+                  color: cs.outlineVariant,
                 ),
                 const SizedBox(height: 100), // Space for bottom nav
               ],
@@ -384,7 +425,7 @@ class _ContactGlassIcon extends StatelessWidget {
         shape: BoxShape.circle,
         color: cs.surface.withValues(alpha: 0.5),
         border: Border.all(
-          color: const Color(0xFFD8C1C6).withValues(alpha: 0.3),
+          color: cs.outlineVariant.withValues(alpha: 0.3),
         ),
       ),
       child: ClipOval(
@@ -409,7 +450,7 @@ class ModernDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Drawer(
-      backgroundColor: const Color(0xFFFFF1E9), // surface-container-low
+      backgroundColor: cs.surfaceContainerLow,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
@@ -453,7 +494,7 @@ class ModernDrawer extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Divider(
-                  color: const Color(0xFFD8C1C6).withValues(alpha: 0.3),
+                  color: cs.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
 
@@ -468,7 +509,7 @@ class ModernDrawer extends StatelessWidget {
                   color: cs.surfaceContainer,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFD8C1C6).withValues(alpha: 0.2),
+                    color: cs.outlineVariant.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(

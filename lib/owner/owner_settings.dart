@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../main.dart';
 import 'add_staff_page.dart';
-
-// Brand Colors - Sweet Pink Bakery Theme
-const Color _primaryColor = Color(0xFFFF4D8D);
-const Color _secondaryColor = Color(0xFF701235);
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -36,10 +33,17 @@ class _SettingsContent extends StatefulWidget {
 class _SettingsContentState extends State<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
-  bool _darkMode = false;
+  late bool _isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDarkMode = themeController.value == ThemeMode.dark;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return ListView(
       padding: EdgeInsets.symmetric(
         horizontal: widget.isDesktop ? 48.0 : 16.0,
@@ -55,7 +59,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   "CONTROL PANEL",
                   style: GoogleFonts.plusJakartaSans(
-                    color: _primaryColor,
+                    color: cs.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                     letterSpacing: 2.0,
@@ -65,7 +69,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   "Business Settings",
                   style: GoogleFonts.notoSerif(
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     fontSize: widget.isDesktop ? 48 : 32,
                     height: 1.1,
                   ),
@@ -77,7 +81,7 @@ class _SettingsContentState extends State<_SettingsContent> {
         const SizedBox(height: 24),
         Container(
           height: 1,
-          color: _secondaryColor.withValues(alpha: 0.3),
+          color: cs.secondary.withValues(alpha: 0.3),
         ),
         const SizedBox(height: 48),
 
@@ -92,9 +96,9 @@ class _SettingsContentState extends State<_SettingsContent> {
                   Expanded(
                     child: Column(
                       children: [
-                        _buildEstablishmentSection(),
+                        _buildEstablishmentSection(cs),
                         const SizedBox(height: 32),
-                        _buildStaffSection(),
+                        _buildStaffSection(cs),
                       ],
                     ),
                   ),
@@ -102,9 +106,9 @@ class _SettingsContentState extends State<_SettingsContent> {
                   Expanded(
                     child: Column(
                       children: [
-                        _buildPreferencesSection(),
+                        _buildPreferencesSection(cs),
                         const SizedBox(height: 32),
-                        _buildBISection(),
+                        _buildBISection(cs),
                       ],
                     ),
                   ),
@@ -115,13 +119,13 @@ class _SettingsContentState extends State<_SettingsContent> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildEstablishmentSection(),
+                _buildEstablishmentSection(cs),
                 const SizedBox(height: 32),
-                _buildPreferencesSection(),
+                _buildPreferencesSection(cs),
                 const SizedBox(height: 32),
-                _buildStaffSection(),
+                _buildStaffSection(cs),
                 const SizedBox(height: 32),
-                _buildBISection(),
+                _buildBISection(cs),
                 const SizedBox(height: 64),
               ],
             );
@@ -131,27 +135,27 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildEstablishmentSection() {
+  Widget _buildEstablishmentSection(ColorScheme cs) {
     return _SettingsCard(
       title: "Establishment Details",
       icon: Icons.storefront,
       child: Column(
         children: [
-          _buildInfoRow("Bakery Name", "Sonna's Patisserie & Cafe"),
-          _buildInfoRow("Contact Phone", "+91 91132 31424"),
-          _buildInfoRow("Instagram", "@sonnas__"),
-          _buildInfoRow("Contact Email", "sonnaspatisseriecafe@gmail.com"),
-          _buildInfoRow("Address", "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021"),
+          _buildInfoRow(cs, "Bakery Name", "Sonna's Patisserie & Cafe"),
+          _buildInfoRow(cs, "Contact Phone", "+91 91132 31424"),
+          _buildInfoRow(cs, "Instagram", "@sonnas__"),
+          _buildInfoRow(cs, "Contact Email", "sonnaspatisseriecafe@gmail.com"),
+          _buildInfoRow(cs, "Address", "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021"),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
               onPressed: () {},
-              icon: const Icon(Icons.edit, size: 16, color: _primaryColor),
+              icon: Icon(Icons.edit, size: 16, color: cs.primary),
               label: Text(
                 "Edit Information",
                 style: GoogleFonts.plusJakartaSans(
-                  color: _primaryColor,
+                  color: cs.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -162,44 +166,52 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildPreferencesSection() {
+  Widget _buildPreferencesSection(ColorScheme cs) {
     return _SettingsCard(
       title: "App Preferences",
       icon: Icons.tune,
       child: Column(
         children: [
           _buildSwitchRow(
+            cs,
             "Push Notifications",
             "Receive alerts for new orders",
             _pushNotifications,
             (val) => setState(() => _pushNotifications = val),
           ),
           _buildSwitchRow(
+            cs,
             "Inventory Alerts",
             "Notify when ingredients are low",
             _inventoryAlerts,
             (val) => setState(() => _inventoryAlerts = val),
           ),
           _buildSwitchRow(
+            cs,
             "Dark Mode",
-            "Alternative color scheme (Coming soon)",
-            _darkMode,
-            (val) => setState(() => _darkMode = val),
+            "Toggle between light and dark aesthetics",
+            _isDarkMode,
+            (val) {
+              setState(() {
+                _isDarkMode = val;
+                themeController.value = val ? ThemeMode.dark : ThemeMode.light;
+              });
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStaffSection() {
+  Widget _buildStaffSection(ColorScheme cs) {
     return _SettingsCard(
       title: "Staff Management",
       icon: Icons.people_outline,
       child: Column(
         children: [
-          _buildStaffRow("Chef Julian", "Senior Artisan", true),
-          _buildStaffRow("Aisha M.", "Pastry Assistant", true),
-          _buildStaffRow("Marcus T.", "Delivery", false),
+          _buildStaffRow(cs, "Chef Julian", "Senior Artisan", true),
+          _buildStaffRow(cs, "Aisha M.", "Pastry Assistant", true),
+          _buildStaffRow(cs, "Marcus T.", "Delivery", false),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -213,13 +225,13 @@ class _SettingsContentState extends State<_SettingsContent> {
                   widget.onTabChanged!(result);
                 }
               },
-              icon: const Icon(Icons.person_add, color: _primaryColor),
+              icon: Icon(Icons.person_add, color: cs.primary),
               label: Text(
                 "Add New Staff",
-                style: GoogleFonts.plusJakartaSans(color: _primaryColor),
+                style: GoogleFonts.plusJakartaSans(color: cs.primary),
               ),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: _primaryColor.withValues(alpha: 0.5)),
+                side: BorderSide(color: cs.primary.withValues(alpha: 0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -232,21 +244,21 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildBISection() {
+  Widget _buildBISection(ColorScheme cs) {
     return _SettingsCard(
       title: "Business Intelligence",
       icon: Icons.insights,
       child: Column(
         children: [
-          _buildActionRow("Sales Reports", Icons.bar_chart, "View historical data"),
-          _buildActionRow("Expense Reports", Icons.receipt_long, "Analyze costs"),
-          _buildActionRow("Inventory Analytics", Icons.inventory, "Stock trends"),
+          _buildActionRow(cs, "Sales Reports", Icons.bar_chart, "View historical data"),
+          _buildActionRow(cs, "Expense Reports", Icons.receipt_long, "Analyze costs"),
+          _buildActionRow(cs, "Inventory Analytics", Icons.inventory, "Stock trends"),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(ColorScheme cs, String label, String value) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmall = constraints.maxWidth < 300;
@@ -260,7 +272,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   label,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withValues(alpha: 0.6),
+                    color: cs.secondary.withValues(alpha: 0.6),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -269,7 +281,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   value,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -289,7 +301,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 child: Text(
                   label,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withValues(alpha: 0.6),
+                    color: cs.secondary.withValues(alpha: 0.6),
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -301,7 +313,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 child: Text(
                   value,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -314,7 +326,7 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildSwitchRow(String title, String subtitle, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildSwitchRow(ColorScheme cs, String title, String subtitle, bool value, ValueChanged<bool>? onChanged) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -326,7 +338,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   title,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
@@ -334,7 +346,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   subtitle,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withValues(alpha: 0.6),
+                    color: cs.secondary.withValues(alpha: 0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -344,24 +356,24 @@ class _SettingsContentState extends State<_SettingsContent> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: _primaryColor,
+            activeColor: cs.primary,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStaffRow(String name, String role, bool active) {
+  Widget _buildStaffRow(ColorScheme cs, String name, String role, bool active) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: _primaryColor.withValues(alpha: 0.1),
+            backgroundColor: cs.primary.withValues(alpha: 0.1),
             child: Text(
               name[0],
               style: GoogleFonts.plusJakartaSans(
-                color: _primaryColor,
+                color: cs.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -374,14 +386,14 @@ class _SettingsContentState extends State<_SettingsContent> {
                 Text(
                   name,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   role,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withValues(alpha: 0.6),
+                    color: cs.secondary.withValues(alpha: 0.6),
                     fontSize: 12,
                   ),
                 ),
@@ -408,7 +420,7 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildActionRow(String title, IconData icon, String subtitle) {
+  Widget _buildActionRow(ColorScheme cs, String title, IconData icon, String subtitle) {
     return InkWell(
       onTap: () {},
       borderRadius: BorderRadius.circular(12),
@@ -419,10 +431,10 @@ class _SettingsContentState extends State<_SettingsContent> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: _secondaryColor.withValues(alpha: 0.05),
+                color: cs.secondary.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: _primaryColor, size: 24),
+              child: Icon(icon, color: cs.primary, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -432,21 +444,21 @@ class _SettingsContentState extends State<_SettingsContent> {
                   Text(
                     title,
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor,
+                      color: cs.secondary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.6),
+                      color: cs.secondary.withValues(alpha: 0.6),
                       fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: _secondaryColor.withValues(alpha: 0.5)),
+            Icon(Icons.chevron_right, color: cs.secondary.withValues(alpha: 0.5)),
           ],
         ),
       ),
@@ -467,14 +479,15 @@ class _SettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _secondaryColor.withValues(alpha: 0.05)),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withValues(alpha: 0.03),
+            color: cs.secondary.withValues(alpha: 0.03),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -487,12 +500,12 @@ class _SettingsCard extends StatelessWidget {
             padding: const EdgeInsets.all(24.0),
             child: Row(
               children: [
-                Icon(icon, color: _primaryColor),
+                Icon(icon, color: cs.primary),
                 const SizedBox(width: 12),
                 Text(
                   title,
                   style: GoogleFonts.notoSerif(
-                    color: _primaryColor,
+                    color: cs.primary,
                     fontSize: 20,
                     fontStyle: FontStyle.italic,
                   ),
@@ -500,7 +513,7 @@ class _SettingsCard extends StatelessWidget {
               ],
             ),
           ),
-          Container(height: 1, color: _secondaryColor.withValues(alpha: 0.05)),
+          Container(height: 1, color: cs.secondary.withValues(alpha: 0.05)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
             child: child,

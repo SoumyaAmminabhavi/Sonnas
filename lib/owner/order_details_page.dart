@@ -5,7 +5,6 @@ import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 
 // Brand Colors - Sweet Pink Bakery Theme
-const Color _bgColor = Color(0xFFFFF0F6);
 
 class OrderDetailsPage extends StatelessWidget {
   final String orderId;
@@ -36,22 +35,22 @@ class OrderDetailsPage extends StatelessWidget {
 
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
-                backgroundColor: _bgColor,
+                backgroundColor: cs.surface,
                 body: const Center(child: CircularProgressIndicator()),
               );
             }
 
             if (order == null) {
               return Scaffold(
-                backgroundColor: _bgColor,
+                backgroundColor: cs.surface,
                 body: Center(child: Text("Order not found: $orderId")),
               );
             }
 
             return Scaffold(
-              backgroundColor: _bgColor,
+              backgroundColor: cs.surface,
               appBar: AppBar(
-                backgroundColor: _bgColor.withValues(alpha: 0.9),
+                backgroundColor: cs.surface.withValues(alpha: 0.9),
                 elevation: 0,
                 scrolledUnderElevation: 0,
                 leading: IconButton(
@@ -596,7 +595,7 @@ class _ElegantAction extends StatelessWidget {
     return Container(
       height: 54,
       decoration: BoxDecoration(
-        color: isPrimary ? cs.primary : Colors.white,
+        color: isPrimary ? cs.primary : cs.surface,
         borderRadius: BorderRadius.circular(16),
         border: !isPrimary
             ? Border.all(color: cs.primary.withValues(alpha: 0.1))

@@ -7,24 +7,11 @@ import 'payments_page.dart';
 import '../widgets/owner_sidebar.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-// Brand Colors - Sweet Pink Bakery Theme
-const Color _bgColor = Color(0xFFFFF0F6); // Ultra pale pink
-const Color _primaryColor = Color(0xFFFF4D8D); // Vibrant pink
-const Color _primaryContainer = Color(0xFFFFB6D3); // Pastel pink accent
-const Color _secondaryColor = Color(0xFF701235); // Deep berry for text/contrast
-const Color _surfaceLow = Color(0xFFFFF5F9); // Lighter surface
-
-// Images
-const _profileUrl =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDDQvYGvn7S_J3DgscTQ2hNnlLJRhww-9vSDS-Wt5d8khGCywY2mEyOlidW86WQ0V1-AhQh2KWO60drIVHQJrfu3ZZJsuR_E8nsZl3mX6iruFwf9hK3oksVyq298bTGjeXEx8IDZExP5eyrE_JD3gnXSeAn_-OlWPTcgIxt2-_1AxMAYzTIfh8rIJHZXRYfbobtQI-IAL_PTkx9ufPCiigfWZlzIDGwO6FEA9kitgjTQc_lkka6tk007AMES6uXmk5vnYroLLKQz--4";
-const _imgOrder1 =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuByamhClb3gDhF3nngRFpLvkbtTTHarLWuqt4-agAtERKXjlvCqO0UX3yoFz8JcqTxXexzX6nYk_VgLcK0PhyPJcetaMu0wIt5XswIYgIbUVmdoLWucs7HsL6WEwnGYbjBT8Dju38uIOlCwkRSaksxz6v2pSSi1xjhD_tiuMHQWhwmm3o8mBSZGVB41NEqCjepzdUc_TgIx4FsF49JV6XFveVlL76uJKML55RWk6tpcySzc2TFE1MfrNg1sUXJ6BKv69tr904uK6oSO";
-const _imgOrder2 =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuBgLiZjc9axvI-eFs8vO1zzxXSfph_zKSHA9tUul1gcWpf1QEOdqEipFJuCWmE0P8H9Mq_9T6s6P2dAUoW4WGiI94z-4QrxdHl7AYmzfzGCy5GOgFQAo4TmUwJnSFPSTtkV8bBW20fV0MurGRSB4jnPK111Qxuv2yiTQ2CIfFHGRGyXA1CZbUmlIs-v6A3RHMYNqdsl0PoOJJxyZ_lFRObqOKAnKPqc_4mCp1DvHn01byvns9Mc3JHBquVh_j04E5LWBNRgrLU-tRzQ";
-const _imgOrder3 =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuCMggGL41lwe2i4Hoo75nPIBRKP9jNB-bpez1o15acouqD2kq9Xm2CMIC6RB-60FX1h5PUQijYrbv-QmjuvsF3lDd6U_RGEVfyriZZf28EktoAbAXV2gWj-r18jED5in5g8-4eXkBRTQ3p2wNkJ7zBsFW8BKvplp4rqngBkQvOcpFG8P9d92TuJRDGyFEBMaE1DFDT5ml-S7Os54bLBx8eVzGpeSDdAI0CRqWbjmGtA4TAJshbLFBBdabnvBVoFkbJlrlccy-WgIuv-";
-const _imgOrder4 =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDGwlEwOUwOfvwwQYEI5N9MyD17EsoHebe0bo_ito0-cXuFY8odZg1uyWA-bpYULaxCXVb80y5fRsfUby-NaopwuLqXGs3Px7imIUA_AKJvqfZl6T6f-aZiYROl1_aPAOKt73Msdakj8PV84o8TMZ6Am7lwqTViaBG0ea75y0znTDi5-I4dRwFHp88lf1cE16C8jxp0ISgJMnZtAPjFf3z31n-Cb_fGxq-1iLfIB_Vywk7VDDLQoChnHEXjIUHzNwVnust_mYR_Uqp2";
+// Image constants for dashboard
+const String _imgOrder1 = "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=200&auto=format&fit=crop";
+const String _imgOrder2 = "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?q=80&w=200&auto=format&fit=crop";
+const String _imgOrder3 = "https://images.unsplash.com/photo-1559181567-c3190ca9959b?q=80&w=200&auto=format&fit=crop";
+const String _imgOrder4 = "https://images.unsplash.com/photo-1481391243133-f96216dcb5d2?q=80&w=200&auto=format&fit=crop";
 
 class OwnerDashboard extends StatefulWidget {
   const OwnerDashboard({super.key});
@@ -35,27 +22,31 @@ class OwnerDashboard extends StatefulWidget {
 
 class _OwnerDashboardState extends State<OwnerDashboard> {
   int _selectedIndex = 0;
+  static const String _profileUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop";
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 768;
 
         return Scaffold(
-          backgroundColor: _bgColor,
+          backgroundColor: cs.surface,
           appBar: AppBar(
-            backgroundColor: _bgColor.withValues(alpha: 0.9),
+            backgroundColor: cs.surface.withValues(alpha: 0.9),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: _primaryColor),
+              icon: Icon(Icons.arrow_back, color: cs.primary),
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
               "Sonna's Patisserie & Cafe",
               style: GoogleFonts.notoSerif(
-                color: const Color.fromARGB(255, 146, 6, 53),
+                color: cs.primary,
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w600,
                 letterSpacing: -0.5,
@@ -63,14 +54,14 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             ),
             actions: [
               if (isDesktop) ...[
-                const _TopNavText(text: "DASHBOARD", isSelected: true),
+                _TopNavText(text: "DASHBOARD", isSelected: _selectedIndex == 0, cs: cs),
                 GestureDetector(
                   onTap: () => setState(() => _selectedIndex = 3),
-                  child: const _TopNavText(text: "MENU"),
+                  child: _TopNavText(text: "MENU", isSelected: _selectedIndex == 3, cs: cs),
                 ),
                 GestureDetector(
                   onTap: () => setState(() => _selectedIndex = 4),
-                  child: const _TopNavText(text: "SETTINGS"),
+                  child: _TopNavText(text: "SETTINGS", isSelected: _selectedIndex == 4, cs: cs),
                 ),
               ],
               Padding(
@@ -78,7 +69,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: _primaryContainer, width: 2),
+                    border: Border.all(color: cs.primaryContainer, width: 2),
                   ),
                   child: const CircleAvatar(
                     radius: 16,
@@ -141,8 +132,9 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
 class _TopNavText extends StatelessWidget {
   final String text;
   final bool isSelected;
+  final ColorScheme cs;
 
-  const _TopNavText({required this.text, this.isSelected = false});
+  const _TopNavText({required this.text, this.isSelected = false, required this.cs});
 
   @override
   Widget build(BuildContext context) {
@@ -153,8 +145,8 @@ class _TopNavText extends StatelessWidget {
           text,
           style: GoogleFonts.plusJakartaSans(
             color: isSelected
-                ? _primaryColor
-                : _secondaryColor.withValues(alpha: 0.6),
+                ? cs.primary
+                : cs.secondary.withValues(alpha: 0.6),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 12,
             letterSpacing: 1.5,
@@ -173,13 +165,14 @@ class _MobileBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: _bgColor.withValues(alpha: 0.95),
-      selectedItemColor: _primaryColor,
-      unselectedItemColor: _secondaryColor.withValues(alpha: 0.6),
+      backgroundColor: cs.surface.withValues(alpha: 0.95),
+      selectedItemColor: cs.primary,
+      unselectedItemColor: cs.secondary.withValues(alpha: 0.6),
       selectedLabelStyle: GoogleFonts.plusJakartaSans(
         fontSize: 9,
         fontWeight: FontWeight.bold,
@@ -212,8 +205,11 @@ class _MainContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Container(
-      color: _bgColor, // Explicitly use the pink background for content
+      color: cs.surface,
       child: ListView(
         padding: EdgeInsets.symmetric(
           horizontal: isDesktop ? 48.0 : 24.0,
@@ -224,7 +220,7 @@ class _MainContent extends StatelessWidget {
           Text(
             "OWNER OVERVIEW",
             style: GoogleFonts.plusJakartaSans(
-              color: _primaryColor,
+              color: cs.primary,
               fontWeight: FontWeight.bold,
               fontSize: 12,
               letterSpacing: 2.0,
@@ -234,7 +230,7 @@ class _MainContent extends StatelessWidget {
           Text(
             "Hello, Sonna.",
             style: GoogleFonts.notoSerif(
-              color: _secondaryColor,
+              color: cs.secondary,
               fontSize: isDesktop ? 48 : 36,
               height: 1.1,
             ),
@@ -243,7 +239,7 @@ class _MainContent extends StatelessWidget {
           Container(
             width: 48,
             height: 1,
-            color: _secondaryColor.withValues(alpha: 0.3),
+            color: cs.secondary.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 48),
           _buildPerformanceChart(context, isDesktop),
@@ -260,14 +256,14 @@ class _MainContent extends StatelessWidget {
                   Text(
                     "Recent Orders",
                     style: GoogleFonts.notoSerif(
-                      color: _secondaryColor,
+                      color: cs.secondary,
                       fontSize: 24,
                     ),
                   ),
                   Text(
                     "Latest activity from the boutique",
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.6),
+                      color: cs.secondary.withValues(alpha: 0.6),
                       fontSize: 14,
                     ),
                   ),
@@ -276,16 +272,16 @@ class _MainContent extends StatelessWidget {
               InkWell(
                 onTap: onViewAllOrders,
                 child: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     border: Border(
-                      bottom: BorderSide(color: _primaryContainer, width: 2),
+                      bottom: BorderSide(color: cs.primaryContainer, width: 2),
                     ),
                   ),
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
                     "View All Archives",
                     style: GoogleFonts.notoSerif(
-                      color: _primaryColor,
+                      color: cs.primary,
                       fontStyle: FontStyle.italic,
                       fontSize: 14,
                     ),
@@ -306,8 +302,8 @@ class _MainContent extends StatelessWidget {
                 _OrderCard(
                   id: "#ORD-8821",
                   status: "IN PREPARATION",
-                  statusColor: _primaryColor,
-                  statusBg: _surfaceLow,
+                  statusColor: cs.primary,
+                  statusBg: cs.surfaceContainerLow,
                   title: "Belgian Dark Chocolate Cake",
                   customer: "Customer: Mrs. Deshpande",
                   imageUrl: _imgOrder1,
@@ -315,7 +311,7 @@ class _MainContent extends StatelessWidget {
                 _OrderCard(
                   id: "#ORD-8822",
                   status: "PENDING PICKUP",
-                  statusColor: _secondaryColor,
+                  statusColor: cs.secondary,
                   statusBg: const Color(0xFFFDBF97).withValues(alpha: 0.2),
                   title: "Wild Strawberry Cake",
                   customer: "Customer: Mr. Kulkarni",
@@ -324,8 +320,8 @@ class _MainContent extends StatelessWidget {
                 _OrderCard(
                   id: "#ORD-8823",
                   status: "IN PREPARATION",
-                  statusColor: _primaryColor,
-                  statusBg: _surfaceLow,
+                  statusColor: cs.primary,
+                  statusBg: cs.surfaceContainerLow,
                   title: "Signature Macaron Box (24)",
                   customer: "Customer: Ms. Patil",
                   imageUrl: _imgOrder3,
@@ -333,8 +329,8 @@ class _MainContent extends StatelessWidget {
                 _OrderCard(
                   id: "#ORD-8824",
                   status: "CONFIRMED",
-                  statusColor: _primaryColor,
-                  statusBg: _primaryColor.withValues(alpha: 0.1),
+                  statusColor: cs.primary,
+                  statusBg: cs.primary.withValues(alpha: 0.1),
                   title: "Madagascar Vanilla Bean Mousse",
                   customer: "Customer: Marc Antoine",
                   imageUrl: _imgOrder4,
@@ -381,15 +377,16 @@ class _MainContent extends StatelessWidget {
   }
 
   Widget _buildPerformanceChart(BuildContext context, bool isDesktop) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withValues(alpha: 0.04),
+            color: cs.secondary.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -407,7 +404,7 @@ class _MainContent extends StatelessWidget {
                   Text(
                     "Sales Performance",
                     style: GoogleFonts.notoSerif(
-                      color: _secondaryColor,
+                      color: cs.secondary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -415,7 +412,7 @@ class _MainContent extends StatelessWidget {
                   Text(
                     "Revenue trend for the past week",
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      color: cs.secondary.withValues(alpha: 0.5),
                       fontSize: 12,
                     ),
                   ),
@@ -427,13 +424,13 @@ class _MainContent extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withValues(alpha: 0.05),
+                  color: cs.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   "WEEKLY",
                   style: GoogleFonts.plusJakartaSans(
-                    color: _primaryColor,
+                    color: cs.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 10,
                     letterSpacing: 1.0,
@@ -453,7 +450,7 @@ class _MainContent extends StatelessWidget {
                   horizontalInterval: 5,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: _secondaryColor.withValues(alpha: 0.05),
+                      color: cs.secondary.withValues(alpha: 0.05),
                       strokeWidth: 1,
                     );
                   },
@@ -490,7 +487,7 @@ class _MainContent extends StatelessWidget {
                             child: Text(
                               days[value.toInt()],
                               style: GoogleFonts.plusJakartaSans(
-                                color: _secondaryColor.withValues(alpha: 0.4),
+                                color: cs.secondary.withValues(alpha: 0.4),
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -519,8 +516,8 @@ class _MainContent extends StatelessWidget {
                       FlSpot(6, 18),
                     ],
                     isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [_primaryColor, _primaryContainer],
+                    gradient: LinearGradient(
+                      colors: [cs.primary, cs.primaryContainer],
                     ),
                     barWidth: 4,
                     isStrokeCapRound: true,
@@ -529,17 +526,17 @@ class _MainContent extends StatelessWidget {
                       getDotPainter: (spot, percent, barData, index) =>
                           FlDotCirclePainter(
                             radius: 4,
-                            color: Colors.white,
+                            color: cs.surface,
                             strokeWidth: 3,
-                            strokeColor: _primaryColor,
+                            strokeColor: cs.primary,
                           ),
                     ),
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          _primaryColor.withValues(alpha: 0.2),
-                          _primaryColor.withValues(alpha: 0.0),
+                          cs.primary.withValues(alpha: 0.2),
+                          cs.primary.withValues(alpha: 0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -577,19 +574,20 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withValues(alpha: 0.04),
+            color: cs.secondary.withValues(alpha: 0.04),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: _secondaryColor.withValues(alpha: 0.05)),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -617,7 +615,7 @@ class _OrderCard extends StatelessWidget {
                       style: GoogleFonts.notoSerif(
                         fontSize: 10,
                         fontStyle: FontStyle.italic,
-                        color: _secondaryColor.withValues(alpha: 0.5),
+                        color: cs.secondary.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -645,17 +643,17 @@ class _OrderCard extends StatelessWidget {
                   style: GoogleFonts.notoSerif(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: _secondaryColor,
+                    color: cs.secondary,
                   ),
                 ),
                 const SizedBox(height: 6),
                 _CompactInfoRow(
-                    icon: Icons.cake_outlined, text: title, color: _secondaryColor),
+                    icon: Icons.cake_outlined, text: title, color: cs.secondary),
                 const SizedBox(height: 2),
                 _CompactInfoRow(
                     icon: Icons.schedule_outlined,
                     text: "Pickup at 2:30 PM",
-                    color: _secondaryColor),
+                    color: cs.secondary),
               ],
             ),
           ),
@@ -667,13 +665,13 @@ class _OrderCard extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(Icons.more_vert,
-                    color: _secondaryColor.withValues(alpha: 0.3)),
+                    color: cs.secondary.withValues(alpha: 0.3)),
                 onPressed: () {},
               ),
               Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _primaryColor,
+                  color: cs.primary,
                 ),
                 padding: const EdgeInsets.all(8),
                 child: const Icon(Icons.edit_note, size: 18, color: Colors.white),

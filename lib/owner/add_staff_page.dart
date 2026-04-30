@@ -2,20 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
 
-// Brand Colors - Sweet Pink Bakery Theme
-const Color _bgColor = Color(0xFFFFF0F6);
-const Color _primaryColor = Color(0xFFFF4D8D);
-const Color _secondaryColor = Color(0xFF701235);
-const Color _surfaceContainerLow = Color(0xFFFFF5F9);
-const Color _outlineVariant = Color(0xFFFFB6D3);
-const Color _primaryContainer = Color(0xFFFFB6D3);
-
 class AddStaffPage extends StatefulWidget {
   const AddStaffPage({super.key});
 
   @override
   State<AddStaffPage> createState() => _AddStaffPageState();
 }
+
 
 class _AddStaffPageState extends State<AddStaffPage> {
   String _selectedRole = 'BAKER';
@@ -42,25 +35,28 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 768;
 
         return Scaffold(
-          backgroundColor: _bgColor,
+          backgroundColor: cs.surface,
           appBar: isDesktop
               ? AppBar(
-                  backgroundColor: _bgColor.withValues(alpha: 0.9),
+                  backgroundColor: cs.surface.withValues(alpha: 0.9),
                   elevation: 0,
                   scrolledUnderElevation: 0,
                   leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: _primaryColor),
+                    icon: Icon(Icons.arrow_back, color: cs.primary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   title: Text(
                     "Sonna's Patisserie & Cafe",
                     style: GoogleFonts.notoSerif(
-                      color: const Color.fromARGB(255, 146, 6, 53),
+                      color: cs.primary,
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.5,
@@ -68,10 +64,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   ),
                 )
               : AppBar(
-                  backgroundColor: _bgColor.withValues(alpha: 0.8),
+                  backgroundColor: cs.surface.withValues(alpha: 0.8),
                   elevation: 0,
                   leading: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: _primaryColor),
+                    icon: Icon(Icons.arrow_back, color: cs.primary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   title: Column(
@@ -80,7 +76,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                       Text(
                         "Add New Staff",
                         style: GoogleFonts.notoSerif(
-                          color: _primaryColor,
+                          color: cs.primary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -88,7 +84,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                       Text(
                         "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
                         style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withValues(alpha: 0.6),
+                          color: cs.secondary.withValues(alpha: 0.6),
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.0,
@@ -117,36 +113,36 @@ class _AddStaffPageState extends State<AddStaffPage> {
                         children: [
                           if (isDesktop) ...[
                              Text(
-                              "Add New Staff",
-                              style: GoogleFonts.notoSerif(
-                                color: _primaryColor,
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
-                              style: GoogleFonts.plusJakartaSans(
-                                color: _secondaryColor.withValues(alpha: 0.6),
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                            const SizedBox(height: 40),
+                               "Add New Staff",
+                               style: GoogleFonts.notoSerif(
+                                 color: cs.primary,
+                                 fontSize: 32,
+                                 fontWeight: FontWeight.bold,
+                               ),
+                             ),
+                             const SizedBox(height: 8),
+                             Text(
+                               "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
+                               style: GoogleFonts.plusJakartaSans(
+                                 color: cs.secondary.withValues(alpha: 0.6),
+                                 fontSize: 10,
+                                 fontWeight: FontWeight.bold,
+                                 letterSpacing: 1.0,
+                               ),
+                             ),
+                             const SizedBox(height: 40),
                           ],
-                          _buildBasicInfoSection(),
+                          _buildBasicInfoSection(cs),
                           const SizedBox(height: 40),
-                          _buildRoleSelectionSection(),
+                          _buildRoleSelectionSection(cs),
                           const SizedBox(height: 40),
-                          _buildPermissionsSection(),
+                          _buildPermissionsSection(cs),
                           const SizedBox(height: 40),
-                          _buildWorkDetailsSection(),
+                          _buildWorkDetailsSection(cs),
                           const SizedBox(height: 40),
-                          _buildAccountSetupSection(),
+                          _buildAccountSetupSection(cs),
                           const SizedBox(height: 40),
-                          _buildActions(),
+                          _buildActions(cs),
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -161,7 +157,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildBasicInfoSection() {
+  Widget _buildBasicInfoSection(ColorScheme cs) {
     bool isMobile = MediaQuery.of(context).size.width < 500;
     return Column(
       children: [
@@ -173,17 +169,17 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: _surfaceContainerLow,
+                    color: cs.surfaceContainerLow,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _outlineVariant.withValues(alpha: 0.5),
+                      color: cs.primaryContainer.withValues(alpha: 0.5),
                       style: BorderStyle.solid,
                       width: 2,
                     ),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_a_photo_outlined,
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     size: 30,
                   ),
                 ),
@@ -192,8 +188,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   right: 0,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: _primaryColor,
+                    decoration: BoxDecoration(
+                      color: cs.primary,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -208,6 +204,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             const SizedBox(width: 24),
             Expanded(
               child: _buildGhostInput(
+                cs,
                 label: "FULL NAME",
                 placeholder: "e.g. Julianne Moretti",
               ),
@@ -217,12 +214,14 @@ class _AddStaffPageState extends State<AddStaffPage> {
         const SizedBox(height: 24),
         if (isMobile) ...[
           _buildGhostInput(
+            cs,
             label: "PHONE NUMBER",
             placeholder: "+91 9876543210",
             keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: 24),
           _buildGhostInput(
+            cs,
             label: "EMAIL ADDRESS (OPTIONAL)",
             placeholder: "julianne@patisserie.com",
             keyboardType: TextInputType.emailAddress,
@@ -232,6 +231,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             children: [
               Expanded(
                 child: _buildGhostInput(
+                  cs,
                   label: "PHONE NUMBER",
                   placeholder: "+91 9876543210",
                   keyboardType: TextInputType.phone,
@@ -240,6 +240,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               const SizedBox(width: 24),
               Expanded(
                 child: _buildGhostInput(
+                  cs,
                   label: "EMAIL ADDRESS (OPTIONAL)",
                   placeholder: "julianne@patisserie.com",
                   keyboardType: TextInputType.emailAddress,
@@ -251,14 +252,14 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildRoleSelectionSection() {
+  Widget _buildRoleSelectionSection(ColorScheme cs) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           "SELECT STAFF ROLE",
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor,
+            color: cs.secondary,
             fontSize: 11,
             fontWeight: FontWeight.bold,
             letterSpacing: 2.0,
@@ -274,12 +275,13 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 alignment: WrapAlignment.center,
                 children: [
                   _buildRoleCard(
+                    cs,
                     "BAKER",
                     Icons.cookie_outlined,
-                  ), // Simplified icon for "cooking"
-                  _buildRoleCard("CASHIER", Icons.point_of_sale_outlined),
-                  _buildRoleCard("DELIVERY", Icons.motorcycle_outlined),
-                  _buildRoleCard("MANAGER", Icons.badge_outlined),
+                  ),
+                  _buildRoleCard(cs, "CASHIER", Icons.point_of_sale_outlined),
+                  _buildRoleCard(cs, "DELIVERY", Icons.motorcycle_outlined),
+                  _buildRoleCard(cs, "MANAGER", Icons.badge_outlined),
                 ],
               ),
             );
@@ -289,7 +291,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildRoleCard(String role, IconData icon) {
+  Widget _buildRoleCard(ColorScheme cs, String role, IconData icon) {
     bool isSelected = _selectedRole == role;
     return GestureDetector(
       onTap: () => setState(() => _selectedRole = role),
@@ -298,11 +300,11 @@ class _AddStaffPageState extends State<AddStaffPage> {
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: isSelected
-              ? _primaryContainer.withValues(alpha: 0.1)
-              : _surfaceContainerLow,
+              ? cs.primaryContainer.withValues(alpha: 0.1)
+              : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? _primaryContainer : Colors.transparent,
+            color: isSelected ? cs.primaryContainer : Colors.transparent,
             width: 2,
           ),
         ),
@@ -313,8 +315,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
             Icon(
               icon,
               color: isSelected
-                  ? _primaryColor
-                  : _secondaryColor.withValues(alpha: 0.4),
+                  ? cs.primary
+                  : cs.secondary.withValues(alpha: 0.4),
               size: 28,
             ),
             const SizedBox(height: 8),
@@ -322,8 +324,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
               role,
               style: GoogleFonts.plusJakartaSans(
                 color: isSelected
-                    ? _primaryColor
-                    : _secondaryColor.withValues(alpha: 0.6),
+                    ? cs.primary
+                    : cs.secondary.withValues(alpha: 0.6),
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -334,11 +336,11 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildPermissionsSection() {
+  Widget _buildPermissionsSection(ColorScheme cs) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: _surfaceContainerLow,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -346,12 +348,12 @@ class _AddStaffPageState extends State<AddStaffPage> {
         children: [
           Row(
             children: [
-              const Icon(Icons.security, color: _primaryColor, size: 16),
+              Icon(Icons.security, color: cs.primary, size: 16),
               const SizedBox(width: 8),
               Text(
                 "Permissions",
                 style: GoogleFonts.notoSerif(
-                  color: _secondaryColor,
+                  color: cs.secondary,
                   fontSize: 16,
                 ),
               ),
@@ -367,12 +369,12 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   Text(
                     key,
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.8),
+                      color: cs.secondary.withValues(alpha: 0.8),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  _buildToggle(_permissions[key]!, (val) {
+                  _buildToggle(cs, _permissions[key]!, (val) {
                     setState(() => _permissions[key] = val);
                   }),
                 ],
@@ -384,7 +386,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildToggle(bool value, ValueChanged<bool> onChanged) {
+  Widget _buildToggle(ColorScheme cs, bool value, ValueChanged<bool> onChanged) {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: Container(
@@ -392,7 +394,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         height: 20,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: value ? _primaryColor : _outlineVariant.withValues(alpha: 0.4),
+          color: value ? cs.primary : cs.primaryContainer.withValues(alpha: 0.4),
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 200),
@@ -402,8 +404,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
             child: Container(
               width: 14,
               height: 14,
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: value ? cs.onPrimary : cs.surface,
                 shape: BoxShape.circle,
               ),
             ),
@@ -413,7 +415,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildWorkDetailsSection() {
+  Widget _buildWorkDetailsSection(ColorScheme cs) {
     bool isMobile = MediaQuery.of(context).size.width < 500;
     Widget shiftTiming = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,7 +423,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         Text(
           "SHIFT TIMING",
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor,
+            color: cs.secondary,
             fontSize: 11,
             fontWeight: FontWeight.bold,
             letterSpacing: 2.0,
@@ -441,11 +443,12 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: _primaryColor,
+                      color: cs.primary,
                       letterSpacing: 1.0,
                     ),
                   ),
                   _buildGhostInput(
+                    cs,
                     placeholder: "",
                     controller: _startTimeController,
                     isTime: true,
@@ -458,7 +461,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               child: Text(
                 "to",
                 style: GoogleFonts.notoSerif(
-                  color: _primaryColor.withValues(alpha: 0.4),
+                  color: cs.primary.withValues(alpha: 0.4),
                   fontStyle: FontStyle.italic,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -475,11 +478,12 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: _primaryColor,
+                      color: cs.primary,
                       letterSpacing: 1.0,
                     ),
                   ),
                   _buildGhostInput(
+                    cs,
                     placeholder: "",
                     controller: _endTimeController,
                     isTime: true,
@@ -498,7 +502,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         Text(
           "WORKING DAYS",
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor,
+            color: cs.secondary,
             fontSize: 11,
             fontWeight: FontWeight.bold,
             letterSpacing: 2.0,
@@ -525,7 +529,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: isSelected ? _primaryColor : _surfaceContainerLow,
+                  color: isSelected ? cs.primary : cs.surfaceContainerLow,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -533,8 +537,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   day,
                   style: GoogleFonts.plusJakartaSans(
                     color: isSelected
-                        ? Colors.white
-                        : _secondaryColor.withValues(alpha: 0.5),
+                        ? cs.onPrimary
+                        : cs.secondary.withValues(alpha: 0.5),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -563,23 +567,25 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildAccountSetupSection() {
+  Widget _buildAccountSetupSection(ColorScheme cs) {
     bool isMobile = MediaQuery.of(context).size.width < 500;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(height: 1, color: _outlineVariant.withValues(alpha: 0.3)),
+        Container(height: 1, color: cs.primaryContainer.withValues(alpha: 0.3)),
         const SizedBox(height: 24),
-        _buildGhostInput(label: "USERNAME", placeholder: "staff_julianne"),
+        _buildGhostInput(cs, label: "USERNAME", placeholder: "staff_julianne"),
         const SizedBox(height: 24),
         if (isMobile) ...[
           _buildGhostInput(
+            cs,
             label: "PASSWORD",
             placeholder: "••••••••",
             obscureText: true,
           ),
           const SizedBox(height: 24),
           _buildGhostInput(
+            cs,
             label: "CONFIRM PASSWORD",
             placeholder: "••••••••",
             obscureText: true,
@@ -589,6 +595,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             children: [
               Expanded(
                 child: _buildGhostInput(
+                  cs,
                   label: "PASSWORD",
                   placeholder: "••••••••",
                   obscureText: true,
@@ -597,6 +604,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               const SizedBox(width: 24),
               Expanded(
                 child: _buildGhostInput(
+                  cs,
                   label: "CONFIRM PASSWORD",
                   placeholder: "••••••••",
                   obscureText: true,
@@ -608,19 +616,19 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(ColorScheme cs) {
     return Column(
       children: [
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [_primaryColor, _primaryContainer],
+            gradient: LinearGradient(
+              colors: [cs.primary, cs.primaryContainer],
             ),
             borderRadius: BorderRadius.circular(100),
             boxShadow: [
               BoxShadow(
-                color: _primaryColor.withValues(alpha: 0.3),
+                color: cs.primary.withValues(alpha: 0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -637,7 +645,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   child: Text(
                     "ADD STAFF",
                     style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
+                      color: cs.onPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       letterSpacing: 2.0,
@@ -654,7 +662,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           child: Text(
             "CANCEL",
             style: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.6),
+              color: cs.secondary.withValues(alpha: 0.6),
               fontWeight: FontWeight.bold,
               fontSize: 10,
               letterSpacing: 2.0,
@@ -665,7 +673,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildGhostInput({
+  Widget _buildGhostInput(
+    ColorScheme cs, {
     String? label,
     required String placeholder,
     TextEditingController? controller,
@@ -681,7 +690,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.7),
+              color: cs.secondary.withValues(alpha: 0.7),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
@@ -695,25 +704,25 @@ class _AddStaffPageState extends State<AddStaffPage> {
           keyboardType: keyboardType,
           readOnly: isTime,
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor,
+            color: cs.secondary,
             fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
             hintText: placeholder,
             hintStyle: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.3),
+              color: cs.secondary.withValues(alpha: 0.3),
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: _outlineVariant, width: 0.5),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: cs.primaryContainer, width: 0.5),
             ),
-            focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: _primaryColor, width: 2),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: cs.primary, width: 2),
             ),
             suffixIcon: isTime
                 ? IconButton(
                     icon: const Icon(Icons.access_time, size: 18),
-                    color: _secondaryColor,
+                    color: cs.secondary,
                     onPressed: () async {
                       final time = await showTimePicker(
                         context: context,
@@ -722,37 +731,37 @@ class _AddStaffPageState extends State<AddStaffPage> {
                           return Theme(
                             data: Theme.of(context).copyWith(
                               timePickerTheme: TimePickerThemeData(
-                                backgroundColor: _bgColor,
+                                backgroundColor: cs.surface,
                                 hourMinuteShape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   side: BorderSide(
-                                      color: _primaryColor.withValues(alpha: 0.2)),
+                                      color: cs.primary.withValues(alpha: 0.2)),
                                 ),
-                                hourMinuteColor: Colors.white,
-                                hourMinuteTextColor: _secondaryColor,
+                                hourMinuteColor: cs.surfaceContainer,
+                                hourMinuteTextColor: cs.secondary,
                                 dayPeriodColor: WidgetStateColor.resolveWith((states) =>
                                     states.contains(WidgetState.selected)
-                                        ? _primaryColor
+                                        ? cs.primary
                                         : Colors.transparent),
                                 dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
                                     states.contains(WidgetState.selected)
-                                        ? Colors.white
-                                        : _secondaryColor),
+                                        ? cs.onPrimary
+                                        : cs.secondary),
                                 dayPeriodShape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                   side: BorderSide(
-                                      color: _primaryColor.withValues(alpha: 0.5)),
+                                      color: cs.primary.withValues(alpha: 0.5)),
                                 ),
-                                dialBackgroundColor: Colors.white,
-                                dialHandColor: _primaryColor,
-                                dialTextColor: _secondaryColor,
-                                entryModeIconColor: _primaryColor,
+                                dialBackgroundColor: cs.surfaceContainer,
+                                dialHandColor: cs.primary,
+                                dialTextColor: cs.secondary,
+                                entryModeIconColor: cs.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(28),
                                 ),
                                 helpTextStyle: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.bold,
-                                  color: _secondaryColor,
+                                  color: cs.secondary,
                                   fontSize: 12,
                                   letterSpacing: 1.5,
                                 ),
@@ -762,14 +771,12 @@ class _AddStaffPageState extends State<AddStaffPage> {
                                   textStyle: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.bold,
                                   ),
-                                  foregroundColor: _primaryColor,
+                                  foregroundColor: cs.primary,
                                 ),
                               ),
-                              colorScheme: ColorScheme.light(
-                                primary: _primaryColor,
-                                onPrimary: Colors.white,
-                                surface: _bgColor,
-                                onSurface: _secondaryColor,
+                              colorScheme: cs.copyWith(
+                                surface: cs.surface,
+                                onSurface: cs.secondary,
                               ),
                             ),
                             child: child!,
@@ -789,3 +796,4 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 }
+
