@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { api } from "~/trpc/react";
@@ -91,9 +91,8 @@ interface AdminOrder {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 function WhatsAppAdminContent() {
-  const [statusFilter, setStatusFilter] = useState<string | undefined>(
-    undefined
-  );
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [dateFilter, setDateFilter] = useState<string>("ALL");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [replyPhone, setReplyPhone] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -101,37 +100,83 @@ function WhatsAppAdminContent() {
   const searchParams = useSearchParams();
   const isSidebarCollapsed = searchParams.get("sidebar") === "collapsed";
 
-  // Data queries
   const statsQuery = api.whatsapp.getStats.useQuery();
-  const ordersQuery = api.whatsapp.getOrders.useQuery({
-    status: statusFilter,
-    limit: 50,
-  });
-  const conversationsQuery = api.whatsapp.getConversations.useQuery({
-    limit: 20,
-  });
+  const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading } = 
+    api.whatsapp.getOrders.useQuery({ 
+      status: statusFilter === "ALL" ? undefined : statusFilter 
+    });
+  
+  const { data: conversations, refetch: refetchConvos, isLoading: convosLoading } = 
+    api.whatsapp.getConversations.useQuery({ limit: 50 });
 
-  // Mutations
-  const utils = api.useUtils();
+  const stats = statsQuery.data;
+
   const updateStatus = api.whatsapp.updateOrderStatus.useMutation({
-    onSuccess: () => {
-      void utils.whatsapp.getOrders.invalidate();
-      void utils.whatsapp.getStats.invalidate();
-    },
+    onSuccess: () => refetchOrders(),
   });
 
   const sendMessage = api.whatsapp.sendMessage.useMutation({
     onSuccess: () => {
       setReplyText("");
       setReplyPhone(null);
+      refetchConvos();
     },
   });
 
-  const stats = statsQuery.data;
-  const orders = ordersQuery.data?.orders ?? [];
-  const conversations = conversationsQuery.data ?? [];
+  // Extract unique delivery dates for the filter
+  const uniqueDates = useMemo(() => {
+    if (!ordersData?.orders) return [];
+    const dates = new Set<string>();
+    ordersData.orders.forEach(o => {
+      if (o.deliveryDate) dates.add(o.deliveryDate);
+    });
+    return Array.from(dates).sort();
+  }, [ordersData?.orders]);
 
-  // const selectedOrder = orders.find((o) => o.id === selectedOrderId);
+  const filteredOrders = useMemo(() => {
+    if (!ordersData?.orders) return [];
+    let filtered = ordersData.orders;
+    
+    if (dateFilter !== "ALL") {
+      const todayStr = new Date().toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+      });
+      
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+      });
+
+      if (dateFilter === "TODAY") {
+        filtered = filtered.filter(o => o.deliveryDate?.includes("Today") || o.deliveryDate === todayStr);
+      } else if (dateFilter === "TOMORROW") {
+        filtered = filtered.filter(o => o.deliveryDate?.includes("Tomorrow") || o.deliveryDate === tomorrowStr);
+      } else {
+        filtered = filtered.filter(o => o.deliveryDate === dateFilter);
+      }
+    }
+    
+    return filtered;
+  }, [ordersData?.orders, dateFilter]);
+
+  const selectedOrder = filteredOrders.find((o) => o.id === selectedOrderId);
+
+  // ─── Handlers ──────────────────────────────────────────────────────────
+
+  const handleStatusUpdate = async (id: string, status: OrderStatus) => {
+    if (!confirm(`Mark order as ${status}?`)) return;
+    await updateStatus.mutateAsync({ id, status });
+  };
+
+  const handleReply = async () => {
+    if (!replyPhone || !replyText.trim()) return;
+    await sendMessage.mutateAsync({ phone: replyPhone, message: replyText });
+  };
 
   return (
     <div style={styles.container}>
@@ -150,9 +195,9 @@ function WhatsAppAdminContent() {
           <button
             style={{
               ...styles.filterBtn,
-              ...(statusFilter === undefined ? styles.filterBtnActive : {}),
+              ...(statusFilter === "ALL" ? styles.filterBtnActive : {}),
             }}
-            onClick={() => setStatusFilter(undefined)}
+            onClick={() => setStatusFilter("ALL")}
           >
             All Orders
           </button>
@@ -186,7 +231,7 @@ function WhatsAppAdminContent() {
         <div style={styles.convSection}>
           <h3 style={styles.convTitle}>💬 Recent Chats</h3>
           <div style={styles.convList}>
-            {conversations.map((c) => (
+            {conversations?.map((c) => (
               <div key={c.id} style={styles.convItem}>
                 <div style={styles.convAvatar}>
                   {(c.name ?? c.phone).charAt(0).toUpperCase()}
@@ -204,7 +249,7 @@ function WhatsAppAdminContent() {
                 </button>
               </div>
             ))}
-            {conversations.length === 0 && (
+            {(!conversations || conversations.length === 0) && (
               <p style={styles.emptyText}>No conversations yet</p>
             )}
           </div>
@@ -253,16 +298,16 @@ function WhatsAppAdminContent() {
         <div style={styles.tableWrapper}>
           <div style={styles.tableHeader}>
             <h2 style={styles.tableTitle}>
-              {statusFilter
+              {statusFilter !== "ALL"
                 ? `${STATUS_CONFIG[statusFilter]?.emoji} ${STATUS_CONFIG[statusFilter]?.label} Orders`
                 : "📋 All Orders"}
             </h2>
-            <span style={styles.orderCount}>{orders.length} orders</span>
+            <span style={styles.orderCount}>{filteredOrders.length} orders</span>
           </div>
 
-          {ordersQuery.isLoading ? (
+          {ordersLoading ? (
             <div style={styles.loading}>Loading orders...</div>
-          ) : orders.length === 0 ? (
+          ) : filteredOrders.length === 0 ? (
             <div style={styles.emptyState}>
               <span style={{ fontSize: 48 }}>🧁</span>
               <p style={styles.emptyText}>No orders found</p>
@@ -272,7 +317,7 @@ function WhatsAppAdminContent() {
             </div>
           ) : (
             <div style={styles.orderGrid}>
-              {orders.map((order) => {
+              {filteredOrders.map((order) => {
                 const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.PENDING!;
                 const isSelected = selectedOrderId === order.id;
 
@@ -555,8 +600,28 @@ const styles: Record<string, React.CSSProperties> = {
     transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   },
   sidebarHeader: {
-    padding: "28px 24px 20px",
+    padding: "20px 24px",
     borderBottom: "1px solid rgba(255,255,255,0.08)",
+    backgroundColor: "transparent",
+  },
+  sidebarTitle: {
+    margin: 0,
+    fontSize: 18,
+    fontWeight: 700,
+    color: "#F4C2C2",
+    letterSpacing: "-0.01em",
+  },
+  filterSelect: {
+    flex: 1,
+    padding: "8px 10px",
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.1)",
+    fontSize: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    color: "#FFF",
+    outline: "none",
+    cursor: "pointer",
+    minWidth: 0,
   },
   sidebarLogo: {
     fontFamily: "Playfair Display, serif",
