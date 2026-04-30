@@ -850,42 +850,49 @@ async function handleSizeSelection(
 }
 
 async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
-  if (msg.interactiveId === "btn_add_to_cart") {
-    if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
-      await addToCart(msg.from, {
-        cakeName: convo.selectedCake,
-        size: convo.selectedSize,
-        price: convo.selectedPrice,
-        quantity: 1
-      });
+  try {
+    if (msg.interactiveId === "btn_add_to_cart") {
+      if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
+        await addToCart(msg.from, {
+          cakeName: convo.selectedCake,
+          size: convo.selectedSize,
+          price: convo.selectedPrice,
+          quantity: 1
+        });
+        
+        await sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to your cart!`);
+        
+        // Fetch fresh cart from DB to ensure UI is in sync
+        const freshCart = await db.whatsAppCartItem.findMany({ where: { phone: msg.from } });
+        const summary = getCartSummary(freshCart as unknown as CartItem[]);
+        
+        await sendInteractiveButtons(msg.from, summary, [
+          { id: "btn_menu", title: "➕ Add More Cakes" },
+          { id: "btn_checkout", title: "💳 Checkout" },
+        ]);
+        await updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null });
+      }
+    } else if (msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now") {
+      // Add current selection if any and proceed to checkout
+      if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
+        await addToCart(msg.from, {
+          cakeName: convo.selectedCake,
+          size: convo.selectedSize,
+          price: convo.selectedPrice,
+          quantity: 1
+        });
+      }
       
-      await sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to your cart!`);
-      
-      // Fetch fresh cart from DB to ensure UI is in sync
-      const freshCart = await db.whatsAppCartItem.findMany({ where: { phone: msg.from } });
-      const summary = getCartSummary(freshCart as unknown as CartItem[]);
-      
-      await sendInteractiveButtons(msg.from, summary, [
-        { id: "btn_menu", title: "➕ Add More Cakes" },
-        { id: "btn_checkout", title: "💳 Checkout" },
-      ]);
-      await updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null });
+      await updateState(msg.from, "ASKING_ADDRESS");
+      await sendTextMessage(
+        msg.from,
+        "📍 *Delivery Address*\n\nPlease provide your full delivery address.\n\n💡 *Tip:* You can also send your *GPS Location*!"
+      );
     }
-  } else if (msg.interactiveId === "btn_checkout_now") {
-    // Add current selection and proceed to checkout
-    if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
-      await addToCart(msg.from, {
-        cakeName: convo.selectedCake,
-        size: convo.selectedSize,
-        price: convo.selectedPrice,
-        quantity: 1
-      });
-    }
-    await updateState(msg.from, "ASKING_ADDRESS");
-    await sendTextMessage(
-      msg.from,
-      "📍 *Delivery Address*\n\nPlease provide your full delivery address.\n\n💡 *Tip:* You can also send your *GPS Location*!"
-    );
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[WhatsApp] Error in handleCartActions:", errorMsg);
+    await sendTextMessage(msg.from, "⚠️ Sorry, I encountered an error while processing your cart. Please try again or reply *Menu*.");
   }
 }
 
