@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+enum SalesRange { today, weekly, monthly, yearly }
 
 class SupabaseService {
   static String get supabaseUrl => dotenv.get('SUPABASE_URL', fallback: '');
@@ -72,12 +73,25 @@ class SupabaseService {
         .order('createdAt', ascending: false);
   }
 
-  // Real-time stream for Sales Performance (last 7 days)
-  static Stream<Map<int, double>> getSalesStream() {
+
+
+  // Real-time stream for Sales Performance
+  static Stream<Map<int, double>> getSalesStream({SalesRange range = SalesRange.weekly}) {
     return getOrdersStream().map((orders) {
-      final Map<int, double> salesByDay = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+      final Map<int, double> salesData = {};
       final now = DateTime.now();
       
+      // Initialize keys based on range
+      if (range == SalesRange.today) {
+        for (int i = 0; i < 24; i++) salesData[i] = 0.0;
+      } else if (range == SalesRange.weekly) {
+        for (int i = 0; i < 7; i++) salesData[i] = 0.0;
+      } else if (range == SalesRange.monthly) {
+        for (int i = 0; i < 30; i++) salesData[i] = 0.0;
+      } else if (range == SalesRange.yearly) {
+        for (int i = 1; i <= 12; i++) salesData[i] = 0.0;
+      }
+
       for (var order in orders) {
         final createdAtStr = order['createdAt'];
         if (createdAtStr == null) continue;
@@ -85,14 +99,33 @@ class SupabaseService {
         final createdAt = DateTime.tryParse(createdAtStr);
         if (createdAt == null) continue;
         
-        final diff = now.difference(createdAt).inDays;
-        if (diff >= 0 && diff < 7) {
-          final weekday = (createdAt.weekday - 1);
-          final price = double.tryParse(order['price'].toString().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0;
-          salesByDay[weekday] = (salesByDay[weekday] ?? 0) + price;
+        final price = double.tryParse(order['price'].toString().replaceAll('₹', '').replaceAll(',', '')) ?? 0.0;
+
+        if (range == SalesRange.today) {
+          if (createdAt.year == now.year && createdAt.month == now.month && createdAt.day == now.day) {
+            final hour = createdAt.hour;
+            salesData[hour] = (salesData[hour] ?? 0) + price;
+          }
+        } else if (range == SalesRange.weekly) {
+          final diff = now.difference(createdAt).inDays;
+          if (diff >= 0 && diff < 7) {
+            final weekday = (createdAt.weekday - 1);
+            salesData[weekday] = (salesData[weekday] ?? 0) + price;
+          }
+        } else if (range == SalesRange.monthly) {
+          final diff = now.difference(createdAt).inDays;
+          if (diff >= 0 && diff < 30) {
+            final dayOfMonth = 29 - diff; // Map 0-29 to X-axis
+            salesData[dayOfMonth] = (salesData[dayOfMonth] ?? 0) + price;
+          }
+        } else if (range == SalesRange.yearly) {
+          if (createdAt.year == now.year) {
+            final month = createdAt.month;
+            salesData[month] = (salesData[month] ?? 0) + price;
+          }
         }
       }
-      return salesByDay;
+      return salesData;
     });
   }
 

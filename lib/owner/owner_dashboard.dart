@@ -17,6 +17,7 @@ class OwnerDashboard extends StatefulWidget {
 
 class _OwnerDashboardState extends State<OwnerDashboard> {
   int _selectedIndex = 0;
+  SalesRange _selectedRange = SalesRange.weekly;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +85,8 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                       )
                     : _MainContent(
                         isDesktop: isDesktop,
+                        selectedRange: _selectedRange,
+                        onRangeChanged: (range) => setState(() => _selectedRange = range),
                         onViewAllOrders: () =>
                             setState(() => _selectedIndex = 1),
                       ),
@@ -135,9 +138,16 @@ class _MobileBottomNav extends StatelessWidget {
 
 class _MainContent extends StatelessWidget {
   final bool isDesktop;
+  final SalesRange selectedRange;
+  final Function(SalesRange) onRangeChanged;
   final VoidCallback onViewAllOrders;
 
-  const _MainContent({required this.isDesktop, required this.onViewAllOrders});
+  const _MainContent({
+    required this.isDesktop,
+    required this.selectedRange,
+    required this.onRangeChanged,
+    required this.onViewAllOrders,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -441,7 +451,7 @@ class _MainContent extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    "Revenue trend for the past week",
+                    "Revenue trend analysis",
                     style: GoogleFonts.plusJakartaSans(
                       color: cs.secondary.withValues(alpha: 0.5),
                       fontSize: 12,
@@ -449,20 +459,35 @@ class _MainContent extends StatelessWidget {
                   ),
                 ],
               ),
+              // Range Selector
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: cs.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  "WEEKLY",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: cs.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                    letterSpacing: 1.0,
-                  ),
+                child: Row(
+                  children: SalesRange.values.map((range) {
+                    final isSelected = selectedRange == range;
+                    return GestureDetector(
+                      onTap: () => onRangeChanged(range),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? cs.primary : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          range.name.toUpperCase(),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: isSelected ? Colors.white : cs.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 9,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             ],
@@ -471,17 +496,18 @@ class _MainContent extends StatelessWidget {
           SizedBox(
             height: 220,
             child: StreamBuilder<Map<int, double>>(
-              stream: SupabaseService.getSalesStream(),
+              stream: SupabaseService.getSalesStream(range: selectedRange),
               builder: (context, snapshot) {
-                final data = snapshot.data ?? {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0};
+                final data = snapshot.data ?? {};
                 
                 double maxRevenue = 1000;
                 for (var v in data.values) { if (v > maxRevenue) maxRevenue = v; }
                 maxRevenue = (maxRevenue / 100).ceil() * 100.0 + 100.0;
 
                 final List<FlSpot> spots = [];
-                for (int i = 0; i < 7; i++) {
-                  spots.add(FlSpot(i.toDouble(), data[i] ?? 0.0));
+                final sortedKeys = data.keys.toList()..sort();
+                for (var key in sortedKeys) {
+                  spots.add(FlSpot(key.toDouble(), data[key] ?? 0.0));
                 }
 
                 return LineChart(
@@ -504,30 +530,41 @@ class _MainContent extends StatelessWidget {
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 30,
-                          interval: 1,
+                          interval: selectedRange == SalesRange.monthly ? 5 : 1,
                           getTitlesWidget: (value, meta) {
-                            const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-                            if (value.toInt() >= 0 && value.toInt() < days.length) {
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 10.0),
-                                child: Text(
-                                  days[value.toInt()],
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: cs.secondary.withValues(alpha: 0.4),
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              );
+                            String text = '';
+                            if (selectedRange == SalesRange.today) {
+                              if (value % 4 == 0) text = "${value.toInt()}h";
+                            } else if (selectedRange == SalesRange.weekly) {
+                              const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+                              if (value >= 0 && value < 7) text = days[value.toInt()];
+                            } else if (selectedRange == SalesRange.monthly) {
+                              if (value % 5 == 0) text = "D${value.toInt()}";
+                            } else if (selectedRange == SalesRange.yearly) {
+                              const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                              if (value >= 1 && value <= 12) text = months[value.toInt() - 1];
                             }
-                            return const SizedBox();
+
+                            if (text.isEmpty) return const SizedBox();
+
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              child: Text(
+                                text,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: cs.secondary.withValues(alpha: 0.4),
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
                           },
                         ),
                       ),
                     ),
                     borderData: FlBorderData(show: false),
-                    minX: 0,
-                    maxX: 6,
+                    minX: sortedKeys.isEmpty ? 0 : sortedKeys.first.toDouble(),
+                    maxX: sortedKeys.isEmpty ? 6 : sortedKeys.last.toDouble(),
                     minY: 0,
                     maxY: maxRevenue,
                     lineBarsData: [
@@ -535,15 +572,15 @@ class _MainContent extends StatelessWidget {
                         spots: spots,
                         isCurved: true,
                         gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
-                        barWidth: 4,
+                        barWidth: 3,
                         isStrokeCapRound: true,
                         dotData: FlDotData(
-                          show: true,
+                          show: selectedRange != SalesRange.monthly,
                           getDotPainter: (spot, percent, barData, index) =>
                               FlDotCirclePainter(
-                            radius: 4,
+                            radius: 3,
                             color: cs.surfaceContainer,
-                            strokeWidth: 3,
+                            strokeWidth: 2,
                             strokeColor: cs.primary,
                           ),
                         ),
@@ -553,7 +590,7 @@ class _MainContent extends StatelessWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              cs.primary.withValues(alpha: 0.2),
+                              cs.primary.withValues(alpha: 0.15),
                               cs.primary.withValues(alpha: 0.0),
                             ],
                           ),
