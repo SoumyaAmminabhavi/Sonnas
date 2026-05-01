@@ -1,3 +1,5 @@
+import { env } from "~/env";
+
 export const Highlight = () => (
   <section id="highlight" className="py-2xl bg-blush/20 relative overflow-hidden">
     {/* Decorative Elements */}
@@ -13,9 +15,12 @@ export const Highlight = () => (
           Whether it&apos;s a grand wedding or an intimate celebration, we&apos;ll design a masterpiece that tastes as beautiful as it looks. Hand-painted details, delicate sugar flowers, and flavors that linger.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-lg">
-          <button className="bg-rose text-white font-body py-md px-2xl rounded-md hover:bg-rose-dark transition-default w-full sm:w-auto shadow-soft">
+          <a 
+            href={`https://wa.me/${env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi! I'd like to design my own cake")}`}
+            className="bg-rose text-white font-body py-md px-2xl rounded-md hover:bg-rose-dark transition-default w-full sm:w-auto shadow-soft text-center"
+          >
             Design Your Cake
-          </button>
+          </a>
           <button className="bg-white text-text-primary font-body py-md px-2xl rounded-md border border-rose/20 hover:bg-cream transition-default w-full sm:w-auto">
             View Custom Gallery
           </button>

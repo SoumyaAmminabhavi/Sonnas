@@ -170,7 +170,8 @@ type ConversationState =
   | "ASKING_DELIVERY_DATE"
   | "ASKING_DELIVERY_TIME"
   | "CONFIRMING"
-  | "REQUESTING_CUSTOM";
+  | "REQUESTING_CUSTOM"
+  | "UPLOADING_REFERENCE_IMAGE";
 
 interface Conversation {
   id: string;
@@ -465,6 +466,20 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
+  // ── Design Your Cake Trigger from Website ──────────────────────────────
+  if (input.includes("design my own cake")) {
+    await updateState(msg.from, "UPLOADING_REFERENCE_IMAGE", {
+      selectedCake: "CUSTOM_CAKE",
+      selectedSize: "Custom Design",
+      selectedPrice: "Pending Quote",
+    });
+    await sendTextMessage(
+      msg.from,
+      "Hi there! 👋 Welcome to our *Cake Design Flow*.\n\nTo get started, please upload a **Reference Photo** of the cake you have in mind! 📸"
+    );
+    return;
+  }
+
   if (input === "menu" || input === "cakes" || interactiveId === "btn_menu") {
     await updateState(msg.from, "BROWSING_MENU", {
       selectedCake: null,
@@ -571,6 +586,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
     case "REQUESTING_CUSTOM":
       await handleCustomRequest(msg, convo);
+      break;
+
+    case "UPLOADING_REFERENCE_IMAGE":
+      await handleReferenceImageUpload(msg, convo);
       break;
 
     case "CONFIRMING":
@@ -1169,6 +1188,45 @@ async function handleCustomRequest(
   }
 }
 
+// ─── Handle reference image upload (Design Your Cake Flow) ────────────────
+
+async function handleReferenceImageUpload(
+  msg: IncomingMessage,
+  convo: Conversation
+) {
+  // If user sends an image
+  if (msg.type === "image" && msg.image) {
+    const mediaId = msg.image.id;
+    const caption = msg.image.caption ?? "";
+    
+    // Download from WhatsApp and upload to Supabase
+    const { downloadAndUploadImage } = await import("./media");
+    const publicUrl = await downloadAndUploadImage(mediaId);
+    
+    await updateState(msg.from, "IDLE", {
+      customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
+      selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+      selectedAddress: null,
+      selectedDeliveryDate: null,
+      selectedDeliveryTime: null,
+    });
+    
+    await sendTextMessage(
+      msg.from,
+      "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
+    );
+  } else {
+    // Re-prompt for image as per user request
+    await sendTextMessage(
+      msg.from,
+      "Please upload a **Reference Photo** 📸 to proceed with your custom design.\n\n(We need an image to understand your vision! ✨)"
+    );
+  }
+}
+
 // ─── Order status lookup ───────────────────────────────────────────────────
 
 async function sendOrderStatus(to: string) {
@@ -1381,6 +1439,9 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       break;
     case "REQUESTING_CUSTOM":
       await sendTextMessage(phone, "🎨 *Custom Cake Request*\n\nPlease describe the cake or send a **Reference Photo**. 📸");
+      break;
+    case "UPLOADING_REFERENCE_IMAGE":
+      await sendTextMessage(phone, "📸 *Reference Photo Needed*\n\nPlease upload a photo of the design you'd like us to create for you! ✨");
       break;
     default:
       await sendWelcome(phone, convo.name ?? undefined);
