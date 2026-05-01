@@ -28,11 +28,16 @@ class SupabaseService {
     return client.storage.from('cakes').getPublicUrl(path);
   }
 
-  // Format price consistently (ensures one ₹ symbol)
+  // Format price consistently (ensures one ₹ symbol for numbers)
   static String formatPrice(dynamic price) {
     if (price == null) return "₹0";
     String p = price.toString();
     if (p.startsWith('₹')) return p;
+    
+    // Check if it's a numeric value (ignore currency symbol for things like 'Pending Quote')
+    final isNumeric = double.tryParse(p.replaceAll(',', '')) != null;
+    if (!isNumeric) return p;
+    
     return "₹$p";
   }
 

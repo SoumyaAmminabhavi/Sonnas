@@ -209,8 +209,12 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                                     orElse: () =>
                                                         <String, dynamic>{},
                                                   );
-                                              displayImageUrl =
-                                                  matchingCake['image'] ?? '';
+                                              displayImageUrl = matchingCake['image'] ?? '';
+
+                                              // Fallback for custom cakes or missing menu images
+                                              if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) && order['customImageUrl'] != null) {
+                                                displayImageUrl = order['customImageUrl'];
+                                              }
 
                                               return Padding(
                                                 padding: const EdgeInsets.only(
@@ -672,13 +676,31 @@ class _OrderItemCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.notoSerif(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  if (title.toUpperCase().contains('CUSTOM'))
+                    IconButton(
+                      icon: const Icon(Icons.view_in_ar_outlined, size: 20),
+                      color: cs.primary,
+                      tooltip: "Holographic 3D View",
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => _HolographicViewer(imageUrl: imageUrl, cs: cs),
+                        );
+                      },
+                    ),
+                ],
               ),
               Text(
                 subtitle,
@@ -773,6 +795,112 @@ class _ElegantAction extends StatelessWidget {
             color: isPrimary ? Colors.white : cs.primary,
           ),
         ),
+      ),
+    );
+  }
+}
+class _HolographicViewer extends StatefulWidget {
+  final String imageUrl;
+  final ColorScheme cs;
+
+  const _HolographicViewer({required this.imageUrl, required this.cs});
+
+  @override
+  State<_HolographicViewer> createState() => _HolographicViewerState();
+}
+
+class _HolographicViewerState extends State<_HolographicViewer> {
+  double _rotationX = 0;
+  double _rotationY = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(20),
+      child: Stack(
+        children: [
+          // Holographic Backdrop
+          GestureDetector(
+            onPanUpdate: (details) {
+              setState(() {
+                _rotationY += details.delta.dx * 0.01;
+                _rotationX -= details.delta.dy * 0.01;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "3D HOLOGRAPHIC VIEW",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: widget.cs.primary.withValues(alpha: 0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 4,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Transform(
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001) // perspective
+                      ..rotateX(_rotationX)
+                      ..rotateY(_rotationY),
+                    alignment: FractionalOffset.center,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.cs.primary.withValues(alpha: 0.3),
+                            blurRadius: 100,
+                            spreadRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: InteractiveViewer(
+                          maxScale: 5.0,
+                          child: Image.network(
+                            widget.imageUrl,
+                            fit: BoxFit.contain,
+                            height: 400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Text(
+                    "SWIPE TO ROTATE • PINCH TO ZOOM",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Close Button
+          Positioned(
+            top: 20,
+            right: 20,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ],
       ),
     );
   }
