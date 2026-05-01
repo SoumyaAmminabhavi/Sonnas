@@ -854,7 +854,7 @@ async function handleSizeSelection(
     `Great choice! *${convo.selectedCake}* (${selectedOption.size}) — ${selectedOption.price}.\n\nWhat would you like to do?`,
     [
       { id: "btn_add_to_cart", title: "🛒 Add to Cart" },
-      { id: "btn_checkout", title: "💳 Checkout Now" },
+      { id: "btn_checkout", title: "💳 Confirm Order" },
       { id: "btn_menu", title: "📋 Back to Menu" },
     ]
   );
