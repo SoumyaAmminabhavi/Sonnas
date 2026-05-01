@@ -389,34 +389,40 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   if (isGreeting && state !== "IDLE") {
     const greeting = msg.name ? `Hi ${msg.name}! 👋` : "Hi! 👋";
-    void sendTextMessage(msg.from, `${greeting} Let's continue from where we left off.`);
-    void rePromptState(msg.from, state, convo);
+    await Promise.all([
+      sendTextMessage(msg.from, `${greeting} Let's continue from where we left off.`),
+      rePromptState(msg.from, state, convo)
+    ]);
     return;
   }
 
   if (input === "restart" || input === "start over") {
-    void updateState(msg.from, "IDLE", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedNotes: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-      customImageUrl: null,
-    });
-    void sendTextMessage(msg.from, "🔄 Restarting your order...");
-    void sendWelcome(msg.from, msg.name);
+    await Promise.all([
+      updateState(msg.from, "IDLE", {
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+        selectedAddress: null,
+        selectedNotes: null,
+        selectedDeliveryDate: null,
+        selectedDeliveryTime: null,
+        customImageUrl: null,
+      }),
+      sendTextMessage(msg.from, "🔄 Restarting your order..."),
+      sendWelcome(msg.from, msg.name)
+    ]);
     return;
   }
 
   if (input === "help" || isGreeting) {
-    void updateState(msg.from, "IDLE", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-    });
-    void sendWelcome(msg.from, msg.name);
+    await Promise.all([
+      updateState(msg.from, "IDLE", {
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+      }),
+      sendWelcome(msg.from, msg.name)
+    ]);
     return;
   }
 
@@ -433,19 +439,20 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     ) ?? null;
 
     if (selectedProduct) {
-      void updateState(msg.from, "SELECTING_SIZE", {
-        selectedCake: selectedProduct.name,
-        selectedSize: null,
-        selectedPrice: null,
-      });
+      const tasks: Promise<any>[] = [
+        updateState(msg.from, "SELECTING_SIZE", {
+          selectedCake: selectedProduct.name,
+          selectedSize: null,
+          selectedPrice: null,
+        })
+      ];
 
-      // Send product image (fire-and-forget, don't wait for it)
       if (selectedProduct.image) {
-        void sendImageMessage(
+        tasks.push(sendImageMessage(
           msg.from,
           selectedProduct.image,
           `*${selectedProduct.name}*\n\n${selectedProduct.description ?? ""}`
-        );
+        ));
       }
 
       const options = selectedProduct.options ?? [];
@@ -455,11 +462,13 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       }));
       buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
-      void sendInteractiveButtons(
+      tasks.push(sendInteractiveButtons(
         msg.from,
         `Hi ${msg.name ?? "there"}! 👋\n\nGreat choice! Choose your size for *${selectedProduct.name}*:`,
         buttons
-      );
+      ));
+
+      await Promise.all(tasks);
       return;
     }
     // If cake not found, fall through to welcome
@@ -469,38 +478,44 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   // ── Design Your Cake Trigger from Website ──────────────────────────────
   if (input.includes("design my own cake")) {
-    void updateState(msg.from, "UPLOADING_REFERENCE_IMAGE", {
-      selectedCake: "CUSTOM_CAKE",
-      selectedSize: "Custom Design",
-      selectedPrice: "Pending Quote",
-    });
-    void sendTextMessage(
-      msg.from,
-      "Hi there! 👋 Welcome to our *Cake Design Flow*.\n\nTo get started, please upload a **Reference Photo** of the cake you have in mind! 📸"
-    );
+    await Promise.all([
+      updateState(msg.from, "UPLOADING_REFERENCE_IMAGE", {
+        selectedCake: "CUSTOM_CAKE",
+        selectedSize: "Custom Design",
+        selectedPrice: "Pending Quote",
+      }),
+      sendTextMessage(
+        msg.from,
+        "Hi there! 👋 Welcome to our *Cake Design Flow*.\n\nTo get started, please upload a **Reference Photo** of the cake you have in mind! 📸"
+      )
+    ]);
     return;
   }
 
   if (input === "menu" || input === "cakes" || interactiveId === "btn_menu") {
-    void updateState(msg.from, "BROWSING_MENU", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-    });
-    void sendMenu(msg.from);
+    await Promise.all([
+      updateState(msg.from, "BROWSING_MENU", {
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+      }),
+      sendMenu(msg.from)
+    ]);
     return;
   }
 
   if (interactiveId === "btn_custom") {
-    void updateState(msg.from, "REQUESTING_CUSTOM", {
-      selectedCake: "CUSTOM_CAKE",
-      selectedSize: "Custom Design",
-      selectedPrice: "Pending Quote",
-    });
-    void sendTextMessage(
-      msg.from,
-      "🎨 *Custom Cake Request*\n\nPlease describe the cake you have in mind! (Flavor, Theme, Size, etc.)\n\n📸 You can also send a *Reference Photo* after describing it."
-    );
+    await Promise.all([
+      updateState(msg.from, "REQUESTING_CUSTOM", {
+        selectedCake: "CUSTOM_CAKE",
+        selectedSize: "Custom Design",
+        selectedPrice: "Pending Quote",
+      }),
+      sendTextMessage(
+        msg.from,
+        "🎨 *Custom Cake Request*\n\nPlease describe the cake you have in mind! (Flavor, Theme, Size, etc.)\n\n📸 You can also send a *Reference Photo* after describing it."
+      )
+    ]);
     return;
   }
 
@@ -520,19 +535,21 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   }
 
   if (input === "cancel" || interactiveId === "btn_cancel") {
-    void updateState(msg.from, "IDLE", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedNotes: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-    });
-    void sendTextMessage(
-      msg.from,
-      "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
-    );
+    await Promise.all([
+      updateState(msg.from, "IDLE", {
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+        selectedAddress: null,
+        selectedNotes: null,
+        selectedDeliveryDate: null,
+        selectedDeliveryTime: null,
+      }),
+      sendTextMessage(
+        msg.from,
+        "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
+      )
+    ]);
     return;
   }
 
@@ -543,8 +560,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     const address = msg.location.address ?? `Location: ${latitude}, ${longitude}`;
     
     if (state === "ASKING_ADDRESS") {
-      void updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: address });
-      void sendTextMessage(msg.from, "✅ Location received! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)");
+      await Promise.all([
+        updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: address }),
+        sendTextMessage(msg.from, "✅ Location received! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)")
+      ]);
       return;
     }
   }
@@ -606,7 +625,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
 async function sendWelcome(to: string, name?: string) {
   const greeting = name ? `Hi ${name}! 👋` : "Hi there! 👋";
-  void sendInteractiveButtons(
+  await sendInteractiveButtons(
     to,
     `${greeting}\n\nWelcome to *Sonna's Patisserie & Cafe* 🎂\n\nEvery cake is handcrafted with love using the finest ingredients.\n\nWhat would you like to do?`,
     [
@@ -664,7 +683,7 @@ async function sendMenu(to: string) {
       "View Cakes",
       sections
     );
-    void updateState(to, "BROWSING_MENU");
+    await updateState(to, "BROWSING_MENU");
   } else {
     // Too many cakes for a single list
     await updateState(to, "SELECTING_CATEGORY");
@@ -739,15 +758,18 @@ async function handleCategorySelection(msg: IncomingMessage) {
 
   if (filtered.length === 0) {
     // No cakes in this category — show full menu instead
-    void updateState(msg.from, "BROWSING_MENU");
-    void sendTextMessage(msg.from, "No cakes found in that category. Here's our full menu:");
-    void sendMenu(msg.from);
+    await Promise.all([
+      updateState(msg.from, "BROWSING_MENU"),
+      sendTextMessage(msg.from, "No cakes found in that category. Here's our full menu:"),
+      sendMenu(msg.from)
+    ]);
     return;
   }
 
-  void updateState(msg.from, "BROWSING_MENU");
-  void sendInteractiveList(
-    msg.from,
+  await Promise.all([
+    updateState(msg.from, "BROWSING_MENU"),
+    sendInteractiveList(
+      msg.from,
     title,
     `Here are our signature ${title.toLowerCase()} cakes:`,
     "Select a Cake",
@@ -792,17 +814,18 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   // Store the selection and move to size selection
-  void updateState(msg.from, "SELECTING_SIZE", {
-    selectedCake: selectedProduct.name,
-  });
+  const tasks: Promise<any>[] = [
+    updateState(msg.from, "SELECTING_SIZE", {
+      selectedCake: selectedProduct.name,
+    })
+  ];
 
-  // 📸 Send Product Image (fire-and-forget)
   if (selectedProduct.image) {
-    void sendImageMessage(
+    tasks.push(sendImageMessage(
       msg.from,
       selectedProduct.image,
       `*${selectedProduct.name}*\n\n${selectedProduct.description ?? ""}`
-    );
+    ));
   }
 
   const options = selectedProduct.options ?? [];
@@ -813,11 +836,13 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }));
   buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
-  void sendInteractiveButtons(
+  tasks.push(sendInteractiveButtons(
     msg.from,
     `Choose your size for *${selectedProduct.name}*:`,
     buttons
-  );
+  ));
+
+  await Promise.all(tasks);
 }
 
 // ─── Handle size selection ─────────────────────────────────────────────────
@@ -866,20 +891,21 @@ async function handleSizeSelection(
   }
 
   // Offer to add to cart or checkout immediately
-  void updateState(msg.from, "SELECTING_SIZE", {
-    selectedSize: selectedOption.size,
-    selectedPrice: selectedOption.price,
-  });
-
-  void sendInteractiveButtons(
-    msg.from,
-    `Great choice! *${convo.selectedCake}* (${selectedOption.size}) — ${selectedOption.price}.\n\nWhat would you like to do?`,
-    [
-      { id: "btn_add_to_cart", title: "🛒 Add to Cart" },
-      { id: "btn_checkout", title: "💳 Confirm Order" },
-      { id: "btn_menu", title: "📋 Back to Menu" },
-    ]
-  );
+  await Promise.all([
+    updateState(msg.from, "SELECTING_SIZE", {
+      selectedSize: selectedOption.size,
+      selectedPrice: selectedOption.price,
+    }),
+    sendInteractiveButtons(
+      msg.from,
+      `Great choice! *${convo.selectedCake}* (${selectedOption.size}) — ${selectedOption.price}.\n\nWhat would you like to do?`,
+      [
+        { id: "btn_add_to_cart", title: "🛒 Add to Cart" },
+        { id: "btn_checkout", title: "💳 Confirm Order" },
+        { id: "btn_menu", title: "📋 Back to Menu" },
+      ]
+    )
+  ]);
 }
 
 async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
@@ -958,14 +984,15 @@ async function handleAddressInput(
   }
 
   // Move to asking instructions
-  void updateState(msg.from, "ASKING_INSTRUCTIONS", {
-    selectedAddress: address,
-  });
-
-  void sendTextMessage(
-    msg.from,
-    "✅ Address saved!\n\n📝 *Special Instructions*\n\nAny landmarks or special notes? (e.g., Gate code, call on arrival)\n\nReply *'None'* or *'Skip'* if you have none."
-  );
+  await Promise.all([
+    updateState(msg.from, "ASKING_INSTRUCTIONS", {
+      selectedAddress: address,
+    }),
+    sendTextMessage(
+      msg.from,
+      "✅ Address saved!\n\n📝 *Special Instructions*\n\nAny landmarks or special notes? (e.g., Gate code, call on arrival)\n\nReply *'None'* or *'Skip'* if you have none."
+    )
+  ]);
 }
 
 // ─── Handle instructions input ─────────────────────────────────────────────
@@ -988,11 +1015,12 @@ async function handleInstructionsInput(
   }
 
   // Move to asking delivery date
-  void updateState(msg.from, "ASKING_DELIVERY_DATE", {
-    selectedNotes: notes,
-  });
-
-  void sendDeliveryDateOptions(msg.from);
+  await Promise.all([
+    updateState(msg.from, "ASKING_DELIVERY_DATE", {
+      selectedNotes: notes,
+    }),
+    sendDeliveryDateOptions(msg.from)
+  ]);
 }
 
 // ─── Send delivery date options ────────────────────────────────────────────
@@ -1052,10 +1080,12 @@ async function handleDeliveryDateInput(
 
   try {
     // Move to asking delivery time
-    void updateState(msg.from, "ASKING_DELIVERY_TIME", {
-      selectedDeliveryDate: deliveryDate,
-    });
-    void sendDeliveryTimeOptions(msg.from);
+    await Promise.all([
+      updateState(msg.from, "ASKING_DELIVERY_TIME", {
+        selectedDeliveryDate: deliveryDate,
+      }),
+      sendDeliveryTimeOptions(msg.from)
+    ]);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error("[WhatsApp] Error in handleDeliveryDateInput:", errorMsg);
@@ -1099,7 +1129,7 @@ async function handleDeliveryTimeInput(
 
   try {
     // Move to confirmation
-    void updateState(msg.from, "CONFIRMING", {
+    await updateState(msg.from, "CONFIRMING", {
       selectedDeliveryTime: deliveryTime,
     });
 
@@ -1157,34 +1187,36 @@ async function handleCustomRequest(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(mediaId);
     
-    void updateState(msg.from, "IDLE", {
-      customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-      selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-    });
-    
-    void sendTextMessage(
-      msg.from,
-      "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
-    );
+    await Promise.all([
+      updateState(msg.from, "IDLE", {
+        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
+        selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+        selectedAddress: null,
+        selectedDeliveryDate: null,
+        selectedDeliveryTime: null,
+      }),
+      sendTextMessage(
+        msg.from,
+        "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
+      )
+    ]);
     return;
   }
 
   // If user sends text (description)
   if (msg.type === "text" && msg.text) {
-    void updateState(msg.from, "REQUESTING_CUSTOM", {
-      selectedNotes: msg.text
-    });
-    
-    void sendTextMessage(
-      msg.from,
-      "✅ Got the description! 📝\n\nIf you have a **Reference Photo**, please send it now. 📸\n\nOtherwise, just reply with your **Delivery Address** to proceed."
-    );
+    await Promise.all([
+      updateState(msg.from, "REQUESTING_CUSTOM", {
+        selectedNotes: msg.text
+      }),
+      sendTextMessage(
+        msg.from,
+        "✅ Got the description! 📝\n\nIf you have a **Reference Photo**, please send it now. 📸\n\nOtherwise, just reply with your **Delivery Address** to proceed."
+      )
+    ]);
     return;
   }
 }
@@ -1204,21 +1236,22 @@ async function handleReferenceImageUpload(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(mediaId);
     
-    void updateState(msg.from, "IDLE", {
-      customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-      selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-    });
-    
-    void sendTextMessage(
-      msg.from,
-      "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
-    );
+    await Promise.all([
+      updateState(msg.from, "IDLE", {
+        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
+        selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+        selectedAddress: null,
+        selectedDeliveryDate: null,
+        selectedDeliveryTime: null,
+      }),
+      sendTextMessage(
+        msg.from,
+        "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
+      )
+    ]);
   } else {
     // Re-prompt for image as per user request
     await sendTextMessage(
@@ -1300,20 +1333,22 @@ async function handleConfirmation(
   }
 
   if (isCancel) {
-    await updateState(msg.from, "IDLE", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedNotes: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-      customImageUrl: null,
-    });
-    void sendTextMessage(
-      msg.from,
-      "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
-    );
+    await Promise.all([
+      updateState(msg.from, "IDLE", {
+        selectedCake: null,
+        selectedSize: null,
+        selectedPrice: null,
+        selectedAddress: null,
+        selectedNotes: null,
+        selectedDeliveryDate: null,
+        selectedDeliveryTime: null,
+        customImageUrl: null,
+      }),
+      sendTextMessage(
+        msg.from,
+        "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
+      )
+    ]);
     return;
   }
 
@@ -1364,21 +1399,22 @@ async function handleConfirmation(
 
 
   // Reset conversation state
-  void updateState(msg.from, "IDLE", {
-    selectedCake: null,
-    selectedSize: null,
-    selectedPrice: null,
-    selectedAddress: null,
-    selectedNotes: null,
-    selectedDeliveryDate: null,
-    selectedDeliveryTime: null,
-    customImageUrl: null,
-  });
-
-  void sendTextMessage(
-    msg.from,
-    `🎉 *Order Placed Successfully!*\n\nYour order number is *#${orderNumber}*.\n\n📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n📍 Address: ${convo.selectedAddress}\n\nWe will notify you once your order is confirmed and out for delivery! 💕`
-  );
+  await Promise.all([
+    updateState(msg.from, "IDLE", {
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+      selectedAddress: null,
+      selectedNotes: null,
+      selectedDeliveryDate: null,
+      selectedDeliveryTime: null,
+      customImageUrl: null,
+    }),
+    sendTextMessage(
+      msg.from,
+      `🎉 *Order Placed Successfully!*\n\nYour order number is *#${orderNumber}*.\n\n📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n📍 Address: ${convo.selectedAddress}\n\nWe will notify you once your order is confirmed and out for delivery! 💕`
+    )
+  ]);
 }
 
 // ─── Re-prompt current state ─────────────────────────────────────────────

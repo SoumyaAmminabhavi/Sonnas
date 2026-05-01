@@ -107,10 +107,10 @@ export async function POST(request: Request) {
       };
     }
 
-    // 🚀 Fire-and-forget: process message in background, respond to Meta immediately
+    // 🚀 Process message and wait for it to finish (needed for serverless reliability)
     if (incomingMsg) {
-      void handleIncomingMessage(incomingMsg).catch((err) =>
-        console.error("[WhatsApp] Background processing error:", err)
+      await handleIncomingMessage(incomingMsg).catch((err) =>
+        console.error("[WhatsApp] Processing error:", err)
       );
     }
 
