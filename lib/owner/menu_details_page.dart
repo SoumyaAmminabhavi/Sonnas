@@ -72,7 +72,7 @@ class MenuDetailsPage extends StatelessWidget {
                       currentIndex: 3, // Active under Menu
                       onTap: (index) {
                         if (!context.mounted) return;
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.of(context).popUntil((route) => route.settings.name == 'OwnerDashboard' || route.isFirst);
                         onTabChanged?.call(index);
                       },
                     ),

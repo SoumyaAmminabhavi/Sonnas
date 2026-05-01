@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 
-class OrderDetailsPage extends StatelessWidget {
+class OwnerOrderDetailsView extends StatelessWidget {
   final String orderId;
   final ValueChanged<int>? onTabChanged;
 
-  const OrderDetailsPage({super.key, required this.orderId, this.onTabChanged});
+  const OwnerOrderDetailsView({super.key, required this.orderId, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +84,9 @@ class OrderDetailsPage extends StatelessWidget {
                         OwnerSidebar(
                           currentIndex: 1,
                           onTap: (index) {
-                            Navigator.pop(context);
+                            if (!context.mounted) return;
+                            // Use popUntil to return to the OwnerDashboard specifically
+                            Navigator.of(context).popUntil((route) => route.settings.name == 'OwnerDashboard' || route.isFirst);
                             onTabChanged?.call(index);
                           },
                         ),

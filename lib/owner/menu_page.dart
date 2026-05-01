@@ -462,7 +462,9 @@ class AddMenuPage extends StatelessWidget {
                 OwnerSidebar(
                   currentIndex: 3,
                   onTap: (index) {
-                    Navigator.pop(context);
+                    if (!context.mounted) return;
+                    // Use popUntil to return to the OwnerDashboard specifically
+                    Navigator.of(context).popUntil((route) => route.settings.name == 'OwnerDashboard' || route.isFirst);
                     onTabChanged?.call(index);
                   },
                 ),
@@ -504,24 +506,24 @@ class _AddMenuContentState extends State<_AddMenuContent> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialData?['name']);
-    _selectedCategory = widget.initialData?['category'];
+    
+    // Safety helper to filter out "null" strings from database
+    String safeGet(dynamic val) {
+      if (val == null || val.toString().toLowerCase() == "null") return "";
+      return val.toString();
+    }
 
+    _nameController = TextEditingController(text: safeGet(widget.initialData?['name']));
+    _selectedCategory = widget.initialData?['category']?.toString() == "null" ? null : widget.initialData?['category'];
+    
     final options = widget.initialData?['CakeOption'] as List? ?? [];
-    final initialPrice = options.isNotEmpty
-        ? options[0]['price'].toString()
-        : widget.initialData?['price']?.toString() ?? '';
-    final initialWeight = options.isNotEmpty
-        ? options[0]['weight'].toString()
-        : '';
-    final initialServes = options.isNotEmpty
-        ? options[0]['serves'].toString()
-        : '';
+    
+    final initialPrice = options.isNotEmpty ? safeGet(options[0]['price']) : safeGet(widget.initialData?['price']);
+    final initialWeight = options.isNotEmpty ? safeGet(options[0]['weight']) : '';
+    final initialServes = options.isNotEmpty ? safeGet(options[0]['serves']) : '';
 
     _priceController = TextEditingController(text: initialPrice);
-    _descriptionController = TextEditingController(
-      text: widget.initialData?['description'],
-    );
+    _descriptionController = TextEditingController(text: safeGet(widget.initialData?['description']));
     _weightController = TextEditingController(text: initialWeight);
     _servesController = TextEditingController(text: initialServes);
   }

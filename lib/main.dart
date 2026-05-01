@@ -484,6 +484,7 @@ class ModernDrawer extends StatelessWidget {
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
                     MaterialPageRoute(
+                      settings: const RouteSettings(name: 'OwnerDashboard'),
                       builder: (context) => const OwnerDashboard(),
                     ),
                   );

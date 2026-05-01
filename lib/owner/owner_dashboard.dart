@@ -904,7 +904,7 @@ class _OrderCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(orderId: id),
+            builder: (context) => OwnerOrderDetailsView(orderId: id),
           ),
         );
       },

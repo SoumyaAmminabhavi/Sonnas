@@ -220,7 +220,7 @@ class _OrderTile extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => OrderDetailsPage(
+                builder: (context) => OwnerOrderDetailsView(
                   orderId: orderId,
                   onTabChanged: onTabChanged,
                 ),
