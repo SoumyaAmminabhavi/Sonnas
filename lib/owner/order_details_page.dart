@@ -822,11 +822,13 @@ class _HolographicViewerState extends State<_HolographicViewer> {
         children: [
           // Holographic Backdrop
           GestureDetector(
-            onPanUpdate: (details) {
-              setState(() {
-                _rotationY += details.delta.dx * 0.01;
-                _rotationX -= details.delta.dy * 0.01;
-              });
+            onScaleUpdate: (details) {
+              if (details.pointerCount == 1) {
+                setState(() {
+                  _rotationY += details.focalPointDelta.dx * 0.01;
+                  _rotationX -= details.focalPointDelta.dy * 0.01;
+                });
+              }
             },
             child: Container(
               width: double.infinity,

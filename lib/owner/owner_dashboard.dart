@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'menu_page.dart';
@@ -22,16 +23,118 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
   late PageController _pageController;
+  StreamSubscription? _orderSubscription;
+  int? _lastOrderCount;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+    _setupOrderListener();
+  }
+
+  void _setupOrderListener() {
+    _orderSubscription = SupabaseService.getOrdersStream().listen((orders) {
+      if (_lastOrderCount != null && orders.length > _lastOrderCount!) {
+        // New order received!
+        final newOrder = orders.first;
+        _showNewOrderNotification(newOrder);
+      }
+      _lastOrderCount = orders.length;
+    });
+  }
+
+  void _showNewOrderNotification(Map<String, dynamic> order) {
+    final cs = Theme.of(context).colorScheme;
+    final orderNumber = order['orderNumber'] ?? '---';
+    final customerName = order['customerName'] ?? 'Guest';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 8),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        content: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cs.secondaryContainer,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.secondary.withValues(alpha: 0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: cs.secondary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.shopping_bag_outlined, color: cs.secondary, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "NEW ORDER RECEIVED",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        color: cs.secondary.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    Text(
+                      "$customerName (#$orderNumber)",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OwnerOrderDetailsView(
+                        orderId: orderNumber,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  "VIEW",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    color: cs.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _orderSubscription?.cancel();
     super.dispose();
   }
 
