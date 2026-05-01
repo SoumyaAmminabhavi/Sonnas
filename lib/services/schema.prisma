@@ -107,23 +107,35 @@ model WhatsAppConversation {
     selectedQuantity Int?     @default(1)
     
     customImageUrl   String?
+    selectedDeliveryDate String?
+    selectedDeliveryTime String?
+    messages         Json?    @default("[]")
     
     lastMessageAt  DateTime @default(now())
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt
 
+    cart           WhatsAppCartItem[]
     orders         WhatsAppOrder[]
 }
 
-model WhatsAppOrder {
+model WhatsAppCartItem {
     id             String   @id @default(cuid())
-    orderNumber    String   @unique
     phone          String
-    customerName   String?
     cakeName       String
     size           String
     price          String
     quantity       Int      @default(1)
+    createdAt      DateTime @default(now())
+    
+    conversation   WhatsAppConversation @relation(fields: [phone], references: [phone], onDelete: Cascade)
+}model WhatsAppOrder {
+    id             String   @id @default(cuid())
+    orderNumber    String   @unique
+    phone          String
+    customerName   String?
+    
+    totalPrice     String?
     address        String?
     notes        String?
     status       String   @default("PENDING")
@@ -132,8 +144,21 @@ model WhatsAppOrder {
     customImageUrl String?
     
     deliveryDate   String?
+    deliveryTime   String?
     createdAt    DateTime @default(now())
     updatedAt      DateTime @updatedAt
 
+    items          WhatsAppOrderItem[]
     conversation   WhatsAppConversation @relation(fields: [phone], references: [phone])
+}
+
+model WhatsAppOrderItem {
+    id             String   @id @default(cuid())
+    orderId        String
+    cakeName       String
+    size           String
+    price          String
+    quantity       Int      @default(1)
+    
+    order          WhatsAppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }

@@ -184,24 +184,14 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                           final items = snapshot.data?[1] ?? [];
 
                                           if (items.isEmpty) {
-                                            // Fallback for custom orders without separate items
-                                            String displayImageUrl =
-                                                order['customImageUrl'] ?? '';
-                                            return _OrderItemCard(
-                                              title:
-                                                  order['cakeName'] ??
-                                                  'Custom Creation',
-                                              subtitle:
-                                                  "${order['size'] ?? 'Standard'} • ${order['quantity'] ?? 1} Units",
-                                              price:
-                                                  SupabaseService.formatPrice(
-                                                    order['totalPrice'],
-                                                  ),
-                                              imageUrl:
-                                                  SupabaseService.getPublicUrl(
-                                                    displayImageUrl,
-                                                  ),
-                                              cs: cs,
+                                            return Center(
+                                              child: Text(
+                                                "No items found for this selection.",
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 13,
+                                                  color: cs.secondary.withValues(alpha: 0.4),
+                                                ),
+                                              ),
                                             );
                                           }
 

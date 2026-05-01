@@ -872,13 +872,19 @@ class _OrderCardReactive extends StatelessWidget {
           }
         }
 
+        String orderSubtitle = 'Custom Creation';
+        if (items.isNotEmpty) {
+          final String firstName = items[0]['cakeName'] ?? 'Boutique Order';
+          orderSubtitle = items.length > 1 ? "$firstName + ${items.length - 1} more" : firstName;
+        }
+
         return _OrderCard(
           id: "#${data['orderNumber'] ?? '---'}",
           status: status,
           statusColor: statusColor,
           statusBg: statusColor.withValues(alpha: 0.1),
-          title: data['customerName'] ?? 'Boutique Order',
-          customer: data['totalPrice'] != null
+          customerName: data['customerName'] ?? 'Guest Customer',
+          price: data['totalPrice'] != null
               ? SupabaseService.formatPrice(data['totalPrice'])
               : (items.isNotEmpty
                     ? SupabaseService.formatPrice(items[0]['price'])
@@ -886,6 +892,7 @@ class _OrderCardReactive extends StatelessWidget {
           imageUrl: SupabaseService.getPublicUrl(imageUrl),
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
           deliveryTime: data['deliveryTime'],
+          orderSubtitle: orderSubtitle,
         );
       },
     );
@@ -897,21 +904,23 @@ class _OrderCard extends StatelessWidget {
   final String status;
   final Color statusColor;
   final Color statusBg;
-  final String title;
-  final String customer;
+  final String customerName;
+  final String price;
   final String imageUrl;
   final String deliveryDate;
   final String? deliveryTime;
+  final String orderSubtitle;
 
   const _OrderCard({
     required this.id,
     required this.status,
     required this.statusColor,
     required this.statusBg,
-    required this.title,
-    required this.customer,
+    required this.customerName,
+    required this.price,
     required this.imageUrl,
     required this.deliveryDate,
+    required this.orderSubtitle,
     this.deliveryTime,
   });
 
@@ -1007,7 +1016,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    customer,
+                    customerName,
                     style: GoogleFonts.notoSerif(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -1019,7 +1028,13 @@ class _OrderCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   _CompactInfoRow(
                     icon: Icons.cake_outlined,
-                    text: title,
+                    text: orderSubtitle,
+                    color: cs.secondary,
+                  ),
+                  const SizedBox(height: 2),
+                  _CompactInfoRow(
+                    icon: Icons.payments_outlined,
+                    text: price,
                     color: cs.secondary,
                   ),
                   const SizedBox(height: 2),

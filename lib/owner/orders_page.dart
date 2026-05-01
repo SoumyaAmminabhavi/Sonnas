@@ -18,7 +18,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -89,6 +89,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
                   Tab(text: "TODAY"),
                   Tab(text: "UPCOMING"),
                   Tab(text: "COMPLETED"),
+                  Tab(text: "CUSTOM"),
                 ],
               ),
             ),
@@ -105,9 +106,10 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged),
-                  const Center(child: Text("Upcoming Orders")),
-                  const Center(child: Text("Completed Orders")),
+                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.today),
+                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.upcoming),
+                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.completed),
+                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.custom),
                 ],
               ),
             ),
@@ -118,10 +120,31 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
   }
 }
 
+enum _OrderFilter { today, upcoming, completed, custom }
+
 class _OrdersList extends StatelessWidget {
   final ColorScheme cs;
   final ValueChanged<int>? onTabChanged;
-  const _OrdersList({required this.cs, this.onTabChanged});
+  final _OrderFilter filter;
+
+  const _OrdersList({
+    required this.cs,
+    required this.filter,
+    this.onTabChanged,
+  });
+
+  String _getEmptyStateMessage(_OrderFilter filter) {
+    switch (filter) {
+      case _OrderFilter.custom:
+        return "No bespoke creations are currently in the atelier's care.";
+      case _OrderFilter.completed:
+        return "The archives are quiet. No completed orders to display.";
+      case _OrderFilter.upcoming:
+        return "The calendar is clear for the days ahead.";
+      case _OrderFilter.today:
+        return "There are no active orders currently gracing the atelier.";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +169,34 @@ class _OrdersList extends StatelessWidget {
           );
         }
 
-        final List<Map<String, dynamic>> rawOrders = snapshot.data ?? [];
+        List<Map<String, dynamic>> rawOrders = snapshot.data ?? [];
+
+        // Apply filtering logic
+        final now = DateTime.now();
+        rawOrders = rawOrders.where((order) {
+          final isCustom = order['isCustom'] == true;
+          final status = order['status'] ?? 'PENDING';
+          final createdAtStr = order['createdAt'];
+          
+          DateTime? createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr) : null;
+
+          switch (filter) {
+            case _OrderFilter.custom:
+              return isCustom && status != 'COMPLETED';
+            case _OrderFilter.completed:
+              return status == 'COMPLETED';
+            case _OrderFilter.today:
+              if (status == 'COMPLETED' || isCustom) return false;
+              if (createdAt == null) return true;
+              return createdAt.year == now.year && 
+                     createdAt.month == now.month && 
+                     createdAt.day == now.day;
+            case _OrderFilter.upcoming:
+              if (status == 'COMPLETED' || isCustom) return false;
+              if (createdAt == null) return false;
+              return createdAt.isAfter(DateTime(now.year, now.month, now.day, 23, 59));
+          }
+        }).toList();
 
         if (rawOrders.isEmpty) {
           return Center(
@@ -156,7 +206,9 @@ class _OrdersList extends StatelessWidget {
                 Icon(Icons.auto_awesome_outlined, color: cs.primary.withValues(alpha: 0.1), size: 64),
                 const SizedBox(height: 24),
                 Text(
-                  "A Quiet Moment",
+                  filter == _OrderFilter.custom 
+                    ? "A Canvas Awaiting Color" 
+                    : "A Quiet Moment",
                   style: GoogleFonts.notoSerif(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -165,7 +217,8 @@ class _OrdersList extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "There are no active orders currently gracing the atelier.",
+                  _getEmptyStateMessage(filter),
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: cs.secondary.withValues(alpha: 0.4),
