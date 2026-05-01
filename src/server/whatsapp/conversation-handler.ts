@@ -1073,14 +1073,19 @@ async function handleCustomRequest(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(mediaId);
     
-    await updateState(msg.from, "ASKING_ADDRESS", {
+    await updateState(msg.from, "IDLE", {
       customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-      selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption
+      selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+      selectedAddress: null,
+      selectedDeliveryDate: null,
     });
     
     await sendTextMessage(
       msg.from,
-      "📸 Reference photo received! 📍\n\nWhere should we deliver this custom creation once it's ready?\n\n(Please provide your full address)"
+      "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
     );
     return;
   }
