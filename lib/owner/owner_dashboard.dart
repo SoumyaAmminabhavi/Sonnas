@@ -884,6 +884,8 @@ class _OrderCardReactive extends StatelessWidget {
                     ? SupabaseService.formatPrice(items[0]['price'])
                     : '---'),
           imageUrl: SupabaseService.getPublicUrl(imageUrl),
+          deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
+          deliveryTime: data['deliveryTime'],
         );
       },
     );
@@ -898,6 +900,8 @@ class _OrderCard extends StatelessWidget {
   final String title;
   final String customer;
   final String imageUrl;
+  final String deliveryDate;
+  final String? deliveryTime;
 
   const _OrderCard({
     required this.id,
@@ -907,6 +911,8 @@ class _OrderCard extends StatelessWidget {
     required this.title,
     required this.customer,
     required this.imageUrl,
+    required this.deliveryDate,
+    this.deliveryTime,
   });
 
   @override
@@ -1019,7 +1025,7 @@ class _OrderCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   _CompactInfoRow(
                     icon: Icons.schedule_outlined,
-                    text: "Pickup at 2:30 PM",
+                    text: deliveryTime != null ? "$deliveryDate at $deliveryTime" : deliveryDate,
                     color: cs.secondary,
                   ),
                 ],

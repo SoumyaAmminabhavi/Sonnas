@@ -138,7 +138,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                           ),
                                           Text(
                                             order['deliveryDate'] != null
-                                                ? "Scheduled for ${order['deliveryDate']}"
+                                                ? "Scheduled for ${order['deliveryDate']}${order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : ''}"
                                                 : "Date not scheduled yet",
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,

@@ -258,7 +258,9 @@ class _OrderTile extends StatelessWidget {
             : (items.isNotEmpty
                   ? SupabaseService.formatPrice(items[0]['price'])
                   : '---');
-        final String time = data['deliveryDate'] ?? 'Not scheduled';
+        final String dateStr = data['deliveryDate'] ?? 'Not scheduled';
+        final String? timeStr = data['deliveryTime'];
+        final String schedule = timeStr != null ? "$dateStr at $timeStr" : dateStr;
 
         return InkWell(
           onTap: () {
@@ -405,7 +407,7 @@ class _OrderTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            time,
+                            schedule,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               color: cs.secondary.withValues(alpha: 0.4),
