@@ -160,10 +160,8 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             order['customerName'] ??
                                             conversation?['name'] ??
                                             'Guest Customer',
-                                        phone:
-                                            order['phone'] ??
-                                            conversation?['phone'] ??
-                                            'Contact hidden',
+                                        phone: order['phone'] ?? conversation?['phone'] ?? 'Contact hidden',
+                                        address: order['address'] ?? conversation?['address'] ?? 'No location provided',
                                         cs: cs,
                                       ),
                                       const SizedBox(height: 32),
@@ -469,10 +467,12 @@ class _SectionTitle extends StatelessWidget {
 class _CustomerInfoCard extends StatelessWidget {
   final String name;
   final String phone;
+  final String address;
   final ColorScheme cs;
   const _CustomerInfoCard({
     required this.name,
     required this.phone,
+    required this.address,
     required this.cs,
   });
 
@@ -504,18 +504,61 @@ class _CustomerInfoCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  phone,
+                  _formatPhone(phone),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: cs.secondary.withValues(alpha: 0.6),
                   ),
                 ),
+                if (address.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: _isCoordinates(address) ? () => SupabaseService.launchMaps(address) : null,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined, 
+                          size: 14, 
+                          color: _isCoordinates(address) ? cs.primary : cs.primary.withValues(alpha: 0.6)
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _isCoordinates(address) ? "$address (Open in Maps)" : address,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: _isCoordinates(address) ? cs.primary : cs.secondary.withValues(alpha: 0.5),
+                              decoration: _isCoordinates(address) ? TextDecoration.underline : null,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _formatPhone(String p) {
+    if (p == 'Contact hidden') return p;
+    // Remove non-numeric characters
+    final clean = p.replaceAll(RegExp(r'[^0-9]'), '');
+    if (clean.length == 10) return '+91 $p';
+    if (clean.length == 12 && clean.startsWith('91')) {
+      return '+${clean.substring(0, 2)} ${clean.substring(2)}';
+    }
+    return p.startsWith('+') ? p : '+$p';
+  }
+
+  bool _isCoordinates(String s) {
+    // Basic regex for lat,long: -90 to 90 and -180 to 180
+    return RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(s.trim());
   }
 }
 

@@ -65,6 +65,16 @@ class SupabaseService {
     }
   }
 
+  // Launch Google Maps
+  static Future<void> launchMaps(String query) async {
+    final encodedQuery = Uri.encodeComponent(query);
+    final Uri url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$encodedQuery");
+    
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint('Could not launch Maps for $query');
+    }
+  }
+
   // Real-time stream for WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
   static Stream<List<Map<String, dynamic>>> getOrdersStream() {
     return client

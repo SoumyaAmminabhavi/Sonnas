@@ -315,6 +315,12 @@ class _OrderTile extends StatelessWidget {
         final String? timeStr = data['deliveryTime'];
         final String schedule = timeStr != null ? "$dateStr at $timeStr" : dateStr;
 
+        String orderSubtitle = 'Custom Creation';
+        if (items.isNotEmpty) {
+          final String firstName = items[0]['cakeName'] ?? 'Boutique Order';
+          orderSubtitle = items.length > 1 ? "$firstName + ${items.length - 1} more" : firstName;
+        }
+
         return InkWell(
           onTap: () {
             Navigator.push(
@@ -432,41 +438,22 @@ class _OrderTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.cake_outlined,
-                            size: 14,
-                            color: cs.secondary.withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            price,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: cs.secondary.withValues(alpha: 0.6),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                      _IconInfoRow(
+                        icon: Icons.cake_outlined,
+                        text: orderSubtitle,
+                        cs: cs,
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            size: 14,
-                            color: cs.secondary.withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            schedule,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
-                              color: cs.secondary.withValues(alpha: 0.4),
-                            ),
-                          ),
-                        ],
+                      _IconInfoRow(
+                        icon: Icons.payments_outlined,
+                        text: price,
+                        cs: cs,
+                      ),
+                      const SizedBox(height: 4),
+                      _IconInfoRow(
+                        icon: Icons.schedule_outlined,
+                        text: schedule,
+                        cs: cs,
                       ),
                     ],
                   ),
@@ -593,6 +580,43 @@ class _ImagePlaceholder extends StatelessWidget {
           size: 32,
         ),
       ),
+    );
+  }
+}
+
+class _IconInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final ColorScheme cs;
+
+  const _IconInfoRow({
+    required this.icon,
+    required this.text,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: cs.secondary.withValues(alpha: 0.4),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 11,
+              color: cs.secondary.withValues(alpha: 0.5),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
