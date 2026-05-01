@@ -54,33 +54,34 @@ export async function POST(request: Request) {
       void markAsRead(message.id);
     }
 
-    // Parse message based on type
+    // Build the message object synchronously, then process in background
+    let incomingMsg: Parameters<typeof handleIncomingMessage>[0] | null = null;
+
     if (message.type === "text") {
-      await handleIncomingMessage({
+      incomingMsg = {
         from: message.from,
         name: contactName,
         type: "text",
         text: message.text?.body,
         messageId: message.id,
-      });
+      };
     } else if (message.type === "interactive") {
-      // Button reply or list reply
       const interactive = message.interactive;
       const replyId =
         interactive?.button_reply?.id ?? interactive?.list_reply?.id;
       const replyTitle =
         interactive?.button_reply?.title ?? interactive?.list_reply?.title;
 
-      await handleIncomingMessage({
+      incomingMsg = {
         from: message.from,
         name: contactName,
         type: "interactive",
         interactiveId: replyId,
         interactiveTitle: replyTitle,
         messageId: message.id,
-      });
+      };
     } else if (message.type === "location" && message.location) {
-      await handleIncomingMessage({
+      incomingMsg = {
         from: message.from,
         name: contactName,
         type: "location",
@@ -91,9 +92,9 @@ export async function POST(request: Request) {
           address: message.location.address,
         },
         messageId: message.id,
-      });
+      };
     } else if (message.type === "image" && message.image) {
-      await handleIncomingMessage({
+      incomingMsg = {
         from: message.from,
         name: contactName,
         type: "image",
@@ -103,10 +104,17 @@ export async function POST(request: Request) {
           mimeType: message.image.mime_type,
         },
         messageId: message.id,
-      });
+      };
     }
 
-    // Meta Webhooks require a 200 OK within ~15s
+    // 🚀 Fire-and-forget: process message in background, respond to Meta immediately
+    if (incomingMsg) {
+      void handleIncomingMessage(incomingMsg).catch((err) =>
+        console.error("[WhatsApp] Background processing error:", err)
+      );
+    }
+
+    // Return 200 immediately — Meta requires response within ~15s
     return new NextResponse("OK", { status: 200 });
   } catch (err) {
     console.error("[WhatsApp] Webhook error:", err);
