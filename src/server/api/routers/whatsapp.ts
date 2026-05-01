@@ -20,7 +20,7 @@ export const whatsappRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const where: any = {};
+      const where: { status?: string; isCustom?: boolean } = {};
       if (input.status) where.status = input.status;
       if (input.customOnly) where.isCustom = true;
 

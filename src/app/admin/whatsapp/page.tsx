@@ -87,11 +87,6 @@ interface AdminOrder {
   createdAt: string | Date;
   items: AdminOrderItem[];
   isCustom?: boolean;
-  conversation?: {
-    messages?: any[] | null;
-    name?: string | null;
-    phone: string;
-  } | null;
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -138,20 +133,6 @@ function WhatsAppAdminContent() {
     let filtered = ordersData.orders;
     
     if (dateFilter !== "ALL") {
-      const todayStr = new Date().toLocaleDateString("en-IN", {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-      });
-      
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const tomorrowStr = tomorrow.toLocaleDateString("en-IN", {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-      });
-
       if (dateFilter === "TODAY") {
         const todayStr = new Date().toISOString().split('T')[0];
         filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr);

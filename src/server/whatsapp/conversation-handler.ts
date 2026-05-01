@@ -5,7 +5,6 @@
  */
 import { db } from "~/server/db";
 import { products } from "~/data/landing";
-import { classifyMessage } from "./local-classifier";
 import {
   sendTextMessage,
   sendInteractiveList,
@@ -298,14 +297,11 @@ async function updateState(
   // Update in-memory cache immediately (instant read for next message)
   updateConvoCache(phone, { state, ...extra });
 
-  // We extract cart relation to avoid Prisma update errors
-  const { cart: _cart, ...otherExtra } = extra;
-
   // Persist to DB in the background — don't block the reply
   void withTimeout(
     db.whatsAppConversation.update({
       where: { phone },
-      data: { state, lastMessageAt: new Date(), ...otherExtra },
+      data: { state, lastMessageAt: new Date(), ...extra },
     }),
     DB_TIMEOUT
   ).catch((e) => console.error("[WhatsApp] updateState DB write failed:", e));
@@ -1362,7 +1358,6 @@ async function handleConfirmation(
   // Clear cart in DB
   await clearCart(msg.from);
 
-  const deliveryInfo = existingConvo?.selectedDeliveryDate ?? "To be confirmed";
 
   // Reset conversation state
   await updateState(msg.from, "IDLE", {
