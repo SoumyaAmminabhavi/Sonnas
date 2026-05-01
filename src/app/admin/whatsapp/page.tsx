@@ -409,6 +409,18 @@ function WhatsAppAdminContent() {
                               : "No Items"}
                           </h3>
 
+                          <div style={styles.customerLine}>
+                            <span style={styles.customerLabel}>Customer:</span>
+                            <a 
+                              href={`https://wa.me/${o.phone}`} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              style={styles.customerLink}
+                            >
+                              👤 {o.customerName ?? "Guest"} • 📞 {o.phone}
+                            </a>
+                          </div>
+
                           <div style={styles.orderMeta}>
                             <span>💰 {o.totalPrice ?? "Quote Pending"}</span>
                             <span>📦 {o.items ? o.items.reduce((sum, item) => sum + item.quantity, 0) : 0} items</span>
@@ -919,6 +931,31 @@ const styles: Record<string, React.CSSProperties> = {
   customerName: {
     fontWeight: 500,
     color: "#6E6E6E",
+  },
+  customerLine: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 8,
+    padding: "8px 12px",
+    backgroundColor: "rgba(37, 211, 102, 0.08)",
+    borderRadius: 8,
+    border: "1px solid rgba(37, 211, 102, 0.2)",
+  },
+  customerLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#128C7E",
+  },
+  customerLink: {
+    fontSize: 13,
+    color: "#075E54",
+    textDecoration: "none",
+    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
   },
   orderDate: {},
 
