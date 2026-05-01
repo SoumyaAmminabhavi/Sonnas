@@ -166,6 +166,7 @@ type ConversationState =
   | "ASKING_ADDRESS"
   | "ASKING_INSTRUCTIONS"
   | "ASKING_DELIVERY_DATE"
+  | "ASKING_DELIVERY_TIME"
   | "CONFIRMING"
   | "REQUESTING_CUSTOM";
 
@@ -181,6 +182,7 @@ interface Conversation {
   selectedNotes?: string | null;
   selectedQuantity?: number | null;
   selectedDeliveryDate?: string | null;
+  selectedDeliveryTime?: string | null;
   customImageUrl?: string | null;
   cart?: CartItem[];
 }
@@ -285,6 +287,7 @@ async function updateState(
     selectedNotes?: string | null;
     selectedQuantity?: number | null;
     selectedDeliveryDate?: string | null;
+    selectedDeliveryTime?: string | null;
     customImageUrl?: string | null;
     cart?: CartItem[];
   } = {}
@@ -480,6 +483,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       selectedCake: null,
       selectedSize: null,
       selectedPrice: null,
+      selectedAddress: null,
+      selectedNotes: null,
+      selectedDeliveryDate: null,
+      selectedDeliveryTime: null,
     });
     await sendTextMessage(
       msg.from,
@@ -554,6 +561,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
     case "ASKING_DELIVERY_DATE":
       await handleDeliveryDateInput(msg, convo);
+      break;
+
+    case "ASKING_DELIVERY_TIME":
+      await handleDeliveryTimeInput(msg, convo);
       break;
 
     case "REQUESTING_CUSTOM":
@@ -1013,19 +1024,64 @@ async function handleDeliveryDateInput(
   }
 
   try {
-    // Move to confirmation
-    await updateState(msg.from, "CONFIRMING", {
+    // Move to asking delivery time
+    await updateState(msg.from, "ASKING_DELIVERY_TIME", {
       selectedDeliveryDate: deliveryDate,
     });
+    await sendDeliveryTimeOptions(msg.from);
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error("[WhatsApp] Error in handleDeliveryDateInput:", errorMsg);
+    await sendTextMessage(msg.from, `⚠️ Sorry, I encountered an error: *${errorMsg}*\n\nPlease try again by replying *Menu*.`);
+  }
+}
 
-    // Fetch fresh cart and conversation to be 100% sure we have the latest data
+// ─── Send delivery time options ───────────────────────────────────────────
+
+async function sendDeliveryTimeOptions(to: string) {
+  await sendInteractiveButtons(
+    to,
+    "🕒 *Delivery Timing*\n\nPlease select your preferred delivery time slot:",
+    [
+      { id: "time_12pm_3pm", title: "12 pm - 3 pm" },
+      { id: "time_3pm_6pm", title: "3 pm - 6 pm" },
+      { id: "time_6pm_9pm", title: "6 pm - 9 pm" },
+    ]
+  );
+}
+
+// ─── Handle delivery time input ───────────────────────────────────────────
+
+async function handleDeliveryTimeInput(
+  msg: IncomingMessage,
+  _convo: Conversation
+) {
+  let deliveryTime = "";
+
+  if (msg.interactiveId?.startsWith("time_")) {
+    const timeId = msg.interactiveId.replace("time_", "");
+    deliveryTime = timeId.replace("_", " to ").replace("pm", " PM");
+    // Format nicely: "12pm to 3pm" -> "12 PM to 3 PM"
+    deliveryTime = deliveryTime.toUpperCase();
+  } else if (msg.text?.trim()) {
+    deliveryTime = msg.text.trim();
+  } else {
+    await sendTextMessage(msg.from, "Please select a delivery time slot.");
+    return;
+  }
+
+  try {
+    // Move to confirmation
+    await updateState(msg.from, "CONFIRMING", {
+      selectedDeliveryTime: deliveryTime,
+    });
+
+    // Fetch fresh cart and conversation
     const cart = await withTimeout(
       db.whatsAppCartItem.findMany({ where: { phone: msg.from } }),
       DB_TIMEOUT
     ) as unknown as CartItem[];
     let updatedConvo = convoCache.get(msg.from);
-    
-    // If cache was lost, reload from DB
     updatedConvo ??= await getConversation(msg.from);
 
     let summary = `📋 *Order Summary*\n\n`;
@@ -1040,7 +1096,8 @@ async function handleDeliveryDateInput(
     summary += `\n*Total: ${getCartTotal(cart)}*\n`;
     summary += `📍 Address: ${updatedConvo?.selectedAddress ?? "_Not provided_"}\n`;
     summary += `📝 Notes: ${updatedConvo?.selectedNotes ?? "_None_"}\n`;
-    summary += `📅 Delivery: *${deliveryDate}*\n\n`;
+    summary += `📅 Delivery: *${updatedConvo?.selectedDeliveryDate}*\n`;
+    summary += `🕒 Timing: *${deliveryTime}*\n\n`;
     summary += `Shall I place this order?`;
 
     await sendInteractiveButtons(
@@ -1053,7 +1110,7 @@ async function handleDeliveryDateInput(
     );
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("[WhatsApp] Error in handleDeliveryDateInput:", errorMsg);
+    console.error("[WhatsApp] Error in handleDeliveryTimeInput:", errorMsg);
     await sendTextMessage(msg.from, `⚠️ Sorry, I encountered an error: *${errorMsg}*\n\nPlease try again by replying *Menu*.`);
   }
 }
@@ -1081,6 +1138,7 @@ async function handleCustomRequest(
       selectedPrice: null,
       selectedAddress: null,
       selectedDeliveryDate: null,
+      selectedDeliveryTime: null,
     });
     
     await sendTextMessage(
@@ -1203,6 +1261,7 @@ async function handleConfirmation(
       address: convo.selectedAddress,
       notes: convo.selectedNotes,
       deliveryDate: existingConvo?.selectedDeliveryDate,
+      deliveryTime: existingConvo?.selectedDeliveryTime,
       status: "PENDING",
       isCustom: cart.some(item => item.cakeName === "CUSTOM_CAKE"),
       customImageUrl: convo.customImageUrl,
@@ -1230,11 +1289,12 @@ async function handleConfirmation(
     selectedAddress: null,
     selectedNotes: null,
     selectedDeliveryDate: null,
+    selectedDeliveryTime: null,
     customImageUrl: null,
   });
 
   await sendTextMessage(
     msg.from,
-    `🎉 *Order Placed Successfully!*\n\nYour order number is *#${orderNumber}*.\n\n📅 Delivery: *${deliveryInfo}*\n📍 Address: ${convo.selectedAddress}\n\nWe will notify you once your order is confirmed and out for delivery! 💕`
+    `🎉 *Order Placed Successfully!*\n\nYour order number is *#${orderNumber}*.\n\n📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n📍 Address: ${convo.selectedAddress}\n\nWe will notify you once your order is confirmed and out for delivery! 💕`
   );
 }
