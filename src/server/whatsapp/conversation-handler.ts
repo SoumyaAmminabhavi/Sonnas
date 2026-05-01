@@ -439,7 +439,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     ) ?? null;
 
     if (selectedProduct) {
-      const tasks: Promise<any>[] = [
+      const tasks: Promise<unknown>[] = [
         updateState(msg.from, "SELECTING_SIZE", {
           selectedCake: selectedProduct.name,
           selectedSize: null,
@@ -815,7 +815,7 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   // Store the selection and move to size selection
-  const tasks: Promise<any>[] = [
+  const tasks: Promise<unknown>[] = [
     updateState(msg.from, "SELECTING_SIZE", {
       selectedCake: selectedProduct.name,
     })
