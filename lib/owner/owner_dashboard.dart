@@ -21,6 +21,32 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   SalesRange _selectedRange = SalesRange.weekly;
   int _selectedMonth = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleNavigation(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,47 +81,30 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               ? null
               : _MobileBottomNav(
                   currentIndex: _selectedIndex,
-                  onTap: (index) {
-                    setState(() => _selectedIndex = index);
-                  },
+                  onTap: _handleNavigation,
                 ),
           body: Row(
             children: [
               if (isDesktop)
                 OwnerSidebar(
                   currentIndex: _selectedIndex,
-                  onTap: (index) {
-                    setState(() => _selectedIndex = index);
-                  },
+                  onTap: _handleNavigation,
                 ),
               Expanded(
-                child: _selectedIndex == 1
-                    ? ManageOrdersPage(
-                        onTabChanged: (index) =>
-                            setState(() => _selectedIndex = index),
-                      )
-                    : _selectedIndex == 2
-                    ? const PaymentsPage()
-                    : _selectedIndex == 3
-                    ? MenuPage(
-                        onTabChanged: (index) =>
-                            setState(() => _selectedIndex = index),
-                      )
-                    : _selectedIndex == 4
-                    ? OwnerSettingsPage(
-                        onTabChanged: (index) =>
-                            setState(() => _selectedIndex = index),
-                      )
-                    : _MainContent(
-                        isDesktop: isDesktop,
-                        selectedRange: _selectedRange,
-                        selectedMonth: _selectedMonth,
-                        selectedYear: _selectedYear,
-                        onRangeChanged: (range) => setState(() => _selectedRange = range),
-                        onMonthChanged: (m) => setState(() => _selectedMonth = m),
-                        onYearChanged: (y) => setState(() => _selectedYear = y),
-                        onViewAllOrders: () =>
-                            setState(() => _selectedIndex = 1),
+                child: isDesktop
+                    ? _buildPage(_selectedIndex, isDesktop)
+                    : PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() => _selectedIndex = index);
+                        },
+                        children: [
+                          _buildPage(0, false),
+                          _buildPage(1, false),
+                          _buildPage(2, false),
+                          _buildPage(3, false),
+                          _buildPage(4, false),
+                        ],
                       ),
               ),
             ],
@@ -103,6 +112,29 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         );
       },
     );
+  }
+
+  Widget _buildPage(int index, bool isDesktop) {
+    if (index == 1) {
+      return ManageOrdersPage(onTabChanged: _handleNavigation);
+    } else if (index == 2) {
+      return const PaymentsPage();
+    } else if (index == 3) {
+      return MenuPage(onTabChanged: _handleNavigation);
+    } else if (index == 4) {
+      return OwnerSettingsPage(onTabChanged: _handleNavigation);
+    } else {
+      return _MainContent(
+        isDesktop: isDesktop,
+        selectedRange: _selectedRange,
+        selectedMonth: _selectedMonth,
+        selectedYear: _selectedYear,
+        onRangeChanged: (range) => setState(() => _selectedRange = range),
+        onMonthChanged: (m) => setState(() => _selectedMonth = m),
+        onYearChanged: (y) => setState(() => _selectedYear = y),
+        onViewAllOrders: () => _handleNavigation(1),
+      );
+    }
   }
 }
 
@@ -133,7 +165,10 @@ class _MobileBottomNav extends StatelessWidget {
         letterSpacing: 0.5,
       ),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Dashboard"),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.grid_view),
+          label: "Dashboard",
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Orders"),
         BottomNavigationBarItem(icon: Icon(Icons.payments), label: "Payments"),
         BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Menu"),
@@ -212,47 +247,51 @@ class _MainContent extends StatelessWidget {
           Flex(
             direction: isDesktop ? Axis.horizontal : Axis.vertical,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: isDesktop ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment: isDesktop
+                ? CrossAxisAlignment.end
+                : CrossAxisAlignment.start,
             children: [
-              isDesktop ? Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Recent Orders",
-                      style: GoogleFonts.notoSerif(
-                        color: cs.secondary,
-                        fontSize: 24,
+              isDesktop
+                  ? Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Recent Orders",
+                            style: GoogleFonts.notoSerif(
+                              color: cs.secondary,
+                              fontSize: 24,
+                            ),
+                          ),
+                          Text(
+                            "Latest activity from the boutique",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.6),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Recent Orders",
+                          style: GoogleFonts.notoSerif(
+                            color: cs.secondary,
+                            fontSize: 24,
+                          ),
+                        ),
+                        Text(
+                          "Latest activity from the boutique",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.secondary.withValues(alpha: 0.6),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      "Latest activity from the boutique",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: cs.secondary.withValues(alpha: 0.6),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ) : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Recent Orders",
-                    style: GoogleFonts.notoSerif(
-                      color: cs.secondary,
-                      fontSize: 24,
-                    ),
-                  ),
-                  Text(
-                    "Latest activity from the boutique",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary.withValues(alpha: 0.6),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
               if (!isDesktop) const SizedBox(height: 12),
               InkWell(
                 onTap: onViewAllOrders,
@@ -284,16 +323,18 @@ class _MainContent extends StatelessWidget {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               final rawOrders = (snapshot.data ?? []).take(4).toList();
-              
+
               if (rawOrders.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(48.0),
                     child: Text(
                       "No active orders found.",
-                      style: GoogleFonts.notoSerif(color: cs.secondary.withValues(alpha: 0.5)),
+                      style: GoogleFonts.notoSerif(
+                        color: cs.secondary.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 );
@@ -302,19 +343,14 @@ class _MainContent extends StatelessWidget {
               return FutureBuilder<List<Map<String, dynamic>>>(
                 future: SupabaseService.fetchMenu(),
                 builder: (context, menuSnapshot) {
-                  final menu = menuSnapshot.data ?? [];
-                  
                   final orders = rawOrders.map((data) {
-                    return _OrderCardReactive(
-                      data: data,
-                      cs: cs,
-                    );
+                    return _OrderCardReactive(data: data, cs: cs);
                   }).toList();
 
                   return LayoutBuilder(
                     builder: (context, constraints) {
                       final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
-                      
+
                       if (crossAxisCount == 2) {
                         List<Widget> rows = [];
                         for (var i = 0; i < orders.length; i += 2) {
@@ -326,7 +362,9 @@ class _MainContent extends StatelessWidget {
                                   Expanded(child: orders[i]),
                                   const SizedBox(width: 24),
                                   Expanded(
-                                    child: i + 1 < orders.length ? orders[i + 1] : const SizedBox(),
+                                    child: i + 1 < orders.length
+                                        ? orders[i + 1]
+                                        : const SizedBox(),
                                   ),
                                 ],
                               ),
@@ -337,10 +375,14 @@ class _MainContent extends StatelessWidget {
                       }
 
                       return Column(
-                        children: orders.map((o) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: o,
-                        )).toList(),
+                        children: orders
+                            .map(
+                              (o) => Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: o,
+                              ),
+                            )
+                            .toList(),
                       );
                     },
                   );
@@ -358,22 +400,54 @@ class _MainContent extends StatelessWidget {
     return StreamBuilder<Map<String, dynamic>>(
       stream: SupabaseService.getDashboardStatsStream(),
       builder: (context, snapshot) {
-        final stats = snapshot.data ?? {'totalOrders': 0, 'totalRevenue': 0.0, 'activeCustomers': 0};
-        
+        final stats =
+            snapshot.data ??
+            {'totalOrders': 0, 'totalRevenue': 0.0, 'activeCustomers': 0};
+
         return Row(
           children: [
-            Expanded(child: _statCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop)),
+            Expanded(
+              child: _statCard(
+                title: "TOTAL ORDERS",
+                value: stats['totalOrders'].toString(),
+                icon: Icons.shopping_bag_outlined,
+                cs: cs,
+                isDesktop: isDesktop,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _statCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop)),
+            Expanded(
+              child: _statCard(
+                title: "TOTAL REVENUE",
+                value: "₹${stats['totalRevenue'].toInt()}",
+                icon: Icons.payments_outlined,
+                cs: cs,
+                isDesktop: isDesktop,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _statCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop)),
+            Expanded(
+              child: _statCard(
+                title: "CUSTOMERS",
+                value: stats['activeCustomers'].toString(),
+                icon: Icons.people_outline,
+                cs: cs,
+                isDesktop: isDesktop,
+              ),
+            ),
           ],
         );
       },
     );
   }
 
-  Widget _statCard({required String title, required String value, required IconData icon, required ColorScheme cs, required bool isDesktop}) {
+  Widget _statCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required ColorScheme cs,
+    required bool isDesktop,
+  }) {
     return Container(
       padding: EdgeInsets.all(isDesktop ? 24 : 12),
       decoration: BoxDecoration(
@@ -436,53 +510,59 @@ class _MainContent extends StatelessWidget {
           Flex(
             direction: isDesktop ? Axis.horizontal : Axis.vertical,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: isDesktop ? CrossAxisAlignment.start : CrossAxisAlignment.start,
+            crossAxisAlignment: isDesktop
+                ? CrossAxisAlignment.start
+                : CrossAxisAlignment.start,
             children: [
-              isDesktop ? Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Sales Performance",
-                      style: GoogleFonts.notoSerif(
-                        color: cs.secondary,
-                        fontSize: isDesktop ? 20 : 18,
-                        fontWeight: FontWeight.bold,
+              isDesktop
+                  ? Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Sales Performance",
+                            style: GoogleFonts.notoSerif(
+                              color: cs.secondary,
+                              fontSize: isDesktop ? 20 : 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            "Revenue trend analysis",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.5),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Sales Performance",
+                          style: GoogleFonts.notoSerif(
+                            color: cs.secondary,
+                            fontSize: isDesktop ? 20 : 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "Revenue trend analysis",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.secondary.withValues(alpha: 0.5),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      "Revenue trend analysis",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: cs.secondary.withValues(alpha: 0.5),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ) : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Sales Performance",
-                    style: GoogleFonts.notoSerif(
-                      color: cs.secondary,
-                      fontSize: isDesktop ? 20 : 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Revenue trend analysis",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
               if (!isDesktop) const SizedBox(height: 16),
               // Range Selector & Date Pickers
               Column(
-                crossAxisAlignment: isDesktop ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                crossAxisAlignment: isDesktop
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
                 children: [
                   Container(
                     decoration: BoxDecoration(
@@ -490,14 +570,19 @@ class _MainContent extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
-                      children: SalesRange.values.map((range) {
+                        children: SalesRange.values.map((range) {
                         final isSelected = selectedRange == range;
                         return GestureDetector(
                           onTap: () => onRangeChanged(range),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSelected ? cs.primary : Colors.transparent,
+                              color: isSelected
+                                  ? cs.primary
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -514,7 +599,8 @@ class _MainContent extends StatelessWidget {
                       }).toList(),
                     ),
                   ),
-                  if (selectedRange == SalesRange.monthly || selectedRange == SalesRange.yearly)
+                  if (selectedRange == SalesRange.monthly ||
+                      selectedRange == SalesRange.yearly)
                     Padding(
                       padding: const EdgeInsets.only(top: 12.0),
                       child: Row(
@@ -524,22 +610,55 @@ class _MainContent extends StatelessWidget {
                             DropdownButton<int>(
                               value: selectedMonth,
                               underline: const SizedBox(),
-                              style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                              onChanged: (m) => m != null ? onMonthChanged(m) : null,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: cs.primary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              onChanged: (m) =>
+                                  m != null ? onMonthChanged(m) : null,
                               items: List.generate(12, (i) => i + 1).map((m) {
-                                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                return DropdownMenuItem(value: m, child: Text(months[m - 1].toUpperCase()));
+                                const months = [
+                                  'Jan',
+                                  'Feb',
+                                  'Mar',
+                                  'Apr',
+                                  'May',
+                                  'Jun',
+                                  'Jul',
+                                  'Aug',
+                                  'Sep',
+                                  'Oct',
+                                  'Nov',
+                                  'Dec',
+                                ];
+                                return DropdownMenuItem(
+                                  value: m,
+                                  child: Text(months[m - 1].toUpperCase()),
+                                );
                               }).toList(),
                             ),
                           const SizedBox(width: 8),
                           DropdownButton<int>(
                             value: selectedYear,
                             underline: const SizedBox(),
-                            style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                            onChanged: (y) => y != null ? onYearChanged(y) : null,
-                            items: List.generate(5, (i) => DateTime.now().year - i).map((y) {
-                              return DropdownMenuItem(value: y, child: Text("$y"));
-                            }).toList(),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            onChanged: (y) =>
+                                y != null ? onYearChanged(y) : null,
+                            items:
+                                List.generate(
+                                  5,
+                                  (i) => DateTime.now().year - i,
+                                ).map((y) {
+                                  return DropdownMenuItem(
+                                    value: y,
+                                    child: Text("$y"),
+                                  );
+                                }).toList(),
                           ),
                         ],
                       ),
@@ -559,9 +678,11 @@ class _MainContent extends StatelessWidget {
               ),
               builder: (context, snapshot) {
                 final data = snapshot.data ?? {};
-                
+
                 double maxRevenue = 1000;
-                for (var v in data.values) { if (v > maxRevenue) maxRevenue = v; }
+                for (var v in data.values) {
+                  if (v > maxRevenue) maxRevenue = v;
+                }
                 maxRevenue = (maxRevenue / 100).ceil() * 100.0 + 100.0;
 
                 final List<FlSpot> spots = [];
@@ -583,9 +704,15 @@ class _MainContent extends StatelessWidget {
                     ),
                     titlesData: FlTitlesData(
                       show: true,
-                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
@@ -596,13 +723,38 @@ class _MainContent extends StatelessWidget {
                             if (selectedRange == SalesRange.today) {
                               if (value % 4 == 0) text = "${value.toInt()}h";
                             } else if (selectedRange == SalesRange.weekly) {
-                              const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-                              if (value >= 0 && value < 7) text = days[value.toInt()];
+                              const days = [
+                                'MON',
+                                'TUE',
+                                'WED',
+                                'THU',
+                                'FRI',
+                                'SAT',
+                                'SUN',
+                              ];
+                              if (value >= 0 && value < 7) {
+                                text = days[value.toInt()];
+                              }
                             } else if (selectedRange == SalesRange.monthly) {
                               if (value % 5 == 0) text = "D${value.toInt()}";
                             } else if (selectedRange == SalesRange.yearly) {
-                              const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                              if (value >= 1 && value <= 12) text = months[value.toInt() - 1];
+                              const months = [
+                                'JAN',
+                                'FEB',
+                                'MAR',
+                                'APR',
+                                'MAY',
+                                'JUN',
+                                'JUL',
+                                'AUG',
+                                'SEP',
+                                'OCT',
+                                'NOV',
+                                'DEC',
+                              ];
+                              if (value >= 1 && value <= 12) {
+                                text = months[value.toInt() - 1];
+                              }
                             }
 
                             if (text.isEmpty) return const SizedBox();
@@ -631,18 +783,20 @@ class _MainContent extends StatelessWidget {
                       LineChartBarData(
                         spots: spots,
                         isCurved: true,
-                        gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
+                        gradient: LinearGradient(
+                          colors: [cs.primary, cs.primaryContainer],
+                        ),
                         barWidth: 3,
                         isStrokeCapRound: true,
                         dotData: FlDotData(
                           show: selectedRange != SalesRange.monthly,
                           getDotPainter: (spot, percent, barData, index) =>
                               FlDotCirclePainter(
-                            radius: 3,
-                            color: cs.surfaceContainer,
-                            strokeWidth: 2,
-                            strokeColor: cs.primary,
-                          ),
+                                radius: 3,
+                                color: cs.surfaceContainer,
+                                strokeWidth: 2,
+                                strokeColor: cs.primary,
+                              ),
                         ),
                         belowBarData: BarAreaData(
                           show: true,
@@ -672,10 +826,7 @@ class _OrderCardReactive extends StatelessWidget {
   final Map<String, dynamic> data;
   final ColorScheme cs;
 
-  const _OrderCardReactive({
-    required this.data,
-    required this.cs,
-  });
+  const _OrderCardReactive({required this.data, required this.cs});
 
   @override
   Widget build(BuildContext context) {
@@ -687,7 +838,7 @@ class _OrderCardReactive extends StatelessWidget {
       builder: (context, snapshot) {
         final menu = snapshot.data?[0] ?? [];
         final items = snapshot.data?[1] ?? [];
-        
+
         final status = data['status'] ?? 'PENDING';
         Color statusColor = cs.primary;
         if (status == 'COMPLETED') {
@@ -699,7 +850,9 @@ class _OrderCardReactive extends StatelessWidget {
           if (items.isNotEmpty) {
             final String firstName = items[0]['cakeName'] ?? '';
             final matchingCake = menu.firstWhere(
-              (c) => (c['name'] as String).toLowerCase() == firstName.toLowerCase(),
+              (c) =>
+                  (c['name'] as String).toLowerCase() ==
+                  firstName.toLowerCase(),
               orElse: () => <String, dynamic>{},
             );
             imageUrl = matchingCake['image'] ?? '';
@@ -712,9 +865,11 @@ class _OrderCardReactive extends StatelessWidget {
           statusColor: statusColor,
           statusBg: statusColor.withValues(alpha: 0.1),
           title: data['customerName'] ?? 'Boutique Order',
-          customer: data['totalPrice'] != null 
-              ? SupabaseService.formatPrice(data['totalPrice']) 
-              : (items.isNotEmpty ? SupabaseService.formatPrice(items[0]['price']) : '---'),
+          customer: data['totalPrice'] != null
+              ? SupabaseService.formatPrice(data['totalPrice'])
+              : (items.isNotEmpty
+                    ? SupabaseService.formatPrice(items[0]['price'])
+                    : '---'),
           imageUrl: SupabaseService.getPublicUrl(imageUrl),
         );
       },
@@ -749,9 +904,7 @@ class _OrderCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(
-              orderId: id,
-            ),
+            builder: (context) => OrderDetailsPage(orderId: id),
           ),
         );
       },
@@ -814,7 +967,10 @@ class _OrderCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: statusBg.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
@@ -842,7 +998,11 @@ class _OrderCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  _CompactInfoRow(icon: Icons.cake_outlined, text: title, color: cs.secondary),
+                  _CompactInfoRow(
+                    icon: Icons.cake_outlined,
+                    text: title,
+                    color: cs.secondary,
+                  ),
                   const SizedBox(height: 2),
                   _CompactInfoRow(
                     icon: Icons.schedule_outlined,
@@ -864,7 +1024,11 @@ class _CompactInfoRow extends StatelessWidget {
   final String text;
   final Color color;
 
-  const _CompactInfoRow({required this.icon, required this.text, required this.color});
+  const _CompactInfoRow({
+    required this.icon,
+    required this.text,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {

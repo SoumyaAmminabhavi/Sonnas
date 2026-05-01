@@ -25,11 +25,20 @@ class _AddStaffPageState extends State<AddStaffPage> {
       TextEditingController(text: "08:00 AM");
   final TextEditingController _endTimeController =
       TextEditingController(text: "04:00 PM");
+  final TextEditingController _dobController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _emergencyNameController = TextEditingController();
+  final TextEditingController _emergencyPhoneController = TextEditingController();
+  String? _selectedBloodGroup;
 
   @override
   void dispose() {
     _startTimeController.dispose();
     _endTimeController.dispose();
+    _dobController.dispose();
+    _addressController.dispose();
+    _emergencyNameController.dispose();
+    _emergencyPhoneController.dispose();
     super.dispose();
   }
 
@@ -133,6 +142,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
                              const SizedBox(height: 40),
                           ],
                           _buildBasicInfoSection(cs),
+                          const SizedBox(height: 40),
+                          _buildAdditionalInfoSection(cs),
                           const SizedBox(height: 40),
                           _buildRoleSelectionSection(cs),
                           const SizedBox(height: 40),
@@ -673,6 +684,173 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
+  Widget _buildAdditionalInfoSection(ColorScheme cs) {
+    bool isMobile = MediaQuery.of(context).size.width < 600;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(cs, "RESIDENTIAL & VITAL INFO"),
+        const SizedBox(height: 24),
+        
+        _buildGhostInput(
+          cs,
+          label: "HOME ADDRESS",
+          placeholder: "House No, Street, Area, City, Pincode",
+          controller: _addressController,
+          maxLines: 2,
+        ),
+        const SizedBox(height: 24),
+
+        if (isMobile) ...[
+          _buildGhostInput(
+            cs,
+            label: "DATE OF BIRTH",
+            placeholder: "Select Date",
+            controller: _dobController,
+            isDate: true,
+          ),
+          const SizedBox(height: 24),
+          _buildBloodGroupDropdown(cs),
+        ] else
+          Row(
+            children: [
+              Expanded(
+                child: _buildGhostInput(
+                  cs,
+                  label: "DATE OF BIRTH",
+                  placeholder: "Select Date",
+                  controller: _dobController,
+                  isDate: true,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(child: _buildBloodGroupDropdown(cs)),
+            ],
+          ),
+        
+        const SizedBox(height: 32),
+        _buildSectionTitle(cs, "EMERGENCY CONTACT"),
+        const SizedBox(height: 24),
+        
+        if (isMobile) ...[
+          _buildGhostInput(
+            cs,
+            label: "EMERGENCY CONTACT NAME",
+            placeholder: "Name of relative/friend",
+            controller: _emergencyNameController,
+          ),
+          const SizedBox(height: 24),
+          _buildGhostInput(
+            cs,
+            label: "EMERGENCY CONTACT PHONE",
+            placeholder: "+91 00000 00000",
+            controller: _emergencyPhoneController,
+            keyboardType: TextInputType.phone,
+          ),
+        ] else
+          Row(
+            children: [
+              Expanded(
+                child: _buildGhostInput(
+                  cs,
+                  label: "EMERGENCY CONTACT NAME",
+                  placeholder: "Name of relative/friend",
+                  controller: _emergencyNameController,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _buildGhostInput(
+                  cs,
+                  label: "EMERGENCY CONTACT PHONE",
+                  placeholder: "+91 00000 00000",
+                  controller: _emergencyPhoneController,
+                  keyboardType: TextInputType.phone,
+                ),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(ColorScheme cs, String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            color: cs.secondary,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: 40,
+          height: 2,
+          color: cs.primary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBloodGroupDropdown(ColorScheme cs) {
+    final groups = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "BLOOD GROUP (OPTIONAL)",
+          style: GoogleFonts.plusJakartaSans(
+            color: cs.secondary.withValues(alpha: 0.7),
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedBloodGroup,
+          hint: Text(
+            "Select Group",
+            style: GoogleFonts.plusJakartaSans(
+              color: cs.secondary.withValues(alpha: 0.3),
+              fontSize: 14,
+            ),
+          ),
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: cs.primaryContainer, width: 0.5),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: cs.primary, width: 2),
+            ),
+          ),
+          icon: Icon(Icons.keyboard_arrow_down, color: cs.secondary, size: 20),
+          dropdownColor: cs.surface,
+          items: groups.map((g) {
+            return DropdownMenuItem(
+              value: g,
+              child: Text(
+                g,
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) => setState(() => _selectedBloodGroup = val),
+        ),
+      ],
+    );
+  }
+
   Widget _buildGhostInput(
     ColorScheme cs, {
     String? label,
@@ -681,6 +859,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
     String? initialValue,
     bool obscureText = false,
     bool isTime = false,
+    bool isDate = false,
+    int maxLines = 1,
     TextInputType? keyboardType,
   }) {
     return Column(
@@ -702,7 +882,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
           initialValue: controller == null ? initialValue : null,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          readOnly: isTime,
+          readOnly: isTime || isDate,
+          maxLines: maxLines,
           style: GoogleFonts.plusJakartaSans(
             color: cs.secondary,
             fontWeight: FontWeight.w500,
@@ -719,73 +900,31 @@ class _AddStaffPageState extends State<AddStaffPage> {
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: cs.primary, width: 2),
             ),
-            suffixIcon: isTime
+            suffixIcon: (isTime || isDate)
                 ? IconButton(
-                    icon: const Icon(Icons.access_time, size: 18),
+                    icon: Icon(isTime ? Icons.access_time : Icons.calendar_today, size: 18),
                     color: cs.secondary,
                     onPressed: () async {
-                      final time = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              timePickerTheme: TimePickerThemeData(
-                                backgroundColor: cs.surface,
-                                hourMinuteShape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                      color: cs.primary.withValues(alpha: 0.2)),
-                                ),
-                                hourMinuteColor: cs.surfaceContainer,
-                                hourMinuteTextColor: cs.secondary,
-                                dayPeriodColor: WidgetStateColor.resolveWith((states) =>
-                                    states.contains(WidgetState.selected)
-                                        ? cs.primary
-                                        : Colors.transparent),
-                                dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
-                                    states.contains(WidgetState.selected)
-                                        ? cs.onPrimary
-                                        : cs.secondary),
-                                dayPeriodShape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(
-                                      color: cs.primary.withValues(alpha: 0.5)),
-                                ),
-                                dialBackgroundColor: cs.surfaceContainer,
-                                dialHandColor: cs.primary,
-                                dialTextColor: cs.secondary,
-                                entryModeIconColor: cs.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
-                                helpTextStyle: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.secondary,
-                                  fontSize: 12,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              textButtonTheme: TextButtonThemeData(
-                                style: TextButton.styleFrom(
-                                  textStyle: GoogleFonts.plusJakartaSans(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  foregroundColor: cs.primary,
-                                ),
-                              ),
-                              colorScheme: cs.copyWith(
-                                surface: cs.surface,
-                                onSurface: cs.secondary,
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
-                      if (!mounted) return;
-                      if (time != null && controller != null) {
-                        controller.text = time.format(context);
+                      if (isTime) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (!mounted) return;
+                        if (time != null && controller != null) {
+                          controller.text = time.format(context);
+                        }
+                      } else if (isDate) {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now().subtract(const Duration(days: 365 * 20)),
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime.now(),
+                        );
+                        if (!mounted) return;
+                        if (date != null && controller != null) {
+                          controller.text = "${date.day}/${date.month}/${date.year}";
+                        }
                       }
                     },
                   )

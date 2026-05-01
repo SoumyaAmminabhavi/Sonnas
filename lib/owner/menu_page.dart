@@ -17,13 +17,6 @@ class MenuPage extends StatefulWidget {
 
 class _MenuPageState extends State<MenuPage> {
   Set<String> _selectedCategories = {'All'};
-  final List<String> _categories = [
-    'All',
-    'Chocolate Cakes',
-    'Vanilla Cakes',
-    'Tea Cakes',
-    'Seasonal Cakes',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +27,10 @@ class _MenuPageState extends State<MenuPage> {
         final crossAxisCount = constraints.maxWidth > 1400
             ? 4
             : constraints.maxWidth > 900
-                ? 3
-                : constraints.maxWidth > 600
-                    ? 2
-                    : 1;
+            ? 3
+            : constraints.maxWidth > 600
+            ? 2
+            : 1;
 
         return Scaffold(
           backgroundColor: cs.surface,
@@ -49,9 +42,8 @@ class _MenuPageState extends State<MenuPage> {
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AddMenuPage(
-                    onTabChanged: widget.onTabChanged,
-                  ),
+                  builder: (_) =>
+                      AddMenuPage(onTabChanged: widget.onTabChanged),
                 ),
               );
             },
@@ -60,24 +52,28 @@ class _MenuPageState extends State<MenuPage> {
           body: StreamBuilder<List<Map<String, dynamic>>>(
             stream: SupabaseService.getMenuStream(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-
               return FutureBuilder<List<Map<String, dynamic>>>(
-                future: SupabaseService.fetchMenu(), // To get CakeOptions
+                future: SupabaseService.fetchMenu(),
                 builder: (context, menuSnapshot) {
+                  if (!menuSnapshot.hasData && snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (menuSnapshot.hasError) {
+                    return Center(child: Text('Error: ${menuSnapshot.error}'));
+                  }
+
                   final List<Map<String, dynamic>> rawCakes = menuSnapshot.data ?? snapshot.data ?? [];
               final List<_MenuItem> allItems = rawCakes.map((data) {
                 final options = data['CakeOption'] as List? ?? [];
-                final basePrice = options.isNotEmpty 
-                    ? SupabaseService.formatPrice(options[0]['price']) 
-                    : (data['price'] != null ? SupabaseService.formatPrice(data['price']) : "Price on Request");
-                final baseServes = options.isNotEmpty ? "Serves ${options[0]['serves']}" : "";
+                final basePrice = options.isNotEmpty
+                    ? SupabaseService.formatPrice(options[0]['price'])
+                    : (data['price'] != null
+                          ? SupabaseService.formatPrice(data['price'])
+                          : "Price on Request");
+                final baseServes = options.isNotEmpty
+                    ? "Serves ${options[0]['serves']}"
+                    : "";
 
                 return _MenuItem(
                   id: data['id'],
@@ -91,21 +87,24 @@ class _MenuPageState extends State<MenuPage> {
                 );
               }).toList();
 
+              // Dynamic Categories
+              final Set<String> uniqueCategories = {'All'};
+              for (var item in allItems) {
+                if (item.category.isNotEmpty) {
+                  uniqueCategories.add(item.category);
+                }
+              }
+              final List<String> categories = uniqueCategories.toList()
+                ..sort((a, b) {
+                  if (a == 'All') return -1;
+                  if (b == 'All') return 1;
+                  return a.compareTo(b);
+                });
+
               // Filtering logic
               final List<_MenuItem> items = allItems.where((item) {
                 if (_selectedCategories.contains('All')) return true;
-                
-                return _selectedCategories.any((filter) {
-                  final cat = item.category.toLowerCase();
-                  final f = filter.toLowerCase();
-                  
-                  if (f.contains('chocolate')) return cat.contains('chocolate');
-                  if (f.contains('vanilla')) return cat.contains('vanilla');
-                  if (f.contains('tea')) return cat.contains('tea');
-                  if (f.contains('seasonal')) return cat.contains('seasonal');
-                  
-                  return cat.contains(f);
-                });
+                return _selectedCategories.contains(item.category);
               }).toList();
 
               return CustomScrollView(
@@ -113,7 +112,11 @@ class _MenuPageState extends State<MenuPage> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                          isDesktop ? 48 : 24, 20, isDesktop ? 48 : 24, 0),
+                        isDesktop ? 48 : 24,
+                        20,
+                        isDesktop ? 48 : 24,
+                        0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -145,13 +148,15 @@ class _MenuPageState extends State<MenuPage> {
                             ),
                           ),
                           const SizedBox(height: 24),
-                          
+
                           // Category Filter Chips
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: _categories.map((category) {
-                                final isSelected = _selectedCategories.contains(category);
+                              children: categories.map((category) {
+                                final isSelected = _selectedCategories.contains(
+                                  category,
+                                );
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 8.0),
                                   child: FilterChip(
@@ -160,9 +165,13 @@ class _MenuPageState extends State<MenuPage> {
                                       category.toUpperCase(),
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 10,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w600,
                                         letterSpacing: 1.0,
-                                        color: isSelected ? Colors.white : cs.secondary,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : cs.secondary,
                                       ),
                                     ),
                                     onSelected: (val) {
@@ -174,7 +183,9 @@ class _MenuPageState extends State<MenuPage> {
                                           if (val) {
                                             _selectedCategories.add(category);
                                           } else {
-                                            _selectedCategories.remove(category);
+                                            _selectedCategories.remove(
+                                              category,
+                                            );
                                           }
                                           if (_selectedCategories.isEmpty) {
                                             _selectedCategories = {'All'};
@@ -188,10 +199,17 @@ class _MenuPageState extends State<MenuPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(30),
                                       side: BorderSide(
-                                        color: isSelected ? cs.primary : cs.secondary.withValues(alpha: 0.1),
+                                        color: isSelected
+                                            ? cs.primary
+                                            : cs.secondary.withValues(
+                                                alpha: 0.1,
+                                              ),
                                       ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
                                   ),
                                 );
                               }).toList(),
@@ -206,35 +224,36 @@ class _MenuPageState extends State<MenuPage> {
 
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
-                        isDesktop ? 48 : 16, 16, isDesktop ? 48 : 16, 100),
+                      isDesktop ? 48 : 16,
+                      16,
+                      isDesktop ? 48 : 16,
+                      100,
+                    ),
                     sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final item = items[index];
-                          return _MenuItemCard(
-                            item: item,
-                            onTabChanged: widget.onTabChanged,
-                          );
-                        },
-                        childCount: items.length,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final item = items[index];
+                        return _MenuItemCard(
+                          item: item,
+                          onTabChanged: widget.onTabChanged,
+                        );
+                      }, childCount: items.length),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
                         crossAxisSpacing: 12,
                         mainAxisSpacing: 12,
-                        mainAxisExtent: 130, 
+                        mainAxisExtent: 130,
                       ),
                     ),
                   ),
                 ],
-                );
-              },
-            );
-          },
-        ),
-      );
-    },
-  );
+              );
+            },
+          );
+        },
+      ),
+    );
+  },
+);
 }
 }
 
@@ -273,10 +292,8 @@ class _MenuItemCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MenuDetailsPage(
-              cakeId: item.id,
-              onTabChanged: onTabChanged,
-            ),
+            builder: (_) =>
+                MenuDetailsPage(cakeId: item.id, onTabChanged: onTabChanged),
           ),
         );
       },
@@ -296,7 +313,9 @@ class _MenuItemCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
+              ),
               child: SizedBox(
                 width: 110,
                 height: double.infinity,
@@ -305,7 +324,10 @@ class _MenuItemCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: cs.surface,
-                    child: Icon(Icons.cake, color: cs.primary.withValues(alpha: 0.2)),
+                    child: Icon(
+                      Icons.cake,
+                      color: cs.primary.withValues(alpha: 0.2),
+                    ),
                   ),
                 ),
               ),
@@ -321,7 +343,10 @@ class _MenuItemCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: cs.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
@@ -370,7 +395,11 @@ class _MenuItemCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.people_outline, size: 10, color: cs.secondary.withValues(alpha: 0.3)),
+                        Icon(
+                          Icons.people_outline,
+                          size: 10,
+                          color: cs.secondary.withValues(alpha: 0.3),
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           item.serves,
@@ -390,13 +419,12 @@ class _MenuItemCard extends StatelessWidget {
       ),
     );
   }
-
-
 }
 
 class AddMenuPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
-  const AddMenuPage({super.key, this.onTabChanged});
+  final Map<String, dynamic>? cakeData;
+  const AddMenuPage({super.key, this.onTabChanged, this.cakeData});
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +444,9 @@ class AddMenuPage extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              isDesktop ? "Sonna's Patisserie & Cafe" : "New Menu Item",
+              isDesktop
+                  ? "Sonna's Patisserie & Cafe"
+                  : (cakeData != null ? "Edit Item" : "New Menu Item"),
               style: GoogleFonts.notoSerif(
                 color: cs.primary,
                 fontStyle: FontStyle.italic,
@@ -437,7 +467,10 @@ class AddMenuPage extends StatelessWidget {
                   },
                 ),
               Expanded(
-                child: _AddMenuContent(isDesktop: isDesktop),
+                child: _AddMenuContent(
+                  isDesktop: isDesktop,
+                  initialData: cakeData,
+                ),
               ),
             ],
           ),
@@ -452,7 +485,8 @@ class AddMenuPage extends StatelessWidget {
 // ─────────────────────────────────────────────
 class _AddMenuContent extends StatefulWidget {
   final bool isDesktop;
-  const _AddMenuContent({required this.isDesktop});
+  final Map<String, dynamic>? initialData;
+  const _AddMenuContent({required this.isDesktop, this.initialData});
 
   @override
   State<_AddMenuContent> createState() => _AddMenuContentState();
@@ -460,6 +494,47 @@ class _AddMenuContent extends StatefulWidget {
 
 class _AddMenuContentState extends State<_AddMenuContent> {
   final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
+  String? _selectedCategory;
+  late TextEditingController _priceController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _weightController;
+  late TextEditingController _servesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialData?['name']);
+    _selectedCategory = widget.initialData?['category'];
+
+    final options = widget.initialData?['CakeOption'] as List? ?? [];
+    final initialPrice = options.isNotEmpty
+        ? options[0]['price'].toString()
+        : widget.initialData?['price']?.toString() ?? '';
+    final initialWeight = options.isNotEmpty
+        ? options[0]['weight'].toString()
+        : '';
+    final initialServes = options.isNotEmpty
+        ? options[0]['serves'].toString()
+        : '';
+
+    _priceController = TextEditingController(text: initialPrice);
+    _descriptionController = TextEditingController(
+      text: widget.initialData?['description'],
+    );
+    _weightController = TextEditingController(text: initialWeight);
+    _servesController = TextEditingController(text: initialServes);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _descriptionController.dispose();
+    _weightController.dispose();
+    _servesController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -487,7 +562,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Add New Cake",
+                  widget.initialData != null ? "Edit Creation" : "Add New Cake",
                   style: GoogleFonts.notoSerif(
                     color: cs.secondary,
                     fontSize: widget.isDesktop ? 48 : 32,
@@ -499,10 +574,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
           ],
         ),
         const SizedBox(height: 24),
-        Container(
-          height: 1,
-          color: cs.secondary.withValues(alpha: 0.3),
-        ),
+        Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
         const SizedBox(height: 48),
 
         Form(
@@ -518,83 +590,59 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                   const SizedBox(height: 16),
                   if (isTwoCol)
                     Row(
-                      children: const [
-                        Expanded(
-                          child: _InputField(
-                            label: "Category",
-                            hint: "e.g. Chocolate Based",
-                            icon: Icons.category,
-                          ),
-                        ),
-                        SizedBox(width: 24),
-                        Expanded(
-                          child: _InputField(
-                            label: "Category Subtitle",
-                            hint: "e.g. Indulgent artisan chocolate",
-                            icon: Icons.subtitles,
-                          ),
-                        ),
+                      children: [
+                        Expanded(child: _buildCategoryDropdown(cs)),
+                        const SizedBox(width: 24),
+                        const Spacer(),
                       ],
                     )
-                  else ...const [
-                    _InputField(
-                      label: "Category",
-                      hint: "e.g. Chocolate Based",
-                      icon: Icons.category,
-                    ),
-                    SizedBox(height: 16),
-                    _InputField(
-                      label: "Category Subtitle",
-                      hint: "e.g. Indulgent artisan chocolate",
-                      icon: Icons.subtitles,
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                  const _InputField(
-                    label: "Item Name",
-                    hint: "e.g. SONNA'S CLASSIC CHOCOLATE",
-                    icon: Icons.cake,
-                  ),
+                  else
+                    _buildCategoryDropdown(cs),
                   const SizedBox(height: 24),
                   if (isTwoCol)
                     Row(
-                      children: const [
+                      children: [
                         Expanded(
                           child: _InputField(
-                            label: "Item Flavors",
-                            hint: "e.g. Chocolate cake",
-                            icon: Icons.auto_awesome,
+                            label: "Item Name",
+                            hint: "e.g. SONNA'S CLASSIC CHOCOLATE",
+                            icon: Icons.cake,
+                            controller: _nameController,
                           ),
                         ),
-                        SizedBox(width: 24),
+                        const SizedBox(width: 24),
                         Expanded(
                           child: _InputField(
                             label: "Price",
                             hint: "e.g. 675/-",
                             icon: Icons.currency_rupee,
+                            controller: _priceController,
                           ),
                         ),
                       ],
                     )
-                  else ...const [
+                  else ...[
                     _InputField(
-                      label: "Item Flavors",
-                      hint: "e.g. Chocolate cake",
-                      icon: Icons.auto_awesome,
+                      label: "Item Name",
+                      hint: "e.g. SONNA'S CLASSIC CHOCOLATE",
+                      icon: Icons.cake,
+                      controller: _nameController,
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     _InputField(
                       label: "Price",
                       hint: "e.g. 675/-",
                       icon: Icons.currency_rupee,
+                      controller: _priceController,
                     ),
                   ],
                   const SizedBox(height: 24),
-                  const _InputField(
+                  _InputField(
                     label: "Item Description",
                     hint: "e.g. Chocolate Whipped Ganache",
                     icon: Icons.description,
                     maxLines: 3,
+                    controller: _descriptionController,
                   ),
                   const SizedBox(height: 48),
 
@@ -602,35 +650,39 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                   const SizedBox(height: 16),
                   if (isTwoCol)
                     Row(
-                      children: const [
+                      children: [
                         Expanded(
                           child: _InputField(
                             label: "Weight",
                             hint: "e.g. 600 grams",
                             icon: Icons.scale,
+                            controller: _weightController,
                           ),
                         ),
-                        SizedBox(width: 24),
+                        const SizedBox(width: 24),
                         Expanded(
                           child: _InputField(
                             label: "Serves",
                             hint: "e.g. Serves 4-6",
                             icon: Icons.people,
+                            controller: _servesController,
                           ),
                         ),
                       ],
                     )
-                  else ...const [
+                  else ...[
                     _InputField(
                       label: "Weight",
                       hint: "e.g. 600 grams",
                       icon: Icons.scale,
+                      controller: _weightController,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     _InputField(
                       label: "Serves",
                       hint: "e.g. Serves 4-6",
                       icon: Icons.people,
+                      controller: _servesController,
                     ),
                   ],
                   const SizedBox(height: 48),
@@ -638,22 +690,29 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text("Product added successfully!")),
+                          SnackBar(
+                            content: Text(
+                              widget.initialData != null
+                                  ? "Changes saved successfully!"
+                                  : "Product added successfully!",
+                            ),
+                          ),
                         );
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: cs.primary,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 20),
+                        padding: const EdgeInsets.symmetric(vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: Text(
-                        "ADD PRODUCT TO MENU",
+                        widget.initialData != null
+                            ? "SAVE CHANGES"
+                            : "ADD PRODUCT TO MENU",
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -670,11 +729,90 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       ],
     );
   }
+
+  Widget _buildCategoryDropdown(ColorScheme cs) {
+    final categories = [
+      'Chocolate Cakes',
+      'Fruit & Floral Cakes',
+      'Artisan Pastries',
+      'Cheesecakes',
+      'Cookies & Macarons',
+      'Savory Delights',
+      'Seasonal Specials',
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "CATEGORY",
+          style: GoogleFonts.plusJakartaSans(
+            color: cs.secondary.withValues(alpha: 0.8),
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            letterSpacing: 1.0,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: _selectedCategory,
+          hint: Text(
+            "Select Collection",
+            style: GoogleFonts.plusJakartaSans(
+              color: cs.secondary.withValues(alpha: 0.3),
+              fontSize: 14,
+            ),
+          ),
+          decoration: InputDecoration(
+            prefixIcon: Icon(
+              Icons.category,
+              color: cs.primary.withValues(alpha: 0.6),
+            ),
+            filled: true,
+            fillColor: cs.surfaceContainer,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: cs.secondary.withValues(alpha: 0.1),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: cs.secondary.withValues(alpha: 0.1),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: cs.primary),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 16,
+              horizontal: 12,
+            ),
+          ),
+          icon: Icon(Icons.keyboard_arrow_down, color: cs.secondary, size: 20),
+          dropdownColor: cs.surface,
+          items: categories.map((c) {
+            return DropdownMenuItem(
+              value: c,
+              child: Text(
+                c,
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (val) => setState(() => _selectedCategory = val),
+        ),
+      ],
+    );
+  }
 }
 
-// ─────────────────────────────────────────────
-//  Shared helpers
-// ─────────────────────────────────────────────
 class _SectionHeader extends StatelessWidget {
   final String title;
   const _SectionHeader(this.title);
@@ -698,12 +836,14 @@ class _InputField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final int maxLines;
+  final TextEditingController? controller;
 
   const _InputField({
     required this.label,
     required this.hint,
     required this.icon,
     this.maxLines = 1,
+    this.controller,
   });
 
   @override
@@ -723,6 +863,7 @@ class _InputField extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          controller: controller,
           maxLines: maxLines,
           style: GoogleFonts.plusJakartaSans(color: cs.secondary),
           decoration: InputDecoration(
@@ -737,13 +878,15 @@ class _InputField extends StatelessWidget {
             fillColor: cs.surfaceContainer,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: cs.secondary.withValues(alpha: 0.1)),
+              borderSide: BorderSide(
+                color: cs.secondary.withValues(alpha: 0.1),
+              ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  BorderSide(color: cs.secondary.withValues(alpha: 0.1)),
+              borderSide: BorderSide(
+                color: cs.secondary.withValues(alpha: 0.1),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

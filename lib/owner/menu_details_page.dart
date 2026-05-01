@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
+import 'menu_page.dart';
 
 class MenuDetailsPage extends StatelessWidget {
   final String cakeId;
@@ -70,7 +71,8 @@ class MenuDetailsPage extends StatelessWidget {
                     OwnerSidebar(
                       currentIndex: 3, // Active under Menu
                       onTap: (index) {
-                        Navigator.pop(context);
+                        if (!context.mounted) return;
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                         onTabChanged?.call(index);
                       },
                     ),
@@ -84,7 +86,7 @@ class MenuDetailsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 24),
-                              
+
                               // Poetic Header
                               Text(
                                 "ATELIER SPECIFICATION",
@@ -114,7 +116,9 @@ class MenuDetailsPage extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(24),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: cs.secondary.withValues(alpha: 0.1),
+                                      color: cs.secondary.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 30,
                                       offset: const Offset(0, 15),
                                     ),
@@ -125,10 +129,16 @@ class MenuDetailsPage extends StatelessWidget {
                                   child: Image.network(
                                     imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      color: cs.surfaceContainer,
-                                      child: Icon(Icons.restaurant, color: cs.primary, size: 48),
-                                    ),
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                              color: cs.surfaceContainer,
+                                              child: Icon(
+                                                Icons.restaurant,
+                                                color: cs.primary,
+                                                size: 48,
+                                              ),
+                                            ),
                                   ),
                                 ),
                               ),
@@ -146,7 +156,8 @@ class MenuDetailsPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                cake['description'] ?? 'No description provided.',
+                                cake['description'] ??
+                                    'No description provided.',
                                 style: GoogleFonts.notoSerif(
                                   fontSize: 16,
                                   height: 1.6,
@@ -186,8 +197,10 @@ class MenuDetailsPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              ...options.map((opt) => _OptionCard(opt: opt, cs: cs)),
-                              
+                              ...options.map(
+                                (opt) => _OptionCard(opt: opt, cs: cs),
+                              ),
+
                               if (options.isEmpty)
                                 Text(
                                   "No size configurations found for this item.",
@@ -207,11 +220,21 @@ class MenuDetailsPage extends StatelessWidget {
                 ],
               ),
               floatingActionButton: FloatingActionButton.extended(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddMenuPage(
+                        cakeData: cake,
+                        onTabChanged: onTabChanged,
+                      ),
+                    ),
+                  );
+                },
                 backgroundColor: cs.primary,
                 icon: const Icon(Icons.edit_outlined, color: Colors.white),
                 label: Text(
-                  "EDIT CREATION",
+                  "EDIT",
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,

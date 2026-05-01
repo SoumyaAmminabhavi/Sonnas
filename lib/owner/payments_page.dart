@@ -37,12 +37,11 @@ class _PaymentsPageState extends State<PaymentsPage>
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
         final pendingOrders = orders.where((o) => (o['status'] ?? 'PENDING') == 'PENDING').toList();
-        final completedToday = orders.where((o) {
+        final completedHistory = orders.where((o) {
           if ((o['status'] ?? 'PENDING') != 'COMPLETED') return false;
           final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
           if (date == null) return false;
-          final now = DateTime.now();
-          return date.year == now.year && date.month == now.month && date.day == now.day;
+          return date.isAfter(DateTime.now().subtract(const Duration(days: 7)));
         }).toList();
 
         double totalPending = 0;
@@ -84,14 +83,14 @@ class _PaymentsPageState extends State<PaymentsPage>
                           children: [
                             _buildTabs(context),
                             const SizedBox(height: 24),
-                            _buildPaymentList(context, pendingOrders, completedToday),
+                            _buildPaymentList(context, pendingOrders, completedHistory),
                           ],
                         ),
                       ),
                       const SizedBox(width: 48),
                       Expanded(
                         flex: 2,
-                        child: _buildHistorySection(context, isCompact: true, recentCompleted: completedToday),
+                        child: _buildHistorySection(context, isCompact: true, recentCompleted: completedHistory),
                       ),
                     ],
                   )
@@ -100,9 +99,9 @@ class _PaymentsPageState extends State<PaymentsPage>
                     children: [
                       _buildTabs(context),
                       const SizedBox(height: 24),
-                      _buildPaymentList(context, pendingOrders, completedToday),
+                      _buildPaymentList(context, pendingOrders, completedHistory),
                       const SizedBox(height: 48),
-                      _buildHistorySection(context, isCompact: false, recentCompleted: completedToday),
+                      _buildHistorySection(context, isCompact: false, recentCompleted: completedHistory),
                     ],
                   ),
               ],
@@ -257,7 +256,7 @@ class _PaymentsPageState extends State<PaymentsPage>
       ),
       tabs: const [
         Tab(text: "PENDING PAYMENTS"),
-        Tab(text: "COMPLETED TODAY"),
+        Tab(text: "RECENTLY COMPLETED"),
       ],
     );
   }
@@ -359,6 +358,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                         SnackBar(
                           content: Text("Payment for #${item['orderNumber']} marked as completed"),
                           backgroundColor: cs.primary,
+                          behavior: SnackBarBehavior.floating,
                         ),
                       );
                     }
@@ -440,7 +440,7 @@ class _PaymentsPageState extends State<PaymentsPage>
             ),
             child: Center(
               child: Text(
-                "No completed payments today.",
+                "No completed payments in the last 7 days.",
                 style: GoogleFonts.plusJakartaSans(
                   color: cs.secondary.withValues(alpha: 0.4),
                   fontSize: 12,

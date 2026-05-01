@@ -109,9 +109,7 @@ class _DrawerEntry extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             gradient: isSelected
-                ? LinearGradient(
-                    colors: [cs.primary, cs.primaryContainer],
-                  )
+                ? LinearGradient(colors: [cs.primary, cs.primaryContainer])
                 : null,
           ),
           child: Row(
@@ -138,4 +136,3 @@ class _DrawerEntry extends StatelessWidget {
     );
   }
 }
-
