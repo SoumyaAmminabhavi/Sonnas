@@ -770,16 +770,17 @@ async function handleCategorySelection(msg: IncomingMessage) {
     updateState(msg.from, "BROWSING_MENU"),
     sendInteractiveList(
       msg.from,
-    title,
-    `Here are our signature ${title.toLowerCase()} cakes:`,
-    "Select a Cake",
-    [
-      {
-        title: "Choose your favorite",
-        rows: filtered.map(cakeRow),
-      },
-    ]
-  );
+      title,
+      `Here are our signature ${title.toLowerCase()} cakes:`,
+      "Select a Cake",
+      [
+        {
+          title: "Choose your favorite",
+          rows: filtered.map(cakeRow),
+        },
+      ]
+    )
+  ]);
 }
 
 // ─── Handle cake selection ─────────────────────────────────────────────────
