@@ -86,12 +86,19 @@ interface AdminOrder {
   customImageUrl?: string | null;
   createdAt: string | Date;
   items: AdminOrderItem[];
+  isCustom?: boolean;
+  conversation?: {
+    messages?: any[] | null;
+    name?: string | null;
+    phone: string;
+  } | null;
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 function WhatsAppAdminContent() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [customFilter, setCustomFilter] = useState<boolean>(false);
   const [dateFilter, setDateFilter] = useState<string>("ALL");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [replyPhone, setReplyPhone] = useState<string | null>(null);
@@ -103,7 +110,8 @@ function WhatsAppAdminContent() {
   const statsQuery = api.whatsapp.getStats.useQuery();
   const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading } = 
     api.whatsapp.getOrders.useQuery({ 
-      status: statusFilter === "ALL" ? undefined : statusFilter 
+      status: statusFilter === "ALL" ? undefined : statusFilter,
+      customOnly: customFilter || undefined
     });
   
   const { data: conversations, refetch: refetchConvos } = 
@@ -189,6 +197,18 @@ function WhatsAppAdminContent() {
             onClick={() => setStatusFilter("ALL")}
           >
             All Orders
+          </button>
+          <button
+            style={{
+              ...styles.filterBtn,
+              ...(customFilter ? styles.filterBtnActive : {}),
+            }}
+            onClick={() => {
+              setCustomFilter(!customFilter);
+              setStatusFilter("ALL");
+            }}
+          >
+            🎨 Custom Requests
           </button>
           {STATUS_FLOW.map((s) => {
             const cfg = STATUS_CONFIG[s]!;
@@ -377,6 +397,18 @@ function WhatsAppAdminContent() {
                             >
                               {cfg.emoji} {cfg.label}
                             </span>
+                            {o.isCustom && (
+                              <span
+                                style={{
+                                  ...styles.statusPill,
+                                  color: "#D88C8C",
+                                  backgroundColor: "rgba(216,140,140,0.12)",
+                                  marginLeft: 8
+                                }}
+                              >
+                                ✨ Custom Design
+                              </span>
+                            )}
                           </div>
 
                           <h3 style={styles.cakeName}>

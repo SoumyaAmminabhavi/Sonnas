@@ -311,6 +311,7 @@ async function updateState(
   ).catch((e) => console.error("[WhatsApp] updateState DB write failed:", e));
 }
 
+
 // ─── Cart Helpers ─────────────────────────────────────────────────────────
 
 async function addToCart(phone: string, item: { cakeName: string; size: string; price: string; quantity: number }) {

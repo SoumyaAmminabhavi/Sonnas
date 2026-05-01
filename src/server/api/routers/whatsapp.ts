@@ -14,13 +14,18 @@ export const whatsappRouter = createTRPCRouter({
     .input(
       z.object({
         status: z.string().optional(),
+        customOnly: z.boolean().optional(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
+      const where: any = {};
+      if (input.status) where.status = input.status;
+      if (input.customOnly) where.isCustom = true;
+
       const orders = await ctx.db.whatsAppOrder.findMany({
-        where: input.status ? { status: input.status } : undefined,
+        where,
         orderBy: { createdAt: "desc" },
         include: { items: true },
         take: input.limit + 1,
