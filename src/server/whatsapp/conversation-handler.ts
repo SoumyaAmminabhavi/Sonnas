@@ -1188,6 +1188,29 @@ async function handleCustomRequest(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(mediaId);
     
+    // Create a custom order record immediately so it appears in the admin dashboard
+    const orderNumber = generateOrderNumber();
+    await db.whatsAppOrder.create({
+      data: {
+        orderNumber,
+        phone: msg.from,
+        customerName: convo.name ?? msg.name,
+        totalPrice: "Pending Quote",
+        notes: (convo.selectedNotes ?? "") + (caption ? `\nTheme: ${caption}` : ""),
+        status: "PENDING",
+        isCustom: true,
+        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
+        items: {
+          create: [{
+            cakeName: "CUSTOM_CAKE",
+            size: "Custom Design",
+            price: "Pending Quote",
+            quantity: 1
+          }]
+        }
+      }
+    });
+
     await Promise.all([
       updateState(msg.from, "IDLE", {
         customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
@@ -1237,6 +1260,29 @@ async function handleReferenceImageUpload(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(mediaId);
     
+    // Create a custom order record immediately
+    const orderNumber = generateOrderNumber();
+    await db.whatsAppOrder.create({
+      data: {
+        orderNumber,
+        phone: msg.from,
+        customerName: convo.name ?? msg.name,
+        totalPrice: "Pending Quote",
+        notes: (convo.selectedNotes ?? "") + (caption ? `\nTheme: ${caption}` : ""),
+        status: "PENDING",
+        isCustom: true,
+        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
+        items: {
+          create: [{
+            cakeName: "CUSTOM_CAKE",
+            size: "Custom Design",
+            price: "Pending Quote",
+            quantity: 1
+          }]
+        }
+      }
+    });
+
     await Promise.all([
       updateState(msg.from, "IDLE", {
         customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,

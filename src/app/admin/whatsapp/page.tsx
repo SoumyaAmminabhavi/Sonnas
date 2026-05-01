@@ -175,7 +175,10 @@ function WhatsAppAdminContent() {
               ...styles.filterBtn,
               ...(statusFilter === "ALL" ? styles.filterBtnActive : {}),
             }}
-            onClick={() => setStatusFilter("ALL")}
+            onClick={() => {
+              setStatusFilter("ALL");
+              setCustomFilter(false);
+            }}
           >
             All Orders
           </button>
@@ -200,7 +203,10 @@ function WhatsAppAdminContent() {
                   ...styles.filterBtn,
                   ...(statusFilter === s ? styles.filterBtnActive : {}),
                 }}
-                onClick={() => setStatusFilter(s)}
+                onClick={() => {
+                  setStatusFilter(s);
+                  setCustomFilter(false);
+                }}
               >
                 {cfg.emoji} {cfg.label}
               </button>
@@ -211,7 +217,10 @@ function WhatsAppAdminContent() {
               ...styles.filterBtn,
               ...(statusFilter === "CANCELLED" ? styles.filterBtnActive : {}),
             }}
-            onClick={() => setStatusFilter("CANCELLED")}
+            onClick={() => {
+              setStatusFilter("CANCELLED");
+              setCustomFilter(false);
+            }}
           >
             ❌ Cancelled
           </button>
