@@ -297,11 +297,15 @@ async function updateState(
   // Update in-memory cache immediately (instant read for next message)
   updateConvoCache(phone, { state, ...extra });
 
+  // We extract cart relation to avoid Prisma update errors
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { cart, ...otherExtra } = extra;
+
   // Persist to DB in the background — don't block the reply
   void withTimeout(
     db.whatsAppConversation.update({
       where: { phone },
-      data: { state, lastMessageAt: new Date(), ...extra },
+      data: { state, lastMessageAt: new Date(), ...otherExtra },
     }),
     DB_TIMEOUT
   ).catch((e) => console.error("[WhatsApp] updateState DB write failed:", e));
