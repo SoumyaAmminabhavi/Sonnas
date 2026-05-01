@@ -324,17 +324,30 @@ class _MainContent extends StatelessWidget {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              if (snapshot.hasError) {
+                return _DashboardErrorView(
+                  cs: cs,
+                  error: snapshot.error.toString(),
+                );
+              }
+
               final rawOrders = (snapshot.data ?? []).take(4).toList();
 
               if (rawOrders.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(48.0),
-                    child: Text(
-                      "No active orders found.",
-                      style: GoogleFonts.notoSerif(
-                        color: cs.secondary.withValues(alpha: 0.5),
-                      ),
+                    child: Column(
+                      children: [
+                        Icon(Icons.auto_awesome_outlined, color: cs.primary.withValues(alpha: 0.1), size: 48),
+                        const SizedBox(height: 16),
+                        Text(
+                          "No active creations.",
+                          style: GoogleFonts.notoSerif(
+                            color: cs.secondary.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
@@ -1048,6 +1061,50 @@ class _CompactInfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+class _DashboardErrorView extends StatelessWidget {
+  final ColorScheme cs;
+  final String error;
+
+  const _DashboardErrorView({
+    required this.cs,
+    required this.error,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cs.primary.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.cloud_off_rounded, color: cs.primary.withValues(alpha: 0.3), size: 32),
+          const SizedBox(height: 12),
+          Text(
+            "Connection Flickered",
+            style: GoogleFonts.notoSerif(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: cs.secondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Live updates are paused. Refresh to reconnect.",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: cs.secondary.withValues(alpha: 0.5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

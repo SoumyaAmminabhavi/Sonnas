@@ -11,7 +11,8 @@ class ManageOrdersPage extends StatefulWidget {
   State<ManageOrdersPage> createState() => _ManageOrdersPageState();
 }
 
-class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerProviderStateMixin {
+class _ManageOrdersPageState extends State<ManageOrdersPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -91,7 +92,13 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
                 ],
               ),
             ),
-            Divider(height: 1, thickness: 0.5, color: cs.secondary.withValues(alpha: 0.1), indent: 24, endIndent: 24),
+            Divider(
+              height: 1,
+              thickness: 0.5,
+              color: cs.secondary.withValues(alpha: 0.1),
+              indent: 24,
+              endIndent: 24,
+            ),
 
             // Orders List/Grid
             Expanded(
@@ -124,15 +131,49 @@ class _OrdersList extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return _ErrorView(
+            cs: cs,
+            error: snapshot.error.toString(),
+            onRetry: () {
+              // Trigger a rebuild by popping and pushing or just using a key?
+              // For now, providing a graceful UI is the priority.
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => ManageOrdersPage(onTabChanged: onTabChanged)),
+              );
+            },
+          );
         }
 
         final List<Map<String, dynamic>> rawOrders = snapshot.data ?? [];
-        
+
         if (rawOrders.isEmpty) {
-          return const Center(child: Text("No active orders found."));
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.auto_awesome_outlined, color: cs.primary.withValues(alpha: 0.1), size: 64),
+                const SizedBox(height: 24),
+                Text(
+                  "A Quiet Moment",
+                  style: GoogleFonts.notoSerif(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: cs.secondary.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "There are no active orders currently gracing the atelier.",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: cs.secondary.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          );
         }
 
         return FutureBuilder<List<Map<String, dynamic>>>(
@@ -194,13 +235,15 @@ class _OrderTile extends StatelessWidget {
       future: SupabaseService.fetchOrderItems(data['id']),
       builder: (context, itemSnapshot) {
         final items = itemSnapshot.data ?? [];
-        
+
         String imageUrl = data['customImageUrl'] ?? '';
         if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
           if (items.isNotEmpty) {
             final String firstName = items[0]['cakeName'] ?? '';
             final matchingCake = menu.firstWhere(
-              (c) => (c['name'] as String).toLowerCase() == firstName.toLowerCase(),
+              (c) =>
+                  (c['name'] as String).toLowerCase() ==
+                  firstName.toLowerCase(),
               orElse: () => <String, dynamic>{},
             );
             imageUrl = matchingCake['image'] ?? '';
@@ -210,9 +253,11 @@ class _OrderTile extends StatelessWidget {
         final String orderId = "#${data['orderNumber'] ?? '---'}";
         final String customerName = data['customerName'] ?? 'Boutique Order';
         final String status = data['status'] ?? 'PENDING';
-        final String price = data['totalPrice'] != null 
-            ? SupabaseService.formatPrice(data['totalPrice']) 
-            : (items.isNotEmpty ? SupabaseService.formatPrice(items[0]['price']) : '---');
+        final String price = data['totalPrice'] != null
+            ? SupabaseService.formatPrice(data['totalPrice'])
+            : (items.isNotEmpty
+                  ? SupabaseService.formatPrice(items[0]['price'])
+                  : '---');
         final String time = data['deliveryDate'] ?? 'Not scheduled';
 
         return InkWell(
@@ -260,13 +305,24 @@ class _OrderTile extends StatelessWidget {
                           loadingBuilder: (context, child, progress) {
                             if (progress == null) return child;
                             return Container(
-                              color: cs.secondaryContainer.withValues(alpha: 0.1),
-                              child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
+                              color: cs.secondaryContainer.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) => _ImagePlaceholder(cs: cs),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _ImagePlaceholder(cs: cs),
                         );
-                      }
+                      },
                     ),
                   ),
                 ),
@@ -292,7 +348,10 @@ class _OrderTile extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: statusBg,
                               borderRadius: BorderRadius.circular(6),
@@ -320,7 +379,11 @@ class _OrderTile extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.cake_outlined, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
+                          Icon(
+                            Icons.cake_outlined,
+                            size: 14,
+                            color: cs.secondary.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             price,
@@ -335,7 +398,11 @@ class _OrderTile extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: cs.secondary.withValues(alpha: 0.4),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             time,
@@ -349,12 +416,104 @@ class _OrderTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios, size: 12, color: cs.secondary.withValues(alpha: 0.2)),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
+                  color: cs.secondary.withValues(alpha: 0.2),
+                ),
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final ColorScheme cs;
+  final String error;
+  final VoidCallback onRetry;
+
+  const _ErrorView({
+    required this.cs,
+    required this.error,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.wifi_off_rounded,
+                color: cs.primary.withValues(alpha: 0.5),
+                size: 48,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              "Connection Interrupted",
+              style: GoogleFonts.notoSerif(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: cs.secondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "The atelier's live pulse was briefly interrupted. Let's try to reconnect your view.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: cs.secondary.withValues(alpha: 0.6),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                label: const Text("RECONNECT"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "DEBUG INFO: ${error.length > 60 ? '${error.substring(0, 60)}...' : error}",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                color: cs.secondary.withValues(alpha: 0.3),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

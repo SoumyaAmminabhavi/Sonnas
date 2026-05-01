@@ -59,8 +59,15 @@ class _MenuPageState extends State<MenuPage> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (menuSnapshot.hasError) {
-                    return Center(child: Text('Error: ${menuSnapshot.error}'));
+                  if (menuSnapshot.hasError || snapshot.hasError) {
+                    final error = (menuSnapshot.error ?? snapshot.error).toString();
+                    return _MenuErrorView(
+                      cs: cs,
+                      error: error,
+                      onRetry: () {
+                        setState(() {});
+                      },
+                    );
                   }
 
                   final List<Map<String, dynamic>> rawCakes = menuSnapshot.data ?? snapshot.data ?? [];
@@ -277,6 +284,73 @@ class _MenuItem {
     required this.weight,
     this.imageUrl = "",
   });
+}
+
+class _MenuErrorView extends StatelessWidget {
+  final ColorScheme cs;
+  final String error;
+  final VoidCallback onRetry;
+
+  const _MenuErrorView({
+    required this.cs,
+    required this.error,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off_rounded, color: cs.primary.withValues(alpha: 0.1), size: 64),
+            const SizedBox(height: 24),
+            Text(
+              "Collection Unavailable",
+              style: GoogleFonts.notoSerif(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: cs.secondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "We're having trouble reaching the atelier's menu. Let's try refreshing the collection.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: cs.secondary.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: 180,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(
+                  "REFRESH MENU",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _MenuItemCard extends StatelessWidget {
