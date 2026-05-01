@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 
@@ -161,7 +163,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             conversation?['name'] ??
                                             'Guest Customer',
                                         phone: order['phone'] ?? conversation?['phone'] ?? 'Contact hidden',
-                                        address: order['address'] ?? conversation?['address'] ?? 'No location provided',
+                                        address: (order['address'] ?? conversation?['address'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
                                       ),
                                       const SizedBox(height: 32),
@@ -524,13 +526,9 @@ class _CustomerInfoCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Expanded(
-                          child: Text(
-                            _isCoordinates(address) ? "$address (Open in Maps)" : address,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
-                              color: _isCoordinates(address) ? cs.primary : cs.secondary.withValues(alpha: 0.5),
-                              decoration: _isCoordinates(address) ? TextDecoration.underline : null,
-                            ),
+                          child: _GeocodedAddress(
+                            address: address,
+                            cs: cs,
                           ),
                         ),
                       ],
@@ -557,8 +555,83 @@ class _CustomerInfoCard extends StatelessWidget {
   }
 
   bool _isCoordinates(String s) {
-    // Basic regex for lat,long: -90 to 90 and -180 to 180
     return RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(s.trim());
+  }
+}
+
+class _GeocodedAddress extends StatelessWidget {
+  final String address;
+  final ColorScheme cs;
+
+  const _GeocodedAddress({required this.address, required this.cs});
+
+  Future<String> _fetchReadableAddress() async {
+    final cleanAddress = address.replaceAll('Location: ', '').trim();
+    if (!RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(cleanAddress)) {
+      return address;
+    }
+
+    try {
+      final parts = cleanAddress.split(',');
+      final lat = parts[0].trim();
+      final lon = parts[1].trim();
+
+      final response = await http.get(
+        Uri.parse('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lon'),
+        headers: {
+          'User-Agent': 'SonnaBakeryAdminApp/1.0',
+        },
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final displayName = data['display_name'] as String?;
+        if (displayName != null) {
+          // Clean up long addresses (take first 3-4 segments)
+          final segments = displayName.split(',');
+          if (segments.length > 4) {
+            return segments.take(4).join(',').trim();
+          }
+          return displayName;
+        }
+      }
+    } catch (e) {
+      debugPrint('Geocoding error: $e');
+    }
+    return address; // Fallback to raw coordinates
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanAddress = address.replaceAll('Location: ', '').trim();
+    final isCoord = RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(cleanAddress);
+    
+    if (!isCoord) {
+      return Text(
+        address,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          color: cs.secondary.withValues(alpha: 0.5),
+        ),
+      );
+    }
+
+    return FutureBuilder<String>(
+      future: _fetchReadableAddress(),
+      builder: (context, snapshot) {
+        final display = snapshot.data ?? address;
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+
+        return Text(
+          isLoading ? "Pinpointing location..." : "$display (Open in Maps)",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            color: cs.primary,
+            decoration: TextDecoration.underline,
+          ),
+        );
+      },
+    );
   }
 }
 
