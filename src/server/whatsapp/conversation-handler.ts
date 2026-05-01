@@ -61,6 +61,8 @@ export function clearMenuCache() {
 // Conversation state cache
 const convoCache = new Map<string, Conversation>();
 
+const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
+
 function updateConvoCache(phone: string, data: Partial<Conversation>) {
   const existing = convoCache.get(phone) ?? { phone, state: "IDLE" } as Conversation;
   convoCache.set(phone, { ...existing, ...data });
@@ -381,9 +383,32 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   console.log(`[WhatsApp] Processing from ${msg.from}: ${input || interactiveId} (State: ${state})`);
 
-  // ── Global commands (work from any state) ──────────────────────────────
+  const isGreeting = GREETINGS.includes(input);
 
-  if (input === "help" || input === "hi" || input === "hello" || input === "hey") {
+  if (isGreeting && state !== "IDLE") {
+    const greeting = msg.name ? `Hi ${msg.name}! 👋` : "Hi! 👋";
+    await sendTextMessage(msg.from, `${greeting} Let's continue from where we left off.`);
+    await rePromptState(msg.from, state, convo);
+    return;
+  }
+
+  if (input === "restart" || input === "start over") {
+    await updateState(msg.from, "IDLE", {
+      selectedCake: null,
+      selectedSize: null,
+      selectedPrice: null,
+      selectedAddress: null,
+      selectedNotes: null,
+      selectedDeliveryDate: null,
+      selectedDeliveryTime: null,
+      customImageUrl: null,
+    });
+    await sendTextMessage(msg.from, "🔄 Restarting your order...");
+    await sendWelcome(msg.from, msg.name);
+    return;
+  }
+
+  if (input === "help" || isGreeting) {
     await updateState(msg.from, "IDLE", {
       selectedCake: null,
       selectedSize: null,
@@ -508,29 +533,6 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     }
   }
 
-  // ── Local NLP Classification (Make it faster) ──────────────────────────
-  
-  if (msg.type === "text" && input.length > 5 && state !== "CONFIRMING" && state !== "IDLE") {
-    const category = classifyMessage(input);
-    
-    if (category === "ADDRESS" && state !== "ASKING_ADDRESS") {
-      await updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: msg.text ?? "" });
-      await sendTextMessage(msg.from, "✅ Address saved! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)");
-      return;
-    }
-    
-    if (category === "INSTRUCTIONS" && state !== "ASKING_INSTRUCTIONS") {
-      await updateState(msg.from, "ASKING_DELIVERY_DATE", { selectedNotes: msg.text });
-      // Read from cache — no extra DB round-trip needed
-      const updated = convoCache.get(msg.from);
-      
-      // If we already have cake/size/address, go to delivery date selection
-      if (updated?.selectedCake && updated?.selectedSize && updated?.selectedAddress) {
-        await sendDeliveryDateOptions(msg.from);
-        return;
-      }
-    }
-  }
 
   // ── State-specific handling ────────────────────────────────────────────
 
@@ -930,8 +932,8 @@ async function handleAddressInput(
     console.log(`[WhatsApp] Received GPS location: ${latitude}, ${longitude}`);
   }
 
-  if (!address) {
-    await sendTextMessage(msg.from, "Please provide a valid address or send your location to continue.");
+  if (!address || address.length < 5 || GREETINGS.includes(address.toLowerCase())) {
+    await sendTextMessage(msg.from, "⚠️ *Invalid Address*\n\nPlease provide a complete delivery address (Street, Building, Landmark) or send your *GPS Location* to continue. 📍");
     return;
   }
 
@@ -959,6 +961,11 @@ async function handleInstructionsInput(
     input.toLowerCase() === "no";
 
   const notes = isSkip ? null : input;
+
+  if (!isSkip && (input.length < 2 || GREETINGS.includes(input.toLowerCase()))) {
+    await sendTextMessage(msg.from, "📝 Please provide any special instructions or landmarks for the delivery. (Reply *'None'* to skip)");
+    return;
+  }
 
   // Move to asking delivery date
   await updateState(msg.from, "ASKING_DELIVERY_DATE", {
@@ -1221,11 +1228,28 @@ async function handleConfirmation(
     msg.text?.toLowerCase() === "yes" ||
     msg.text?.toLowerCase() === "confirm";
 
-  if (!isConfirm) {
+  const isCancel =
+    msg.interactiveId === "btn_cancel" ||
+    msg.text?.toLowerCase() === "no" ||
+    msg.text?.toLowerCase() === "cancel";
+
+  if (!isConfirm && !isCancel) {
+    // Unrelated input — acknowledge and re-prompt
+    await sendTextMessage(msg.from, "Please confirm your order or cancel it to start over. 👇");
+    await rePromptState(msg.from, "CONFIRMING", convo);
+    return;
+  }
+
+  if (isCancel) {
     await updateState(msg.from, "IDLE", {
       selectedCake: null,
       selectedSize: null,
       selectedPrice: null,
+      selectedAddress: null,
+      selectedNotes: null,
+      selectedDeliveryDate: null,
+      selectedDeliveryTime: null,
+      customImageUrl: null,
     });
     await sendTextMessage(
       msg.from,
@@ -1297,4 +1321,68 @@ async function handleConfirmation(
     msg.from,
     `🎉 *Order Placed Successfully!*\n\nYour order number is *#${orderNumber}*.\n\n📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n📍 Address: ${convo.selectedAddress}\n\nWe will notify you once your order is confirmed and out for delivery! 💕`
   );
+}
+
+// ─── Re-prompt current state ─────────────────────────────────────────────
+
+async function rePromptState(phone: string, state: ConversationState, convo: Conversation) {
+  switch (state) {
+    case "BROWSING_MENU":
+      await sendMenu(phone);
+      break;
+    case "SELECTING_CATEGORY":
+      await sendMenu(phone); // Go back to category list
+      break;
+    case "SELECTING_SIZE":
+      if (convo.selectedCake) {
+        const cake = await safeGetCakeByName(convo.selectedCake);
+        if (cake) {
+          const options = cake.options ?? [];
+          const buttons = options.slice(0, 2).map((opt, idx) => ({
+            id: `size_${idx}`,
+            title: `${opt.size} — ${opt.price}`,
+          }));
+          buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
+          await sendInteractiveButtons(phone, `Please choose your size for *${cake.name}*:`, buttons);
+        } else {
+          await sendMenu(phone);
+        }
+      } else {
+        await sendMenu(phone);
+      }
+      break;
+    case "ASKING_ADDRESS":
+      await sendTextMessage(phone, "📍 *Delivery Address*\n\nPlease provide your full delivery address or send your *GPS Location*.");
+      break;
+    case "ASKING_INSTRUCTIONS":
+      await sendTextMessage(phone, "📝 *Special Instructions*\n\nAny landmarks or special notes? (Reply *'None'* to skip)");
+      break;
+    case "ASKING_DELIVERY_DATE":
+      await sendDeliveryDateOptions(phone);
+      break;
+    case "ASKING_DELIVERY_TIME":
+      await sendDeliveryTimeOptions(phone);
+      break;
+    case "CONFIRMING":
+      // Re-send summary
+      const cart = await db.whatsAppCartItem.findMany({ where: { phone } }) as unknown as CartItem[];
+      let summary = `📋 *Order Summary*\n\n`;
+      cart.forEach((item, idx) => {
+        summary += `${idx + 1}. *${item.cakeName}* (${item.size}) — ${item.price}\n`;
+      });
+      summary += `\n*Total: ${getCartTotal(cart)}*\n`;
+      summary += `📍 Address: ${convo.selectedAddress}\n`;
+      summary += `📅 Delivery: *${convo.selectedDeliveryDate}* at *${convo.selectedDeliveryTime}*\n\n`;
+      summary += `Shall I place this order?`;
+      await sendInteractiveButtons(phone, summary, [
+        { id: "btn_confirm", title: "✅ Confirm Order" },
+        { id: "btn_cancel", title: "❌ Cancel" },
+      ]);
+      break;
+    case "REQUESTING_CUSTOM":
+      await sendTextMessage(phone, "🎨 *Custom Cake Request*\n\nPlease describe the cake or send a **Reference Photo**. 📸");
+      break;
+    default:
+      await sendWelcome(phone, convo.name ?? undefined);
+  }
 }
