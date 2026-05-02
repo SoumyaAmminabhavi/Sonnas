@@ -87,7 +87,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
                 dividerColor: Colors.transparent,
                 tabs: const [
                   Tab(text: "TODAY"),
-                  Tab(text: "UPCOMING"),
+                  Tab(text: "ORDERS"),
                   Tab(text: "COMPLETED"),
                   Tab(text: "CUSTOM"),
                 ],
@@ -107,7 +107,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
                 controller: _tabController,
                 children: [
                   _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.today),
-                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.upcoming),
+                  _AllOrdersFilterView(cs: cs, onTabChanged: widget.onTabChanged),
                   _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.completed),
                   _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.custom),
                 ],
@@ -120,17 +120,20 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
   }
 }
 
-enum _OrderFilter { today, upcoming, completed, custom }
+enum _OrderFilter { today, all, completed, custom }
 
 class _OrdersList extends StatelessWidget {
   final ColorScheme cs;
   final ValueChanged<int>? onTabChanged;
   final _OrderFilter filter;
 
+  final String? statusFilter;
+
   const _OrdersList({
     required this.cs,
     required this.filter,
     this.onTabChanged,
+    this.statusFilter,
   });
 
   String _getEmptyStateMessage(_OrderFilter filter) {
@@ -139,8 +142,8 @@ class _OrdersList extends StatelessWidget {
         return "No bespoke creations are currently in the atelier's care.";
       case _OrderFilter.completed:
         return "The archives are quiet. No completed orders to display.";
-      case _OrderFilter.upcoming:
-        return "The calendar is clear for the days ahead.";
+      case _OrderFilter.all:
+        return "The order book is empty for this selection.";
       case _OrderFilter.today:
         return "There are no active orders currently gracing the atelier.";
     }
@@ -191,10 +194,12 @@ class _OrdersList extends StatelessWidget {
               return createdAt.year == now.year && 
                      createdAt.month == now.month && 
                      createdAt.day == now.day;
-            case _OrderFilter.upcoming:
-              if (status == 'COMPLETED' || isCustom) return false;
-              if (createdAt == null) return false;
-              return createdAt.isAfter(DateTime(now.year, now.month, now.day, 23, 59));
+            case _OrderFilter.all:
+              if (isCustom) return false;
+              if (statusFilter != null && statusFilter != 'ALL') {
+                return status == statusFilter;
+              }
+              return true;
           }
         }).toList();
 
@@ -614,6 +619,85 @@ class _IconInfoRow extends StatelessWidget {
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+class _AllOrdersFilterView extends StatefulWidget {
+  final ColorScheme cs;
+  final ValueChanged<int>? onTabChanged;
+
+  const _AllOrdersFilterView({required this.cs, this.onTabChanged});
+
+  @override
+  State<_AllOrdersFilterView> createState() => _AllOrdersFilterViewState();
+}
+
+class _AllOrdersFilterViewState extends State<_AllOrdersFilterView> {
+  String _selectedStatus = 'ALL';
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+          child: Row(
+            children: [
+              Text(
+                "FILTER BY STATUS",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                  color: widget.cs.secondary.withValues(alpha: 0.4),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: widget.cs.surfaceContainer,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: widget.cs.secondary.withValues(alpha: 0.1)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedStatus,
+                    icon: Icon(Icons.keyboard_arrow_down, size: 16, color: widget.cs.primary),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: widget.cs.secondary,
+                    ),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedStatus = newValue;
+                        });
+                      }
+                    },
+                    items: <String>['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: _OrdersList(
+            cs: widget.cs,
+            onTabChanged: widget.onTabChanged,
+            filter: _OrderFilter.all,
+            statusFilter: _selectedStatus,
           ),
         ),
       ],

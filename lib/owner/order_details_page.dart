@@ -167,9 +167,29 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                         cs: cs,
                                       ),
                                       const SizedBox(height: 32),
-                                      _SectionTitle(
-                                        title: "Artisan Selection",
-                                        cs: cs,
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          _SectionTitle(
+                                            title: "Artisan Selection",
+                                            cs: cs,
+                                          ),
+                                          if (order['customImageUrl'] != null)
+                                            IconButton(
+                                              icon: const Icon(Icons.view_in_ar_outlined, size: 20),
+                                              color: cs.primary,
+                                              tooltip: "Holographic 3D View",
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => _HolographicViewer(
+                                                    imageUrl: order['customImageUrl'],
+                                                    cs: cs,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                        ],
                                       ),
                                       const SizedBox(height: 16),
                                       FutureBuilder<List<dynamic>>(
@@ -676,36 +696,18 @@ class _OrderItemCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                  ),
-                  if (title.toUpperCase().contains('CUSTOM'))
-                    IconButton(
-                      icon: const Icon(Icons.view_in_ar_outlined, size: 20),
-                      color: cs.primary,
-                      tooltip: "Holographic 3D View",
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => _HolographicViewer(imageUrl: imageUrl, cs: cs),
-                        );
-                      },
-                    ),
-                ],
+              Text(
+                title,
+                style: GoogleFonts.notoSerif(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
               ),
               Text(
                 subtitle,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: cs.secondary.withValues(alpha: 0.5),
                 ),
               ),
@@ -715,7 +717,7 @@ class _OrderItemCard extends StatelessWidget {
         Text(
           price,
           style: GoogleFonts.notoSerif(
-            fontSize: 15,
+            fontSize: 13,
             fontWeight: FontWeight.bold,
             color: cs.primary,
           ),
