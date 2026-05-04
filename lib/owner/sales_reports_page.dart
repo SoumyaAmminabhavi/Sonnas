@@ -41,12 +41,9 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
         });
       }
 
-      // Fetch items for top items analysis
-      List<Map<String, dynamic>> allItems = [];
-      for (var order in _orders.take(30)) { // Analyze more orders for better stats
-        final items = await SupabaseService.fetchOrderItems(order['id']);
-        allItems.addAll(items);
-      }
+      // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
+      final orderIds = _orders.take(50).map((o) => o['id'] as String).toList();
+      final allItems = await SupabaseService.fetchBulkOrderItems(orderIds);
 
       if (mounted) {
         setState(() {
@@ -178,7 +175,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 ),
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? _buildSkeleton(cs)
                     : CustomScrollView(
                         slivers: [
                           _buildSliverAppBar(cs),
@@ -696,5 +693,51 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
       default:
         return Colors.blueGrey;
     }
+  }
+
+  Widget _buildSkeleton(ColorScheme cs) {
+    return Shimmer.fromColors(
+      baseColor: cs.surfaceContainer,
+      highlightColor: cs.surface,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              return GridView.count(
+                crossAxisCount: isMobile ? 1 : 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: isMobile ? 2.5 : 1.5,
+                children: List.generate(3, (_) => Container(
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                )),
+              );
+            }),
+            const SizedBox(height: 32),
+            Container(height: 280, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
+                const SizedBox(width: 16),
+                Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
+              ],
+            ),
+            const SizedBox(height: 32),
+            Container(width: 160, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
+            const SizedBox(height: 16),
+            ...List.generate(4, (_) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(height: 80, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+            )),
+          ],
+        ),
+      ),
+    );
   }
 }

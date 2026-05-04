@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
@@ -38,7 +39,32 @@ class OwnerOrderDetailsView extends StatelessWidget {
                 order == null) {
               return Scaffold(
                 backgroundColor: cs.surface,
-                body: const Center(child: CircularProgressIndicator()),
+                body: Shimmer.fromColors(
+                  baseColor: cs.surfaceContainer,
+                  highlightColor: cs.surface,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 56),
+                        // Hero image placeholder
+                        Container(height: 220, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                        const SizedBox(height: 24),
+                        // Title
+                        Container(width: 200, height: 28, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                        const SizedBox(height: 12),
+                        Container(width: 140, height: 18, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                        const SizedBox(height: 32),
+                        // Detail rows
+                        ...List.generate(5, (i) => Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Container(height: 52, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                        )),
+                      ],
+                    ),
+                  ),
+                ),
               );
             }
 

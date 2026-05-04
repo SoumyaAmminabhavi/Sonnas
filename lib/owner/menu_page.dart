@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 import 'menu_details_page.dart';
@@ -56,7 +57,29 @@ class _MenuPageState extends State<MenuPage> {
                 future: SupabaseService.fetchMenu(),
                 builder: (context, menuSnapshot) {
                   if (!menuSnapshot.hasData && snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    final cs2 = Theme.of(context).colorScheme;
+                    return Shimmer.fromColors(
+                      baseColor: cs2.surfaceContainer,
+                      highlightColor: cs2.surface,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
+                        child: GridView.builder(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.75,
+                          ),
+                          itemCount: crossAxisCount * 2,
+                          itemBuilder: (_, __) => Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
                   }
 
                   if (menuSnapshot.hasError || snapshot.hasError) {

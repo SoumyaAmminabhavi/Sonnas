@@ -295,4 +295,19 @@ class SupabaseService {
       return [];
     }
   }
+
+  // Fetch items for multiple orders at once (Performance optimization)
+  static Future<List<Map<String, dynamic>>> fetchBulkOrderItems(List<String> orderIds) async {
+    try {
+      if (orderIds.isEmpty) return [];
+      final data = await client
+          .from('WhatsAppOrderItem')
+          .select()
+          .inFilter('orderId', orderIds);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Error fetching bulk order items: $e');
+      return [];
+    }
+  }
 }

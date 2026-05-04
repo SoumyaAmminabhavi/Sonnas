@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 import 'menu_page.dart';
@@ -32,7 +33,35 @@ class MenuDetailsPage extends StatelessWidget {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 backgroundColor: cs.surface,
-                body: const Center(child: CircularProgressIndicator()),
+                body: Shimmer.fromColors(
+                  baseColor: cs.surfaceContainer,
+                  highlightColor: cs.surface,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 56),
+                        // Hero image
+                        Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                        const SizedBox(height: 24),
+                        // Name
+                        Container(width: 220, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                        const SizedBox(height: 12),
+                        // Category chip
+                        Container(width: 100, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                        const SizedBox(height: 32),
+                        // Options
+                        Container(width: 120, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                        const SizedBox(height: 16),
+                        ...List.generate(3, (i) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14))),
+                        )),
+                      ],
+                    ),
+                  ),
+                ),
               );
             }
 
