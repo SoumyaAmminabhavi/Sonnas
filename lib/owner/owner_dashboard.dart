@@ -45,16 +45,19 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   }
 
   void _showNewOrderNotification(Map<String, dynamic> order) {
-    final cs = Theme.of(context).colorScheme;
     final orderNumber = order['orderNumber'] ?? '---';
     final customerName = order['customerName'] ?? 'Guest';
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
 
     late OverlayEntry overlayEntry;
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        bottom: 24,
-        right: 24,
-        width: 380,
+        top: isMobile ? 16 : null,
+        bottom: isMobile ? null : 24,
+        right: isMobile ? 16 : 24,
+        left: isMobile ? 16 : null,
+        width: isMobile ? null : 380,
         child: Material(
           color: Colors.transparent,
           child: TweenAnimationBuilder<double>(
@@ -63,7 +66,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             curve: Curves.easeOutBack,
             builder: (context, value, child) {
               return Transform.translate(
-                offset: Offset(0, 40 * (1 - value)),
+                offset: Offset(0, isMobile ? -40 * (1 - value) : 40 * (1 - value)),
                 child: Opacity(
                   opacity: value,
                   child: child,
@@ -73,12 +76,11 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: cs.secondaryContainer,
+                color: const Color(0xFFFF4D8D),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: cs.secondary.withValues(alpha: 0.1)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: const Color(0xFFFF4D8D).withValues(alpha: 0.3),
                     blurRadius: 40,
                     offset: const Offset(0, 10),
                   ),
@@ -89,10 +91,10 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: cs.secondary.withValues(alpha: 0.1),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.shopping_bag_outlined, color: cs.secondary, size: 20),
+                    child: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -106,7 +108,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
-                            color: cs.secondary.withValues(alpha: 0.5),
+                            color: Colors.white.withValues(alpha: 0.7),
                           ),
                         ),
                         Text(
@@ -114,7 +116,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                           style: GoogleFonts.notoSerif(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: cs.onSecondaryContainer,
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -135,21 +137,23 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      backgroundColor: cs.primary.withValues(alpha: 0.1),
+                      backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     child: Text(
                       "VIEW",
                       style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.bold,
-                        color: cs.primary,
+                        color: const Color(0xFFFF4D8D),
                         fontSize: 12,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close, size: 16, color: cs.secondary.withValues(alpha: 0.4)),
+                    icon: const Icon(Icons.close, size: 18, color: Colors.white),
                     onPressed: () => overlayEntry.remove(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),

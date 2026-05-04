@@ -52,3 +52,5 @@ app.*.map.json
 .env.test.local
 .env.production.local
 *.secret
+.vercel
+.env*.local
