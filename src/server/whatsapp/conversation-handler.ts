@@ -400,6 +400,24 @@ function formatItemTotal(price: string, quantity: number): string {
   return `₹${unitPrice * quantity}`;
 }
 
+async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          "User-Agent": "SonnasPatisserieBot/1.0",
+        },
+      }
+    );
+    const data = await response.json() as { display_name: string };
+    return data.display_name ?? null;
+  } catch (e) {
+    console.error("[WhatsApp] reverseGeocode failed:", e);
+    return null;
+  }
+}
+
 function getCartSummary(cart: CartItem[]): string {
   if (!cart || cart.length === 0) return "Your cart is empty.";
   
@@ -996,16 +1014,23 @@ async function handleAddressInput(
     const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
     const coordsStr = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
     
+    // Attempt to reverse geocode if no address provided
+    let finalAddress = locAddress;
+    if (!finalAddress || finalAddress.length < 5) {
+      console.log(`[WhatsApp] No address in location message. Attempting reverse geocode for ${coordsStr}...`);
+      finalAddress = await reverseGeocode(latitude, longitude) ?? null;
+    }
+
     // Format: "Descriptive Address (Lat, Long) \n Maps Link"
-    address = locAddress 
-      ? `${locAddress}\n📍 Coords: ${coordsStr}\n🔗 ${mapsUrl}` 
+    address = finalAddress 
+      ? `${finalAddress}\n📍 Coords: ${coordsStr}\n🔗 ${mapsUrl}` 
       : `📍 GPS Location: ${coordsStr}\n🔗 ${mapsUrl}`;
     
     if (name) {
       address = `🏛️ ${name}\n${address}`;
     }
     
-    console.log(`[WhatsApp] Received GPS location: ${latitude}, ${longitude}`);
+    console.log(`[WhatsApp] Received GPS location: ${latitude}, ${longitude} (Address: ${finalAddress})`);
   }
 
   if (!address || address.length < 5 || GREETINGS.includes(address.toLowerCase())) {
