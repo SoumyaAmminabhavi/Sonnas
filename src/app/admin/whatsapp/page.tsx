@@ -443,7 +443,7 @@ function WhatsAppAdminContent() {
                               <div style={styles.notesText}>
                                 {o.address.split('\n').map((line, i) => {
                                   if (line.includes('https://')) {
-                                    const url = line.split('🔗').pop()?.trim() || line;
+                                    const url = line.split('🔗').pop()?.trim() ?? line;
                                     return (
                                       <a 
                                         key={i} 
