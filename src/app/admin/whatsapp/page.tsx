@@ -479,21 +479,21 @@ function WhatsAppAdminContent() {
 
                           {o.customImageUrl && (
                             <div style={styles.imagePreview}>
-                              <Image
-                                src={o.customImageUrl}
-                                alt="Custom Cake Reference"
-                                style={styles.previewImg}
-                                width={200}
-                                height={150}
-                                unoptimized
-                              />
+                              {o.customImageUrl.split(',').map((url, idx) => (
+                                <Image
+                                  key={idx}
+                                  src={url.trim()}
+                                  alt={`Custom Cake Reference ${idx + 1}`}
+                                  style={styles.previewImg}
+                                  width={180}
+                                  height={140}
+                                  unoptimized
+                                />
+                              ))}
                             </div>
                           )}
 
                           <div style={styles.orderFooter}>
-                            <span style={styles.customerName}>
-                              {o.customerName ?? o.phone}
-                            </span>
                             <span style={styles.orderDate}>
                               {new Date(o.createdAt).toLocaleDateString("en-IN", {
                                 day: "numeric",
@@ -1143,19 +1143,18 @@ const styles: Record<string, React.CSSProperties> = {
   imagePreview: {
     marginTop: 12,
     marginBottom: 12,
+    display: "flex",
+    flexDirection: "row",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  previewImg: {
     borderRadius: 10,
     overflow: "hidden",
     border: "1px solid #E8DED4",
-    width: 180,
-    height: 140,
+    objectFit: "cover" as const,
     backgroundColor: "#F7F3EF",
     boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-  },
-  previewImg: {
-    width: "100%",
-    height: "100%",
-    display: "block",
-    objectFit: "cover" as const,
   },
   collapseBtnInternal: {
     backgroundColor: "transparent",
