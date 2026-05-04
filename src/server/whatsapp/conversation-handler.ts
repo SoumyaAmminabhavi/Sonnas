@@ -394,13 +394,20 @@ function getCartTotal(cart: CartItem[]): string {
   return `₹${total}`;
 }
 
+function formatItemTotal(price: string, quantity: number): string {
+  const unitPrice = parseInt(price.replace(/[^\d]/g, ""), 10);
+  if (isNaN(unitPrice)) return price;
+  return `₹${unitPrice * quantity}`;
+}
+
 function getCartSummary(cart: CartItem[]): string {
   if (!cart || cart.length === 0) return "Your cart is empty.";
   
   let summary = `🛒 *Your Cart*\n\n`;
   cart.forEach((item, idx) => {
     const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${item.price}\n`;
+    const displayPrice = formatItemTotal(item.price, item.quantity);
+    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${displayPrice}\n`;
   });
   summary += `\n*Total: ${getCartTotal(cart)}*`;
   return summary;
@@ -1179,7 +1186,8 @@ async function handleDeliveryTimeInput(
     } else {
       cart.forEach((item, idx) => {
         const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${item.price}\n`;
+        const displayPrice = formatItemTotal(item.price, item.quantity);
+        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${displayPrice}\n`;
       });
     }
     
@@ -1376,7 +1384,8 @@ async function sendOrderStatus(to: string) {
     // Display items
     order.items.forEach(item => {
       const qtyStr = item.quantity > 1 ? ` (x${item.quantity})` : "";
-      statusText += `   🎂 ${item.cakeName} (${item.size})${qtyStr}\n`;
+      const displayPrice = formatItemTotal(item.price, item.quantity);
+      statusText += `   🎂 ${item.cakeName} (${item.size})${qtyStr} — ${displayPrice}\n`;
     });
     
     statusText += `   💰 Total: ${order.totalPrice}\n`;
@@ -1543,7 +1552,8 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       let summary = `📋 *Order Summary*\n\n`;
       cart.forEach((item, idx) => {
         const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${item.price}\n`;
+        const displayPrice = formatItemTotal(item.price, item.quantity);
+        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${displayPrice}\n`;
       });
       summary += `\n*Total: ${getCartTotal(cart)}*\n`;
       summary += `📍 Address: ${convo.selectedAddress}\n`;
