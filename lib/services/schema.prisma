@@ -177,8 +177,8 @@ model Expense {
 model Staff {
     id              String   @id @default(cuid())
     name            String
-    phone           String
-    email           String?
+    phone           String   @unique
+    email           String?  @unique
     imageUrl        String?
     address         String?
 
@@ -191,9 +191,11 @@ model Staff {
     shiftStart      String
     shiftEnd        String
     workingDays     Json
-    username        String   @unique
-    password        String
+    password        String?
+    joiningCode     String?
+    isActivated     Boolean  @default(false)
     createdAt       DateTime @default(now())
     updatedAt       DateTime @updatedAt
 }
+
 

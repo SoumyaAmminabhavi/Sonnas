@@ -253,7 +253,10 @@ class _SettingsContentState extends State<_SettingsContent> {
                   s['role'] ?? 'Staff',
                   true, // Defaulting to active
                   imageUrl: s['imageUrl'],
+                  staffData: s,
                 )),
+
+
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -433,7 +436,7 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildStaffRow(ColorScheme cs, String name, String role, bool active, {String? imageUrl}) {
+  Widget _buildStaffRow(ColorScheme cs, String name, String role, bool active, {String? imageUrl, Map<String, dynamic>? staffData}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -451,7 +454,6 @@ class _SettingsContentState extends State<_SettingsContent> {
                   )
                 : null,
           ),
-
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -489,10 +491,88 @@ class _SettingsContentState extends State<_SettingsContent> {
               ),
             ),
           ),
+          if (staffData != null)
+            PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert, color: cs.secondary.withValues(alpha: 0.5)),
+              elevation: 4,
+              offset: const Offset(0, 40),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              color: cs.surface,
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddStaffPage(staff: staffData),
+                    ),
+                  );
+                  _fetchStaff();
+                } else if (value == 'view') {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddStaffPage(staff: staffData, isReadOnly: true),
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  value: 'view',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.visibility_outlined, size: 16, color: Colors.blue),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        "View Details",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: cs.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.edit_outlined, size: 16, color: cs.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        "Edit Staff",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: cs.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
         ],
       ),
     );
   }
+
 
   Widget _buildActionRow(ColorScheme cs, String title, IconData icon, String subtitle, {VoidCallback? onTap}) {
     return InkWell(

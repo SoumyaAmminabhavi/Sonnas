@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +10,11 @@ import '../services/supabase_service.dart';
 
 
 class AddStaffPage extends StatefulWidget {
-  const AddStaffPage({super.key});
+  final Map<String, dynamic>? staff;
+  final bool isReadOnly;
+  const AddStaffPage({super.key, this.staff, this.isReadOnly = false});
+
+
 
   @override
   State<AddStaffPage> createState() => _AddStaffPageState();
@@ -17,13 +23,14 @@ class AddStaffPage extends StatefulWidget {
 
 class _AddStaffPageState extends State<AddStaffPage> {
   String _selectedRole = 'BAKER';
-  final Map<String, bool> _permissions = {
+  Map<String, bool> _permissions = {
     'Manage Orders': true,
     'Access Inventory': true,
     'View Reports': false,
     'Handle Payments': false,
   };
-  final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
+  List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
+
   final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   
   XFile? _pickedImage;
@@ -43,12 +50,35 @@ class _AddStaffPageState extends State<AddStaffPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-
   String? _selectedBloodGroup;
+
+  Future<void> _selectDate(BuildContext context) async {
+    if (widget.isReadOnly) return;
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _dobController.text = "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context, TextEditingController controller) async {
+    if (widget.isReadOnly) return;
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        controller.text = picked.format(context);
+      });
+    }
+  }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -64,8 +94,36 @@ class _AddStaffPageState extends State<AddStaffPage> {
   }
 
   @override
-  void dispose() {
+  void initState() {
+    super.initState();
+    if (widget.staff != null) {
+      final s = widget.staff!;
+      _nameController.text = s['name'] ?? '';
+      _phoneController.text = s['phone'] ?? '';
+      _emailController.text = s['email'] ?? '';
+      _addressController.text = s['address'] ?? '';
+      _dobController.text = s['dob'] ?? '';
+      _selectedBloodGroup = s['bloodGroup'];
+      _emergencyNameController.text = s['emergencyName'] ?? '';
+      _emergencyPhoneController.text = s['emergencyPhone'] ?? '';
+      _selectedRole = s['role'] ?? 'Staff';
+      
+      if (s['permissions'] != null) {
+        _permissions = Map<String, bool>.from(s['permissions']);
+      }
+      
+      _startTimeController.text = s['shiftStart'] ?? '08:00 AM';
+      _endTimeController.text = s['shiftEnd'] ?? '04:00 PM';
+      
+      if (s['workingDays'] != null) {
+        _workingDays.clear();
+        _workingDays.addAll(List<String>.from(s['workingDays']));
+      }
+    }
+  }
 
+  @override
+  void dispose() {
     _startTimeController.dispose();
     _endTimeController.dispose();
     _dobController.dispose();
@@ -75,9 +133,6 @@ class _AddStaffPageState extends State<AddStaffPage> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -162,11 +217,13 @@ class _AddStaffPageState extends State<AddStaffPage> {
                         children: [
                           if (isDesktop) ...[
                              Text(
-                               "Add New Staff",
+                               widget.isReadOnly ? "Staff Details" : (widget.staff != null ? "Edit Staff" : "Add New Staff"),
                                style: GoogleFonts.notoSerif(
                                  color: cs.primary,
                                  fontSize: 32,
                                  fontWeight: FontWeight.bold,
+
+
                                ),
                              ),
                              const SizedBox(height: 8),
@@ -191,9 +248,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                           const SizedBox(height: 40),
                           _buildWorkDetailsSection(cs),
                           const SizedBox(height: 40),
-                          _buildAccountSetupSection(cs),
-                          const SizedBox(height: 40),
-                          _buildActions(cs),
+                          if (!widget.isReadOnly) _buildActions(cs),
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -215,9 +270,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
         Row(
           children: [
         GestureDetector(
-          onTap: _pickImage,
+          onTap: widget.isReadOnly ? null : _pickImage,
           child: Stack(
             children: [
+
               Container(
                 width: 80,
                 height: 80,
@@ -234,15 +290,21 @@ class _AddStaffPageState extends State<AddStaffPage> {
                           image: MemoryImage(_imageBytes!),
                           fit: BoxFit.cover,
                         )
-                      : null,
+                      : (widget.staff?['imageUrl'] != null
+                          ? DecorationImage(
+                              image: NetworkImage(widget.staff!['imageUrl']),
+                              fit: BoxFit.cover,
+                            )
+                          : null),
                 ),
-                child: _imageBytes == null
+                child: (_imageBytes == null && widget.staff?['imageUrl'] == null)
                     ? Icon(
                         Icons.add_a_photo_outlined,
                         color: cs.secondary,
                         size: 30,
                       )
                     : null,
+
               ),
               Positioned(
                 bottom: 0,
@@ -346,14 +408,13 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 runSpacing: 12,
                 alignment: WrapAlignment.center,
                 children: [
-                  _buildRoleCard(
-                    cs,
-                    "BAKER",
-                    Icons.cookie_outlined,
-                  ),
-                  _buildRoleCard(cs, "CASHIER", Icons.point_of_sale_outlined),
-                  _buildRoleCard(cs, "DELIVERY", Icons.motorcycle_outlined),
-                  _buildRoleCard(cs, "MANAGER", Icons.badge_outlined),
+                  _buildRoleCard(cs, "BAKER", Icons.cookie_outlined, "BAKER"),
+                  const SizedBox(width: 12),
+                  _buildRoleCard(cs, "CASHIER", Icons.point_of_sale_outlined, "CASHIER"),
+                  const SizedBox(width: 12),
+                  _buildRoleCard(cs, "DELIVERY", Icons.motorcycle_outlined, "DELIVERY"),
+                  const SizedBox(width: 12),
+                  _buildRoleCard(cs, "MANAGER", Icons.badge_outlined, "MANAGER"),
                 ],
               ),
             );
@@ -363,10 +424,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildRoleCard(ColorScheme cs, String role, IconData icon) {
+  Widget _buildRoleCard(ColorScheme cs, String role, IconData icon, String label) {
     bool isSelected = _selectedRole == role;
     return GestureDetector(
-      onTap: () => setState(() => _selectedRole = role),
+      onTap: widget.isReadOnly ? null : () => setState(() => _selectedRole = role),
       child: Container(
         width: 130,
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -393,7 +454,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              role,
+              label,
               style: GoogleFonts.plusJakartaSans(
                 color: isSelected
                     ? cs.primary
@@ -407,6 +468,31 @@ class _AddStaffPageState extends State<AddStaffPage> {
       ),
     );
   }
+
+  Widget _buildPermissionTile(ColorScheme cs, String title) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SwitchListTile(
+        value: _permissions[title] ?? false,
+        onChanged: widget.isReadOnly ? null : (val) => setState(() => _permissions[title] = val),
+        title: Text(
+          title,
+          style: GoogleFonts.plusJakartaSans(
+            color: cs.secondary,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+        ),
+        activeColor: cs.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
 
   Widget _buildPermissionsSection(ColorScheme cs) {
     return Container(
@@ -639,79 +725,22 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildAccountSetupSection(ColorScheme cs) {
-    bool isMobile = MediaQuery.of(context).size.width < 500;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(height: 1, color: cs.primaryContainer.withValues(alpha: 0.3)),
-        const SizedBox(height: 24),
-        _buildGhostInput(
-          cs, 
-          label: "USERNAME", 
-          placeholder: "staff_julianne",
-          controller: _usernameController,
-        ),
-        const SizedBox(height: 24),
-        if (isMobile) ...[
-          _buildGhostInput(
-            cs,
-            label: "PASSWORD",
-            placeholder: "••••••••",
-            controller: _passwordController,
-            obscureText: true,
-          ),
-          const SizedBox(height: 24),
-          _buildGhostInput(
-            cs,
-            label: "CONFIRM PASSWORD",
-            placeholder: "••••••••",
-            controller: _confirmPasswordController,
-            obscureText: true,
-          ),
-        ] else
-          Row(
-            children: [
-              Expanded(
-                child: _buildGhostInput(
-                  cs,
-                  label: "PASSWORD",
-                  placeholder: "••••••••",
-                  controller: _passwordController,
-                  obscureText: true,
-                ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildGhostInput(
-                  cs,
-                  label: "CONFIRM PASSWORD",
-                  placeholder: "••••••••",
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                ),
-              ),
-            ],
-          ),
 
-      ],
-    );
+
+
+  String _generateJoiningCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing 0, O, 1, I
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
   Future<void> _saveStaff() async {
-    if (_nameController.text.isEmpty ||
-        _phoneController.text.isEmpty ||
-        _usernameController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
+    final bool isEdit = widget.staff != null;
+    
+    if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all required fields")),
-      );
-      return;
-    }
-
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Passwords do not match")),
+        const SnackBar(content: Text("Please fill name and phone number")),
       );
       return;
     }
@@ -725,27 +754,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       return;
     }
 
-    String cleanEmergencyPhone = _emergencyPhoneController.text.replaceAll(RegExp(r'\D'), '');
-    if (cleanEmergencyPhone.length != 10 && cleanEmergencyPhone.isNotEmpty) {
-       // Optional: you can choose if emergency is mandatory or not. 
-       // I'll keep it as 10 digits if provided.
-    }
-
-
-
-    // Email validation (if provided)
-    if (_emailController.text.isNotEmpty) {
-      final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
-      if (!emailRegex.hasMatch(_emailController.text)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Please enter a valid Gmail/Email address")),
-        );
-        return;
-      }
-    }
-
     setState(() => _isSaving = true);
-
 
     try {
       String? imageUrl;
@@ -754,39 +763,48 @@ class _AddStaffPageState extends State<AddStaffPage> {
         imageUrl = await SupabaseService.uploadStaffImage(fileName, _imageBytes!);
       }
 
+      String? joiningCode;
+      if (!isEdit) {
+        joiningCode = _generateJoiningCode();
+      }
+
       final staff = {
         'name': _nameController.text,
         'phone': cleanPhone,
         'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-        'imageUrl': imageUrl,
-
+        'imageUrl': imageUrl ?? widget.staff?['imageUrl'],
         'address': _addressController.text,
         'dob': _dobController.text,
         'bloodGroup': _selectedBloodGroup,
         'emergencyName': _emergencyNameController.text,
-        'emergencyPhone': cleanEmergencyPhone,
+        'emergencyPhone': _emergencyPhoneController.text.replaceAll(RegExp(r'\D'), ''),
         'role': _selectedRole,
         'permissions': _permissions,
         'shiftStart': _startTimeController.text,
         'shiftEnd': _endTimeController.text,
         'workingDays': _workingDays,
-        'username': _usernameController.text,
-        'password': _passwordController.text,
+        if (!isEdit) 'joiningCode': joiningCode,
+        if (!isEdit) 'isActivated': false,
       };
 
-
-      await SupabaseService.addStaff(staff);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Staff member added successfully")),
-        );
-        Navigator.pop(context);
+      if (isEdit) {
+        await SupabaseService.updateStaff(widget.staff!['id'], staff);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Staff member updated")),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        await SupabaseService.addStaff(staff);
+        if (mounted) {
+          _showSuccessDialog(joiningCode!);
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error adding staff: $e")),
+          SnackBar(content: Text("Error: $e")),
         );
       }
     } finally {
@@ -795,6 +813,58 @@ class _AddStaffPageState extends State<AddStaffPage> {
       }
     }
   }
+
+  void _showSuccessDialog(String code) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          "Staff Added Successfully!",
+          style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Please share this 5-digit joining code with the staff member. This is a one-time code for their first login.",
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Theme.of(context).colorScheme.primary),
+              ),
+              child: Text(
+                code,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 8,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to settings
+            },
+            child: const Text("DONE"),
+          ),
+        ],
+      ),
+    );
+  }
+
 
 
   Widget _buildActions(ColorScheme cs) {
@@ -833,7 +903,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                           ),
                         )
                       : Text(
-                          "ADD STAFF",
+                          widget.staff != null ? "SAVE CHANGES" : "ADD STAFF",
                           style: GoogleFonts.plusJakartaSans(
                             color: cs.onPrimary,
                             fontWeight: FontWeight.bold,
@@ -841,6 +911,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                             letterSpacing: 2.0,
                           ),
                         ),
+
                 ),
               ),
             ),
@@ -1068,8 +1139,9 @@ class _AddStaffPageState extends State<AddStaffPage> {
           initialValue: controller == null ? initialValue : null,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          readOnly: isTime || isDate,
+          readOnly: widget.isReadOnly || isTime || isDate,
           maxLines: maxLines,
+
           style: GoogleFonts.plusJakartaSans(
             color: cs.secondary,
             fontWeight: FontWeight.w500,

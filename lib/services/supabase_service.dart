@@ -399,17 +399,31 @@ class SupabaseService {
   }
 
   static Future<void> addStaff(Map<String, dynamic> staff) async {
-
     try {
-      if (staff.containsKey('password')) {
-        staff['password'] = DBCrypt().hashpw(staff['password'], DBCrypt().gensalt());
-      }
       await myClient.from('Staff').insert(staff);
     } catch (e) {
       debugPrint('Error adding staff: $e');
       rethrow;
     }
   }
+
+  static Future<void> updateStaff(String id, Map<String, dynamic> staff) async {
+    try {
+      if (staff.containsKey('password') && staff['password'] != null) {
+        final String pwd = staff['password'].toString();
+        if (pwd.isNotEmpty && pwd.length != 60) {
+          staff['password'] = DBCrypt().hashpw(pwd, DBCrypt().gensalt());
+        } else if (pwd.isEmpty) {
+          staff.remove('password');
+        }
+      }
+      await myClient.from('Staff').update(staff).eq('id', id);
+    } catch (e) {
+      debugPrint('Error updating staff: $e');
+      rethrow;
+    }
+  }
+
 
 }
 
