@@ -483,8 +483,8 @@ function WhatsAppAdminContent() {
                                 src={o.customImageUrl}
                                 alt="Custom Cake Reference"
                                 style={styles.previewImg}
-                                width={300}
-                                height={200}
+                                width={200}
+                                height={150}
                                 unoptimized
                               />
                             </div>
@@ -1143,19 +1143,19 @@ const styles: Record<string, React.CSSProperties> = {
   imagePreview: {
     marginTop: 12,
     marginBottom: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: "hidden",
     border: "1px solid #E8DED4",
-    maxHeight: 500,
+    width: 180,
+    height: 140,
     backgroundColor: "#F7F3EF",
     boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
   },
   previewImg: {
     width: "100%",
-    height: "auto",
+    height: "100%",
     display: "block",
     objectFit: "cover" as const,
-    maxHeight: 500,
   },
   collapseBtnInternal: {
     backgroundColor: "transparent",
