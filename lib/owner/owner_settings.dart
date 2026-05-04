@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 import 'add_staff_page.dart';
+import 'sales_reports_page.dart';
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -250,7 +251,21 @@ class _SettingsContentState extends State<_SettingsContent> {
       icon: Icons.insights,
       child: Column(
         children: [
-          _buildActionRow(cs, "Sales Reports", Icons.bar_chart, "View historical data"),
+          _buildActionRow(
+            cs,
+            "Sales Reports",
+            Icons.bar_chart,
+            "View historical data",
+            onTap: () async {
+              final index = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SalesReportsPage()),
+              );
+              if (index is int && widget.onTabChanged != null) {
+                widget.onTabChanged!(index);
+              }
+            },
+          ),
           _buildActionRow(cs, "Expense Reports", Icons.receipt_long, "Analyze costs"),
           _buildActionRow(cs, "Inventory Analytics", Icons.inventory, "Stock trends"),
         ],
@@ -420,9 +435,9 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildActionRow(ColorScheme cs, String title, IconData icon, String subtitle) {
+  Widget _buildActionRow(ColorScheme cs, String title, IconData icon, String subtitle, {VoidCallback? onTap}) {
     return InkWell(
-      onTap: () {},
+      onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
