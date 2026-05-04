@@ -400,7 +400,7 @@ function formatItemTotal(price: string, quantity: number): string {
   return `₹${unitPrice * quantity}`;
 }
 
-async function reverseGeocode(lat: number, lon: number): Promise<string | null> {
+async function reverseGeocode(lat: number, lon: number): Promise<string | undefined> {
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
@@ -411,10 +411,10 @@ async function reverseGeocode(lat: number, lon: number): Promise<string | null> 
       }
     );
     const data = await response.json() as { display_name: string };
-    return data.display_name ?? null;
+    return data.display_name ?? undefined;
   } catch (e) {
     console.error("[WhatsApp] reverseGeocode failed:", e);
-    return null;
+    return undefined;
   }
 }
 
@@ -1018,7 +1018,7 @@ async function handleAddressInput(
     let finalAddress = locAddress;
     if (!finalAddress || finalAddress.length < 5) {
       console.log(`[WhatsApp] No address in location message. Attempting reverse geocode for ${coordsStr}...`);
-      finalAddress = await reverseGeocode(latitude, longitude) ?? null;
+      finalAddress = await reverseGeocode(latitude, longitude);
     }
 
     // Format: "Descriptive Address (Lat, Long) \n Maps Link"
