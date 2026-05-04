@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/supabase_service.dart';
 import '../services/report_service.dart';
 import '../widgets/owner_sidebar.dart';
@@ -223,11 +224,20 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
             ),
             const Spacer(),
             PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'pdf') {
-                  ReportService.downloadPDF(_orders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
-                } else if (value == 'csv') {
-                  ReportService.downloadCSV(_orders, _totalRevenue, _totalOrders);
+              onSelected: (value) async {
+                try {
+                  if (value == 'pdf') {
+                    await ReportService.downloadPDF(_orders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
+                  } else if (value == 'csv') {
+                    await ReportService.downloadCSV(_orders, _totalRevenue, _totalOrders);
+                  }
+                } catch (e) {
+                  debugPrint("Error generating report: $e");
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Error generating report: $e")),
+                    );
+                  }
                 }
               },
               icon: Container(

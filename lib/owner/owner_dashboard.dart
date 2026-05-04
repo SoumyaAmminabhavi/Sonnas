@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'menu_page.dart';
 import 'owner_settings.dart';
 import 'orders_page.dart';
@@ -68,7 +69,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
               return Transform.translate(
                 offset: Offset(0, isMobile ? -40 * (1 - value) : 40 * (1 - value)),
                 child: Opacity(
-                  opacity: value,
+                  opacity: value.clamp(0.0, 1.0),
                   child: child,
                 ),
               );
@@ -466,7 +467,16 @@ class _MainContent extends StatelessWidget {
             stream: SupabaseService.getOrdersStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return Shimmer.fromColors(
+                  baseColor: cs.surfaceContainer,
+                  highlightColor: cs.surface,
+                  child: Column(
+                    children: List.generate(3, (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Container(height: 100, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                    )),
+                  ),
+                );
               }
 
               if (snapshot.hasError) {
@@ -558,6 +568,21 @@ class _MainContent extends StatelessWidget {
     return StreamBuilder<Map<String, dynamic>>(
       stream: SupabaseService.getDashboardStatsStream(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Shimmer.fromColors(
+            baseColor: cs.surfaceContainer,
+            highlightColor: cs.surface,
+            child: Row(
+              children: List.generate(3, (index) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Container(height: 80, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+                ),
+              )),
+            ),
+          );
+        }
+
         final stats =
             snapshot.data ??
             {'totalOrders': 0, 'totalRevenue': 0.0, 'activeCustomers': 0};
