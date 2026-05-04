@@ -85,7 +85,16 @@ class SupabaseService {
     return client
         .from('WhatsAppOrder')
         .stream(primaryKey: ['id'])
-        .order('createdAt', ascending: false);
+        .map((data) {
+          final list = data.map((e) => Map<String, dynamic>.from(e)).toList();
+          // Sort by createdAt descending in Dart to be 100% sure
+          list.sort((a, b) {
+            final dateA = DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime(2000);
+            final dateB = DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime(2000);
+            return dateB.compareTo(dateA);
+          });
+          return list;
+        });
   }
 
 

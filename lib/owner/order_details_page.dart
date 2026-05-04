@@ -647,11 +647,10 @@ class _GeocodedAddress extends StatelessWidget {
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
 
         return Text(
-          isLoading ? "Pinpointing location..." : "$display (Open in Maps)",
+          isLoading ? "Pinpointing location..." : display,
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
-            color: cs.primary,
-            decoration: TextDecoration.underline,
+            color: cs.secondary.withValues(alpha: 0.5),
           ),
         );
       },
