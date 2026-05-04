@@ -147,7 +147,8 @@ function WhatsAppAdminContent() {
       }
     }
     
-    return filtered;
+    // Explicitly sort by createdAt descending
+    return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [ordersData?.orders, dateFilter]);
 
 
@@ -439,7 +440,33 @@ function WhatsAppAdminContent() {
                           {o.address && (
                             <div style={styles.orderNotes}>
                               <span style={styles.notesIcon}>📍</span>
-                              <span style={styles.notesText}>{o.address}</span>
+                              <div style={styles.notesText}>
+                                {o.address.split('\n').map((line, i) => {
+                                  if (line.includes('https://')) {
+                                    const url = line.split('🔗').pop()?.trim() || line;
+                                    return (
+                                      <a 
+                                        key={i} 
+                                        href={url} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        style={{ 
+                                          color: '#4A90D9', 
+                                          textDecoration: 'underline', 
+                                          display: 'inline-flex', 
+                                          alignItems: 'center',
+                                          gap: 4,
+                                          marginTop: 4,
+                                          fontWeight: 600
+                                        }}
+                                      >
+                                        🔗 Open in Google Maps
+                                      </a>
+                                    );
+                                  }
+                                  return <div key={i}>{line}</div>;
+                                })}
+                              </div>
                             </div>
                           )}
 
@@ -947,6 +974,27 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     fontWeight: 600,
     color: "#128C7E",
+  },
+  orderNotes: {
+    display: "flex",
+    gap: 10,
+    marginTop: 8,
+    padding: "10px 14px",
+    backgroundColor: "#FDFCFB",
+    borderRadius: 10,
+    border: "1px solid #E8DED4",
+    alignItems: "flex-start",
+  },
+  notesIcon: {
+    fontSize: 16,
+    flexShrink: 0,
+  },
+  notesText: {
+    fontSize: 13,
+    color: "#5A3E36",
+    lineHeight: 1.6,
+    flex: 1,
+    whiteSpace: "pre-wrap",
   },
   customerLink: {
     fontSize: 13,
