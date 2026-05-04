@@ -27,27 +27,79 @@ export const whatsappRouter = createTRPCRouter({
       const orders = await ctx.db.whatsAppOrder.findMany({
         where,
         orderBy: { createdAt: "desc" },
-        include: { items: true },
+        include: { 
+          items: {
+            select: {
+              id: true,
+              orderId: true,
+              cakeName: true,
+              size: true,
+              price: true,
+              quantity: true,
+            }
+          } 
+        },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
       });
 
+      // Fetch all cakes to map images
+      const cakes = await ctx.db.cake.findMany({
+        select: { name: true, image: true }
+      });
+      const cakeImageMap = new Map(cakes.map(c => [c.name, c.image]));
+
+      const ordersWithImages = orders.map(order => ({
+        ...order,
+        items: order.items.map(item => ({
+          ...item,
+          image: cakeImageMap.get(item.cakeName)
+        }))
+      }));
+
       let nextCursor: string | undefined;
-      if (orders.length > input.limit) {
-        const last = orders.pop();
+      if (ordersWithImages.length > input.limit) {
+        const last = ordersWithImages.pop();
         nextCursor = last?.id;
       }
 
-      return { orders, nextCursor };
+      return { orders: ordersWithImages, nextCursor };
     }),
 
   getOrder: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      return ctx.db.whatsAppOrder.findUnique({
+      const order = await ctx.db.whatsAppOrder.findUnique({
         where: { id: input.id },
-        include: { items: true },
+        include: { 
+          items: {
+            select: {
+              id: true,
+              orderId: true,
+              cakeName: true,
+              size: true,
+              price: true,
+              quantity: true,
+            }
+          } 
+        },
       });
+      if (!order) return null;
+
+      // Fetch cake images
+      const cakes = await ctx.db.cake.findMany({
+        where: { name: { in: order.items.map(i => i.cakeName) } },
+        select: { name: true, image: true }
+      });
+      const cakeImageMap = new Map(cakes.map(c => [c.name, c.image]));
+
+      return {
+        ...order,
+        items: order.items.map(item => ({
+          ...item,
+          image: cakeImageMap.get(item.cakeName)
+        }))
+      };
     }),
 
   updateOrderStatus: publicProcedure
@@ -69,7 +121,18 @@ export const whatsappRouter = createTRPCRouter({
       const order = await ctx.db.whatsAppOrder.update({
         where: { id: input.id },
         data: { status: input.status },
-        include: { items: true },
+        include: { 
+          items: {
+            select: {
+              id: true,
+              orderId: true,
+              cakeName: true,
+              size: true,
+              price: true,
+              quantity: true,
+            }
+          } 
+        },
       });
 
       // Notify the customer via WhatsApp
@@ -139,7 +202,17 @@ export const whatsappRouter = createTRPCRouter({
       }),
       ctx.db.whatsAppConversation.count(),
       ctx.db.whatsAppOrder.findMany({
-        select: { totalPrice: true, items: true },
+        select: { 
+          totalPrice: true, 
+          items: {
+            select: {
+              id: true,
+              cakeName: true,
+              size: true,
+              quantity: true,
+            }
+          } 
+        },
       }),
     ]);
 

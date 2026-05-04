@@ -71,6 +71,7 @@ interface AdminOrderItem {
   size: string;
   price: string;
   quantity: number;
+  image?: string | null;
 }
 
 interface AdminOrder {
@@ -431,9 +432,16 @@ function WhatsAppAdminContent() {
                           {isSelected && o.items && o.items.length > 0 && (
                             <div style={{ marginBottom: 12, padding: '8px 12px', backgroundColor: '#F9F9F9', borderRadius: 8, fontSize: 12, color: '#5A3E36', border: '1px solid #E8DED4' }}>
                               {o.items.map(item => (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                  <span>• {item.cakeName} ({item.size})</span>
-                                  <span>x{item.quantity}</span>
+                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '4px 0' }}>
+                                  {item.image && (
+                                    <div style={{ width: 40, height: 40, borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid #E8DED4' }}>
+                                      <Image src={item.image} alt={item.cakeName} width={40} height={40} style={{ width: '100%', height: '100%', objectFit: 'cover' }} unoptimized />
+                                    </div>
+                                  )}
+                                  <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>• {item.cakeName} ({item.size})</span>
+                                    <span>x{item.quantity}</span>
+                                  </div>
                                 </div>
                               ))}
                             </div>
