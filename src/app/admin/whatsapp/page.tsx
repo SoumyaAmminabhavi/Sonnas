@@ -83,6 +83,7 @@ interface AdminOrder {
   address?: string | null;
   notes?: string | null;
   deliveryDate?: string | null;
+  deliveryTime?: string | null;
   customImageUrl?: string | null;
   createdAt: string | Date;
   items: AdminOrderItem[];
@@ -466,6 +467,15 @@ function WhatsAppAdminContent() {
                                   }
                                   return <div key={i}>{line}</div>;
                                 })}
+                              </div>
+                            </div>
+                          )}
+
+                          {o.deliveryDate && (
+                            <div style={styles.orderNotes}>
+                              <span style={styles.notesIcon}>🗓️</span>
+                              <div style={styles.notesText}>
+                                Delivery: <b>{o.deliveryDate}</b> {o.deliveryTime && ` at `} <b>{o.deliveryTime}</b>
                               </div>
                             </div>
                           )}
