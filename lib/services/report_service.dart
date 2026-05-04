@@ -147,4 +147,123 @@ class ReportService {
       rethrow;
     }
   }
+
+  static Future<void> downloadExpenseCSV(List<Map<String, dynamic>> expenses, double totalExpenses) async {
+    List<List<dynamic>> rows = [];
+    
+    // Header
+    rows.add(["Title", "Date", "Category", "Amount", "Description"]);
+    
+    for (var exp in expenses) {
+      DateTime? dt;
+      final dateValue = exp['date'];
+      if (dateValue != null) {
+        dt = DateTime.tryParse(dateValue.toString());
+      }
+      String dateStr = dt != null ? DateFormat('dd-MM-yyyy').format(dt) : 'N/A';
+
+      rows.add([
+        exp['title']?.toString() ?? 'N/A',
+        dateStr,
+        exp['category']?.toString() ?? 'Other',
+        exp['amount']?.toString() ?? '0',
+        exp['description']?.toString() ?? '',
+      ]);
+    }
+    
+    // Summary
+    rows.add([]);
+    rows.add(["SUMMARY"]);
+    rows.add(["Total Expenses", totalExpenses]);
+    
+    String csv = const ListToCsvConverter().convert(rows);
+    final bytes = [0xEF, 0xBB, 0xBF, ...utf8.encode(csv)];
+    
+    await Printing.sharePdf(
+      bytes: Uint8List.fromList(bytes),
+      filename: 'sonna_expense_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv',
+    );
+  }
+
+  static Future<void> downloadExpensePDF(
+    List<Map<String, dynamic>> expenses, 
+    double totalExpenses,
+    Map<String, double> categoryBreakdown,
+  ) async {
+    try {
+      final pdf = pw.Document();
+      
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          footer: (context) => pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              "Page ${context.pageNumber} of ${context.pagesCount}",
+              style: pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+            ),
+          ),
+          build: (context) => [
+            pw.Header(
+              level: 0,
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("Expense Report", style: pw.TextStyle(fontSize: 18)),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text("Report Date: ${DateFormat('dd MMM yyyy').format(DateTime.now())}"),
+                pw.Text("Total Expenses: Rs. ${totalExpenses.toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              ],
+            ),
+            pw.SizedBox(height: 30),
+            pw.Text("Category Breakdown", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.Divider(),
+            ...categoryBreakdown.entries.map((e) => pw.Padding(
+              padding: const pw.EdgeInsets.symmetric(vertical: 4),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(e.key),
+                  pw.Text("Rs. ${e.value.toStringAsFixed(2)}"),
+                ],
+              ),
+            )),
+            pw.SizedBox(height: 30),
+            pw.Text("Expense Entries (Last 50)", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.TableHelper.fromTextArray(
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              headers: ["Date", "Title", "Category", "Amount"],
+              data: expenses.take(50).map((e) {
+                final dt = DateTime.tryParse(e['date']?.toString() ?? '');
+                final dateStr = dt != null ? DateFormat('dd MMM').format(dt) : 'N/A';
+                return [
+                  dateStr,
+                  e['title']?.toString() ?? 'N/A',
+                  e['category']?.toString() ?? 'Other',
+                  "Rs. ${e['amount']}",
+                ];
+              }).toList(),
+            ),
+          ],
+        ),
+      );
+
+      final pdfBytes = await pdf.save();
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: 'sonna_expense_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
+      );
+    } catch (e) {
+      debugPrint("Expense PDF Error: $e");
+      rethrow;
+    }
+  }
 }
+

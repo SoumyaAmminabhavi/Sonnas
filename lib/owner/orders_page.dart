@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:intl/intl.dart';
 import 'order_details_page.dart';
 import '../services/supabase_service.dart';
+
 
 class ManageOrdersPage extends StatefulWidget {
   final ValueChanged<int>? onTabChanged;
@@ -333,9 +335,20 @@ class _OrderTile extends StatelessWidget {
             : (items.isNotEmpty
                   ? SupabaseService.formatPrice(items[0]['price'])
                   : '---');
-        final String dateStr = data['deliveryDate'] ?? 'Not scheduled';
+        final String rawDate = data['deliveryDate'] ?? '';
+        String dateStr = 'Not scheduled';
+        if (rawDate.isNotEmpty) {
+          final dt = DateTime.tryParse(rawDate);
+          if (dt != null) {
+            dateStr = DateFormat('dd MMM yyyy').format(dt);
+          } else {
+            dateStr = rawDate; // Fallback to raw if parsing fails
+          }
+        }
+        
         final String? timeStr = data['deliveryTime'];
         final String schedule = timeStr != null ? "$dateStr at $timeStr" : dateStr;
+
 
         String orderSubtitle = 'Custom Creation';
         if (items.isNotEmpty) {

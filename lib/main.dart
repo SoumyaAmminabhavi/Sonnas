@@ -15,13 +15,11 @@ void main() async {
     // Load environment variables
     await dotenv.load(fileName: ".env");
     
-    // Explicit initialization in main
-    await Supabase.initialize(
-      url: SupabaseService.supabaseUrl,
-      anonKey: SupabaseService.supabaseAnonKey,
-    );
+    // Initialize Supabase (Handles both instances)
+    await SupabaseService.initialize();
     
     runApp(const PatisserieApp());
+
   } catch (e) {
     debugPrint('Critical Initialization Error: $e');
     runApp(MaterialApp(

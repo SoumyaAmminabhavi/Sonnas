@@ -2,23 +2,36 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dbcrypt/dbcrypt.dart';
+
 enum SalesRange { today, weekly, monthly, yearly }
 
 class SupabaseService {
   static String get supabaseUrl => dotenv.get('SUPABASE_URL', fallback: '');
   static String get supabaseAnonKey => dotenv.get('SUPABASE_ANON_KEY', fallback: '');
 
+  static String get mySupabaseUrl => dotenv.get('MY_SUPABASE_URL', fallback: '');
+  static String get mySupabaseAnonKey => dotenv.get('MY_SUPABASE_ANON_KEY', fallback: '');
+
+  static late SupabaseClient _myClient;
+
   static Future<void> initialize() async {
+    // Default instance (Friend's - for Orders/Menu)
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
+
+    // Second instance (User's - for Expenses/Private data)
+    _myClient = SupabaseClient(mySupabaseUrl, mySupabaseAnonKey);
   }
 
   static SupabaseClient get client => Supabase.instance.client;
+  static SupabaseClient get myClient => _myClient;
 
-  // Helper to get public URL for images in the 'cakes' bucket
+  // Helper to get public URL for images in the 'cakes' bucket (Always from friend's for menu)
   static String getPublicUrl(String? path) {
+
     if (path == null || path.isEmpty) return '';
     // Already a full web link — use directly
     if (path.startsWith('https://') || path.startsWith('http://')) return path;
@@ -310,4 +323,95 @@ class SupabaseService {
       return [];
     }
   }
+
+  // ─── Expense Management (Using Personal Supabase) ──────────────────────────
+  
+  static Future<List<Map<String, dynamic>>> fetchExpenses() async {
+    try {
+      final data = await myClient
+          .from('Expense')
+          .select()
+          .order('date', ascending: false);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Error fetching expenses: $e');
+      return [];
+    }
+  }
+
+  static Stream<List<Map<String, dynamic>>> getExpensesStream() {
+    return myClient
+        .from('Expense')
+        .stream(primaryKey: ['id'])
+        .map((data) {
+          final list = data.map((e) => Map<String, dynamic>.from(e)).toList();
+          list.sort((a, b) {
+            final dateA = DateTime.tryParse(a['date'] ?? '') ?? DateTime(2000);
+            final dateB = DateTime.tryParse(b['date'] ?? '') ?? DateTime(2000);
+            return dateB.compareTo(dateA);
+          });
+          return list;
+        });
+  }
+
+  static Future<void> addExpense(Map<String, dynamic> expense) async {
+    try {
+      await myClient.from('Expense').insert(expense);
+    } catch (e) {
+      debugPrint('Error adding expense: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteExpense(String id) async {
+    try {
+      await myClient.from('Expense').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting expense: $e');
+    }
+  }
+
+  // ─── Staff Management ─────────────────────────────────────────────────────
+
+  static Future<String?> uploadStaffImage(String fileName, dynamic fileBytes) async {
+    try {
+      final String path = 'staff/$fileName';
+      await myClient.storage.from('staff_photos').uploadBinary(
+        path,
+        fileBytes,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+      );
+      return myClient.storage.from('staff_photos').getPublicUrl(path);
+    } catch (e) {
+      debugPrint('Error uploading staff image: $e');
+      return null;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getAllStaff() async {
+    try {
+      final response = await myClient.from('Staff').select().order('createdAt', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching staff: $e');
+      return [];
+    }
+  }
+
+  static Future<void> addStaff(Map<String, dynamic> staff) async {
+
+    try {
+      if (staff.containsKey('password')) {
+        staff['password'] = DBCrypt().hashpw(staff['password'], DBCrypt().gensalt());
+      }
+      await myClient.from('Staff').insert(staff);
+    } catch (e) {
+      debugPrint('Error adding staff: $e');
+      rethrow;
+    }
+  }
+
 }
+
+
+

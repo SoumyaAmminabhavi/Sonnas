@@ -3,6 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 import 'add_staff_page.dart';
 import 'sales_reports_page.dart';
+import 'expense_reports_page.dart';
+import '../services/supabase_service.dart';
+
+
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -35,12 +39,27 @@ class _SettingsContentState extends State<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
   late bool _isDarkMode;
+  List<Map<String, dynamic>> _staff = [];
+  bool _isLoadingStaff = true;
 
   @override
   void initState() {
     super.initState();
     _isDarkMode = themeController.value == ThemeMode.dark;
+    _fetchStaff();
   }
+
+  Future<void> _fetchStaff() async {
+    setState(() => _isLoadingStaff = true);
+    final staff = await SupabaseService.getAllStaff();
+    if (mounted) {
+      setState(() {
+        _staff = staff;
+        _isLoadingStaff = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -210,21 +229,41 @@ class _SettingsContentState extends State<_SettingsContent> {
       icon: Icons.people_outline,
       child: Column(
         children: [
-          _buildStaffRow(cs, "Chef Julian", "Senior Artisan", true),
-          _buildStaffRow(cs, "Aisha M.", "Pastry Assistant", true),
-          _buildStaffRow(cs, "Marcus T.", "Delivery", false),
+          if (_isLoadingStaff)
+            const Center(child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: CircularProgressIndicator(),
+            ))
+          else if (_staff.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  "No staff members added yet.",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.secondary.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            )
+          else
+            ..._staff.map((s) => _buildStaffRow(
+                  cs,
+                  s['name'] ?? 'Unknown',
+                  s['role'] ?? 'Staff',
+                  true, // Defaulting to active
+                  imageUrl: s['imageUrl'],
+                )),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () async {
-                final result = await Navigator.push(
+                await Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AddStaffPage()),
                 );
-                if (result is int && widget.onTabChanged != null) {
-                  widget.onTabChanged!(result);
-                }
+                _fetchStaff(); // Refresh after coming back
               },
               icon: Icon(Icons.person_add, color: cs.primary),
               label: Text(
@@ -244,6 +283,7 @@ class _SettingsContentState extends State<_SettingsContent> {
       ),
     );
   }
+
 
   Widget _buildBISection(ColorScheme cs) {
     return _SettingsCard(
@@ -266,7 +306,22 @@ class _SettingsContentState extends State<_SettingsContent> {
               }
             },
           ),
-          _buildActionRow(cs, "Expense Reports", Icons.receipt_long, "Analyze costs"),
+          _buildActionRow(
+            cs,
+            "Expense Reports",
+            Icons.receipt_long,
+            "Analyze costs",
+            onTap: () async {
+              final index = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ExpenseReportsPage()),
+              );
+              if (index is int && widget.onTabChanged != null) {
+                widget.onTabChanged!(index);
+              }
+            },
+          ),
+
           _buildActionRow(cs, "Inventory Analytics", Icons.inventory, "Stock trends"),
         ],
       ),
@@ -378,21 +433,25 @@ class _SettingsContentState extends State<_SettingsContent> {
     );
   }
 
-  Widget _buildStaffRow(ColorScheme cs, String name, String role, bool active) {
+  Widget _buildStaffRow(ColorScheme cs, String name, String role, bool active, {String? imageUrl}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
           CircleAvatar(
             backgroundColor: cs.primary.withValues(alpha: 0.1),
-            child: Text(
-              name[0],
-              style: GoogleFonts.plusJakartaSans(
-                color: cs.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+            child: imageUrl == null
+                ? Text(
+                    name.isNotEmpty ? name[0] : "?",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
+
           const SizedBox(width: 16),
           Expanded(
             child: Column(

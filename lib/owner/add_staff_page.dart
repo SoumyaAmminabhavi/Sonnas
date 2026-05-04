@@ -1,6 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../widgets/owner_sidebar.dart';
+import '../services/supabase_service.dart';
+
+
 
 class AddStaffPage extends StatefulWidget {
   const AddStaffPage({super.key});
@@ -20,6 +25,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
   };
   final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
   final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  
+  XFile? _pickedImage;
+  Uint8List? _imageBytes;
+  bool _isSaving = false;
 
   final TextEditingController _startTimeController =
       TextEditingController(text: "08:00 AM");
@@ -29,18 +38,49 @@ class _AddStaffPageState extends State<AddStaffPage> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _emergencyNameController = TextEditingController();
   final TextEditingController _emergencyPhoneController = TextEditingController();
+  
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
   String? _selectedBloodGroup;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _pickedImage = image;
+        _imageBytes = bytes;
+      });
+    }
+  }
 
   @override
   void dispose() {
+
     _startTimeController.dispose();
     _endTimeController.dispose();
     _dobController.dispose();
     _addressController.dispose();
     _emergencyNameController.dispose();
     _emergencyPhoneController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -174,50 +214,63 @@ class _AddStaffPageState extends State<AddStaffPage> {
       children: [
         Row(
           children: [
-            Stack(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
+        GestureDetector(
+          onTap: _pickImage,
+          child: Stack(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerLow,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: cs.primaryContainer.withValues(alpha: 0.5),
+                    style: BorderStyle.solid,
+                    width: 2,
+                  ),
+                  image: _imageBytes != null
+                      ? DecorationImage(
+                          image: MemoryImage(_imageBytes!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: _imageBytes == null
+                    ? Icon(
+                        Icons.add_a_photo_outlined,
+                        color: cs.secondary,
+                        size: 30,
+                      )
+                    : null,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerLow,
+                    color: cs.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: cs.primaryContainer.withValues(alpha: 0.5),
-                      style: BorderStyle.solid,
-                      width: 2,
-                    ),
                   ),
-                  child: Icon(
-                    Icons.add_a_photo_outlined,
-                    color: cs.secondary,
-                    size: 30,
+                  child: const Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 12,
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                      size: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+        ),
+
             const SizedBox(width: 24),
             Expanded(
               child: _buildGhostInput(
                 cs,
                 label: "FULL NAME",
                 placeholder: "e.g. Julianne Moretti",
+                controller: _nameController,
               ),
             ),
           ],
@@ -227,14 +280,17 @@ class _AddStaffPageState extends State<AddStaffPage> {
           _buildGhostInput(
             cs,
             label: "PHONE NUMBER",
-            placeholder: "+91 9876543210",
+            placeholder: "9876543210",
+            controller: _phoneController,
             keyboardType: TextInputType.phone,
+            prefixText: "+91 ",
           ),
           const SizedBox(height: 24),
           _buildGhostInput(
             cs,
             label: "EMAIL ADDRESS (OPTIONAL)",
             placeholder: "julianne@patisserie.com",
+            controller: _emailController,
             keyboardType: TextInputType.emailAddress,
           ),
         ] else
@@ -244,8 +300,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 child: _buildGhostInput(
                   cs,
                   label: "PHONE NUMBER",
-                  placeholder: "+91 9876543210",
+                  placeholder: "9876543210",
+                  controller: _phoneController,
                   keyboardType: TextInputType.phone,
+                  prefixText: "+91 ",
                 ),
               ),
               const SizedBox(width: 24),
@@ -254,11 +312,14 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   cs,
                   label: "EMAIL ADDRESS (OPTIONAL)",
                   placeholder: "julianne@patisserie.com",
+                  controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                 ),
               ),
             ],
           ),
+
+
       ],
     );
   }
@@ -585,13 +646,19 @@ class _AddStaffPageState extends State<AddStaffPage> {
       children: [
         Container(height: 1, color: cs.primaryContainer.withValues(alpha: 0.3)),
         const SizedBox(height: 24),
-        _buildGhostInput(cs, label: "USERNAME", placeholder: "staff_julianne"),
+        _buildGhostInput(
+          cs, 
+          label: "USERNAME", 
+          placeholder: "staff_julianne",
+          controller: _usernameController,
+        ),
         const SizedBox(height: 24),
         if (isMobile) ...[
           _buildGhostInput(
             cs,
             label: "PASSWORD",
             placeholder: "••••••••",
+            controller: _passwordController,
             obscureText: true,
           ),
           const SizedBox(height: 24),
@@ -599,6 +666,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             cs,
             label: "CONFIRM PASSWORD",
             placeholder: "••••••••",
+            controller: _confirmPasswordController,
             obscureText: true,
           ),
         ] else
@@ -609,6 +677,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   cs,
                   label: "PASSWORD",
                   placeholder: "••••••••",
+                  controller: _passwordController,
                   obscureText: true,
                 ),
               ),
@@ -618,14 +687,115 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   cs,
                   label: "CONFIRM PASSWORD",
                   placeholder: "••••••••",
+                  controller: _confirmPasswordController,
                   obscureText: true,
                 ),
               ),
             ],
           ),
+
       ],
     );
   }
+
+  Future<void> _saveStaff() async {
+    if (_nameController.text.isEmpty ||
+        _phoneController.text.isEmpty ||
+        _usernameController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all required fields")),
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Passwords do not match")),
+      );
+      return;
+    }
+
+    // Phone validation (10 digits)
+    String cleanPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    if (cleanPhone.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Primary phone must be exactly 10 digits")),
+      );
+      return;
+    }
+
+    String cleanEmergencyPhone = _emergencyPhoneController.text.replaceAll(RegExp(r'\D'), '');
+    if (cleanEmergencyPhone.length != 10 && cleanEmergencyPhone.isNotEmpty) {
+       // Optional: you can choose if emergency is mandatory or not. 
+       // I'll keep it as 10 digits if provided.
+    }
+
+
+
+    // Email validation (if provided)
+    if (_emailController.text.isNotEmpty) {
+      final emailRegex = RegExp(r'^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+');
+      if (!emailRegex.hasMatch(_emailController.text)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please enter a valid Gmail/Email address")),
+        );
+        return;
+      }
+    }
+
+    setState(() => _isSaving = true);
+
+
+    try {
+      String? imageUrl;
+      if (_pickedImage != null && _imageBytes != null) {
+        final fileName = 'staff_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        imageUrl = await SupabaseService.uploadStaffImage(fileName, _imageBytes!);
+      }
+
+      final staff = {
+        'name': _nameController.text,
+        'phone': cleanPhone,
+        'email': _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+        'imageUrl': imageUrl,
+
+        'address': _addressController.text,
+        'dob': _dobController.text,
+        'bloodGroup': _selectedBloodGroup,
+        'emergencyName': _emergencyNameController.text,
+        'emergencyPhone': cleanEmergencyPhone,
+        'role': _selectedRole,
+        'permissions': _permissions,
+        'shiftStart': _startTimeController.text,
+        'shiftEnd': _endTimeController.text,
+        'workingDays': _workingDays,
+        'username': _usernameController.text,
+        'password': _passwordController.text,
+      };
+
+
+      await SupabaseService.addStaff(staff);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Staff member added successfully")),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error adding staff: $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
 
   Widget _buildActions(ColorScheme cs) {
     return Column(
@@ -648,25 +818,36 @@ class _AddStaffPageState extends State<AddStaffPage> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {},
+              onTap: _isSaving ? null : _saveStaff,
               borderRadius: BorderRadius.circular(100),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 18),
                 child: Center(
-                  child: Text(
-                    "ADD STAFF",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.onPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            color: cs.onPrimary,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          "ADD STAFF",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.onPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 2.0,
+                          ),
+                        ),
                 ),
               ),
             ),
+
           ),
         ),
+
         const SizedBox(height: 12),
         TextButton(
           onPressed: () => Navigator.pop(context),
@@ -744,9 +925,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
           _buildGhostInput(
             cs,
             label: "EMERGENCY CONTACT PHONE",
-            placeholder: "+91 00000 00000",
+            placeholder: "00000 00000",
             controller: _emergencyPhoneController,
             keyboardType: TextInputType.phone,
+            prefixText: "+91 ",
           ),
         ] else
           Row(
@@ -764,13 +946,15 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 child: _buildGhostInput(
                   cs,
                   label: "EMERGENCY CONTACT PHONE",
-                  placeholder: "+91 00000 00000",
+                  placeholder: "00000 00000",
                   controller: _emergencyPhoneController,
                   keyboardType: TextInputType.phone,
+                  prefixText: "+91 ",
                 ),
               ),
             ],
           ),
+
       ],
     );
   }
@@ -862,7 +1046,9 @@ class _AddStaffPageState extends State<AddStaffPage> {
     bool isDate = false,
     int maxLines = 1,
     TextInputType? keyboardType,
+    String? prefixText,
   }) {
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -891,9 +1077,26 @@ class _AddStaffPageState extends State<AddStaffPage> {
           decoration: InputDecoration(
             hintText: placeholder,
             hintStyle: GoogleFonts.plusJakartaSans(
+
               color: cs.secondary.withValues(alpha: 0.3),
             ),
+            prefixIcon: prefixText != null
+                ? Container(
+                    width: 40,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      prefixText,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )
+                : null,
+            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
+
+
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(color: cs.primaryContainer, width: 0.5),
             ),

@@ -162,3 +162,38 @@ model WhatsAppOrderItem {
     
     order          WhatsAppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
+
+model Expense {
+    id          String   @id @default(cuid())
+    title       String
+    amount      Float
+    category    String
+    date        DateTime @default(now())
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+}
+
+model Staff {
+    id              String   @id @default(cuid())
+    name            String
+    phone           String
+    email           String?
+    imageUrl        String?
+    address         String?
+
+    dob             String?
+    bloodGroup      String?
+    emergencyName   String?
+    emergencyPhone  String?
+    role            String
+    permissions     Json
+    shiftStart      String
+    shiftEnd        String
+    workingDays     Json
+    username        String   @unique
+    password        String
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+}
+
