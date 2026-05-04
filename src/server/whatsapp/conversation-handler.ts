@@ -316,22 +316,52 @@ async function updateState(
 
 async function addToCart(phone: string, item: { cakeName: string; size: string; price: string; quantity: number }) {
   try {
-    const newItem = await db.whatsAppCartItem.create({
-      data: {
+    // Check if item already exists in cart
+    const existingItem = await db.whatsAppCartItem.findFirst({
+      where: {
         phone,
         cakeName: item.cakeName,
         size: item.size,
-        price: item.price,
-        quantity: item.quantity,
       },
     });
 
+    let resultItem;
+
+    if (existingItem) {
+      // Update quantity of existing item
+      resultItem = await db.whatsAppCartItem.update({
+        where: { id: existingItem.id },
+        data: {
+          quantity: existingItem.quantity + item.quantity,
+        },
+      });
+    } else {
+      // Create new item
+      resultItem = await db.whatsAppCartItem.create({
+        data: {
+          phone,
+          cakeName: item.cakeName,
+          size: item.size,
+          price: item.price,
+          quantity: item.quantity,
+        },
+      });
+    }
+
     const cached = convoCache.get(phone);
     if (cached) {
-      cached.cart = [...(cached.cart ?? []), newItem as unknown as CartItem];
+      if (existingItem) {
+        // Update item in cache
+        cached.cart = (cached.cart ?? []).map((i) =>
+          i.id === existingItem.id ? (resultItem as unknown as CartItem) : i
+        );
+      } else {
+        // Add new item to cache
+        cached.cart = [...(cached.cart ?? []), resultItem as unknown as CartItem];
+      }
       convoCache.set(phone, cached);
     }
-    return newItem;
+    return resultItem;
   } catch (e) {
     console.error("[WhatsApp] addToCart failed:", e);
     return null;
@@ -369,7 +399,8 @@ function getCartSummary(cart: CartItem[]): string {
   
   let summary = `🛒 *Your Cart*\n\n`;
   cart.forEach((item, idx) => {
-    summary += `${idx + 1}. *${item.cakeName}* (${item.size}) — ${item.price}\n`;
+    const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
+    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${item.price}\n`;
   });
   summary += `\n*Total: ${getCartTotal(cart)}*`;
   return summary;
@@ -1147,7 +1178,8 @@ async function handleDeliveryTimeInput(
       summary += "_No items in cart._\n";
     } else {
       cart.forEach((item, idx) => {
-        summary += `${idx + 1}. *${item.cakeName}* (${item.size}) — ${item.price}\n`;
+        const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
+        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${item.price}\n`;
       });
     }
     
@@ -1343,7 +1375,8 @@ async function sendOrderStatus(to: string) {
     
     // Display items
     order.items.forEach(item => {
-      statusText += `   🎂 ${item.cakeName} (${item.size})\n`;
+      const qtyStr = item.quantity > 1 ? ` (x${item.quantity})` : "";
+      statusText += `   🎂 ${item.cakeName} (${item.size})${qtyStr}\n`;
     });
     
     statusText += `   💰 Total: ${order.totalPrice}\n`;
@@ -1509,7 +1542,8 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       const cart = await db.whatsAppCartItem.findMany({ where: { phone } }) as unknown as CartItem[];
       let summary = `📋 *Order Summary*\n\n`;
       cart.forEach((item, idx) => {
-        summary += `${idx + 1}. *${item.cakeName}* (${item.size}) — ${item.price}\n`;
+        const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
+        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${item.price}\n`;
       });
       summary += `\n*Total: ${getCartTotal(cart)}*\n`;
       summary += `📍 Address: ${convo.selectedAddress}\n`;
