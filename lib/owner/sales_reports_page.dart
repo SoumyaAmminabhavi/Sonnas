@@ -415,6 +415,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
             height: 300,
             child: LineChart(
               LineChartData(
+                minY: 0,
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
@@ -427,6 +428,32 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                   show: true,
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 52,
+                      interval: (_totalRevenue / 4).clamp(100, double.infinity), // Dynamic spacing
+                      getTitlesWidget: (value, meta) {
+                        String text = '';
+                        if (value >= 1000) {
+                          text = '${(value / 1000).toStringAsFixed(1)}K';
+                        } else {
+                          text = value.toInt().toString();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            text,
+                            textAlign: TextAlign.right,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.4),
+                              fontSize: 10,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,

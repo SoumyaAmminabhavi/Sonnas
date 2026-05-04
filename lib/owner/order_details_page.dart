@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
@@ -165,9 +166,17 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             ),
                                           ),
                                           Text(
-                                            order['deliveryDate'] != null
-                                                ? "Scheduled for ${order['deliveryDate']}${order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : ''}"
-                                                : "Date not scheduled yet",
+                                            () {
+                                              if (order['deliveryDate'] == null) return "Date not scheduled yet";
+                                              try {
+                                                final date = DateTime.parse(order['deliveryDate'].toString());
+                                                final formattedDate = DateFormat('MMMM d, y').format(date);
+                                                final time = order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : '';
+                                                return "Scheduled for $formattedDate$time";
+                                              } catch (e) {
+                                                return "Scheduled for ${order['deliveryDate']}${order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : ''}";
+                                              }
+                                            }(),
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
                                               color: cs.secondary.withValues(
