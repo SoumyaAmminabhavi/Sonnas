@@ -510,7 +510,7 @@ function WhatsAppAdminContent() {
                             </div>
                           )}
 
-                          {o.customImageUrl && (
+                          {o.isCustom && o.customImageUrl && (
                             <div style={styles.imagePreview}>
                               {o.customImageUrl.split(',').map((url, idx) => (
                                 <Image
