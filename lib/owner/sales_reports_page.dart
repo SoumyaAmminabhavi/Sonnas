@@ -681,18 +681,27 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
   }
 
   Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'cake':
-      case 'cakes':
-        return const Color(0xFFFF4D8D);
-      case 'pastry':
-      case 'pastries':
-        return const Color(0xFF701235);
-      case 'artisan':
-        return const Color(0xFF964261);
-      default:
-        return Colors.blueGrey;
-    }
+    final cat = category.toLowerCase();
+    if (cat.contains('chocolate')) return const Color(0xFF3E2723); // Deep Chocolate
+    if (cat.contains('vanilla')) return const Color(0xFFE1C16E); // Golden Vanilla
+    if (cat.contains('tea')) return const Color(0xFF7B8E7E); // Sage Tea
+    if (cat.contains('seasonal')) return const Color(0xFFC88D67); // Seasonal Copper
+    if (cat.contains('pastry')) return const Color(0xFF701235); // Sonna Maroon
+    if (cat.contains('cake')) return const Color(0xFFFF4D8D); // Sonna Pink
+    if (cat.contains('artisan')) return const Color(0xFF964261); // Mauve
+    
+    // Dynamic fallback based on category name to ensure variety
+    final colors = [
+      const Color(0xFFFF4D8D),
+      const Color(0xFF701235),
+      const Color(0xFF964261),
+      const Color(0xFF3E2723),
+      const Color(0xFF7B8E7E),
+      const Color(0xFFC88D67),
+      const Color(0xFF5D4037),
+      Colors.blueGrey,
+    ];
+    return colors[category.hashCode.abs() % colors.length];
   }
 
   Widget _buildSkeleton(ColorScheme cs) {
