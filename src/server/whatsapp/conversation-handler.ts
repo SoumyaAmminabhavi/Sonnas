@@ -591,20 +591,6 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
-  // ── Handle Location Message ───────────────────────────────────────────
-
-  if (msg.type === "location" && msg.location) {
-    const { latitude, longitude } = msg.location;
-    const address = msg.location.address ?? `Location: ${latitude}, ${longitude}`;
-    
-    if (state === "ASKING_ADDRESS") {
-      await Promise.all([
-        updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: address }),
-        sendTextMessage(msg.from, "✅ Location received! 📍\n\nAny *Special Instructions* or *Writings* for the cake?\n\n(Reply *None* to skip)")
-      ]);
-      return;
-    }
-  }
 
 
   // ── State-specific handling ────────────────────────────────────────────
@@ -1008,10 +994,15 @@ async function handleAddressInput(
     const { latitude, longitude, name, address: locAddress } = msg.location;
     // Create a Google Maps link
     const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    address = locAddress ? `${locAddress}\n📍 ${mapsUrl}` : `📍 GPS Location: ${mapsUrl}`;
+    const coordsStr = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+    
+    // Format: "Descriptive Address (Lat, Long) \n Maps Link"
+    address = locAddress 
+      ? `${locAddress}\n📍 Coords: ${coordsStr}\n🔗 ${mapsUrl}` 
+      : `📍 GPS Location: ${coordsStr}\n🔗 ${mapsUrl}`;
     
     if (name) {
-      address = `📍 ${name}\n${address}`;
+      address = `🏛️ ${name}\n${address}`;
     }
     
     console.log(`[WhatsApp] Received GPS location: ${latitude}, ${longitude}`);
