@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 import 'add_staff_page.dart';
+import 'inventory_analytics_page.dart';
 import 'sales_reports_page.dart';
 import 'expense_reports_page.dart';
+
 import '../services/supabase_service.dart';
+import '../widgets/skeleton.dart';
+
 
 
 
@@ -230,10 +234,31 @@ class _SettingsContentState extends State<_SettingsContent> {
       child: Column(
         children: [
           if (_isLoadingStaff)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(),
-            ))
+            SkeletonWrapper(
+              child: Column(
+                children: List.generate(3, (index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Row(
+                    children: [
+                      const Skeleton(height: 40, width: 40, borderRadius: 20),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Skeleton(height: 14, width: 120),
+                            const SizedBox(height: 8),
+                            const Skeleton(height: 10, width: 80),
+                          ],
+                        ),
+                      ),
+                      const Skeleton(height: 24, width: 60, borderRadius: 12),
+                    ],
+                  ),
+                )),
+              ),
+            )
+
           else if (_staff.isEmpty)
             Center(
               child: Padding(
@@ -325,7 +350,22 @@ class _SettingsContentState extends State<_SettingsContent> {
             },
           ),
 
-          _buildActionRow(cs, "Inventory Analytics", Icons.inventory, "Stock trends"),
+          _buildActionRow(
+            cs,
+            "Inventory Analytics",
+            Icons.inventory,
+            "Stock trends",
+            onTap: () async {
+              final index = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const InventoryAnalyticsPage()),
+              );
+              if (index is int && widget.onTabChanged != null) {
+                widget.onTabChanged!(index);
+              }
+            },
+          ),
+
         ],
       ),
     );

@@ -120,15 +120,20 @@ class _DrawerEntry extends StatelessWidget {
                 color: isSelected ? Colors.white : cs.secondary,
               ),
               const SizedBox(width: 16),
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                  letterSpacing: 1.5,
-                  color: isSelected ? Colors.white : cs.secondary,
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    letterSpacing: 1.5,
+                    color: isSelected ? Colors.white : cs.secondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+
             ],
           ),
         ),

@@ -4,9 +4,11 @@ import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'order_details_page.dart';
 import '../services/supabase_service.dart';
-
+import '../widgets/skeleton.dart';
 
 class ManageOrdersPage extends StatefulWidget {
+
+
   final ValueChanged<int>? onTabChanged;
   const ManageOrdersPage({super.key, this.onTabChanged});
 
@@ -158,24 +160,39 @@ class _OrdersList extends StatelessWidget {
       stream: SupabaseService.getOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          final cs2 = Theme.of(context).colorScheme;
-          return Shimmer.fromColors(
-            baseColor: cs2.surfaceContainer,
-            highlightColor: cs2.surface,
+          return SkeletonWrapper(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              itemCount: 5,
+              itemCount: 6,
               separatorBuilder: (_, __) => const SizedBox(height: 16),
               itemBuilder: (_, __) => Container(
-                height: 110,
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Skeleton(height: 50, width: 50, borderRadius: 12),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Skeleton(height: 14, width: 140),
+                          const SizedBox(height: 8),
+                          const Skeleton(height: 10, width: 90),
+                        ],
+                      ),
+                    ),
+                    const Skeleton(height: 24, width: 70, borderRadius: 12),
+                  ],
                 ),
               ),
             ),
           );
         }
+
 
         if (snapshot.hasError) {
           return _ErrorView(

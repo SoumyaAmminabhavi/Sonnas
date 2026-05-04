@@ -563,14 +563,19 @@ class _DrawerItem extends StatelessWidget {
           children: [
             Icon(icon, color: cs.primary),
             const SizedBox(width: 16),
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: cs.onSurface,
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurface,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+
           ],
         ),
       ),

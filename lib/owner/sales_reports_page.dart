@@ -174,30 +174,45 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                   },
                 ),
               Expanded(
-                child: _isLoading
-                    ? _buildSkeleton(cs)
-                    : CustomScrollView(
-                        slivers: [
-                          _buildSliverAppBar(cs),
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildMetricsGrid(cs),
-                                  const SizedBox(height: 32),
-                                  _buildRevenueChart(cs, isDark),
-                                  const SizedBox(height: 32),
-                                  _buildSecondaryStats(cs, isDark),
-                                  const SizedBox(height: 64),
-                                ],
-                              ),
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: SupabaseService.getOrdersStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
+                      return _buildSkeleton(cs);
+                    }
+
+                    if (snapshot.hasData) {
+                      _orders = snapshot.data!;
+                      _calculateMetrics();
+                      // We don't have menu here, so we might need a combined stream or just use cached menu
+                      // For now, using the cached menu from _loadData which is called in initState
+                    }
+
+                    return CustomScrollView(
+                      slivers: [
+                        _buildSliverAppBar(cs),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildMetricsGrid(cs),
+                                const SizedBox(height: 32),
+                                _buildRevenueChart(cs, isDark),
+                                const SizedBox(height: 32),
+                                _buildSecondaryStats(cs, isDark),
+                                const SizedBox(height: 64),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    );
+                  }
+                ),
               ),
+
             ],
           ),
         );
@@ -282,11 +297,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 ),
               ],
             ),
-            const SizedBox(width: 12),
-            IconButton(
-              icon: Icon(Icons.refresh, color: cs.primary),
-              onPressed: _loadData,
-            ),
+
           ],
         ),
       ),

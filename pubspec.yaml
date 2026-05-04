@@ -19,7 +19,8 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.1
+  sdk: ^3.6.0
+
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -49,6 +50,7 @@ dependencies:
   shimmer: ^3.0.0
   image_picker: ^1.1.2
   dbcrypt: ^2.0.0
+
 
 
 

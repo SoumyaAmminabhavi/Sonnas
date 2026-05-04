@@ -7,7 +7,9 @@ import 'owner_settings.dart';
 import 'orders_page.dart';
 import 'payments_page.dart';
 import '../widgets/owner_sidebar.dart';
+import '../widgets/skeleton.dart';
 import 'package:fl_chart/fl_chart.dart';
+
 import '../services/supabase_service.dart';
 import 'order_details_page.dart';
 
@@ -569,19 +571,32 @@ class _MainContent extends StatelessWidget {
       stream: SupabaseService.getDashboardStatsStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Shimmer.fromColors(
-            baseColor: cs.surfaceContainer,
-            highlightColor: cs.surface,
+          return SkeletonWrapper(
             child: Row(
               children: List.generate(3, (index) => Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Container(height: 80, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+                  padding: EdgeInsets.only(right: index == 2 ? 0 : 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Skeleton(height: 10, width: 60),
+                        const SizedBox(height: 12),
+                        const Skeleton(height: 24, width: 40),
+                      ],
+                    ),
+                  ),
                 ),
               )),
             ),
           );
         }
+
 
         final stats =
             snapshot.data ??

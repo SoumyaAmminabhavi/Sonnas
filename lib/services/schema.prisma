@@ -198,4 +198,16 @@ model Staff {
     updatedAt       DateTime @updatedAt
 }
 
+model InventoryItem {
+    id              String   @id @default(cuid())
+    name            String
+    category        String
+    unit            String   // e.g., kg, liters, units
+    currentStock    Float    @default(0)
+    minStock        Float    @default(0) // Threshold for alerts
+    lastRestocked   DateTime @default(now())
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+}
+
 

@@ -7,13 +7,14 @@ import 'package:dbcrypt/dbcrypt.dart';
 enum SalesRange { today, weekly, monthly, yearly }
 
 class SupabaseService {
-  static String get supabaseUrl => dotenv.get('SUPABASE_URL', fallback: '');
-  static String get supabaseAnonKey => dotenv.get('SUPABASE_ANON_KEY', fallback: '');
+  static final String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+  static final String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
-  static String get mySupabaseUrl => dotenv.get('MY_SUPABASE_URL', fallback: '');
-  static String get mySupabaseAnonKey => dotenv.get('MY_SUPABASE_ANON_KEY', fallback: '');
+  static final String mySupabaseUrl = dotenv.env['MY_SUPABASE_URL'] ?? '';
+  static final String mySupabaseAnonKey = dotenv.env['MY_SUPABASE_ANON_KEY'] ?? '';
 
-  static late SupabaseClient _myClient;
+  static late final SupabaseClient _myClient;
+
 
   static Future<void> initialize() async {
     // Default instance (Friend's - for Orders/Menu)
@@ -409,14 +410,7 @@ class SupabaseService {
 
   static Future<void> updateStaff(String id, Map<String, dynamic> staff) async {
     try {
-      if (staff.containsKey('password') && staff['password'] != null) {
-        final String pwd = staff['password'].toString();
-        if (pwd.isNotEmpty && pwd.length != 60) {
-          staff['password'] = DBCrypt().hashpw(pwd, DBCrypt().gensalt());
-        } else if (pwd.isEmpty) {
-          staff.remove('password');
-        }
-      }
+      // Password is set by staff during activation, not by owner anymore
       await myClient.from('Staff').update(staff).eq('id', id);
     } catch (e) {
       debugPrint('Error updating staff: $e');
@@ -425,6 +419,45 @@ class SupabaseService {
   }
 
 
+
+  // ─── Inventory Management ──────────────────────────────────────────────────
+
+  static Stream<List<Map<String, dynamic>>> getInventoryStream() {
+    return myClient
+        .from('InventoryItem')
+        .stream(primaryKey: ['id'])
+        .map((data) => data.map((item) => Map<String, dynamic>.from(item)).toList());
+  }
+
+  static Future<void> addInventoryItem(Map<String, dynamic> item) async {
+    try {
+      await myClient.from('InventoryItem').insert(item);
+    } catch (e) {
+      debugPrint('Error adding inventory item: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> updateInventoryStock(String id, double newStock) async {
+    try {
+      await myClient.from('InventoryItem').update({
+        'currentStock': newStock,
+        'updatedAt': DateTime.now().toIso8601String(),
+      }).eq('id', id);
+    } catch (e) {
+      debugPrint('Error updating inventory stock: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteInventoryItem(String id) async {
+    try {
+      await myClient.from('InventoryItem').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting inventory item: $e');
+      rethrow;
+    }
+  }
 }
 
 
