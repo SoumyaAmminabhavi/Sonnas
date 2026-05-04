@@ -483,7 +483,22 @@ function WhatsAppAdminContent() {
                             <div style={styles.orderNotes}>
                               <span style={styles.notesIcon}>🗓️</span>
                               <div style={styles.notesText}>
-                                Delivery: <b>{o.deliveryDate}</b> {o.deliveryTime && ` at `} <b>{o.deliveryTime}</b>
+                                Delivery: <b>{(() => {
+                                  if (!o.deliveryDate) return "";
+                                  if (o.deliveryDate.includes(",")) return o.deliveryDate;
+                                  try {
+                                    const date = new Date(o.deliveryDate);
+                                    if (!isNaN(date.getTime())) {
+                                      return date.toLocaleDateString("en-IN", {
+                                        weekday: "short",
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric"
+                                      });
+                                    }
+                                  } catch (e) {}
+                                  return o.deliveryDate;
+                                })()}</b> {o.deliveryTime && ` at `} <b>{o.deliveryTime}</b>
                               </div>
                             </div>
                           )}
