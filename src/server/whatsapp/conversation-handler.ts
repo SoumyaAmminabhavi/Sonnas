@@ -452,8 +452,9 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
-  if (input === "restart" || input === "start over") {
+  if (input === "restart" || input === "start over" || input === "reset") {
     await Promise.all([
+      clearCart(msg.from),
       updateState(msg.from, "IDLE", {
         selectedCake: null,
         selectedSize: null,
@@ -590,8 +591,9 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
-  if (input === "cancel" || interactiveId === "btn_cancel") {
+  if (input === "cancel" || input === "cancel order" || interactiveId === "btn_cancel") {
     await Promise.all([
+      clearCart(msg.from),
       updateState(msg.from, "IDLE", {
         selectedCake: null,
         selectedSize: null,
@@ -669,7 +671,7 @@ async function sendWelcome(to: string, name?: string) {
   const greeting = name ? `Hi ${name}! 👋` : "Hi there! 👋";
   await sendInteractiveButtons(
     to,
-    `${greeting}\n\nWelcome to *Sonna's Patisserie & Cafe* 🎂\n\nEvery cake is handcrafted with love using the finest ingredients.\n\nWhat would you like to do?`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie & Cafe* 🎂\n\nEvery cake is handcrafted with love using the finest ingredients.\n\nWhat would you like to do?\n\n💡 *Helpful Tips:*\n• Reply *'Menu'* to browse our cakes\n• Reply *'Status'* to track your delivery\n• Reply *'Restart'* or *'Cancel'* to start fresh\n• You can send your *Location* for easy delivery!`,
     [
       { id: "btn_menu", title: "📋 View Menu" },
       { id: "btn_custom", title: "🎨 Custom Cake" },
