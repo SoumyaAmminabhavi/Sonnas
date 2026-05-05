@@ -20,6 +20,9 @@ export const env = createEnv({
     WHATSAPP_TOKEN: z.string().optional(),
     WHATSAPP_PHONE_ID: z.string().optional(),
     WHATSAPP_VERIFY_TOKEN: z.string().optional(),
+    RAZORPAY_KEY_ID: z.string().optional(),
+    RAZORPAY_KEY_SECRET: z.string().optional(),
+    RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   },
 
   /**
@@ -51,6 +54,9 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
     NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED,
+    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
+    RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

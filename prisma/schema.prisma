@@ -141,12 +141,17 @@ model WhatsAppOrder {
     address        String?
     notes        String?
     status       String   @default("PENDING")
+    paymentStatus  String   @default("PENDING")
+    razorpayOrderId String?
+    paymentId      String?
+    paymentLink    String?
     
     isCustom     Boolean  @default(false)
     customImageUrl String?
     
     deliveryDate   String?
     deliveryTime   String?
+    
     createdAt    DateTime @default(now())
     updatedAt      DateTime @updatedAt
 

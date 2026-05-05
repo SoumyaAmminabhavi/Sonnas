@@ -11,6 +11,8 @@ import {
   sendInteractiveButtons,
   sendImageMessage,
 } from "~/server/whatsapp";
+import { createPaymentLink } from "~/server/razorpay";
+import { env } from "~/env";
 
 // ─── Types & Interfaces ──────────────────────────────────────────────────────
 
@@ -1473,21 +1475,41 @@ async function handleConfirmation(
 
   // Create the order
   const orderNumber = generateOrderNumber();
+  const totalPriceStr = getCartTotal(cart);
+  const totalAmount = parseInt(totalPriceStr.replace(/[^\d]/g, ""), 10);
 
-  // Read from cache — no extra DB round-trip needed
-  const existingConvo = convoCache.get(msg.from);
+  // Generate Razorpay Payment Link
+  let paymentLink = "";
+  let rzpOrderId = "";
+  
+  try {
+    const rzpLink = await createPaymentLink({
+      orderNumber,
+      amount: totalAmount,
+      phone: msg.from,
+      name: existingConvo?.name ?? msg.name ?? "Customer",
+    });
+    paymentLink = rzpLink.short_url;
+    rzpOrderId = rzpLink.id; // Payment Link ID acts as our reference
+  } catch (err) {
+    console.error("[WhatsApp] Razorpay link generation failed:", err);
+    // Continue anyway as PENDING, admin can manual follow up
+  }
 
   await db.whatsAppOrder.create({
     data: {
       orderNumber,
       phone: msg.from,
       customerName: existingConvo?.name ?? msg.name,
-      totalPrice: getCartTotal(cart),
+      totalPrice: totalPriceStr,
       address: convo.selectedAddress,
       notes: convo.selectedNotes,
       deliveryDate: existingConvo?.selectedDeliveryDate,
       deliveryTime: existingConvo?.selectedDeliveryTime,
       status: "PENDING",
+      paymentStatus: "PENDING",
+      razorpayOrderId: rzpOrderId,
+      paymentLink: paymentLink,
       isCustom: cart.some(item => item.cakeName === "CUSTOM_CAKE"),
       customImageUrl: convo.customImageUrl,
       items: {
@@ -1504,24 +1526,30 @@ async function handleConfirmation(
   // Clear cart in DB
   await clearCart(msg.from);
 
-
   // Reset conversation state
-  await Promise.all([
-    updateState(msg.from, "IDLE", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedNotes: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-      customImageUrl: null,
-    }),
-    sendTextMessage(
-      msg.from,
-      `🎉 *Order Placed Successfully!*\n\nYour order number is *#${orderNumber}*.\n\n📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n📍 Address: ${convo.selectedAddress}\n\nWe will notify you once your order is confirmed and out for delivery! 💕`
-    )
-  ]);
+  await updateState(msg.from, "IDLE", {
+    selectedCake: null,
+    selectedSize: null,
+    selectedPrice: null,
+    selectedAddress: null,
+    selectedNotes: null,
+    selectedDeliveryDate: null,
+    selectedDeliveryTime: null,
+    customImageUrl: null,
+  });
+
+  let message = `🎉 *Order Placed!* (#${orderNumber})\n\n`;
+  message += `📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n`;
+  message += `🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n`;
+  message += `📍 Address: ${convo.selectedAddress}\n\n`;
+  
+  if (paymentLink) {
+    message += `💳 *Payment Required*\nTo confirm your order, please pay *${totalPriceStr}* using the secure link below:\n\n${paymentLink}\n\n_Once paid, your order will be automatically confirmed!_`;
+  } else {
+    message += `💰 Total: *${totalPriceStr}*\n\nOur team will contact you shortly to confirm the order and payment details. 💕`;
+  }
+
+  await sendTextMessage(msg.from, message);
 }
 
 // ─── Re-prompt current state ─────────────────────────────────────────────
