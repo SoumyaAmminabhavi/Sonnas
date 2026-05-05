@@ -92,7 +92,7 @@ async function safeGetCakes(): Promise<Cake[]> {
       db.cake.findMany({ include: { options: true } }),
       DB_TIMEOUT
     );
-    
+
     if (result) {
       cakeCache = result as unknown as Cake[];
       lastCacheUpdate = now;
@@ -108,7 +108,7 @@ async function safeGetCakes(): Promise<Cake[]> {
 async function findCake(query: string | number): Promise<Cake | null> {
   const queryStr = query.toString().toLowerCase();
   const cakes = await safeGetCakes();
-  
+
   // 1. Exact ID match
   const byId = cakes.find(c => c.id.toString() === queryStr);
   if (byId) return byId;
@@ -129,7 +129,7 @@ async function findCake(query: string | number): Promise<Cake | null> {
         DB_TIMEOUT
       );
       if (dbCake) return dbCake as unknown as Cake;
-    } catch {}
+    } catch { }
   }
 
   // 5. Hardcoded products fallback
@@ -232,7 +232,7 @@ async function getConversation(phone: string, name?: string): Promise<Conversati
   console.log(`[WhatsApp] Conversation cache miss for ${phone}. Loading from DB...`);
   try {
     let convo = await withTimeout(
-      db.whatsAppConversation.findUnique({ 
+      db.whatsAppConversation.findUnique({
         where: { phone },
         include: { cart: true }
       }),
@@ -241,7 +241,7 @@ async function getConversation(phone: string, name?: string): Promise<Conversati
 
     if (!convo) {
       convo = await withTimeout(
-        db.whatsAppConversation.create({ 
+        db.whatsAppConversation.create({
           data: { phone, name },
           include: { cart: true }
         }),
@@ -249,8 +249,8 @@ async function getConversation(phone: string, name?: string): Promise<Conversati
       );
     } else if (name && !convo.name) {
       convo = await withTimeout(
-        db.whatsAppConversation.update({ 
-          where: { phone }, 
+        db.whatsAppConversation.update({
+          where: { phone },
           data: { name },
           include: { cart: true }
         }),
@@ -404,10 +404,10 @@ function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
 }
 
 async function createCustomOrder(
-  msg: IncomingMessage, 
-  convo: Conversation, 
-  publicUrl: string | null | undefined, 
-  mediaId: string, 
+  msg: IncomingMessage,
+  convo: Conversation,
+  publicUrl: string | null | undefined,
+  mediaId: string,
   caption: string
 ) {
   const orderNumber = generateOrderNumber();
@@ -655,7 +655,7 @@ async function sendWelcome(to: string, name?: string) {
   const greeting = name ? `Hi ${name}! 👋` : "Hi there! 👋";
   await sendInteractiveButtons(
     to,
-    `${greeting}\n\nWelcome to *Sonna's Patisserie* 🎂\nHandcrafted cakes made with love.\n\n💡 *Quick Commands:*\n• *Menu* — Browse cakes\n• *Status* — Track order\n• *Restart* — Start fresh\n• Send 📍 Location for delivery`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie* 🎂\nHandcrafted cakes made with love.\n\n💡 *Quick Commands:*\n• *Menu* — Browse cakes\n• *Status* — Track order\n• *Restart | Cancel* — Cancel all and start over\n• Send 📍 Location for delivery`,
     [
       { id: "btn_menu", title: "📋 View Menu" },
       { id: "btn_custom", title: "🎨 Custom Cake" },
@@ -932,7 +932,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           price: convo.selectedPrice,
           quantity: 1
         });
-        
+
         const summary = getCartSummary(convo.cart ?? []);
 
         await Promise.all([
@@ -953,7 +953,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           quantity: 1
         });
       }
-      
+
       await Promise.all([
         updateState(msg.from, "ASKING_ADDRESS"),
         sendTextMessage(
@@ -982,7 +982,7 @@ async function handleAddressInput(
     // Create a Google Maps link
     const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
     const coordsStr = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-    
+
     // Attempt to reverse geocode if no address provided
     let finalAddress = locAddress;
     if (!finalAddress || finalAddress.length < 5) {
@@ -991,14 +991,14 @@ async function handleAddressInput(
     }
 
     // Format: "Descriptive Address (Lat, Long) \n Maps Link"
-    address = finalAddress 
-      ? `${finalAddress}\n📍 Coords: ${coordsStr}\n🔗 ${mapsUrl}` 
+    address = finalAddress
+      ? `${finalAddress}\n📍 Coords: ${coordsStr}\n🔗 ${mapsUrl}`
       : `📍 GPS Location: ${coordsStr}\n🔗 ${mapsUrl}`;
-    
+
     if (name) {
       address = `🏛️ ${name}\n${address}`;
     }
-    
+
     console.log(`[WhatsApp] Received GPS location: ${latitude}, ${longitude} (Address: ${finalAddress})`);
   }
 
@@ -1056,7 +1056,7 @@ async function sendDeliveryDateOptions(to: string) {
   for (let i = 0; i < 10; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
-    
+
     const id = `date_${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
     const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
     const dateStr = d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
@@ -1185,9 +1185,9 @@ async function handleCustomRequest(
   if (msg.type === "image" && msg.image) {
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(msg.image.id);
-    
+
     await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
-    
+
     await sendTextMessage(
       msg.from,
       "📸 Photo received! 🍰\n\nWe'll call you shortly to confirm details and provide a quote. 📞"
@@ -1220,9 +1220,9 @@ async function handleReferenceImageUpload(
   if (msg.type === "image" && msg.image) {
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(msg.image.id);
-    
+
     await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
-    
+
     await sendTextMessage(
       msg.from,
       "📸 Photo received! 🍰\n\nWe'll call you shortly to confirm details and provide a quote. 📞"
@@ -1267,14 +1267,14 @@ async function sendOrderStatus(to: string) {
   for (const order of orders) {
     const emoji = statusEmoji[order.status] ?? "📋";
     statusText += `${emoji} *#${order.orderNumber}*\n`;
-    
+
     // Display items
     order.items.forEach(item => {
       const qtyStr = item.quantity > 1 ? ` (x${item.quantity})` : "";
       const displayPrice = formatItemTotal(item.price, item.quantity);
       statusText += `   🎂 ${item.cakeName} (${item.size})${qtyStr} — ${displayPrice}\n`;
     });
-    
+
     statusText += `   💰 Total: ${order.totalPrice}\n`;
     statusText += `   Status: *${order.status}*\n`;
     statusText += `   Placed: ${order.createdAt.toLocaleDateString("en-IN")}\n\n`;
@@ -1385,9 +1385,9 @@ async function handleConfirmation(
       // Update DB with RZP info in background
       void db.whatsAppOrder.update({
         where: { id: dbOrder.id },
-        data: { 
+        data: {
           paymentLink: rzpLinkResult.short_url,
-          razorpayOrderId: rzpLinkResult.id 
+          razorpayOrderId: rzpLinkResult.id
         },
       });
     }
