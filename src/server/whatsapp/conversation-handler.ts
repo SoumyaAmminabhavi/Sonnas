@@ -871,7 +871,7 @@ async function handleSizeSelection(
   msg: IncomingMessage,
   convo: Conversation
 ) {
-  const cake = await findCake(convo.selectedCake || "");
+  const cake = await findCake(convo.selectedCake ?? "");
   if (!cake) {
     await updateState(msg.from, "IDLE");
     await sendWelcome(msg.from);
