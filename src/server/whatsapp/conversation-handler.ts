@@ -1157,12 +1157,13 @@ async function handleDeliveryTimeInput(
       selectedDeliveryTime: deliveryTime,
     });
 
-    // Use cached cart
+    // Use cached cart and convo
     const cart = convoCache.get(msg.from)?.cart ?? [];
+    const currentConvo = convoCache.get(msg.from) ?? _convo;
 
     await sendInteractiveButtons(
       msg.from,
-      buildOrderSummary(cart, updatedConvo),
+      buildOrderSummary(cart, currentConvo),
       [
         { id: "btn_confirm", title: "✅ Confirm Order" },
         { id: "btn_cancel", title: "❌ Cancel" },
