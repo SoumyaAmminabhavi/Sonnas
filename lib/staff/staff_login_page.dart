@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'staff_roles.dart';
 import 'staff_dashboard.dart';
 import '../services/supabase_service.dart';
+import '../services/biometric_service.dart';
 
 class StaffLoginPage extends StatefulWidget {
   const StaffLoginPage({super.key});
@@ -69,6 +70,45 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       _routeToDashboard(staff);
     } else {
       _showError("Invalid credentials. Please check your number and password.");
+    }
+  }
+
+  Future<void> _handleBiometricLogin() async {
+    final bool canCheck = await BiometricService.canCheckBiometrics();
+    if (!canCheck) {
+      _showError("Biometric authentication (Windows Hello / Fingerprint) is not available on this device.");
+      return;
+    }
+
+    final bool authenticated = await BiometricService.authenticate();
+    if (authenticated) {
+      // For Biometric login, we check if there is a staff member with this phone number.
+      // In a real production app, we would store the last logged-in phone number in Secure Storage (SharedPreferences).
+      // For now, if _loginPhoneController is empty, we'll ask them to enter it once to "link" it.
+      final phone = _loginPhoneController.text.replaceAll(RegExp(r'\D'), '');
+      
+      if (phone.isEmpty || phone.length != 10) {
+        _showError("Please enter your 10-digit mobile number once to link it with Biometrics.");
+        return;
+      }
+
+      setState(() => _isLoading = true);
+      // We query the staff directly by phone since biometric passed
+      final staff = await SupabaseService.myClient
+          .from('Staff')
+          .select()
+          .eq('phone', phone)
+          .eq('isActivated', true)
+          .maybeSingle();
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (staff != null) {
+        _routeToDashboard(staff);
+      } else {
+        _showError("No activated staff member found for this number.");
+      }
     }
   }
 
@@ -348,7 +388,26 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
           icon: Icons.lock_outline,
           isPassword: true,
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Or use Windows Hello / Biometrics",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
+                color: cs.secondary.withValues(alpha: 0.5),
+              ),
+            ),
+            const SizedBox(width: 12),
+            IconButton.filledTonal(
+              onPressed: _handleBiometricLogin,
+              icon: const Icon(Icons.fingerprint_rounded),
+              tooltip: "Login with Windows Hello / Fingerprint",
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
         _buildPrimaryButton("Login securely", _handleLogin),
       ],
     );
