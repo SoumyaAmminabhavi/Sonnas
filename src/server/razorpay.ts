@@ -5,10 +5,13 @@ if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) {
   console.warn("[Razorpay] Environment variables RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET are missing.");
 }
 
-export const razorpay = new Razorpay({
-  key_id: env.RAZORPAY_KEY_ID ?? "",
-  key_secret: env.RAZORPAY_KEY_SECRET ?? "",
-});
+export const razorpay =
+  env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
+    ? new Razorpay({
+        key_id: env.RAZORPAY_KEY_ID,
+        key_secret: env.RAZORPAY_KEY_SECRET,
+      })
+    : null;
 
 export async function createPaymentLink(options: {
   orderNumber: string;
@@ -16,6 +19,9 @@ export async function createPaymentLink(options: {
   phone: string;
   name: string;
 }) {
+  if (!razorpay) {
+    throw new Error("Razorpay is not configured. Please check your environment variables.");
+  }
   try {
     // Razorpay expects amount in paise (Rupees * 100)
     const amountInPaise = Math.round(options.amount * 100);
