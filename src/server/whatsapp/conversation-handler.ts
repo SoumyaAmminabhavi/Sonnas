@@ -1477,6 +1477,9 @@ async function handleConfirmation(
   const orderNumber = generateOrderNumber();
   const totalPriceStr = getCartTotal(cart);
   const totalAmount = parseInt(totalPriceStr.replace(/[^\d]/g, ""), 10);
+  
+  // Read from cache — no extra DB round-trip needed
+  const existingConvo = convoCache.get(msg.from);
 
   // Generate Razorpay Payment Link
   let paymentLink = "";
