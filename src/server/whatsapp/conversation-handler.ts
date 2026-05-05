@@ -976,14 +976,17 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           quantity: 1
         });
         
-      await Promise.all([
-        sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to cart!`),
-        sendInteractiveButtons(msg.from, summary, [
-          { id: "btn_menu", title: "➕ Add More" },
-          { id: "btn_checkout", title: "💳 Checkout" },
-        ]),
-        updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
-      ]);
+        const summary = getCartSummary(convo.cart ?? []);
+
+        await Promise.all([
+          sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to cart!`),
+          sendInteractiveButtons(msg.from, summary, [
+            { id: "btn_menu", title: "➕ Add More" },
+            { id: "btn_checkout", title: "💳 Checkout" },
+          ]),
+          updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
+        ]);
+      }
     } else if (msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now") {
       if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
         await addToCart(msg.from, {
