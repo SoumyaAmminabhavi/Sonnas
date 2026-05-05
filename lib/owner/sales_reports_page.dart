@@ -226,15 +226,19 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           children: [
-            Text(
-              "Sales Intelligence",
-              style: GoogleFonts.notoSerif(
-                color: cs.secondary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                "Sales Reports",
+                style: GoogleFonts.notoSerif(
+                  color: cs.secondary,
+                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 28,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
+
             PopupMenuButton<String>(
               onSelected: (value) async {
                 try {

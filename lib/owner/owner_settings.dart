@@ -43,25 +43,10 @@ class _SettingsContentState extends State<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
   late bool _isDarkMode;
-  List<Map<String, dynamic>> _staff = [];
-  bool _isLoadingStaff = true;
-
   @override
   void initState() {
     super.initState();
     _isDarkMode = themeController.value == ThemeMode.dark;
-    _fetchStaff();
-  }
-
-  Future<void> _fetchStaff() async {
-    setState(() => _isLoadingStaff = true);
-    final staff = await SupabaseService.getAllStaff();
-    if (mounted) {
-      setState(() {
-        _staff = staff;
-        _isLoadingStaff = false;
-      });
-    }
   }
 
 
@@ -233,66 +218,73 @@ class _SettingsContentState extends State<_SettingsContent> {
       icon: Icons.people_outline,
       child: Column(
         children: [
-          if (_isLoadingStaff)
-            SkeletonWrapper(
-              child: Column(
-                children: List.generate(3, (index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Row(
-                    children: [
-                      const Skeleton(height: 40, width: 40, borderRadius: 20),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Skeleton(height: 14, width: 120),
-                            const SizedBox(height: 8),
-                            const Skeleton(height: 10, width: 80),
-                          ],
-                        ),
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: SupabaseService.getStaffStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SkeletonWrapper(
+                  child: Column(
+                    children: List.generate(3, (index) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Row(
+                        children: [
+                          const Skeleton(height: 40, width: 40, borderRadius: 20),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Skeleton(height: 14, width: 120),
+                                const SizedBox(height: 8),
+                                const Skeleton(height: 10, width: 80),
+                              ],
+                            ),
+                          ),
+                          const Skeleton(height: 24, width: 60, borderRadius: 12),
+                        ],
                       ),
-                      const Skeleton(height: 24, width: 60, borderRadius: 12),
-                    ],
+                    )),
                   ),
-                )),
-              ),
-            )
+                );
+              }
 
-          else if (_staff.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  "No staff members added yet.",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: cs.secondary.withValues(alpha: 0.5),
+              final staff = snapshot.data ?? [];
+
+              if (staff.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text(
+                      "No staff members added yet.",
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary.withValues(alpha: 0.5),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            )
-          else
-            ..._staff.map((s) => _buildStaffRow(
+                );
+              }
+
+              return Column(
+                children: staff.map((s) => _buildStaffRow(
                   cs,
                   s['name'] ?? 'Unknown',
                   s['role'] ?? 'Staff',
-                  true, // Defaulting to active
+                  s['isActivated'] ?? true,
                   imageUrl: s['imageUrl'],
                   staffData: s,
-                )),
-
+                )).toList(),
+              );
+            },
+          ),
 
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AddStaffPage()),
-                );
-                _fetchStaff(); // Refresh after coming back
-              },
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddStaffPage()),
+              ),
               icon: Icon(Icons.person_add, color: cs.primary),
               label: Text(
                 "Add New Staff",
@@ -311,6 +303,7 @@ class _SettingsContentState extends State<_SettingsContent> {
       ),
     );
   }
+
 
 
   Widget _buildBISection(ColorScheme cs) {
@@ -540,21 +533,39 @@ class _SettingsContentState extends State<_SettingsContent> {
               color: cs.surface,
               onSelected: (value) async {
                 if (value == 'edit') {
-                  await Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddStaffPage(staff: staffData),
                     ),
                   );
-                  _fetchStaff();
                 } else if (value == 'view') {
-                  await Navigator.push(
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddStaffPage(staff: staffData, isReadOnly: true),
                     ),
                   );
+                } else if (value == 'delete') {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Remove Staff"),
+                      content: Text("Are you sure you want to remove ${staffData['name']}?"),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text("Remove", style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    await SupabaseService.deleteStaff(staffData['id']);
+                  }
                 }
+
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
@@ -605,6 +616,31 @@ class _SettingsContentState extends State<_SettingsContent> {
                     ],
                   ),
                 ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        "Remove Staff",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               ],
             ),
 

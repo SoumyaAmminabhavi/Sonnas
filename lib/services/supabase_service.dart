@@ -399,6 +399,13 @@ class SupabaseService {
     }
   }
 
+  static Stream<List<Map<String, dynamic>>> getStaffStream() {
+    return myClient
+        .from('Staff')
+        .stream(primaryKey: ['id'])
+        .map((data) => data.map((item) => Map<String, dynamic>.from(item)).toList());
+  }
+
   static Future<void> addStaff(Map<String, dynamic> staff) async {
     try {
       await myClient.from('Staff').insert(staff);
@@ -410,10 +417,18 @@ class SupabaseService {
 
   static Future<void> updateStaff(String id, Map<String, dynamic> staff) async {
     try {
-      // Password is set by staff during activation, not by owner anymore
       await myClient.from('Staff').update(staff).eq('id', id);
     } catch (e) {
       debugPrint('Error updating staff: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteStaff(String id) async {
+    try {
+      await myClient.from('Staff').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('Error deleting staff: $e');
       rethrow;
     }
   }

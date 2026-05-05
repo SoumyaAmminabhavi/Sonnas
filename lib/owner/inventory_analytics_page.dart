@@ -457,13 +457,16 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           const SizedBox(height: 32),
           const Skeleton(height: 24, width: 200),
           const SizedBox(height: 24),
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 3,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            children: List.generate(6, (index) => Container(height: 140, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)))),
-          ),
+          LayoutBuilder(builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth > 900 ? 3 : (constraints.maxWidth > 600 ? 2 : 1);
+            return GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              children: List.generate(6, (index) => Container(height: 140, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)))),
+            );
+          }),
         ],
       ),
     );
@@ -475,28 +478,32 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "STOCK INTELLIGENCE",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2.5,
-                    color: cs.secondary.withValues(alpha: 0.6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "STOCK INTELLIGENCE",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.5,
+                      color: cs.secondary.withValues(alpha: 0.6),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Inventory Analytics",
-                  style: GoogleFonts.notoSerif(
-                    color: cs.secondary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: 8),
+                  Text(
+                    "Inventory Analytics",
+                    style: GoogleFonts.notoSerif(
+                      color: cs.secondary,
+                      fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -505,29 +512,25 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
   }
 
   Widget _buildKPIs(ColorScheme cs, int total, int low) {
-    return Row(
-      children: [
-        Expanded(
-          child: _kpiCard(
-            cs,
-            "TOTAL ITEMS",
-            total.toString(),
-            Icons.inventory_2_outlined,
-            cs.primary,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _kpiCard(
-            cs,
-            "LOW STOCK",
-            low.toString(),
-            Icons.warning_amber_rounded,
-            low > 0 ? Colors.orange : cs.secondary.withValues(alpha: 0.4),
-          ),
-        ),
-      ],
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 450;
+      if (isMobile) {
+        return Column(
+          children: [
+            _kpiCard(cs, "TOTAL ITEMS", total.toString(), Icons.inventory_2_outlined, cs.primary),
+            const SizedBox(height: 16),
+            _kpiCard(cs, "LOW STOCK", low.toString(), Icons.warning_amber_rounded, low > 0 ? Colors.orange : cs.secondary.withValues(alpha: 0.4)),
+          ],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: _kpiCard(cs, "TOTAL ITEMS", total.toString(), Icons.inventory_2_outlined, cs.primary)),
+          const SizedBox(width: 16),
+          Expanded(child: _kpiCard(cs, "LOW STOCK", low.toString(), Icons.warning_amber_rounded, low > 0 ? Colors.orange : cs.secondary.withValues(alpha: 0.4))),
+        ],
+      );
+    });
   }
 
   Widget _kpiCard(ColorScheme cs, String title, String value, IconData icon, Color accent) {

@@ -299,15 +299,19 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Row(
           children: [
-            Text(
-              "Cost Analytics",
-              style: GoogleFonts.notoSerif(
-                color: cs.secondary,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                "Cost Analytics",
+                style: GoogleFonts.notoSerif(
+                  color: cs.secondary,
+                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 28,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Spacer(),
+
             PopupMenuButton<String>(
               onSelected: (value) async {
                 if (value == 'pdf') {
@@ -427,73 +431,92 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
   }
 
   Widget _buildSecondaryStats(ColorScheme cs) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 3,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(32)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Recent Expenses", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 24),
-                ..._expenses.take(10).map((e) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(e['title'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(e['category'] ?? 'Other'),
-                  trailing: Text("₹${e['amount']}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, fontSize: 16)),
-                )),
-              ],
-            ),
-          ),
+    return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 800;
+      final recentExpenses = Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(32)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Recent Expenses", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 24),
+            ..._expenses.take(10).map((e) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(e['title'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(e['category'] ?? 'Other'),
+              trailing: Text("₹${e['amount']}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, fontSize: 16)),
+            )),
+          ],
         ),
-        const SizedBox(width: 24),
-        Expanded(
-          flex: 2,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(32)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Category Mix", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 18)),
-                const SizedBox(height: 32),
-                SizedBox(
-                  height: 200,
-                  child: PieChart(
-                    PieChartData(
-                      sections: _categoryBreakdown.entries.map((e) => PieChartSectionData(
-                        value: e.value,
-                        title: '',
-                        color: _getCategoryColor(e.key),
-                        radius: 40,
-                      )).toList(),
+      );
+
+      final categoryMix = Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(32)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Category Mix", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 32),
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sections: _categoryBreakdown.entries.map((e) => PieChartSectionData(
+                    value: e.value,
+                    title: '',
+                    color: _getCategoryColor(e.key),
+                    radius: 40,
+                  )).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ..._categoryBreakdown.entries.map((e) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Container(width: 12, height: 12, decoration: BoxDecoration(color: _getCategoryColor(e.key), shape: BoxShape.circle)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      e.key,
+                      style: const TextStyle(fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                ..._categoryBreakdown.entries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    children: [
-                      Container(width: 12, height: 12, decoration: BoxDecoration(color: _getCategoryColor(e.key), shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Text(e.key, style: const TextStyle(fontSize: 12)),
-                      const Spacer(),
-                      Text("₹${e.value.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                )),
-              ],
-            ),
-          ),
+                  const SizedBox(width: 8),
+                  Text("₹${e.value.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )),
+          ],
         ),
-      ],
-    );
+      );
+
+      if (isMobile) {
+        return Column(
+          children: [
+            recentExpenses,
+            const SizedBox(height: 24),
+            categoryMix,
+          ],
+        );
+      }
+
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 3, child: recentExpenses),
+          const SizedBox(width: 24),
+          Expanded(flex: 2, child: categoryMix),
+        ],
+      );
+    });
   }
+
 
   Color _getCategoryColor(String category) {
     final cat = category.toLowerCase();
