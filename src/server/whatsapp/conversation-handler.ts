@@ -597,6 +597,24 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
 
 
+  // ── Global Interactive ID handling (Resilience for old messages) ───────
+  if (interactiveId.startsWith("cake_")) {
+    await handleCakeSelection(msg);
+    return;
+  }
+  if (interactiveId.startsWith("size_")) {
+    await handleSizeSelection(msg, convo);
+    return;
+  }
+  if (interactiveId.startsWith("date_")) {
+    await handleDeliveryDateInput(msg, convo);
+    return;
+  }
+  if (interactiveId.startsWith("time_")) {
+    await handleDeliveryTimeInput(msg, convo);
+    return;
+  }
+
   // ── State-specific handling ────────────────────────────────────────────
 
   switch (state) {
@@ -945,6 +963,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         ]);
       }
     } else if (msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now") {
+      // If they are checking out with a currently selected cake, add it first
       if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
         await addToCart(msg.from, {
           cakeName: convo.selectedCake,
@@ -952,6 +971,18 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           price: convo.selectedPrice,
           quantity: 1
         });
+      }
+
+      // Re-fetch convo to get updated cart
+      const updatedConvo = convoCache.get(msg.from) ?? convo;
+      const cart = updatedConvo.cart ?? [];
+
+      if (cart.length === 0) {
+        await Promise.all([
+          sendTextMessage(msg.from, "🛒 *Your cart is empty!*\n\nPlease select a cake from the menu first. 🎂"),
+          sendMenu(msg.from)
+        ]);
+        return;
       }
 
       await Promise.all([
@@ -987,6 +1018,8 @@ async function handleAddressInput(
     let finalAddress = locAddress;
     if (!finalAddress || finalAddress.length < 5) {
       console.log(`[WhatsApp] No address in location message. Attempting reverse geocode for ${coordsStr}...`);
+      // Send immediate feedback for better perceived performance
+      await sendTextMessage(msg.from, "📍 _Processing your location..._");
       finalAddress = await reverseGeocode(latitude, longitude);
     }
 
