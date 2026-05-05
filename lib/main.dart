@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'owner/owner_dashboard.dart';
 import 'owner/menu_page.dart';
+import 'staff/staff_dashboard.dart';
 
 import 'services/supabase_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -488,7 +489,18 @@ class ModernDrawer extends StatelessWidget {
                   );
                 },
               ),
-              _DrawerItem(icon: Icons.badge_outlined, label: "Login as Staff"),
+              _DrawerItem(
+                icon: Icons.badge_outlined,
+                label: "Login as Staff",
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const StaffDashboard(),
+                    ),
+                  );
+                },
+              ),
 
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
