@@ -425,7 +425,7 @@ function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
 async function createCustomOrder(
   msg: IncomingMessage, 
   convo: Conversation, 
-  publicUrl: string | undefined, 
+  publicUrl: string | null | undefined, 
   mediaId: string, 
   caption: string
 ) {
@@ -1232,7 +1232,7 @@ async function handleCustomRequest(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(msg.image.id);
     
-    await createCustomOrder(msg, convo, publicUrl, msg.image.id, msg.image.caption ?? "");
+    await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
     
     await sendTextMessage(
       msg.from,
@@ -1267,7 +1267,7 @@ async function handleReferenceImageUpload(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(msg.image.id);
     
-    await createCustomOrder(msg, convo, publicUrl, msg.image.id, msg.image.caption ?? "");
+    await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
     
     await sendTextMessage(
       msg.from,
