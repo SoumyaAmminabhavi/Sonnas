@@ -28,7 +28,9 @@ export async function POST(req: Request) {
       }
     }
 
-    const payload = JSON.parse(body);
+
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+    const payload = JSON.parse(body) as any;
     const event = payload.event;
 
     console.log(`[Razorpay Webhook] Received event: ${event}`);
@@ -38,17 +40,16 @@ export async function POST(req: Request) {
       const paymentLink = payload.payload.payment_link.entity;
       const payment = payload.payload.payment.entity;
       const orderNumber = paymentLink.reference_id;
-      const rzpPaymentLinkId = paymentLink.id;
 
       console.log(`[Razorpay Webhook] Order ${orderNumber} paid!`);
 
       // 1. Update Order in DB
       const order = await db.whatsAppOrder.update({
-        where: { orderNumber },
+        where: { orderNumber: orderNumber as string },
         data: {
           status: "CONFIRMED",
           paymentStatus: "PAID",
-          paymentId: payment.id,
+          paymentId: payment.id as string,
         },
       });
 
@@ -58,6 +59,7 @@ export async function POST(req: Request) {
         void sendTextMessage(order.phone, message);
       }
     }
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
     return new NextResponse("OK", { status: 200 });
   } catch (err) {

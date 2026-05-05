@@ -12,7 +12,6 @@ import {
   sendImageMessage,
 } from "~/server/whatsapp";
 import { createPaymentLink } from "~/server/razorpay";
-import { env } from "~/env";
 
 // ─── Types & Interfaces ──────────────────────────────────────────────────────
 

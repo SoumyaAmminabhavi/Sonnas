@@ -10,28 +10,6 @@ export const razorpay = new Razorpay({
   key_secret: env.RAZORPAY_KEY_SECRET ?? "",
 });
 
-interface PaymentLinkOptions {
-  amount: number; // in paise
-  currency: string;
-  accept_partial: boolean;
-  reference_id: string;
-  description: string;
-  customer: {
-    name: string;
-    contact: string;
-    email?: string;
-  };
-  notify: {
-    sms: boolean;
-    email: boolean;
-    whatsapp: boolean;
-  };
-  reminder_enable: boolean;
-  notes: Record<string, string>;
-  callback_url: string;
-  callback_method: "get";
-}
-
 export async function createPaymentLink(options: {
   orderNumber: string;
   amount: number; // in rupees
