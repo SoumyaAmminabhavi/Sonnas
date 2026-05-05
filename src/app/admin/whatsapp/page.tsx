@@ -49,6 +49,36 @@ const STATUS_CONFIG: Record<
   },
 };
 
+const PAYMENT_STATUS_CONFIG: Record<
+  string,
+  { label: string; emoji: string; color: string; bg: string }
+> = {
+  PENDING: {
+    label: "Unpaid",
+    emoji: "⏳",
+    color: "#C9A27E",
+    bg: "rgba(201,162,126,0.12)",
+  },
+  PAID: {
+    label: "Paid",
+    emoji: "💰",
+    color: "#5A8F5A",
+    bg: "rgba(90,143,90,0.12)",
+  },
+  FAILED: {
+    label: "Failed",
+    emoji: "⚠️",
+    color: "#D88C8C",
+    bg: "rgba(216,140,140,0.12)",
+  },
+  REFUNDED: {
+    label: "Refunded",
+    emoji: "↩️",
+    color: "#8B6FC0",
+    bg: "rgba(139,111,192,0.12)",
+  },
+};
+
 const STATUS_FLOW = [
   "PENDING",
   "CONFIRMED",
@@ -89,6 +119,7 @@ interface AdminOrder {
   createdAt: string | Date;
   items: AdminOrderItem[];
   isCustom?: boolean;
+  paymentStatus: string;
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -390,6 +421,24 @@ function WhatsAppAdminContent() {
                             >
                               {cfg.emoji} {cfg.label}
                             </span>
+                            
+                            {/* Payment Status Badge */}
+                            {(() => {
+                              const pCfg = PAYMENT_STATUS_CONFIG[o.paymentStatus] ?? PAYMENT_STATUS_CONFIG.PENDING!;
+                              return (
+                                <span
+                                  style={{
+                                    ...styles.statusPill,
+                                    color: pCfg.color,
+                                    backgroundColor: pCfg.bg,
+                                    marginLeft: 8
+                                  }}
+                                >
+                                  {pCfg.emoji} {pCfg.label}
+                                </span>
+                              );
+                            })()}
+
                             {o.isCustom && (
                               <span
                                 style={{
