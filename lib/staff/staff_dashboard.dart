@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../widgets/staff_sidebar.dart';
+import 'staff_roles.dart';
+import 'profile_page.dart';
+import '../services/supabase_service.dart';
 
 class StaffDashboard extends StatefulWidget {
-  const StaffDashboard({super.key});
+  final StaffRole role;
+  const StaffDashboard({super.key, this.role = StaffRole.manager});
 
   @override
   State<StaffDashboard> createState() => _StaffDashboardState();
@@ -30,11 +34,13 @@ class _StaffDashboardState extends State<StaffDashboard> {
     setState(() {
       _selectedIndex = index;
     });
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -42,6 +48,29 @@ class _StaffDashboardState extends State<StaffDashboard> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDesktop = MediaQuery.sizeOf(context).width >= 768;
+
+    final List<Widget> pages = [
+      _DashboardContent(cs: cs, isDesktop: isDesktop, role: widget.role),
+    ];
+
+    if (widget.role == StaffRole.baker || widget.role == StaffRole.manager) {
+      pages.add(const Center(child: Text("Kitchen Page")));
+    }
+    
+    if (widget.role == StaffRole.cashier || widget.role == StaffRole.manager) {
+      pages.add(const Center(child: Text("Orders Page")));
+    }
+    
+    if (widget.role == StaffRole.delivery || widget.role == StaffRole.manager) {
+      pages.add(const Center(child: Text("Delivery Page")));
+    }
+
+    pages.add(StaffProfilePage(cs: cs, isDesktop: isDesktop, role: widget.role));
+
+    // Ensure _selectedIndex doesn't exceed bounds if role changes
+    if (_selectedIndex >= pages.length) {
+      _selectedIndex = 0; 
+    }
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -81,20 +110,21 @@ class _StaffDashboardState extends State<StaffDashboard> {
             StaffSidebar(
               currentIndex: _selectedIndex,
               onTap: _onItemTapped,
+              role: widget.role,
             ),
           Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() => _selectedIndex = index);
-              },
-              children: [
-                _DashboardContent(cs: cs, isDesktop: isDesktop),
-                const Center(child: Text("Kitchen Page")),
-                const Center(child: Text("Orders Page")),
-                const Center(child: Text("Profile Page")),
-              ],
-            ),
+            child: isDesktop
+                ? IndexedStack(
+                    index: _selectedIndex,
+                    children: pages,
+                  )
+                : PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() => _selectedIndex = index);
+                    },
+                    children: pages,
+                  ),
           ),
         ],
       ),
@@ -122,6 +152,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
         : _StaffBottomNav(
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
+            role: widget.role,
           ),
     );
   }
@@ -130,128 +161,221 @@ class _StaffDashboardState extends State<StaffDashboard> {
 class _DashboardContent extends StatelessWidget {
   final ColorScheme cs;
   final bool isDesktop;
-  const _DashboardContent({required this.cs, required this.isDesktop});
+  final StaffRole role;
+  const _DashboardContent({required this.cs, required this.isDesktop, required this.role});
+
+  String? _getActionLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'Start Prep';
+      case 'prep': return 'To Oven';
+      case 'baking': return 'To Decorating';
+      case 'decorating': return 'Mark Ready';
+      case 'ready': return 'Dispatch';
+      case 'dispatched': return 'Delivered';
+      default: return null;
+    }
+  }
+
+  String? _getNextStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'prep';
+      case 'prep': return 'baking';
+      case 'baking': return 'decorating';
+      case 'decorating': return 'ready';
+      case 'ready': return 'dispatched';
+      case 'dispatched': return 'delivered';
+      default: return null;
+    }
+  }
+
+  bool _canAction(String status) {
+    final lower = status.toLowerCase();
+    if (role == StaffRole.manager) return true;
+    if (role == StaffRole.baker) {
+      return ['pending', 'prep', 'baking', 'decorating'].contains(lower);
+    }
+    if (role == StaffRole.delivery) {
+      return ['ready', 'dispatched'].contains(lower);
+    }
+    if (role == StaffRole.cashier) {
+      return lower == 'ready'; // Cashier hands over pickup orders
+    }
+    return false;
+  }
+
+  bool _shouldSeeOrder(String status) {
+    final lower = status.toLowerCase();
+    if (role == StaffRole.manager) return true; // Manager sees all
+    if (role == StaffRole.baker) {
+      return ['pending', 'prep', 'baking', 'decorating'].contains(lower);
+    }
+    if (role == StaffRole.delivery) {
+      return ['ready', 'dispatched', 'delivered'].contains(lower);
+    }
+    if (role == StaffRole.cashier) {
+      return true; // Cashier might need to see all to answer customer queries
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 48 : 24, 
-        vertical: 32,
-      ),
-      children: [
-        // Greeting
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "STAFF PORTAL",
-              style: GoogleFonts.plusJakartaSans(
-                color: cs.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                letterSpacing: 2.0,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Bonjour, Chef",
-              style: GoogleFonts.notoSerif(
-                fontSize: isDesktop ? 48 : 36,
-                color: cs.secondary,
-                height: 1.1,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              width: 48,
-              height: 1,
-              color: cs.secondary.withValues(alpha: 0.3),
-            ),
-          ],
-        ),
-        const SizedBox(height: 32),
+    String greeting;
+    switch (role) {
+      case StaffRole.baker: greeting = "Bonjour, Chef"; break;
+      case StaffRole.cashier: greeting = "Bonjour, Cashier"; break;
+      case StaffRole.delivery: greeting = "Bonjour, Delivery"; break;
+      case StaffRole.manager: greeting = "Bonjour, Manager"; break;
+    }
 
-        const SizedBox(height: 48),
-        if (isDesktop)
-          Row(
-            children: [
-              Expanded(child: _MetricCard(icon: Icons.bakery_dining_rounded, value: "24", label: "TOTAL ORDERS")),
-              const SizedBox(width: 24),
-              Expanded(child: _MetricCard(icon: Icons.task_alt_rounded, value: "18", label: "COMPLETED")),
-              const SizedBox(width: 24),
-              Expanded(child: _MetricCard(icon: Icons.timer_rounded, value: "6", label: "PENDING")),
-            ],
-          )
-        else
-          _ProductionHeroCard(),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: SupabaseService.getOrdersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final allOrders = snapshot.data ?? [];
         
-        const SizedBox(height: 48),
+        // Filter orders by role visibility
+        final visibleOrders = allOrders.where((o) => _shouldSeeOrder(o['status'] ?? 'pending')).toList();
+        
+        final completedOrders = visibleOrders.where((o) => (o['status'] ?? '').toLowerCase() == 'delivered').toList();
+        final activeOrders = visibleOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').toList();
+        final urgentOrders = activeOrders.where((o) => (o['status'] ?? '').toLowerCase() == 'pending').toList(); // Simplified urgency
+        final inProgressOrders = activeOrders.where((o) => !urgentOrders.contains(o)).toList();
 
-        // Urgent Tasks
-        _TaskSectionHeader(title: "Urgent Tasks", color: const Color(0xFFBA1A1A), isPulse: true),
-        const SizedBox(height: 16),
-        _TaskCard(
-          orderNumber: "#ORD-9012",
-          title: "Wild Berry Chantilly",
-          status: "Due 5:00 PM",
-          tag: "High Priority",
-          isUrgent: true,
-          tagColor: const Color(0xFFFFDAD6),
-          tagTextColor: const Color(0xFF93000A),
-        ),
-        const SizedBox(height: 16),
-        _TaskCard(
-          orderNumber: "#ORD-9015",
-          title: "Dark Chocolate Truffle",
-          status: "ASAP",
-          tag: "Decorating",
-          isUrgent: true,
-          tagColor: const Color(0xFFFFDAD6),
-          tagTextColor: const Color(0xFF93000A),
-        ),
-        const SizedBox(height: 40),
-
-        // In Progress
-        _TaskSectionHeader(title: "In Progress", color: const Color(0xFFF48FB1)),
-        const SizedBox(height: 16),
-        _TaskCard(
-          orderNumber: "#ORD-8992",
-          title: "Lemon Lavender Tart",
-          status: "In Oven",
-          tag: "Classic Collection",
-          tagColor: const Color(0xFFFFDCC6),
-          tagTextColor: const Color(0xFF784C2B),
-        ),
-        const SizedBox(height: 16),
-        _TaskCard(
-          orderNumber: "#ORD-8995",
-          title: "Pistachio Rose Cake",
-          status: "Chilling",
-          tag: "Wedding Order",
-          tagColor: const Color(0xFFFFDCC6),
-          tagTextColor: const Color(0xFF784C2B),
-        ),
-        const SizedBox(height: 40),
-
-        // Completed
-        _TaskSectionHeader(title: "Completed Today", isCompleted: true),
-        const SizedBox(height: 16),
-        Opacity(
-          opacity: 0.6,
-          child: Column(
-            children: [
-              _CompletedCard(orderNumber: "#ORD-8881", title: "Matcha Opera Cake"),
-              const SizedBox(height: 16),
-              _CompletedCard(orderNumber: "#ORD-8875", title: "Classic Tiramisu"),
-            ],
+        return ListView(
+          padding: EdgeInsets.symmetric(
+            horizontal: isDesktop ? 48 : 24, 
+            vertical: 32,
           ),
-        ),
-        const SizedBox(height: 100), // Space for bottom nav
-      ],
+          children: [
+            // Greeting
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "STAFF PORTAL",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    letterSpacing: 2.0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  greeting,
+                  style: GoogleFonts.notoSerif(
+                    fontSize: isDesktop ? 48 : 36,
+                    color: cs.secondary,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: 48,
+                  height: 1,
+                  color: cs.secondary.withValues(alpha: 0.3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            if (isDesktop)
+              Row(
+                children: [
+                  Expanded(child: _MetricCard(icon: Icons.bakery_dining_rounded, value: "${allOrders.length}", label: "TOTAL ORDERS")),
+                  const SizedBox(width: 24),
+                  Expanded(child: _MetricCard(icon: Icons.task_alt_rounded, value: "${completedOrders.length}", label: "COMPLETED")),
+                  const SizedBox(width: 24),
+                  Expanded(child: _MetricCard(icon: Icons.timer_rounded, value: "${activeOrders.length}", label: "ACTIVE")),
+                ],
+              )
+            else
+              _ProductionHeroCard(),
+            
+            const SizedBox(height: 48),
+
+            // Urgent Tasks
+            if (urgentOrders.isNotEmpty) ...[
+              _TaskSectionHeader(title: "Needs Attention", color: const Color(0xFFBA1A1A), isPulse: true),
+              const SizedBox(height: 16),
+              ...urgentOrders.map((o) {
+                final status = o['status'] ?? 'pending';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _TaskCard(
+                    orderNumber: o['orderNumber'] ?? '#---',
+                    title: o['customerName'] ?? 'Walk-in Customer',
+                    status: status.toUpperCase(),
+                    tag: "Priority",
+                    isUrgent: true,
+                    tagColor: const Color(0xFFFFDAD6),
+                    tagTextColor: const Color(0xFF93000A),
+                    actionLabel: _canAction(status) ? _getActionLabel(status) : null,
+                    onAction: () {
+                      final next = _getNextStatus(status);
+                      if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
+                    },
+                  ),
+                );
+              }),
+              const SizedBox(height: 40),
+            ],
+
+            // In Progress
+            if (inProgressOrders.isNotEmpty) ...[
+              _TaskSectionHeader(title: "In Progress", color: const Color(0xFFF48FB1)),
+              const SizedBox(height: 16),
+              ...inProgressOrders.map((o) {
+                final status = o['status'] ?? 'pending';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _TaskCard(
+                    orderNumber: o['orderNumber'] ?? '#---',
+                    title: o['customerName'] ?? 'Customer',
+                    status: status.toUpperCase(),
+                    tag: status.toUpperCase(),
+                    tagColor: const Color(0xFFFFDCC6),
+                    tagTextColor: const Color(0xFF784C2B),
+                    actionLabel: _canAction(status) ? _getActionLabel(status) : null,
+                    onAction: () {
+                      final next = _getNextStatus(status);
+                      if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
+                    },
+                  ),
+                );
+              }),
+              const SizedBox(height: 40),
+            ],
+
+            // Completed
+            if (completedOrders.isNotEmpty) ...[
+              _TaskSectionHeader(title: "Completed", isCompleted: true),
+              const SizedBox(height: 16),
+              Opacity(
+                opacity: 0.6,
+                child: Column(
+                  children: completedOrders.map((o) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _CompletedCard(
+                      orderNumber: o['orderNumber'] ?? '#---', 
+                      title: o['customerName'] ?? 'Customer'
+                    ),
+                  )).toList(),
+                ),
+              ),
+            ],
+            const SizedBox(height: 100), // Space for bottom nav
+          ],
+        );
+      }
     );
   }
 }
+
 
 class _ProductionHeroCard extends StatelessWidget {
   @override
@@ -421,6 +545,8 @@ class _TaskCard extends StatelessWidget {
   final bool isUrgent;
   final Color tagColor;
   final Color tagTextColor;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   const _TaskCard({
     required this.orderNumber,
@@ -430,6 +556,8 @@ class _TaskCard extends StatelessWidget {
     this.isUrgent = false,
     required this.tagColor,
     required this.tagTextColor,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -490,22 +618,47 @@ class _TaskCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: tagColor,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    tag.toUpperCase(),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: tagTextColor,
-                      letterSpacing: 1.0,
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: tagColor,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        tag.toUpperCase(),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: tagTextColor,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
                     ),
-                  ),
+                    if (actionLabel != null && onAction != null)
+                      GestureDetector(
+                        onTap: onAction,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: cs.primary,
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          child: Text(
+                            actionLabel!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: cs.onPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -582,12 +735,32 @@ class _CompletedCard extends StatelessWidget {
 class _StaffBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final StaffRole role;
 
-  const _StaffBottomNav({required this.currentIndex, required this.onTap});
+  const _StaffBottomNav({required this.currentIndex, required this.onTap, required this.role});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    
+    final List<Map<String, dynamic>> navItems = [
+      {'icon': currentIndex == 0 ? Icons.grid_view_rounded : Icons.grid_view_outlined, 'label': "Dashboard"},
+    ];
+
+    if (role == StaffRole.baker || role == StaffRole.manager) {
+      navItems.add({'icon': currentIndex == navItems.length ? Icons.bakery_dining_rounded : Icons.bakery_dining_outlined, 'label': "Kitchen"});
+    }
+    
+    if (role == StaffRole.cashier || role == StaffRole.manager) {
+      navItems.add({'icon': currentIndex == navItems.length ? Icons.assignment_rounded : Icons.assignment_outlined, 'label': "Orders"});
+    }
+    
+    if (role == StaffRole.delivery || role == StaffRole.manager) {
+      navItems.add({'icon': currentIndex == navItems.length ? Icons.local_shipping_rounded : Icons.local_shipping_outlined, 'label': "Delivery"});
+    }
+
+    navItems.add({'icon': currentIndex == navItems.length ? Icons.person_rounded : Icons.person_outline_rounded, 'label': "Profile"});
+
     return Container(
       height: 70,
       decoration: BoxDecoration(
@@ -598,36 +771,16 @@ class _StaffBottomNav extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _NavItem(
-            index: 0,
+        children: List.generate(navItems.length, (index) {
+          final item = navItems[index];
+          return _NavItem(
+            index: index,
             currentIndex: currentIndex,
             onTap: onTap,
-            icon: currentIndex == 0 ? Icons.grid_view_rounded : Icons.grid_view_outlined,
-            label: "Dashboard",
-          ),
-          _NavItem(
-            index: 1,
-            currentIndex: currentIndex,
-            onTap: onTap,
-            icon: currentIndex == 1 ? Icons.bakery_dining_rounded : Icons.bakery_dining_outlined,
-            label: "Kitchen",
-          ),
-          _NavItem(
-            index: 2,
-            currentIndex: currentIndex,
-            onTap: onTap,
-            icon: currentIndex == 2 ? Icons.assignment_rounded : Icons.assignment_outlined,
-            label: "Orders",
-          ),
-          _NavItem(
-            index: 3,
-            currentIndex: currentIndex,
-            onTap: onTap,
-            icon: currentIndex == 3 ? Icons.person_rounded : Icons.person_outline_rounded,
-            label: "Profile",
-          ),
-        ],
+            icon: item['icon'],
+            label: item['label'],
+          );
+        }),
       ),
     );
   }

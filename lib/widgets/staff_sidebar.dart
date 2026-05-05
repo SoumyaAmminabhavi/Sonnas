@@ -1,19 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../staff/staff_roles.dart';
 
 class StaffSidebar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
+  final StaffRole role;
 
   const StaffSidebar({
     super.key,
     required this.currentIndex,
     required this.onTap,
+    required this.role,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    
+    final List<Map<String, dynamic>> menuItems = [
+      {'icon': Icons.grid_view_rounded, 'title': "DASHBOARD"},
+    ];
+
+    if (role == StaffRole.baker || role == StaffRole.manager) {
+      menuItems.add({'icon': Icons.bakery_dining_rounded, 'title': "KITCHEN"});
+    }
+    
+    if (role == StaffRole.cashier || role == StaffRole.manager) {
+      menuItems.add({'icon': Icons.assignment_outlined, 'title': "ORDERS"});
+    }
+    
+    if (role == StaffRole.delivery || role == StaffRole.manager) {
+      menuItems.add({'icon': Icons.local_shipping_rounded, 'title': "DELIVERY"});
+    }
+
+    menuItems.add({'icon': Icons.person_outline_rounded, 'title': "PROFILE"});
+
     return Container(
       width: 250,
       decoration: BoxDecoration(
@@ -46,30 +68,15 @@ class StaffSidebar extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _DrawerEntry(
-            icon: Icons.dashboard_rounded,
-            title: "DASHBOARD",
-            isSelected: currentIndex == 0,
-            onTap: () => onTap(0),
-          ),
-          _DrawerEntry(
-            icon: Icons.bakery_dining_rounded,
-            title: "KITCHEN",
-            isSelected: currentIndex == 1,
-            onTap: () => onTap(1),
-          ),
-          _DrawerEntry(
-            icon: Icons.assignment_outlined,
-            title: "ORDERS",
-            isSelected: currentIndex == 2,
-            onTap: () => onTap(2),
-          ),
-          _DrawerEntry(
-            icon: Icons.person_outline_rounded,
-            title: "PROFILE",
-            isSelected: currentIndex == 3,
-            onTap: () => onTap(3),
-          ),
+          ...List.generate(menuItems.length, (index) {
+            final item = menuItems[index];
+            return _DrawerEntry(
+              icon: item['icon'],
+              title: item['title'],
+              isSelected: currentIndex == index,
+              onTap: () => onTap(index),
+            );
+          }),
         ],
       ),
     );

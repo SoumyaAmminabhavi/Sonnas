@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'owner/owner_dashboard.dart';
 import 'owner/menu_page.dart';
 import 'staff/staff_dashboard.dart';
+import 'staff/staff_roles.dart';
+import 'staff/staff_login_page.dart';
 
 import 'services/supabase_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -493,10 +495,11 @@ class ModernDrawer extends StatelessWidget {
                 icon: Icons.badge_outlined,
                 label: "Login as Staff",
                 onTap: () {
+                  // Close the drawer before navigating
                   Navigator.of(context).pop();
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const StaffDashboard(),
+                      builder: (context) => const StaffLoginPage(),
                     ),
                   );
                 },

@@ -433,6 +433,62 @@ class SupabaseService {
     }
   }
 
+  // ─── Staff Authentication ──────────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>?> verifyStaffCode(String phone, String code) async {
+    try {
+      final response = await myClient
+          .from('Staff')
+          .select()
+          .eq('phone', phone)
+          .eq('joiningCode', code)
+          .eq('isActivated', false)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      debugPrint('Error verifying staff code: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> registerStaff(String id, String password) async {
+    try {
+      final hash = DBCrypt().hashpw(password, DBCrypt().gensalt());
+      await myClient.from('Staff').update({
+        'password': hash,
+        'isActivated': true,
+        'joiningCode': null,
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('Error registering staff: $e');
+      return false;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> loginStaff(String phone, String password) async {
+    try {
+      final staff = await myClient
+          .from('Staff')
+          .select()
+          .eq('phone', phone)
+          .eq('isActivated', true)
+          .maybeSingle();
+
+      if (staff == null || staff['password'] == null) {
+        return null;
+      }
+
+      final bool isCorrect = DBCrypt().checkpw(password, staff['password']);
+      if (isCorrect) {
+        return staff;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error logging in staff: $e');
+      return null;
+    }
+  }
 
 
   // ─── Inventory Management ──────────────────────────────────────────────────
