@@ -41,22 +41,30 @@ export async function POST(req: Request) {
       const payment = payload.payload.payment.entity;
       const orderNumber = paymentLink.reference_id;
 
-      console.log(`[Razorpay Webhook] Order ${orderNumber} paid!`);
+      console.log(`[Razorpay Webhook] Processing payment for Order: ${orderNumber}`);
 
-      // 1. Update Order in DB
-      const order = await db.whatsAppOrder.update({
-        where: { orderNumber: orderNumber as string },
-        data: {
-          status: "CONFIRMED",
-          paymentStatus: "PAID",
-          paymentId: payment.id as string,
-        },
-      });
+      try {
+        // 1. Update Order in DB
+        const order = await db.whatsAppOrder.update({
+          where: { orderNumber: orderNumber as string },
+          data: {
+            status: "CONFIRMED",
+            paymentStatus: "PAID",
+            paymentId: payment.id as string,
+          },
+        });
 
-      // 2. Notify Customer via WhatsApp
-      if (order) {
-        const message = `✅ *Payment Received!*\n\n🧾 Order *#${order.orderNumber}* has been confirmed.\n\nWe've started preparing your delicious cakes! 👩‍🍳 We'll notify you once they are ready for delivery. ✨\n\nThank you for choosing Sonna's Patisserie! 💕`;
-        void sendTextMessage(order.phone, message);
+        console.log(`[Razorpay Webhook] DB updated successfully for ${orderNumber}`);
+
+        // 2. Notify Customer via WhatsApp
+        if (order) {
+          console.log(`[Razorpay Webhook] Sending WhatsApp confirmation to ${order.phone}...`);
+          const message = `✅ *Payment Received!*\n\n🧾 Order *#${order.orderNumber}* has been confirmed.\n\nWe've started preparing your delicious cakes! 👩‍🍳 We'll notify you once they are ready for delivery. ✨\n\nThank you for choosing Sonna's Patisserie! 💕`;
+          await sendTextMessage(order.phone, message);
+          console.log(`[Razorpay Webhook] WhatsApp message sent!`);
+        }
+      } catch (dbError) {
+        console.error(`[Razorpay Webhook] DB or WhatsApp error:`, dbError);
       }
     }
 
