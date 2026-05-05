@@ -483,6 +483,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   // ── Direct order from website ("Hi! I'd like to order: CakeName") ──────
   const orderMatch = /(?:i(?:'|')?d like to order:\s*|order:\s*)(.+)/i.exec(input);
+  if (orderMatch) {
+    const cakeName = orderMatch[1]!.trim();
+    const selectedProduct = await findCake(cakeName);
+
     if (selectedProduct) {
       const tasks: Promise<unknown>[] = [
         updateState(msg.from, "SELECTING_SIZE", {
