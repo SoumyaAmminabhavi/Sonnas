@@ -491,6 +491,18 @@ class SupabaseService {
   }
 
 
+  static Future<bool> updateBiometricStatus(String staffId, bool enabled) async {
+    try {
+      await myClient.from('Staff').update({
+        'biometricEnabled': enabled,
+      }).eq('id', staffId);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating biometric status: $e');
+      return false;
+    }
+  }
+
   // ─── Inventory Management ──────────────────────────────────────────────────
 
   static Stream<List<Map<String, dynamic>>> getInventoryStream() {

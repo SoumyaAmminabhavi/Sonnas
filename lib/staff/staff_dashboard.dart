@@ -4,11 +4,13 @@ import 'package:intl/intl.dart';
 import '../widgets/staff_sidebar.dart';
 import 'staff_roles.dart';
 import 'profile_page.dart';
+import 'inventory_page.dart';
 import '../services/supabase_service.dart';
 
 class StaffDashboard extends StatefulWidget {
   final StaffRole role;
-  const StaffDashboard({super.key, this.role = StaffRole.manager});
+  final Map<String, dynamic>? staffData;
+  const StaffDashboard({super.key, this.role = StaffRole.manager, this.staffData});
 
   @override
   State<StaffDashboard> createState() => _StaffDashboardState();
@@ -65,7 +67,20 @@ class _StaffDashboardState extends State<StaffDashboard> {
       pages.add(const Center(child: Text("Delivery Page")));
     }
 
-    pages.add(StaffProfilePage(cs: cs, isDesktop: isDesktop, role: widget.role));
+    if (widget.role == StaffRole.manager || widget.role == StaffRole.baker) {
+      pages.add(StaffInventoryPage(cs: cs, isDesktop: isDesktop));
+    }
+
+    pages.add(
+      StaffProfilePage(
+        cs: cs, 
+        isDesktop: isDesktop, 
+        role: widget.role,
+        staffId: widget.staffData?['id'] ?? 'unknown',
+        currentBiometricStatus: widget.staffData?['biometricEnabled'] ?? false,
+        staffData: widget.staffData,
+      ),
+    );
 
     // Ensure _selectedIndex doesn't exceed bounds if role changes
     if (_selectedIndex >= pages.length) {
@@ -757,6 +772,10 @@ class _StaffBottomNav extends StatelessWidget {
     
     if (role == StaffRole.delivery || role == StaffRole.manager) {
       navItems.add({'icon': currentIndex == navItems.length ? Icons.local_shipping_rounded : Icons.local_shipping_outlined, 'label': "Delivery"});
+    }
+
+    if (role == StaffRole.manager || role == StaffRole.baker) {
+      navItems.add({'icon': currentIndex == navItems.length ? Icons.inventory_2_rounded : Icons.inventory_2_outlined, 'label': "Inventory"});
     }
 
     navItems.add({'icon': currentIndex == navItems.length ? Icons.person_rounded : Icons.person_outline_rounded, 'label': "Profile"});

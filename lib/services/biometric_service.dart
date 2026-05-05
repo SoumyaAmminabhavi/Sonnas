@@ -1,32 +1,31 @@
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:local_auth_windows/local_auth_windows.dart'; // For Windows Hello support
 
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
 
-  /// Check if the device has biometric hardware (Fingerprint/Face/Windows Hello)
+  /// Check if the device hardware supports biometric authentication
   static Future<bool> canCheckBiometrics() async {
-    if (kIsWeb) return false; // Default to false on web if plugin not fully linked to avoid MissingPluginException
+    if (kIsWeb) return false;
     try {
-      final bool canAuthenticateWithBiometrics = await _auth.canCheckBiometrics;
-      final bool isDeviceSupported = await _auth.isDeviceSupported();
-      return canAuthenticateWithBiometrics && isDeviceSupported;
+      // Only check if the hardware supports it — don't gate on enrollment
+      // Android will prompt the user to enroll if not already done
+      return await _auth.isDeviceSupported();
     } catch (e) {
-      debugPrint("Biometrics not supported or not initialized on this platform.");
+      debugPrint("Biometrics check failed: $e");
       return false;
     }
   }
 
-  /// Trigger the Biometric Auth popup (Windows Hello / Fingerprint / Face ID)
+  /// Trigger the native biometric prompt (Fingerprint / Face ID)
   static Future<bool> authenticate() async {
+    if (kIsWeb) return false;
     try {
-      final bool didAuthenticate = await _auth.authenticate(
-        localizedReason: 'Please authenticate to log in to the Staff Portal',
+      return await _auth.authenticate(
+        localizedReason: 'Scan your fingerprint or face to log in',
       );
-      return didAuthenticate;
     } catch (e) {
-      debugPrint("Error during biometric auth: $e");
+      debugPrint("Biometric auth failed: $e");
       return false;
     }
   }

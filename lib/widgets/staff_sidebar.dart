@@ -34,6 +34,10 @@ class StaffSidebar extends StatelessWidget {
       menuItems.add({'icon': Icons.local_shipping_rounded, 'title': "DELIVERY"});
     }
 
+    if (role == StaffRole.manager || role == StaffRole.baker) {
+      menuItems.add({'icon': Icons.inventory_2_outlined, 'title': "INVENTORY"});
+    }
+
     menuItems.add({'icon': Icons.person_outline_rounded, 'title': "PROFILE"});
 
     return Container(

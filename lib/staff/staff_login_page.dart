@@ -5,6 +5,7 @@ import 'staff_roles.dart';
 import 'staff_dashboard.dart';
 import '../services/supabase_service.dart';
 import '../services/biometric_service.dart';
+import '../services/session_service.dart';
 
 class StaffLoginPage extends StatefulWidget {
   const StaffLoginPage({super.key});
@@ -30,6 +31,36 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
   // Registration state
   Map<String, dynamic>? _verifiedStaff;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  Future<void> _checkExistingSession() async {
+    final savedStaff = await SessionService.getStaffSession();
+    if (savedStaff != null) {
+      // If biometrics are enabled for this staff, we can try to auto-authenticate
+      if (savedStaff['biometricEnabled'] == true) {
+        final bool canCheck = await BiometricService.canCheckBiometrics();
+        if (canCheck) {
+          final bool authenticated = await BiometricService.authenticate();
+          if (authenticated && mounted) {
+            _routeToDashboard(savedStaff);
+            return;
+          }
+        }
+      }
+      // If biometrics failed or not enabled, but session exists, 
+      // we fill the phone number for them
+      if (mounted) {
+        setState(() {
+          _loginPhoneController.text = savedStaff['phone'] ?? '';
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -67,6 +98,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     setState(() => _isLoading = false);
 
     if (staff != null) {
+      await SessionService.saveStaffSession(staff);
       _routeToDashboard(staff);
     } else {
       _showError("Invalid credentials. Please check your number and password.");
@@ -105,6 +137,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       setState(() => _isLoading = false);
 
       if (staff != null) {
+        await SessionService.saveStaffSession(staff);
         _routeToDashboard(staff);
       } else {
         _showError("No activated staff member found for this number.");
@@ -161,6 +194,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     setState(() => _isLoading = false);
 
     if (success) {
+      await SessionService.saveStaffSession(_verifiedStaff!);
       // Auto login after registering
       _routeToDashboard(_verifiedStaff!);
     } else {
@@ -180,7 +214,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) => StaffDashboard(role: mappedRole),
+        builder: (context) => StaffDashboard(role: mappedRole, staffData: staff),
       ),
     );
   }
@@ -393,7 +427,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Or use Windows Hello / Biometrics",
+              "Or use Fingerprint / Face ID",
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 color: cs.secondary.withValues(alpha: 0.5),
@@ -403,7 +437,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
             IconButton.filledTonal(
               onPressed: _handleBiometricLogin,
               icon: const Icon(Icons.fingerprint_rounded),
-              tooltip: "Login with Windows Hello / Fingerprint",
+              tooltip: "Login with Biometrics",
             ),
           ],
         ),
