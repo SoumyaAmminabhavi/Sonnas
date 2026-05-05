@@ -63,6 +63,17 @@ const convoCache = new Map<string, Conversation>();
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
 
+const RESET_STATE = {
+  selectedCake: null,
+  selectedSize: null,
+  selectedPrice: null,
+  selectedAddress: null,
+  selectedNotes: null,
+  selectedDeliveryDate: null,
+  selectedDeliveryTime: null,
+  customImageUrl: null,
+};
+
 function updateConvoCache(phone: string, data: Partial<Conversation>) {
   const existing = convoCache.get(phone) ?? { phone, state: "IDLE" } as Conversation;
   convoCache.set(phone, { ...existing, ...data });
@@ -282,27 +293,14 @@ async function getConversation(phone: string, name?: string): Promise<Conversati
 async function updateState(
   phone: string,
   state: ConversationState,
-  extra: {
-    selectedCake?: string | null;
-    selectedSize?: string | null;
-    selectedPrice?: string | null;
-    selectedAddress?: string | null;
-    selectedNotes?: string | null;
-    selectedQuantity?: number | null;
-    selectedDeliveryDate?: string | null;
-    selectedDeliveryTime?: string | null;
-    customImageUrl?: string | null;
-    cart?: CartItem[];
-  } = {}
+  extra: Partial<Conversation> = {}
 ) {
-  // Update in-memory cache immediately (instant read for next message)
+  // Update in-memory cache immediately
   updateConvoCache(phone, { state, ...extra });
 
-  // We extract cart relation to avoid Prisma update errors
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { cart, ...otherExtra } = extra;
 
-  // Persist to DB in the background — don't block the reply
   void withTimeout(
     db.whatsAppConversation.update({
       where: { phone },
@@ -317,48 +315,23 @@ async function updateState(
 
 async function addToCart(phone: string, item: { cakeName: string; size: string; price: string; quantity: number }) {
   try {
-    // Check if item already exists in cart
     const existingItem = await db.whatsAppCartItem.findFirst({
-      where: {
-        phone,
-        cakeName: item.cakeName,
-        size: item.size,
-      },
+      where: { phone, cakeName: item.cakeName, size: item.size },
     });
 
-    let resultItem;
-
-    if (existingItem) {
-      // Update quantity of existing item
-      resultItem = await db.whatsAppCartItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: existingItem.quantity + item.quantity,
-        },
-      });
-    } else {
-      // Create new item
-      resultItem = await db.whatsAppCartItem.create({
-        data: {
-          phone,
-          cakeName: item.cakeName,
-          size: item.size,
-          price: item.price,
-          quantity: item.quantity,
-        },
-      });
-    }
+    const resultItem = await db.whatsAppCartItem.upsert({
+      where: { id: existingItem?.id ?? "new-item" },
+      create: { ...item, phone },
+      update: { quantity: { increment: item.quantity } },
+    });
 
     const cached = convoCache.get(phone);
     if (cached) {
+      const currentCart = cached.cart ?? [];
       if (existingItem) {
-        // Update item in cache
-        cached.cart = (cached.cart ?? []).map((i) =>
-          i.id === existingItem.id ? (resultItem as unknown as CartItem) : i
-        );
+        cached.cart = currentCart.map(i => i.id === existingItem.id ? (resultItem as unknown as CartItem) : i);
       } else {
-        // Add new item to cache
-        cached.cart = [...(cached.cart ?? []), resultItem as unknown as CartItem];
+        cached.cart = [...currentCart, resultItem as unknown as CartItem];
       }
       convoCache.set(phone, cached);
     }
@@ -421,15 +394,71 @@ async function reverseGeocode(lat: number, lon: number): Promise<string | undefi
 
 function getCartSummary(cart: CartItem[]): string {
   if (!cart || cart.length === 0) return "Your cart is empty.";
-  
   let summary = `🛒 *Your Cart*\n\n`;
   cart.forEach((item, idx) => {
-    const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
     const displayPrice = formatItemTotal(item.price, item.quantity);
-    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${displayPrice}\n`;
+    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${item.quantity > 1 ? ` x${item.quantity}` : ""} — ${displayPrice}\n`;
   });
   summary += `\n*Total: ${getCartTotal(cart)}*`;
   return summary;
+}
+
+function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
+  let summary = `📋 *Order Summary*\n\n`;
+  if (cart.length === 0) {
+    summary += "_No items in cart._\n";
+  } else {
+    cart.forEach((item, idx) => {
+      const displayPrice = formatItemTotal(item.price, item.quantity);
+      summary += `${idx + 1}. *${item.cakeName}* (${item.size})${item.quantity > 1 ? ` x${item.quantity}` : ""} — ${displayPrice}\n`;
+    });
+  }
+  summary += `\n*Total: ${getCartTotal(cart)}*\n`;
+  summary += `📍 Address: ${convo.selectedAddress ?? "_Not provided_"}\n`;
+  summary += `📝 Notes: ${convo.selectedNotes ?? "_None_"}\n`;
+  summary += `📅 Delivery: *${convo.selectedDeliveryDate ?? "Today"}*\n`;
+  summary += `🕒 Timing: *${convo.selectedDeliveryTime ?? "Anytime"}*\n\n`;
+  summary += `Shall I place this order?`;
+  return summary;
+}
+
+async function createCustomOrder(
+  msg: IncomingMessage, 
+  convo: Conversation, 
+  publicUrl: string | undefined, 
+  mediaId: string, 
+  caption: string
+) {
+  const orderNumber = generateOrderNumber();
+  const notes = (convo.selectedNotes ?? "") + (caption ? `\nTheme: ${caption}` : "");
+  const imageUrl = publicUrl ?? `whatsapp://media/${mediaId}`;
+
+  await db.whatsAppOrder.create({
+    data: {
+      orderNumber,
+      phone: msg.from,
+      customerName: convo.name ?? msg.name,
+      totalPrice: "Pending Quote",
+      notes,
+      status: "PENDING",
+      isCustom: true,
+      customImageUrl: imageUrl,
+      items: {
+        create: [{
+          cakeName: "CUSTOM_CAKE",
+          size: "Custom Design",
+          price: "Pending Quote",
+          quantity: 1
+        }]
+      }
+    }
+  });
+
+  return updateState(msg.from, "IDLE", {
+    ...RESET_STATE,
+    customImageUrl: imageUrl,
+    selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
+  });
 }
 
 // ─── Main handler ──────────────────────────────────────────────────────────
@@ -456,16 +485,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   if (input === "restart" || input === "start over" || input === "reset") {
     await Promise.all([
       clearCart(msg.from),
-      updateState(msg.from, "IDLE", {
-        selectedCake: null,
-        selectedSize: null,
-        selectedPrice: null,
-        selectedAddress: null,
-        selectedNotes: null,
-        selectedDeliveryDate: null,
-        selectedDeliveryTime: null,
-        customImageUrl: null,
-      }),
+      updateState(msg.from, "IDLE", RESET_STATE),
       sendTextMessage(msg.from, "🔄 Restarting your order..."),
       sendWelcome(msg.from, msg.name)
     ]);
@@ -595,18 +615,10 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   if (input === "cancel" || input === "cancel order" || interactiveId === "btn_cancel") {
     await Promise.all([
       clearCart(msg.from),
-      updateState(msg.from, "IDLE", {
-        selectedCake: null,
-        selectedSize: null,
-        selectedPrice: null,
-        selectedAddress: null,
-        selectedNotes: null,
-        selectedDeliveryDate: null,
-        selectedDeliveryTime: null,
-      }),
+      updateState(msg.from, "IDLE", RESET_STATE),
       sendTextMessage(
         msg.from,
-        "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
+        "❌ Order cancelled.\n\nReply *Menu* to browse cakes anytime! 🧁"
       )
     ]);
     return;
@@ -672,7 +684,7 @@ async function sendWelcome(to: string, name?: string) {
   const greeting = name ? `Hi ${name}! 👋` : "Hi there! 👋";
   await sendInteractiveButtons(
     to,
-    `${greeting}\n\nWelcome to *Sonna's Patisserie & Cafe* 🎂\n\nEvery cake is handcrafted with love using the finest ingredients.\n\nWhat would you like to do?\n\n💡 *Helpful Tips:*\n• Reply *'Menu'* to browse our cakes\n• Reply *'Status'* to track your delivery\n• Reply *'Restart'* or *'Cancel'* to start fresh\n• You can send your *Location* for easy delivery!`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie* 🎂\nHandcrafted cakes made with love.\n\n💡 *Quick Commands:*\n• *Menu* — Browse cakes\n• *Status* — Track order\n• *Restart* — Start fresh\n• Send 📍 Location for delivery`,
     [
       { id: "btn_menu", title: "📋 View Menu" },
       { id: "btn_custom", title: "🎨 Custom Cake" },
@@ -851,10 +863,9 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   if (!selectedProduct) {
-    console.warn(`[WhatsApp] handleCakeSelection: Failed to find cake. interactiveId="${msg.interactiveId}", text="${msg.text}"`);
     await sendTextMessage(
       msg.from,
-      `I couldn't find that cake. 🤔 (ID: ${msg.interactiveId?.replace("cake_", "") ?? "none"})\n\nReply *Menu* to see our full list, or type the name of a cake!`
+      "Couldn't find that cake. 🤔\n\nReply *Menu* to see our full list!"
     );
     return;
   }
@@ -965,20 +976,15 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           quantity: 1
         });
         
-        await sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to your cart!`);
-        
-        // Fetch fresh cart from DB to ensure UI is in sync
-        const freshCart = await db.whatsAppCartItem.findMany({ where: { phone: msg.from } });
-        const summary = getCartSummary(freshCart as unknown as CartItem[]);
-        
-        await sendInteractiveButtons(msg.from, summary, [
-          { id: "btn_menu", title: "➕ Add More Cakes" },
+      await Promise.all([
+        sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to cart!`),
+        sendInteractiveButtons(msg.from, summary, [
+          { id: "btn_menu", title: "➕ Add More" },
           { id: "btn_checkout", title: "💳 Checkout" },
-        ]);
-        await updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null });
-      }
+        ]),
+        updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
+      ]);
     } else if (msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now") {
-      // Add current selection if any and proceed to checkout
       if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
         await addToCart(msg.from, {
           cakeName: convo.selectedCake,
@@ -988,17 +994,17 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         });
       }
       
-      await updateState(msg.from, "ASKING_ADDRESS");
-      await sendTextMessage(
-        msg.from,
-        "📍 *Delivery Address*\n\nPlease provide your full delivery address.\n\n💡 *Tip:* You can also send your *GPS Location*!"
-      );
+      await Promise.all([
+        updateState(msg.from, "ASKING_ADDRESS"),
+        sendTextMessage(
+          msg.from,
+          "📍 Send your delivery address or share your *GPS Location*."
+        )
+      ]);
     }
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("[WhatsApp] Error in handleCartActions:", errorMsg);
-    // Include the specific error for easier debugging
-    await sendTextMessage(msg.from, `⚠️ Error: *${errorMsg}*\n\nPlease try again or reply *Menu*.`);
+    console.error("[WhatsApp] Error in handleCartActions:", err);
+    await sendTextMessage(msg.from, "⚠️ Something went wrong. Please try again or reply *Menu*.");
   }
 }
 
@@ -1048,7 +1054,7 @@ async function handleAddressInput(
     }),
     sendTextMessage(
       msg.from,
-      "✅ Address saved!\n\n📝 *Special Instructions*\n\nAny landmarks or special notes? (e.g., Gate code, call on arrival)\n\nReply *'None'* or *'Skip'* if you have none."
+      "✅ Address saved!\n\n📝 Any special instructions? (Reply *Skip* if none)"
     )
   ]);
 }
@@ -1192,43 +1198,23 @@ async function handleDeliveryTimeInput(
     });
 
     // Fetch fresh cart and conversation
-    const cart = await withTimeout(
+    const cart = (await withTimeout(
       db.whatsAppCartItem.findMany({ where: { phone: msg.from } }),
       DB_TIMEOUT
-    ) as unknown as CartItem[];
-    let updatedConvo = convoCache.get(msg.from);
-    updatedConvo ??= await getConversation(msg.from);
-
-    let summary = `📋 *Order Summary*\n\n`;
-    if (cart.length === 0) {
-      summary += "_No items in cart._\n";
-    } else {
-      cart.forEach((item, idx) => {
-        const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-        const displayPrice = formatItemTotal(item.price, item.quantity);
-        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${displayPrice}\n`;
-      });
-    }
-    
-    summary += `\n*Total: ${getCartTotal(cart)}*\n`;
-    summary += `📍 Address: ${updatedConvo?.selectedAddress ?? "_Not provided_"}\n`;
-    summary += `📝 Notes: ${updatedConvo?.selectedNotes ?? "_None_"}\n`;
-    summary += `📅 Delivery: *${updatedConvo?.selectedDeliveryDate}*\n`;
-    summary += `🕒 Timing: *${deliveryTime}*\n\n`;
-    summary += `Shall I place this order?`;
+    )) as unknown as CartItem[];
+    const updatedConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
 
     await sendInteractiveButtons(
       msg.from,
-      summary,
+      buildOrderSummary(cart, updatedConvo),
       [
         { id: "btn_confirm", title: "✅ Confirm Order" },
         { id: "btn_cancel", title: "❌ Cancel" },
       ]
     );
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("[WhatsApp] Error in handleDeliveryTimeInput:", errorMsg);
-    await sendTextMessage(msg.from, `⚠️ Sorry, I encountered an error: *${errorMsg}*\n\nPlease try again by replying *Menu*.`);
+    console.error("[WhatsApp] Error in handleDeliveryTimeInput:", err);
+    await sendTextMessage(msg.from, "⚠️ Something went wrong. Please try again or reply *Menu*.");
   }
 }
 
@@ -1240,52 +1226,15 @@ async function handleCustomRequest(
 ) {
   // If user sends an image
   if (msg.type === "image" && msg.image) {
-    const mediaId = msg.image.id;
-    const caption = msg.image.caption ?? "";
-    
-    // Download from WhatsApp and upload to Supabase for permanent storage
     const { downloadAndUploadImage } = await import("./media");
-    const publicUrl = await downloadAndUploadImage(mediaId);
+    const publicUrl = await downloadAndUploadImage(msg.image.id);
     
-    // Create a custom order record immediately so it appears in the admin dashboard
-    const orderNumber = generateOrderNumber();
-    await db.whatsAppOrder.create({
-      data: {
-        orderNumber,
-        phone: msg.from,
-        customerName: convo.name ?? msg.name,
-        totalPrice: "Pending Quote",
-        notes: (convo.selectedNotes ?? "") + (caption ? `\nTheme: ${caption}` : ""),
-        status: "PENDING",
-        isCustom: true,
-        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-        items: {
-          create: [{
-            cakeName: "CUSTOM_CAKE",
-            size: "Custom Design",
-            price: "Pending Quote",
-            quantity: 1
-          }]
-        }
-      }
-    });
-
-    await Promise.all([
-      updateState(msg.from, "IDLE", {
-        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-        selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
-        selectedCake: null,
-        selectedSize: null,
-        selectedPrice: null,
-        selectedAddress: null,
-        selectedDeliveryDate: null,
-        selectedDeliveryTime: null,
-      }),
-      sendTextMessage(
-        msg.from,
-        "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
-      )
-    ]);
+    await createCustomOrder(msg, convo, publicUrl, msg.image.id, msg.image.caption ?? "");
+    
+    await sendTextMessage(
+      msg.from,
+      "📸 Photo received! 🍰\n\nWe'll call you shortly to confirm details and provide a quote. 📞"
+    );
     return;
   }
 
@@ -1297,7 +1246,7 @@ async function handleCustomRequest(
       }),
       sendTextMessage(
         msg.from,
-        "✅ Got the description! 📝\n\nIf you have a **Reference Photo**, please send it now. 📸\n\nOtherwise, just reply with your **Delivery Address** to proceed."
+        "✅ Description received! 📝\n\nSend a **Reference Photo** 📸 or reply with your **Delivery Address** to proceed."
       )
     ]);
     return;
@@ -1312,57 +1261,19 @@ async function handleReferenceImageUpload(
 ) {
   // If user sends an image
   if (msg.type === "image" && msg.image) {
-    const mediaId = msg.image.id;
-    const caption = msg.image.caption ?? "";
-    
-    // Download from WhatsApp and upload to Supabase
     const { downloadAndUploadImage } = await import("./media");
-    const publicUrl = await downloadAndUploadImage(mediaId);
+    const publicUrl = await downloadAndUploadImage(msg.image.id);
     
-    // Create a custom order record immediately
-    const orderNumber = generateOrderNumber();
-    await db.whatsAppOrder.create({
-      data: {
-        orderNumber,
-        phone: msg.from,
-        customerName: convo.name ?? msg.name,
-        totalPrice: "Pending Quote",
-        notes: (convo.selectedNotes ?? "") + (caption ? `\nTheme: ${caption}` : ""),
-        status: "PENDING",
-        isCustom: true,
-        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-        items: {
-          create: [{
-            cakeName: "CUSTOM_CAKE",
-            size: "Custom Design",
-            price: "Pending Quote",
-            quantity: 1
-          }]
-        }
-      }
-    });
-
-    await Promise.all([
-      updateState(msg.from, "IDLE", {
-        customImageUrl: publicUrl ?? `whatsapp://media/${mediaId}`,
-        selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
-        selectedCake: null,
-        selectedSize: null,
-        selectedPrice: null,
-        selectedAddress: null,
-        selectedDeliveryDate: null,
-        selectedDeliveryTime: null,
-      }),
-      sendTextMessage(
-        msg.from,
-        "📸 Reference photo received! 🍰\n\nThank you for sharing the design. You will receive a call from our cafe shortly to discuss the details and confirm your custom order. 📞"
-      )
-    ]);
-  } else {
-    // Re-prompt for image as per user request
+    await createCustomOrder(msg, convo, publicUrl, msg.image.id, msg.image.caption ?? "");
+    
     await sendTextMessage(
       msg.from,
-      "Please upload a **Reference Photo** 📸 to proceed with your custom design.\n\n(We need an image to understand your vision! ✨)"
+      "📸 Photo received! 🍰\n\nWe'll call you shortly to confirm details and provide a quote. 📞"
+    );
+  } else {
+    await sendTextMessage(
+      msg.from,
+      "Please upload a **Reference Photo** 📸 to proceed.\n\n(We need an image to understand your design! ✨)"
     );
   }
 }
@@ -1443,19 +1354,10 @@ async function handleConfirmation(
 
     if (isCancel) {
       await Promise.all([
-        updateState(msg.from, "IDLE", {
-          selectedCake: null,
-          selectedSize: null,
-          selectedPrice: null,
-          selectedAddress: null,
-          selectedNotes: null,
-          selectedDeliveryDate: null,
-          selectedDeliveryTime: null,
-          customImageUrl: null,
-        }),
+        updateState(msg.from, "IDLE", RESET_STATE),
         sendTextMessage(
           msg.from,
-          "❌ Order cancelled.\n\nReply *Menu* to browse our cakes anytime! 🧁"
+          "❌ Order cancelled.\n\nReply *Menu* to browse cakes anytime! 🧁"
         )
       ]);
       return;
@@ -1479,90 +1381,81 @@ async function handleConfirmation(
     const orderNumber = generateOrderNumber();
     const totalPriceStr = getCartTotal(cart);
     const totalAmount = parseInt(totalPriceStr.replace(/[^\d]/g, ""), 10);
+    const existingConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
 
-    // Read from cache — no extra DB round-trip needed
-    const existingConvo = convoCache.get(msg.from);
+    console.log(`[WhatsApp] Confirming order ${orderNumber}...`);
 
-    // Generate Razorpay Payment Link
-    let paymentLink = "";
-    let rzpOrderId = "";
-
-    try {
-      console.log(`[WhatsApp] Generating Razorpay link for ${orderNumber}...`);
-      const rzpLink = await createPaymentLink({
+    // Parallelize Razorpay call and DB creation
+    const [rzpLinkResult, dbOrder] = await Promise.all([
+      createPaymentLink({
         orderNumber,
         amount: totalAmount,
         phone: msg.from,
         name: existingConvo?.name ?? msg.name ?? "Customer",
+      }).catch(err => {
+        console.error("[WhatsApp] Razorpay failed:", err);
+        return null;
+      }),
+      db.whatsAppOrder.create({
+        data: {
+          orderNumber,
+          phone: msg.from,
+          customerName: existingConvo?.name ?? msg.name,
+          totalPrice: totalPriceStr,
+          address: convo.selectedAddress,
+          notes: convo.selectedNotes,
+          deliveryDate: existingConvo?.selectedDeliveryDate,
+          deliveryTime: existingConvo?.selectedDeliveryTime,
+          status: "PENDING",
+          paymentStatus: "PENDING",
+          razorpayOrderId: "", // Will update if RZP succeeds
+          paymentLink: "",
+          isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
+          customImageUrl: convo.customImageUrl,
+          items: {
+            create: cart.map((item) => ({
+              cakeName: item.cakeName,
+              size: item.size,
+              price: item.price,
+              quantity: item.quantity,
+            })),
+          },
+        },
+      })
+    ]);
+
+    let paymentLink = "";
+    if (rzpLinkResult) {
+      paymentLink = rzpLinkResult.short_url;
+      // Update DB with RZP info in background
+      void db.whatsAppOrder.update({
+        where: { id: dbOrder.id },
+        data: { 
+          paymentLink: rzpLinkResult.short_url,
+          razorpayOrderId: rzpLinkResult.id 
+        },
       });
-      paymentLink = rzpLink.short_url;
-      rzpOrderId = rzpLink.id; // Payment Link ID acts as our reference
-    } catch (err) {
-      console.error("[WhatsApp] Razorpay link generation failed:", err);
-      // Continue anyway as PENDING, admin can manual follow up
     }
 
-    console.log(`[WhatsApp] Creating order ${orderNumber} in DB...`);
-    await db.whatsAppOrder.create({
-      data: {
-        orderNumber,
-        phone: msg.from,
-        customerName: existingConvo?.name ?? msg.name,
-        totalPrice: totalPriceStr,
-        address: convo.selectedAddress,
-        notes: convo.selectedNotes,
-        deliveryDate: existingConvo?.selectedDeliveryDate,
-        deliveryTime: existingConvo?.selectedDeliveryTime,
-        status: "PENDING",
-        paymentStatus: "PENDING",
-        razorpayOrderId: rzpOrderId,
-        paymentLink: paymentLink,
-        isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
-        customImageUrl: convo.customImageUrl,
-        items: {
-          create: cart.map((item) => ({
-            cakeName: item.cakeName,
-            size: item.size,
-            price: item.price,
-            quantity: item.quantity,
-          })),
-        },
-      },
-    });
+    await Promise.all([
+      clearCart(msg.from),
+      updateState(msg.from, "IDLE", RESET_STATE)
+    ]);
 
-    // Clear cart in DB
-    await clearCart(msg.from);
-
-    // Reset conversation state
-    await updateState(msg.from, "IDLE", {
-      selectedCake: null,
-      selectedSize: null,
-      selectedPrice: null,
-      selectedAddress: null,
-      selectedNotes: null,
-      selectedDeliveryDate: null,
-      selectedDeliveryTime: null,
-      customImageUrl: null,
-    });
-
-    let message = `🎉 *Order Placed!* (#${orderNumber})\n\n`;
-    message += `📅 Delivery: *${existingConvo?.selectedDeliveryDate}*\n`;
-    message += `🕒 Timing: *${existingConvo?.selectedDeliveryTime}*\n`;
-    message += `📍 Address: ${convo.selectedAddress}\n\n`;
+    let message = `🎉 *Order #${orderNumber} Placed!*\n\n`;
+    message += `📅 *${existingConvo?.selectedDeliveryDate}* | 🕒 *${existingConvo?.selectedDeliveryTime}*\n`;
+    message += `📍 ${convo.selectedAddress}\n\n`;
 
     if (paymentLink) {
-      message += `💳 *Payment Required*\nTo confirm your order, please pay *${totalPriceStr}* using the secure link below:\n\n${paymentLink}\n\n_Once paid, your order will be automatically confirmed!_`;
+      message += `💳 Pay *${totalPriceStr}* to confirm:\n${paymentLink}\n\n_Order auto-confirms on payment._`;
     } else {
-      message += `💰 Total: *${totalPriceStr}*\n\nOur team will contact you shortly to confirm the order and payment details. 💕`;
+      message += `💰 Total: *${totalPriceStr}*\n\nWe'll contact you shortly to confirm. 💕`;
     }
 
     await sendTextMessage(msg.from, message);
   } catch (error) {
     console.error("[WhatsApp] handleConfirmation CRASH:", error);
-    await sendTextMessage(
-      msg.from,
-      "⚠️ *Order Error*\n\nSomething went wrong while placing your order. Please try again or contact us directly. 🙏"
-    );
+    await sendTextMessage(msg.from, "⚠️ Something went wrong. Please try again or contact us directly. 🙏");
   }
 }
 
@@ -1608,18 +1501,10 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       break;
     case "CONFIRMING":
       // Re-send summary
-      const cart = await db.whatsAppCartItem.findMany({ where: { phone } }) as unknown as CartItem[];
-      let summary = `📋 *Order Summary*\n\n`;
-      cart.forEach((item, idx) => {
-        const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-        const displayPrice = formatItemTotal(item.price, item.quantity);
-        summary += `${idx + 1}. *${item.cakeName}* (${item.size})${qtyStr} — ${displayPrice}\n`;
-      });
-      summary += `\n*Total: ${getCartTotal(cart)}*\n`;
-      summary += `📍 Address: ${convo.selectedAddress}\n`;
-      summary += `📅 Delivery: *${convo.selectedDeliveryDate}* at *${convo.selectedDeliveryTime}*\n\n`;
-      summary += `Shall I place this order?`;
-      await sendInteractiveButtons(phone, summary, [
+      const cart = (await db.whatsAppCartItem.findMany({
+        where: { phone },
+      })) as unknown as CartItem[];
+      await sendInteractiveButtons(phone, buildOrderSummary(cart, convo), [
         { id: "btn_confirm", title: "✅ Confirm Order" },
         { id: "btn_cancel", title: "❌ Cancel" },
       ]);
