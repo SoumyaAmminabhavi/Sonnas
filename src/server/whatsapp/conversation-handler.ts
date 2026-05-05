@@ -105,55 +105,36 @@ async function safeGetCakes(): Promise<Cake[]> {
   }
 }
 
-async function safeGetCakeByName(name: string): Promise<Cake | null> {
+async function findCake(query: string | number): Promise<Cake | null> {
+  const queryStr = query.toString().toLowerCase();
   const cakes = await safeGetCakes();
-  const found = cakes.find(c => c.name === name);
-  if (found) return found;
-
-  try {
-    const result = await withTimeout(
-      db.cake.findFirst({
-        where: { name },
-        include: { options: true },
-      }),
-      DB_TIMEOUT
-    );
-    return (result as unknown as Cake) ?? (products.find((p) => p.name === name) as unknown as Cake) ?? null;
-  } catch {
-    return (products.find((p) => p.name === name) as unknown as Cake) ?? null;
-  }
-}
-
-async function safeGetCakeById(id: string): Promise<Cake | null> {
-  console.log(`[WhatsApp] safeGetCakeById: looking for ID "${id}"`);
   
-  const cakes = await safeGetCakes();
-  const cached = cakes.find(c => c.id === id || c.id.toString() === id);
-  if (cached) return cached;
+  // 1. Exact ID match
+  const byId = cakes.find(c => c.id.toString() === queryStr);
+  if (byId) return byId;
 
-  try {
-    if (id.length > 5) {
-      const result = await withTimeout(
-        db.cake.findUnique({
-          where: { id },
-          include: { options: true },
-        }),
+  // 2. Exact Name match
+  const byName = cakes.find(c => c.name.toLowerCase() === queryStr);
+  if (byName) return byName;
+
+  // 3. Partial Name match
+  const byPartial = cakes.find(c => c.name.toLowerCase().includes(queryStr) || queryStr.includes(c.name.toLowerCase()));
+  if (byPartial) return byPartial;
+
+  // 4. DB Fallback for long IDs
+  if (queryStr.length > 5) {
+    try {
+      const dbCake = await withTimeout(
+        db.cake.findUnique({ where: { id: queryStr }, include: { options: true } }),
         DB_TIMEOUT
       );
-      if (result) return result as unknown as Cake;
-      console.warn(`[WhatsApp] Cake ID "${id}" not found in DB, trying local products...`);
-    }
-    
-    const localId = parseInt(id, 10);
-    const found = products.find((p) => p.id === localId || p.id.toString() === id);
-    if (found) return found as unknown as Cake;
-    
-    return null;
-  } catch (e) {
-    console.error(`[WhatsApp] safeGetCakeById error for "${id}":`, e);
-    const localId = parseInt(id, 10);
-    return (products.find((p) => p.id === localId || p.id.toString() === id) as unknown as Cake) ?? null;
+      if (dbCake) return dbCake as unknown as Cake;
+    } catch {}
   }
+
+  // 5. Hardcoded products fallback
+  const localProduct = products.find(p => p.id.toString() === queryStr || p.name.toLowerCase() === queryStr);
+  return localProduct as unknown as Cake ?? null;
 }
 
 // ─── DB Resilience ─────────────────────────────────────────────────────────
@@ -470,15 +451,18 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   const interactiveId = msg.interactiveId ?? "";
 
   console.log(`[WhatsApp] Processing from ${msg.from}: ${input || interactiveId} (State: ${state})`);
-
   const isGreeting = GREETINGS.includes(input);
 
-  if (isGreeting && state !== "IDLE") {
-    const greeting = msg.name ? `Hi ${msg.name}! 👋` : "Hi! 👋";
-    await Promise.all([
-      sendTextMessage(msg.from, `${greeting} Let's continue from where we left off.`),
-      rePromptState(msg.from, state, convo)
-    ]);
+  if (isGreeting) {
+    if (state === "IDLE") {
+      await sendWelcome(msg.from, msg.name);
+    } else {
+      const greeting = msg.name ? `Hi ${msg.name}! 👋` : "Hi! 👋";
+      await Promise.all([
+        sendTextMessage(msg.from, `${greeting} Let's continue from where we left off.`),
+        rePromptState(msg.from, state, convo)
+      ]);
+    }
     return;
   }
 
@@ -492,30 +476,13 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
-  if (input === "help" || isGreeting) {
-    await Promise.all([
-      updateState(msg.from, "IDLE", {
-        selectedCake: null,
-        selectedSize: null,
-        selectedPrice: null,
-      }),
-      sendWelcome(msg.from, msg.name)
-    ]);
+  if (input === "help") {
+    await sendWelcome(msg.from, msg.name);
     return;
   }
 
   // ── Direct order from website ("Hi! I'd like to order: CakeName") ──────
   const orderMatch = /(?:i(?:'|')?d like to order:\s*|order:\s*)(.+)/i.exec(input);
-  if (orderMatch) {
-    const cakeName = orderMatch[1]!.trim();
-    const cakes = await safeGetCakes();
-    const selectedProduct = cakes.find(
-      (p) =>
-        p.name.toLowerCase() === cakeName.toLowerCase() ||
-        p.name.toLowerCase().includes(cakeName.toLowerCase()) ||
-        cakeName.toLowerCase().includes(p.name.toLowerCase())
-    ) ?? null;
-
     if (selectedProduct) {
       const tasks: Promise<unknown>[] = [
         updateState(msg.from, "SELECTING_SIZE", {
@@ -847,19 +814,11 @@ async function handleCakeSelection(msg: IncomingMessage) {
 
   // Check if they selected from the interactive list
   if (msg.interactiveId?.startsWith("cake_")) {
-    const cakeId = msg.interactiveId.replace("cake_", "");
-    selectedProduct = await safeGetCakeById(cakeId);
+    selectedProduct = await findCake(msg.interactiveId.replace("cake_", ""));
   }
 
-  // Or if they typed a cake name
   if (!selectedProduct && msg.text) {
-    const input = msg.text.toLowerCase();
-    const cakes = await safeGetCakes();
-    selectedProduct = cakes.find(
-      (p) =>
-        p.name.toLowerCase().includes(input) ||
-        input.includes(p.name.toLowerCase())
-    ) ?? null;
+    selectedProduct = await findCake(msg.text);
   }
 
   if (!selectedProduct) {
@@ -908,13 +867,7 @@ async function handleSizeSelection(
   msg: IncomingMessage,
   convo: Conversation
 ) {
-  if (!convo.selectedCake) {
-    await updateState(msg.from, "IDLE");
-    await sendWelcome(msg.from);
-    return;
-  }
-
-  const cake = await safeGetCakeByName(convo.selectedCake || "");
+  const cake = await findCake(convo.selectedCake || "");
   if (!cake) {
     await updateState(msg.from, "IDLE");
     await sendWelcome(msg.from);
@@ -979,7 +932,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         const summary = getCartSummary(convo.cart ?? []);
 
         await Promise.all([
-          sendTextMessage(msg.from, `✅ Added *${convo.selectedCake}* to cart!`),
+          sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added!`),
           sendInteractiveButtons(msg.from, summary, [
             { id: "btn_menu", title: "➕ Add More" },
             { id: "btn_checkout", title: "💳 Checkout" },
@@ -1165,7 +1118,7 @@ async function handleDeliveryDateInput(
 async function sendDeliveryTimeOptions(to: string) {
   await sendInteractiveButtons(
     to,
-    "🕒 *Delivery Timing*\n\nPlease select your preferred delivery time slot:",
+    "🕒 Choose a delivery time slot:",
     [
       { id: "time_12pm_3pm", title: "12 pm - 3 pm" },
       { id: "time_3pm_6pm", title: "3 pm - 6 pm" },
@@ -1200,12 +1153,8 @@ async function handleDeliveryTimeInput(
       selectedDeliveryTime: deliveryTime,
     });
 
-    // Fetch fresh cart and conversation
-    const cart = (await withTimeout(
-      db.whatsAppCartItem.findMany({ where: { phone: msg.from } }),
-      DB_TIMEOUT
-    )) as unknown as CartItem[];
-    const updatedConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
+    // Use cached cart
+    const cart = convoCache.get(msg.from)?.cart ?? [];
 
     await sendInteractiveButtons(
       msg.from,
@@ -1366,10 +1315,8 @@ async function handleConfirmation(
       return;
     }
 
-    // Fetch fresh cart from DB for the order creation
-    const cart = (await db.whatsAppCartItem.findMany({
-      where: { phone: msg.from },
-    })) as unknown as CartItem[];
+    // Use cached cart instead of DB fetch
+    const cart = convoCache.get(msg.from)?.cart ?? [];
 
     if (cart.length === 0) {
       await updateState(msg.from, "IDLE");
@@ -1474,7 +1421,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       break;
     case "SELECTING_SIZE":
       if (convo.selectedCake) {
-        const cake = await safeGetCakeByName(convo.selectedCake);
+        const cake = await findCake(convo.selectedCake);
         if (cake) {
           const options = cake.options ?? [];
           const buttons = options.slice(0, 2).map((opt, idx) => ({
@@ -1482,7 +1429,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
             title: `${opt.size} — ${opt.price}`,
           }));
           buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
-          await sendInteractiveButtons(phone, `Please choose your size for *${cake.name}*:`, buttons);
+          await sendInteractiveButtons(phone, `Choose your size for *${cake.name}*:`, buttons);
         } else {
           await sendMenu(phone);
         }
@@ -1491,10 +1438,10 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       }
       break;
     case "ASKING_ADDRESS":
-      await sendTextMessage(phone, "📍 *Delivery Address*\n\nPlease provide your full delivery address or send your *GPS Location*.");
+      await sendTextMessage(phone, "📍 Send your delivery address or share your *GPS Location*.");
       break;
     case "ASKING_INSTRUCTIONS":
-      await sendTextMessage(phone, "📝 *Special Instructions*\n\nAny landmarks or special notes? (Reply *'None'* to skip)");
+      await sendTextMessage(phone, "📝 Any special instructions? (Reply *Skip* if none)");
       break;
     case "ASKING_DELIVERY_DATE":
       await sendDeliveryDateOptions(phone);
@@ -1503,10 +1450,8 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       await sendDeliveryTimeOptions(phone);
       break;
     case "CONFIRMING":
-      // Re-send summary
-      const cart = (await db.whatsAppCartItem.findMany({
-        where: { phone },
-      })) as unknown as CartItem[];
+      // Use cached cart
+      const cart = convoCache.get(phone)?.cart ?? [];
       await sendInteractiveButtons(phone, buildOrderSummary(cart, convo), [
         { id: "btn_confirm", title: "✅ Confirm Order" },
         { id: "btn_cancel", title: "❌ Cancel" },
