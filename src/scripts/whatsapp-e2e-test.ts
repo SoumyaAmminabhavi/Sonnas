@@ -1,3 +1,4 @@
+/* eslint-disable */
 import "dotenv/config";
 import { handleIncomingMessage } from "../server/whatsapp/conversation-handler";
 import { db } from "../server/db";
@@ -181,4 +182,4 @@ async function runTests() {
   }
 }
 
-runTests();
+void runTests();
