@@ -239,13 +239,44 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
-              "Sonna's Patisserie & Cafe",
+              isDesktop ? "Sonna's Patisserie & Cafe" : "Cost Analytics",
               style: GoogleFonts.notoSerif(
                 color: cs.primary,
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
               ),
             ),
+            actions: [
+              if (isDesktop)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Center(
+                    child: Text(
+                      "Cost Analytics",
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              PopupMenuButton<String>(
+                onSelected: (value) async {
+                  if (value == 'pdf') {
+                    await ReportService.downloadExpensePDF(_expenses, _totalExpenses, _categoryBreakdown);
+                  } else if (value == 'csv') {
+                    await ReportService.downloadExpenseCSV(_expenses, _totalExpenses);
+                  }
+                },
+                icon: Icon(Icons.download_rounded, color: cs.primary),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'pdf', child: Text("Download PDF")),
+                  const PopupMenuItem(value: 'csv', child: Text("Download CSV")),
+                ],
+              ),
+            ],
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: _showAddExpenseDialog,
@@ -301,14 +332,12 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
           children: [
             Expanded(
               child: Text(
-                "Cost Analytics",
+                "Expense Overview",
                 style: GoogleFonts.notoSerif(
                   color: cs.secondary,
-                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 28,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
 

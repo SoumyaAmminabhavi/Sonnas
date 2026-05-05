@@ -34,7 +34,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
         title: Text(
-          "Sonna's Patisserie & Cafe",
+          isDesktop ? "Sonna's Patisserie & Cafe" : "Stock Intelligence",
           style: GoogleFonts.notoSerif(
             color: cs.primary,
             fontStyle: FontStyle.italic,
@@ -42,6 +42,22 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
             letterSpacing: -0.5,
           ),
         ),
+        actions: [
+          if (isDesktop)
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: Center(
+                child: Text(
+                  "Stock Intelligence",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Row(
         children: [
@@ -483,24 +499,12 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "STOCK INTELLIGENCE",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.5,
-                      color: cs.secondary.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Inventory Analytics",
+                    "Stock Intelligence",
                     style: GoogleFonts.notoSerif(
                       color: cs.secondary,
-                      fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 28,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

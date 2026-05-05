@@ -22,6 +22,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
   double _avgOrderValue = 0;
   Map<String, double> _categorySales = {};
   List<Map<String, dynamic>> _topItems = [];
+  List<Map<String, dynamic>> _cachedMenu = [];
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
         setState(() {
           _orders = List<Map<String, dynamic>>.from(orders);
           _calculateMetrics();
+          _cachedMenu = List<Map<String, dynamic>>.from(menu);
         });
       }
 
@@ -118,10 +120,58 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
     }
   }
 
+  void _processItemsFromOrders(List<Map<String, dynamic>> orders, List<Map<String, dynamic>> menu) {
+    if (menu.isEmpty) return;
+  }
+
+  Widget _buildExportButton(ColorScheme cs) {
+    return PopupMenuButton<String>(
+      onSelected: (value) async {
+        try {
+          if (value == 'pdf') {
+            await ReportService.downloadPDF(_orders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
+          } else if (value == 'csv') {
+            await ReportService.downloadCSV(_orders, _totalRevenue, _totalOrders);
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Export failed: $e")),
+            );
+          }
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.download_rounded, color: cs.primary, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              "EXPORT",
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'pdf', child: Text("Download PDF")),
+        const PopupMenuItem(value: 'csv', child: Text("Download CSV")),
+      ],
+    );
+  }
+
   List<FlSpot> _generateChartSpots() {
     if (_orders.isEmpty) return [const FlSpot(0, 0)];
-    
-    // Take last 7 orders for demo trend
     final recent = _orders.take(7).toList().reversed.toList();
     List<FlSpot> spots = [];
     for (int i = 0; i < recent.length; i++) {
@@ -155,7 +205,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
             title: Text(
-              "Sonna's Patisserie & Cafe",
+              isDesktop ? "Sonna's Patisserie & Cafe" : "Sales Intelligence",
               style: GoogleFonts.notoSerif(
                 color: cs.primary,
                 fontStyle: FontStyle.italic,
@@ -163,12 +213,28 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 letterSpacing: -0.5,
               ),
             ),
+            actions: [
+              if (isDesktop)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: Center(
+                    child: Text(
+                      "Sales Intelligence",
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
           body: Row(
             children: [
               if (isDesktop)
                 OwnerSidebar(
-                  currentIndex: 4, // Still in Settings category
+                  currentIndex: 4,
                   onTap: (index) {
                     Navigator.pop(context, index);
                   },
@@ -184,19 +250,32 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                     if (snapshot.hasData) {
                       _orders = snapshot.data!;
                       _calculateMetrics();
-                      // We don't have menu here, so we might need a combined stream or just use cached menu
-                      // For now, using the cached menu from _loadData which is called in initState
+                      _processItemsFromOrders(_orders, _cachedMenu);
                     }
 
                     return CustomScrollView(
                       slivers: [
-                        _buildSliverAppBar(cs),
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.all(24.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Performance Overview",
+                                      style: GoogleFonts.notoSerif(
+                                        color: cs.secondary,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    _buildExportButton(cs),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
                                 _buildMetricsGrid(cs),
                                 const SizedBox(height: 32),
                                 _buildRevenueChart(cs, isDark),
@@ -212,99 +291,10 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                   }
                 ),
               ),
-
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSliverAppBar(ColorScheme cs) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                "Sales Reports",
-                style: GoogleFonts.notoSerif(
-                  color: cs.secondary,
-                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 22 : 28,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-            PopupMenuButton<String>(
-              onSelected: (value) async {
-                try {
-                  if (value == 'pdf') {
-                    await ReportService.downloadPDF(_orders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
-                  } else if (value == 'csv') {
-                    await ReportService.downloadCSV(_orders, _totalRevenue, _totalOrders);
-                  }
-                } catch (e) {
-                  debugPrint("Error generating report: $e");
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Error generating report: $e")),
-                    );
-                  }
-                }
-              },
-              icon: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.download_rounded, color: cs.primary, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Export",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: cs.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'pdf',
-                  child: Row(
-                    children: [
-                      Icon(Icons.picture_as_pdf, color: Colors.red[400], size: 20),
-                      const SizedBox(width: 12),
-                      const Text("Download PDF"),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'csv',
-                  child: Row(
-                    children: [
-                      Icon(Icons.table_chart, color: Colors.green[400], size: 20),
-                      const SizedBox(width: 12),
-                      const Text("Download CSV"),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-          ],
-        ),
-      ),
     );
   }
 
@@ -387,7 +377,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
             ),
           ),
           LinearProgressIndicator(
-            value: 0.7, // Demo value
+            value: 0.7,
             backgroundColor: accent.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(accent),
             borderRadius: BorderRadius.circular(4),
@@ -431,14 +421,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
             child: LineChart(
               LineChartData(
                 minY: 0,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: cs.secondary.withValues(alpha: 0.05),
-                    strokeWidth: 1,
-                  ),
-                ),
+                gridData: const FlGridData(show: false),
                 titlesData: FlTitlesData(
                   show: true,
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -447,7 +430,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 52,
-                      interval: (_totalRevenue / 4).clamp(100, double.infinity), // Dynamic spacing
+                      interval: (_totalRevenue / 4).clamp(100, double.infinity),
                       getTitlesWidget: (value, meta) {
                         String text = '';
                         if (value >= 1000) {
@@ -511,7 +494,6 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
       ),
     );
   }
-
 
   Widget _buildSecondaryStats(ColorScheme cs, bool isDark) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -609,19 +591,6 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    SizedBox(
-                      width: 60,
-                      child: LinearProgressIndicator(
-                        value: (_topItems.isNotEmpty && (_topItems.first['count'] as int) > 0)
-                            ? (item['count'] as int) / (_topItems.first['count'] as int)
-                            : 0,
-                        backgroundColor: cs.primary.withValues(alpha: 0.05),
-                        valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
-                        borderRadius: BorderRadius.circular(2),
-                        minHeight: 3,
-                      ),
-                    ),
                   ],
                 ),
               ],
@@ -703,6 +672,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
   List<PieChartSectionData> _generatePieSections(ColorScheme cs) {
     List<PieChartSectionData> sections = [];
     final total = _categorySales.values.fold(0.0, (a, b) => a + b);
+    if (total == 0) return [];
     
     _categorySales.forEach((key, value) {
       final percentage = (value / total) * 100;
@@ -718,21 +688,19 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
         ),
       ));
     });
-    
     return sections;
   }
 
   Color _getCategoryColor(String category) {
     final cat = category.toLowerCase();
-    if (cat.contains('chocolate')) return const Color(0xFF3E2723); // Deep Chocolate
-    if (cat.contains('vanilla')) return const Color(0xFFE1C16E); // Golden Vanilla
-    if (cat.contains('tea')) return const Color(0xFF7B8E7E); // Sage Tea
-    if (cat.contains('seasonal')) return const Color(0xFFC88D67); // Seasonal Copper
-    if (cat.contains('pastry')) return const Color(0xFF701235); // Sonna Maroon
-    if (cat.contains('cake')) return const Color(0xFFFF4D8D); // Sonna Pink
-    if (cat.contains('artisan')) return const Color(0xFF964261); // Mauve
+    if (cat.contains('chocolate')) return const Color(0xFF3E2723);
+    if (cat.contains('vanilla')) return const Color(0xFFE1C16E);
+    if (cat.contains('tea')) return const Color(0xFF7B8E7E);
+    if (cat.contains('seasonal')) return const Color(0xFFC88D67);
+    if (cat.contains('pastry')) return const Color(0xFF701235);
+    if (cat.contains('cake')) return const Color(0xFFFF4D8D);
+    if (cat.contains('artisan')) return const Color(0xFF964261);
     
-    // Dynamic fallback based on category name to ensure variety
     final colors = [
       const Color(0xFFFF4D8D),
       const Color(0xFF701235),
@@ -755,20 +723,17 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            LayoutBuilder(builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 600;
-              return GridView.count(
-                crossAxisCount: isMobile ? 1 : 3,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: isMobile ? 2.5 : 1.5,
-                children: List.generate(3, (_) => Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-                )),
-              );
-            }),
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.5,
+              children: List.generate(3, (_) => Container(
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+              )),
+            ),
             const SizedBox(height: 32),
             Container(height: 280, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
             const SizedBox(height: 24),
@@ -779,13 +744,6 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
               ],
             ),
-            const SizedBox(height: 32),
-            Container(width: 160, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
-            const SizedBox(height: 16),
-            ...List.generate(4, (_) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Container(height: 80, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
-            )),
           ],
         ),
       ),
