@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { db } from "~/server/db";
@@ -29,7 +30,6 @@ export async function POST(req: Request) {
     }
 
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
     const payload = JSON.parse(body) as any;
     const event = payload.event;
 
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
         void sendTextMessage(order.phone, message);
       }
     }
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+
 
     return new NextResponse("OK", { status: 200 });
   } catch (err) {

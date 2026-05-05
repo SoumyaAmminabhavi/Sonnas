@@ -496,7 +496,7 @@ function WhatsAppAdminContent() {
                                         year: "numeric"
                                       });
                                     }
-                                  } catch (e) {}
+                                  } catch (_e) {}
                                   return o.deliveryDate;
                                 })()}</b> {o.deliveryTime && ` at `} <b>{o.deliveryTime}</b>
                               </div>
