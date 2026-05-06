@@ -105,8 +105,10 @@ async function safeGetCakes(): Promise<Cake[]> {
   }
 }
 
-async function findCake(query: string | number): Promise<Cake | null> {
-  const queryStr = query.toString().toLowerCase();
+async function findCake(query: string | number | null | undefined): Promise<Cake | null> {
+  if (!query) return null;
+  const queryStr = query.toString().trim().toLowerCase();
+  if (!queryStr) return null;
   const cakes = await safeGetCakes();
 
   // 1. Exact ID match
@@ -887,10 +889,12 @@ async function handleSizeSelection(
   msg: IncomingMessage,
   convo: Conversation
 ) {
-  const cake = await findCake(convo.selectedCake ?? "");
+  const cake = await findCake(convo.selectedCake);
   if (!cake) {
-    await updateState(msg.from, "IDLE");
-    await sendWelcome(msg.from);
+    console.warn(`[WhatsApp] handleSizeSelection: Cake not found for selection "${convo.selectedCake}"`);
+    await updateState(msg.from, "IDLE", RESET_STATE);
+    await sendTextMessage(msg.from, "Session expired or cake not found. Please select a cake from the menu again. 🎂");
+    await sendMenu(msg.from);
     return;
   }
 
@@ -953,6 +957,12 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           price: convo.selectedPrice!,
           quantity: 1
         });
+      } else {
+        // Fallback: if somehow active selection is missing but they clicked the button
+        console.warn(`[WhatsApp] handleCartActions: Missing active selection for ${msg.interactiveId}`);
+        await sendTextMessage(msg.from, "⚠️ Selection lost. Please select your cake again from the menu.");
+        await sendMenu(msg.from);
+        return;
       }
 
       // Re-fetch convo to get updated cart
