@@ -1,47 +1,64 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export const Hero = () => (
   <section
     id="home"
-    className="relative h-screen flex items-center justify-center overflow-hidden"
+    className="relative h-screen flex items-center justify-center overflow-hidden bg-cream"
   >
-    {/* Background Image with Parallax-like effect */}
-    <div
-      className="absolute inset-0 bg-cover bg-center transition-transform duration-1000"
-      style={{
-        backgroundImage: "url('/images/hero-cake-india.png')",
-      }}
-    />
-
-    {/* Stronger Soft Pink & Cream Overlay Gradient for readability */}
-    <div className="absolute inset-0 bg-gradient-to-tr from-cream/95 via-blush/60 to-transparent z-0" />
-
-    {/* Content */}
-    <div className="relative z-10 container mx-auto px-lg text-center">
-      <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading text-text-primary mb-md leading-tight animate-fade-in drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
-        <span style={{ color: "#5b1017ff" }}>Crafted with Love,</span><br />
-        <span style={{ color: "#8c0f49ff" }}>Baked to Perfection</span>
-      </h1>
-      {/* <p className="text-lg md:text-xl font-body text-text-secondary mb-xl max-w-2xl mx-auto opacity-100 drop-shadow-sm">
-        Experience the soft embrace of French patisserie tradition in the heart of Bengaluru, where every detail is a delicate dance of flavor and elegance.
-      </p> */}
-      <div className="flex justify-center items-center gap-md mb-xl animate-fade-in-up">
-        <div className="flex items-center gap-sm bg-white/40 backdrop-blur-md px-md py-sm rounded-full border border-green-600/30 shadow-sm">
-          <div className="w-4 h-4 border-2 border-green-600 flex items-center justify-center p-[2px]">
-            <div className="w-full h-full bg-green-600 rounded-full" />
-          </div>
-          <span className="text-sm font-bold text-green-800 tracking-wide uppercase">100% Eggless & Vegetarian</span>
-        </div>
-      </div>
-      <Link
-        href="#highlight"
-        className="inline-block bg-rose text-white font-body py-md px-2xl rounded-md hover:bg-rose-dark shadow-soft hover:shadow-medium transition-default transform hover:-translate-y-1"
-      >
-        Order Now
-      </Link>
+    {/* Background Image */}
+    <div className="absolute inset-0 z-0">
+      <Image
+        src="/sonnas_luxury_hero_1778065050369.png"
+        alt="Sonna's Luxury Pâtisserie"
+        fill
+        className="object-cover object-center scale-105"
+        priority
+        unoptimized
+      />
+      {/* Editorial Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-cream/60 via-cream/30 to-transparent md:bg-gradient-to-r md:from-cream/80 md:via-cream/40 md:to-transparent" />
+      <div className="absolute inset-0 bg-black/5" />
     </div>
 
-    {/* Bottom Gradient Fade */}
-    <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-cream to-transparent" />
+    {/* Content */}
+    <div className="relative z-10 container mx-auto px-6 lg:px-12">
+      <div className="max-w-4xl">
+        <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/30 mb-8 animate-fade-in">
+           <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-cocoa/80">Artisanal & Eggless</span>
+        </div>
+        
+        <h1 className="font-heading text-6xl md:text-8xl lg:text-[10rem] text-cocoa leading-[0.9] mb-8 animate-fade-in [text-wrap:balance]">
+          Crafted with <span className="italic text-gold">Love</span>, <br />
+          Baked to <span className="text-gold">Perfection</span>
+        </h1>
+        
+        <p className="text-sm md:text-lg text-text-secondary max-w-xl mb-12 leading-relaxed animate-fade-in opacity-90 font-medium tracking-wide">
+          Experience the refined elegance of French pâtisserie tradition, where every detail is a delicate dance of flavor and artisanal mastery.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center gap-6 animate-fade-in">
+          <Link
+            href="#cakes"
+            className="w-full sm:w-auto text-center bg-cocoa text-cream text-[11px] uppercase tracking-[0.2em] font-bold py-5 px-12 rounded-full hover:bg-gold transition-slow shadow-premium"
+          >
+            Explore Collection
+          </Link>
+          <Link
+            href="#highlight"
+            className="w-full sm:w-auto text-center border border-cocoa/20 text-cocoa text-[11px] uppercase tracking-[0.2em] font-bold py-5 px-12 rounded-full hover:bg-ivory transition-slow"
+          >
+            Custom Atelier
+          </Link>
+        </div>
+      </div>
+    </div>
+
+    {/* Scroll Indicator */}
+    <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-40">
+      <span className="text-[9px] uppercase tracking-[0.3em] font-bold text-cocoa">Scroll</span>
+      <div className="w-px h-12 bg-gradient-to-b from-cocoa to-transparent" />
+    </div>
   </section>
 );
