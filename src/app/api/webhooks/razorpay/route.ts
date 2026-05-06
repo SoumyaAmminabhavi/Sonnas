@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       console.log(`[Razorpay Webhook] Processing payment for Order: ${orderNumber}`);
 
       try {
-        // 1. Update Order in DB
+        // 1. Update Order in DB (Include items for the bill)
         const order = await db.whatsAppOrder.update({
           where: { orderNumber: orderNumber as string },
           data: {
@@ -52,16 +52,49 @@ export async function POST(req: Request) {
             paymentStatus: "PAID",
             paymentId: payment.id as string,
           },
+          include: {
+            items: true,
+          },
         });
 
         console.log(`[Razorpay Webhook] DB updated successfully for ${orderNumber}`);
 
-        // 2. Notify Customer via WhatsApp
+        // 2. Generate Bill and Notify Customer via WhatsApp
         if (order) {
-          console.log(`[Razorpay Webhook] Sending WhatsApp confirmation to ${order.phone}...`);
-          const message = `✅ *Payment Received!*\n\n🧾 Order *#${order.orderNumber}* has been confirmed.\n\nWe've started preparing your delicious cakes! 👩‍🍳 We'll notify you once they are ready for delivery. ✨\n\nThank you for choosing Sonna's Patisserie! 💕`;
-          await sendTextMessage(order.phone, message);
-          console.log(`[Razorpay Webhook] WhatsApp message sent!`);
+          console.log(`[Razorpay Webhook] Sending WhatsApp bill to ${order.phone}...`);
+
+          const dateStr = new Date(order.createdAt).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+
+          let bill = `✅ *Payment Successful!*\n\n`;
+          bill += `🧾 *RECEIPT: SONNA'S PATISSERIE*\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
+          bill += `Order: *#${order.orderNumber}*\n`;
+          bill += `Date:  *${dateStr}*\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+          bill += `*Items Ordered:*\n`;
+
+          order.items.forEach((item, idx) => {
+            const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
+            bill += `${idx + 1}. *${item.cakeName}*\n    (${item.size})${qtyStr} — ${item.price}\n`;
+          });
+
+          bill += `\n*Total Paid: ${order.totalPrice}* ✅\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+          bill += `📍 *Deliver to:*\n${order.address ?? "_Address not provided_"}\n\n`;
+          bill += `🕒 *Timing:* ${order.deliveryDate ?? "Today"} | ${order.deliveryTime ?? "Anytime"}\n\n`;
+
+          if (order.notes) {
+            bill += `📝 *Notes:* ${order.notes}\n\n`;
+          }
+
+          bill += `We've started preparing your order! 👩‍🍳 We'll notify you once it's ready. ✨\n\nThank you for choosing Sonna's! 💕`;
+
+          await sendTextMessage(order.phone, bill);
+          console.log(`[Razorpay Webhook] WhatsApp bill sent!`);
         }
       } catch (dbError) {
         console.error(`[Razorpay Webhook] DB or WhatsApp error:`, dbError);
