@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { api } from "~/trpc/react";
 import { env } from "~/env";
 
@@ -9,103 +8,74 @@ export const FeaturedProducts = () => {
   const { data: cakes, isLoading } = api.cake.getAll.useQuery();
 
   return (
-    <section id="cakes" className="py-24 lg:py-36 bg-cream">
-      <div className="container mx-auto px-8 lg:px-16">
-        {/* Section Header */}
-        <div className="max-w-4xl mb-24">
-          <h2 className="font-heading text-5xl md:text-7xl text-cocoa mb-8">
-            The <span className="italic">Collection</span>
+    <section id="cakes" className="py-2xl bg-cream">
+      <div className="container mx-auto px-lg">
+        <div className="text-center mb-2xl">
+          <h2 className="text-4xl md:text-5xl font-heading text-text-primary mb-sm">
+            Featured Delights
           </h2>
-          <p className="text-sm md:text-base text-text-secondary leading-relaxed max-w-2xl opacity-90 uppercase tracking-[0.25em] font-extrabold">
-            Explore our handcrafted signature delights, created daily with the finest seasonal ingredients.
+          <p className="text-text-secondary font-body text-center mx-auto w-full">
+            Our signature creations, handcrafted daily with the finest seasonal ingredients.
           </p>
         </div>
 
-        {/* Product Grid - Improved gap and layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 lg:gap-20">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-xl pb-lg hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-8 animate-pulse">
-                <div className="aspect-[4/5] bg-ivory rounded-[2.5rem]" />
-                <div className="h-8 bg-ivory w-2/3 rounded-full" />
-                <div className="h-5 bg-ivory w-1/3 rounded-full" />
-              </div>
+            // Skeleton Loader
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="shrink-0 w-[280px] md:w-[320px] bg-white/50 animate-pulse rounded-lg overflow-hidden h-[500px]" />
             ))
           ) : (
-            cakes?.slice(0, 6).map((cake) => (
+            cakes?.map((cake) => (
               <div
                 key={cake.id}
-                className="group flex flex-col cursor-pointer"
+                className="group shrink-0 w-[280px] md:w-[320px] bg-white rounded-lg shadow-soft overflow-hidden transition-default hover:shadow-medium hover:scale-[1.02] snap-start"
               >
-                {/* Image Container - Increased border radius and shadow */}
-                <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] mb-10 shadow-premium transition-slow bg-ivory border border-cocoa/5">
+                <div className="relative h-72 overflow-hidden">
                   <Image
                     src={cake.image}
                     alt={cake.name}
                     fill
                     unoptimized
-                    className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  {/* Refined Overlay */}
-                  <div className="absolute inset-0 bg-cocoa/10 opacity-0 group-hover:opacity-100 transition-slow" />
-                  
-                  {/* Quick Action Button - More prominent */}
-                  <div className="absolute bottom-10 left-1/2 -translate-x-1/2 translate-y-6 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700">
-                    <a
-                      href={`https://wa.me/${env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I'd like to order: ${cake.name}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-white text-cocoa text-[11px] uppercase tracking-[0.25em] font-extrabold px-10 py-5 rounded-full shadow-2xl hover:bg-gold hover:text-white transition-slow border border-cocoa/5"
-                    >
-                      Pre-Order
-                    </a>
-                  </div>
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-default" />
                 </div>
-
-                {/* Product Info - Improved alignment and spacing */}
-                <div className="flex flex-col items-start px-4">
-                  <div className="flex justify-between items-start w-full mb-3 gap-4">
-                    <h3 className="font-heading text-2xl md:text-3xl text-cocoa group-hover:text-gold transition-colors leading-tight">
-                      {cake.name}
-                    </h3>
-                    <span className="font-heading text-xl text-gold mt-1 shrink-0">
-                      {cake.options?.[0]?.price ?? "—"}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-white bg-gold/80 px-2.5 py-1 rounded-md">
-                      {cake.category.split(' ')[0]}
-                    </span>
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-extrabold text-text-muted">
-                      &middot; {cake.options?.[0]?.size}
-                    </span>
-                  </div>
-
+                <div className="p-lg flex flex-col items-center">
+                  <h3 className="text-xl font-heading text-text-primary text-center mb-sm">
+                    {cake.name}
+                  </h3>
                   {cake.description && (
-                    <p className="text-sm md:text-base text-text-secondary leading-relaxed opacity-80 mb-6 max-w-[90%] font-medium">
+                    <p className="text-text-secondary font-body italic text-sm text-left w-full mb-md leading-relaxed flex-grow">
                       {cake.description}
                     </p>
                   )}
-                  
-                  <div className="h-[1.5px] w-0 bg-gold/30 transition-all duration-1000 group-hover:w-full" />
+                  {cake.options && cake.options.length > 0 && (
+                    <div className="w-full mt-auto">
+                      <hr className="w-full border-t border-black/10 mb-md" />
+                      <div className="flex flex-col gap-sm mb-md">
+                        {cake.options.map((opt, i) => (
+                          <div key={i} className="flex justify-between items-center text-sm font-body">
+                            <span className="text-text-secondary">{opt.size} &middot; Serves {opt.serves}</span>
+                            <span className="text-rose font-medium text-lg">{opt.price}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <a
+                    href={`https://wa.me/${env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hi! I'd like to order: ${cake.name}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-xs text-xs uppercase tracking-widest text-text-muted border-b border-transparent hover:border-rose hover:text-rose transition-default cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.298-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" /></svg>
+                    Order via WhatsApp
+                  </a>
                 </div>
               </div>
             ))
           )}
-        </div>
-
-        {/* View All CTA - Standardized spacing */}
-        <div className="mt-32 text-center">
-          <Link
-            href="#footer"
-            className="inline-flex items-center gap-6 text-cocoa group"
-          >
-            <span className="text-[12px] uppercase tracking-[0.35em] font-extrabold border-b-2 border-cocoa/10 py-3 group-hover:text-gold group-hover:border-gold transition-slow">
-              Discover the full menu
-            </span>
-            <span className="text-2xl transition-transform group-hover:translate-x-3 transition-slow">→</span>
-          </Link>
         </div>
       </div>
     </section>
