@@ -387,27 +387,38 @@ class _StaffCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
                   children: [
-                    Icon(Icons.phone_outlined, size: 14, color: cs.onSurfaceVariant),
-                    const SizedBox(width: 4),
-                    Text(
-                      staff['phone'] ?? "No phone",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: cs.onSurfaceVariant,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.phone_outlined, size: 14, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text(
+                          staff['phone'] ?? "No phone",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Icon(Icons.badge_outlined, size: 14, color: cs.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      "$role • $subRole",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: cs.primary,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.badge_outlined, size: 14, color: cs.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          "$role • $subRole",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: cs.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

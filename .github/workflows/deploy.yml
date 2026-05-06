@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -23,7 +23,6 @@ jobs:
           echo "MY_SUPABASE_URL=${{ secrets.MY_SUPABASE_URL }}" >> .env
           echo "MY_SUPABASE_ANON_KEY=${{ secrets.MY_SUPABASE_ANON_KEY }}" >> .env
 
-
       - name: Get dependencies
         run: flutter pub get
 
@@ -31,7 +30,7 @@ jobs:
         run: flutter build web --release
 
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
+        uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}

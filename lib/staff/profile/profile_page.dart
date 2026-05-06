@@ -151,12 +151,12 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
 
                 // Info Grid
                 GridView.count(
-                  crossAxisCount: 2,
+                  crossAxisCount: widget.isDesktop ? 2 : 1,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  childAspectRatio: widget.isDesktop ? 1.8 : 1.4,
+                  childAspectRatio: widget.isDesktop ? 1.8 : 3.0,
                   children: [
                     _InfoCard(
                       icon: Icons.phone_rounded,
