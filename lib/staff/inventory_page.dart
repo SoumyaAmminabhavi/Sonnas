@@ -204,13 +204,17 @@ class StaffInventoryPage extends StatelessWidget {
                   stream: SupabaseService.getInventoryStream(),
                   builder: (context, snapshot) {
                     final items = snapshot.data ?? [];
-                    return DropdownButtonFormField<Map<String, dynamic>>(
+                    return DropdownButtonFormField<String>(
+                      value: selectedItem?['id'],
                       decoration: const InputDecoration(labelText: "Select Ingredient"),
                       items: items.map((item) => DropdownMenuItem(
-                        value: item,
+                        value: item['id'] as String,
                         child: Text(item['name'] ?? ''),
                       )).toList(),
-                      onChanged: (val) => setDialogState(() => selectedItem = val),
+                      onChanged: (val) {
+                        final newItem = items.firstWhere((i) => i['id'] == val);
+                        setDialogState(() => selectedItem = newItem);
+                      },
                     );
                   }
                 )
