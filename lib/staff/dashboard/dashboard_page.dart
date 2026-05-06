@@ -190,7 +190,7 @@ class _DashboardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     String greeting = "Bonjour, Manager";
     switch (role) {
-      case StaffRole.chef: greeting = "Bonjour, Chef"; break;
+      case StaffRole.chef: greeting = "Bonjour, Chefa"; break;
       case StaffRole.support: greeting = "Bonjour, Support"; break;
       case StaffRole.cleaning: greeting = "Bonjour, Hygiene"; break;
       case StaffRole.cashier: greeting = "Bonjour, Cashier"; break;
