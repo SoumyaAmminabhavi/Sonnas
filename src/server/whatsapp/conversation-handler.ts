@@ -985,6 +985,11 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         return;
       }
 
+      // Show "Added to Cart" message if they just added a cake
+      if (convo.selectedCake) {
+        await sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added to cart!`);
+      }
+
       await Promise.all([
         updateState(msg.from, "ASKING_ADDRESS"),
         sendTextMessage(
