@@ -470,7 +470,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     await Promise.all([
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
-      sendTextMessage(msg.from, "🔄 Restarting your order..."),
+      sendTextMessage(msg.from, "❌ Order cancelled."),
       sendWelcome(msg.from, msg.name)
     ]);
     return;
@@ -587,10 +587,8 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     await Promise.all([
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
-      sendTextMessage(
-        msg.from,
-        "❌ Order cancelled.\n\nReply *Menu* to browse cakes anytime! 🧁"
-      )
+      sendTextMessage(msg.from, "❌ Order cancelled."),
+      sendWelcome(msg.from, msg.name)
     ]);
     return;
   }
@@ -1344,11 +1342,10 @@ async function handleConfirmation(
 
     if (isCancel) {
       await Promise.all([
+        clearCart(msg.from),
         updateState(msg.from, "IDLE", RESET_STATE),
-        sendTextMessage(
-          msg.from,
-          "❌ Order cancelled.\n\nReply *Menu* to browse cakes anytime! 🧁"
-        )
+        sendTextMessage(msg.from, "❌ Order cancelled."),
+        sendWelcome(msg.from, convo.name ?? msg.name)
       ]);
       return;
     }
