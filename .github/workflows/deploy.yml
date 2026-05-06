@@ -31,16 +31,17 @@ jobs:
       - name: Build Web
         run: flutter build web --release
 
-      - name: Copy Vercel Config
-        run: cp vercel.json build/web/
+      - name: Prepare Vercel Build Output
+        run: |
+          mkdir -p .vercel/output/static
+          cp -r build/web/* .vercel/output/static/
+          printf '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/(.*)", "dest":"/index.html","status":200}]}' > .vercel/output/config.json
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel
-        run: |
-          cd build/web
-          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes --local-config=vercel.json
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
