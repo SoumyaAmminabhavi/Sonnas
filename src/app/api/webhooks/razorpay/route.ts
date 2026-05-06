@@ -88,8 +88,13 @@ export async function POST(req: Request) {
           bill += `*TOTAL AMOUNT PAID: ${order.totalPrice}*\n`;
           bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
+          const sanitizedAddress = order.address
+            ?.replace(/📍 Coords:.*?\n/g, "")
+            .replace(/📍 GPS Location:.*?\n/g, "📍 GPS Location\n")
+            .trim();
+
           bill += `🚚 *DELIVERY INFORMATION*\n\n`;
-          bill += `📍 *Address:*\n${order.address ?? "_Address not provided_"}\n\n`;
+          bill += `📍 *Address:*\n${sanitizedAddress ?? "_Address not provided_"}\n\n`;
           bill += `📅 *Scheduled:* ${order.deliveryDate ?? "Today"}\n`;
           bill += `🕒 *Time Slot:* ${order.deliveryTime ?? "Anytime"}\n\n`;
 
@@ -99,7 +104,6 @@ export async function POST(req: Request) {
 
           bill += `━━━━━━━━━━━━━━━━━━━━\n`;
           bill += `_Your order is being handcrafted with love. We'll notify you once it's ready for delivery!_ 👩‍🍳\n\n`;
-          bill += `*Thank you for choosing luxury.*\n`;
           bill += `*Thank you for choosing Sonna’s.* 💕\n`;
           bill += `━━━━━━━━━━━━━━━━━━━━`;
 

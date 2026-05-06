@@ -1020,7 +1020,6 @@ async function handleAddressInput(
     const { latitude, longitude, name, address: locAddress } = msg.location;
     // Create a Google Maps link
     const mapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    const coordsStr = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 
     // Attempt to reverse geocode if no address provided
     let finalAddress = locAddress;
@@ -1031,10 +1030,10 @@ async function handleAddressInput(
       finalAddress = await reverseGeocode(latitude, longitude);
     }
 
-    // Format: "Descriptive Address (Lat, Long) \n Maps Link"
+    // Format: "Descriptive Address \n Maps Link"
     address = finalAddress
-      ? `${finalAddress}\n📍 Coords: ${coordsStr}\n🔗 ${mapsUrl}`
-      : `📍 GPS Location: ${coordsStr}\n🔗 ${mapsUrl}`;
+      ? `${finalAddress}\n🔗 ${mapsUrl}`
+      : `📍 GPS Location\n🔗 ${mapsUrl}`;
 
     if (name) {
       address = `🏛️ ${name}\n${address}`;
