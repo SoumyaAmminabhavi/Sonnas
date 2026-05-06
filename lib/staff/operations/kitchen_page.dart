@@ -50,8 +50,8 @@ class KitchenPage extends StatelessWidget {
                 crossAxisCount: isDesktop ? 2 : 1,
                 crossAxisSpacing: 24,
                 mainAxisSpacing: 24,
-                // Adjusting height slightly to accommodate content without clipping
-                mainAxisExtent: 320, 
+                // Reduced extent for smaller cards
+                mainAxisExtent: 280, 
               ),
               itemCount: kitchenOrders.length,
               itemBuilder: (context, index) {
@@ -96,9 +96,9 @@ class KitchenOrderCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          // Header (Reduced padding)
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -119,7 +119,7 @@ class KitchenOrderCard extends StatelessWidget {
                       Text(
                         order['customerName'] ?? 'Guest Customer',
                         style: GoogleFonts.notoSerif(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: cs.secondary,
                         ),
@@ -162,7 +162,7 @@ class KitchenOrderCard extends StatelessWidget {
               return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 itemCount: items.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, i) {
@@ -204,9 +204,9 @@ class KitchenOrderCard extends StatelessWidget {
 
           const Divider(height: 1),
 
-          // Footer Actions
+          // Footer Actions (Reduced padding)
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Icon(Icons.access_time, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
