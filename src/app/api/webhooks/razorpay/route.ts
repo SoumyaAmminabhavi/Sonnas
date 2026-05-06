@@ -59,9 +59,9 @@ export async function POST(req: Request) {
 
         console.log(`[Razorpay Webhook] DB updated successfully for ${orderNumber}`);
 
-        // 2. Generate Bill and Notify Customer via WhatsApp
+        // 2. Generate Premium Bill and Notify Customer via WhatsApp
         if (order) {
-          console.log(`[Razorpay Webhook] Sending WhatsApp bill to ${order.phone}...`);
+          console.log(`[Razorpay Webhook] Sending Premium WhatsApp bill to ${order.phone}...`);
 
           const dateStr = new Date(order.createdAt).toLocaleDateString("en-IN", {
             day: "numeric",
@@ -69,32 +69,42 @@ export async function POST(req: Request) {
             year: "numeric",
           });
 
-          let bill = `✅ *Payment Successful!*\n\n`;
-          bill += `🧾 *RECEIPT: SONNA'S PATISSERIE*\n`;
+          let bill = `✧ *SONNA’S PATISSERIE* ✧\n`;
+          bill += `_Luxurious Handcrafted Desserts_\n`;
           bill += `━━━━━━━━━━━━━━━━━━━━\n`;
+          bill += `✅ *PAYMENT SUCCESSFUL*\n`;
           bill += `Order: *#${order.orderNumber}*\n`;
           bill += `Date:  *${dateStr}*\n`;
           bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-          bill += `*Items Ordered:*\n`;
+          
+          bill += `✨ *YOUR ORDER DETAILS*\n\n`;
 
           order.items.forEach((item, idx) => {
             const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-            bill += `${idx + 1}. *${item.cakeName}*\n    (${item.size})${qtyStr} — ${item.price}\n`;
+            bill += `${idx + 1}. *${item.cakeName}*\n    (${item.size})${qtyStr} — ${item.price}\n\n`;
           });
 
-          bill += `\n*Total Paid: ${order.totalPrice}* ✅\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
+          bill += `*TOTAL AMOUNT PAID: ${order.totalPrice}*\n`;
           bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
-          bill += `📍 *Deliver to:*\n${order.address ?? "_Address not provided_"}\n\n`;
-          bill += `🕒 *Timing:* ${order.deliveryDate ?? "Today"} | ${order.deliveryTime ?? "Anytime"}\n\n`;
+
+          bill += `🚚 *DELIVERY INFORMATION*\n\n`;
+          bill += `📍 *Address:*\n${order.address ?? "_Address not provided_"}\n\n`;
+          bill += `📅 *Scheduled:* ${order.deliveryDate ?? "Today"}\n`;
+          bill += `🕒 *Time Slot:* ${order.deliveryTime ?? "Anytime"}\n\n`;
 
           if (order.notes) {
-            bill += `📝 *Notes:* ${order.notes}\n\n`;
+            bill += `📝 *SPECIAL NOTES:*\n_${order.notes}_\n\n`;
           }
 
-          bill += `We've started preparing your order! 👩‍🍳 We'll notify you once it's ready. ✨\n\nThank you for choosing Sonna's! 💕`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
+          bill += `_Your order is being handcrafted with love. We'll notify you once it's ready for delivery!_ 👩‍🍳\n\n`;
+          bill += `*Thank you for choosing luxury.*\n`;
+          bill += `*Thank you for choosing Sonna’s.* 💕\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━`;
 
           await sendTextMessage(order.phone, bill);
-          console.log(`[Razorpay Webhook] WhatsApp bill sent!`);
+          console.log(`[Razorpay Webhook] Premium WhatsApp bill sent!`);
         }
       } catch (dbError) {
         console.error(`[Razorpay Webhook] DB or WhatsApp error:`, dbError);

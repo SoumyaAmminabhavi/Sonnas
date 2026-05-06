@@ -1055,7 +1055,7 @@ async function handleAddressInput(
     }),
     sendTextMessage(
       msg.from,
-      "✅ Address saved!\n\n📝 Any special instructions? (Reply *Skip* if none)"
+      "✅ *Address saved!* 📍\n\n🎂 *Cake Customization*\n\n• What would you like **written on the cake**?\n• Any special message, name, or age to add?\n• Any extra design instructions or customizations?\n\n✍️ Please reply with all your details (or reply *'Skip'* if none)."
     )
   ]);
 }
@@ -1075,7 +1075,7 @@ async function handleInstructionsInput(
   const notes = isSkip ? null : input;
 
   if (!isSkip && (input.length < 2 || GREETINGS.includes(input.toLowerCase()))) {
-    await sendTextMessage(msg.from, "📝 Please provide any special instructions or landmarks for the delivery. (Reply *'None'* to skip)");
+    await sendTextMessage(msg.from, "🎂 Please provide your cake customization details (Text on cake, name, age, or design instructions). Reply *'Skip'* if none.");
     return;
   }
 
@@ -1486,7 +1486,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       await sendTextMessage(phone, "📍 Send your delivery address or share your *GPS Location*.");
       break;
     case "ASKING_INSTRUCTIONS":
-      await sendTextMessage(phone, "📝 Any special instructions? (Reply *Skip* if none)");
+      await sendTextMessage(phone, "🎂 *Cake Customization*\n\n• What would you like written on the cake?\n• Any special message, name, or age to add?\n• Any extra design instructions?\n\n✍️ Reply with your details or *'Skip'*.");
       break;
     case "ASKING_DELIVERY_DATE":
       await sendDeliveryDateOptions(phone);
