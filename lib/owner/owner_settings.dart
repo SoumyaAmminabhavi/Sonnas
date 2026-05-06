@@ -281,10 +281,15 @@ class _SettingsContentState extends State<_SettingsContent> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddStaffPage()),
-              ),
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddStaffPage()),
+                );
+                if (result != null && result is int) {
+                  widget.onTabChanged?.call(result);
+                }
+              },
               icon: Icon(Icons.person_add, color: cs.primary),
               label: Text(
                 "Add New Staff",

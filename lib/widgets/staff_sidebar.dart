@@ -22,20 +22,24 @@ class StaffSidebar extends StatelessWidget {
       {'icon': Icons.grid_view_rounded, 'title': "DASHBOARD"},
     ];
 
-    if (role == StaffRole.baker || role == StaffRole.manager) {
+    if (role == StaffRole.chef || role == StaffRole.manager) {
       menuItems.add({'icon': Icons.bakery_dining_rounded, 'title': "KITCHEN"});
     }
     
-    if (role == StaffRole.cashier || role == StaffRole.manager) {
+    if (role == StaffRole.support || role == StaffRole.cashier || role == StaffRole.manager) {
       menuItems.add({'icon': Icons.assignment_outlined, 'title': "ORDERS"});
     }
     
-    if (role == StaffRole.delivery || role == StaffRole.manager) {
-      menuItems.add({'icon': Icons.local_shipping_rounded, 'title': "DELIVERY"});
+    if (role == StaffRole.cleaning || role == StaffRole.manager) {
+      menuItems.add({'icon': Icons.cleaning_services_rounded, 'title': "HYGIENE"});
     }
 
-    if (role == StaffRole.manager || role == StaffRole.baker) {
+    if (role == StaffRole.manager || role == StaffRole.chef) {
       menuItems.add({'icon': Icons.inventory_2_outlined, 'title': "INVENTORY"});
+    }
+
+    if (role == StaffRole.manager) {
+      menuItems.add({'icon': Icons.people_outline_rounded, 'title': "STAFF"});
     }
 
     menuItems.add({'icon': Icons.person_outline_rounded, 'title': "PROFILE"});

@@ -187,6 +187,8 @@ model Staff {
     emergencyName   String?
     emergencyPhone  String?
     role            String
+    sub_role        String?  @default("NONE")
+    shift           String   @default("FULL_DAY")
     permissions     Json
     shiftStart      String
     shiftEnd        String

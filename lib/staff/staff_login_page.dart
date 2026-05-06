@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'staff_roles.dart';
 import 'staff_dashboard.dart';
@@ -25,7 +26,8 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
   // Registration controllers
   final TextEditingController _regPhoneController = TextEditingController();
-  final TextEditingController _regCodeController = TextEditingController();
+  final List<TextEditingController> _pinControllers = List.generate(5, (_) => TextEditingController());
+  final List<FocusNode> _pinFocusNodes = List.generate(5, (_) => FocusNode());
   final TextEditingController _regPasswordController = TextEditingController();
   final TextEditingController _regConfirmPasswordController = TextEditingController();
 
@@ -67,7 +69,12 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     _loginPhoneController.dispose();
     _loginPasswordController.dispose();
     _regPhoneController.dispose();
-    _regCodeController.dispose();
+    for (var controller in _pinControllers) {
+      controller.dispose();
+    }
+    for (var node in _pinFocusNodes) {
+      node.dispose();
+    }
     _regPasswordController.dispose();
     _regConfirmPasswordController.dispose();
     super.dispose();
@@ -147,10 +154,10 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
   Future<void> _handleVerifyCode() async {
     final phone = _regPhoneController.text.replaceAll(RegExp(r'\D'), '');
-    final code = _regCodeController.text.trim().toUpperCase();
+    final code = _pinControllers.map((c) => c.text).join().trim().toUpperCase();
 
-    if (phone.isEmpty || code.isEmpty) {
-      _showError("Please enter mobile number and the 5-character code.");
+    if (phone.isEmpty || code.length < 5) {
+      _showError("Please enter mobile number and the full 5-character code.");
       return;
     }
 
@@ -204,13 +211,16 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
   void _routeToDashboard(Map<String, dynamic> staff) {
     // Map string role to Enum
-    final roleStr = (staff['role'] as String).toUpperCase();
-    StaffRole mappedRole = StaffRole.baker; // fallback
+    final roleStr = (staff['role'] as String? ?? 'SUPPORT').toUpperCase();
+    StaffRole mappedRole; 
 
-    if (roleStr.contains('BAKER')) mappedRole = StaffRole.baker;
+    if (roleStr.contains('MANAGER')) mappedRole = StaffRole.manager;
+    else if (roleStr.contains('CHEF')) mappedRole = StaffRole.chef;
+    else if (roleStr.contains('SUPPORT')) mappedRole = StaffRole.support;
+    else if (roleStr.contains('CLEANING')) mappedRole = StaffRole.cleaning;
     else if (roleStr.contains('CASHIER')) mappedRole = StaffRole.cashier;
     else if (roleStr.contains('DELIVERY')) mappedRole = StaffRole.delivery;
-    else if (roleStr.contains('MANAGER')) mappedRole = StaffRole.manager;
+    else mappedRole = StaffRole.support; // New default
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -422,25 +432,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
           icon: Icons.lock_outline,
           isPassword: true,
         ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Or use Fingerprint / Face ID",
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                color: cs.secondary.withValues(alpha: 0.5),
-              ),
-            ),
-            const SizedBox(width: 12),
-            IconButton.filledTonal(
-              onPressed: _handleBiometricLogin,
-              icon: const Icon(Icons.fingerprint_rounded),
-              tooltip: "Login with Biometrics",
-            ),
-          ],
-        ),
         const SizedBox(height: 24),
         _buildPrimaryButton("Login securely", _handleLogin),
       ],
@@ -495,13 +486,18 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
           keyboardType: TextInputType.phone,
           prefixText: "+91 ",
         ),
-        const SizedBox(height: 16),
-        _buildTextField(
-          controller: _regCodeController,
-          label: "5-Character Code",
-          icon: Icons.vpn_key_outlined,
-          textCapitalization: TextCapitalization.characters,
+        const SizedBox(height: 32),
+        Text(
+          "ENTER JOINING CODE",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: cs.secondary.withValues(alpha: 0.5),
+            letterSpacing: 2.0,
+          ),
         ),
+        const SizedBox(height: 16),
+        _buildPinCodeFields(cs),
         const SizedBox(height: 12),
         Text(
           "Ask the owner or manager for your one-time joining code.",
@@ -514,6 +510,65 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
         const SizedBox(height: 32),
         _buildPrimaryButton("Verify Code", _handleVerifyCode),
       ],
+    );
+  }
+
+  Widget _buildPinCodeFields(ColorScheme cs) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(5, (index) {
+        return RawKeyboardListener(
+          focusNode: FocusNode(), // Dummy node for the listener
+          onKey: (event) {
+            if (event is RawKeyDownEvent && 
+                event.logicalKey == LogicalKeyboardKey.backspace && 
+                _pinControllers[index].text.isEmpty && 
+                index > 0) {
+              _pinFocusNodes[index - 1].requestFocus();
+            }
+          },
+          child: SizedBox(
+            width: 48,
+            height: 56,
+            child: TextField(
+              controller: _pinControllers[index],
+              focusNode: _pinFocusNodes[index],
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: cs.primary,
+              ),
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.characters,
+              maxLength: 1,
+              decoration: InputDecoration(
+                counterText: "",
+                contentPadding: EdgeInsets.zero,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cs.primary, width: 2),
+                ),
+                filled: true,
+                fillColor: cs.surfaceContainerLow,
+              ),
+              onChanged: (value) {
+                if (value.isNotEmpty && index < 4) {
+                  _pinFocusNodes[index + 1].requestFocus();
+                }
+                // If last digit entered, dismiss keyboard
+                if (index == 4 && value.isNotEmpty) {
+                  FocusScope.of(context).unfocus();
+                }
+              },
+            ),
+          ),
+        );
+      }),
     );
   }
 

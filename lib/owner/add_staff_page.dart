@@ -9,12 +9,12 @@ import '../services/supabase_service.dart';
 
 
 
+import '../staff/staff_roles.dart';
+
 class AddStaffPage extends StatefulWidget {
   final Map<String, dynamic>? staff;
   final bool isReadOnly;
   const AddStaffPage({super.key, this.staff, this.isReadOnly = false});
-
-
 
   @override
   State<AddStaffPage> createState() => _AddStaffPageState();
@@ -22,11 +22,16 @@ class AddStaffPage extends StatefulWidget {
 
 
 class _AddStaffPageState extends State<AddStaffPage> {
-  String _selectedRole = 'BAKER';
+  StaffRole _selectedRole = StaffRole.chef;
+  SubRole _selectedSubRole = SubRole.none;
+  StaffShift _selectedShift = StaffShift.fullDay;
   Map<String, bool> _permissions = {
     'Manage Orders': true,
     'Access Inventory': true,
-    'View Reports': false,
+    'Staff Management': false,
+    'Hygiene & Maintenance': false,
+    'Menu & Pricing': false,
+    'Sales Intelligence': false,
     'Handle Payments': false,
   };
   List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
@@ -106,7 +111,18 @@ class _AddStaffPageState extends State<AddStaffPage> {
       _selectedBloodGroup = s['bloodGroup'];
       _emergencyNameController.text = s['emergencyName'] ?? '';
       _emergencyPhoneController.text = s['emergencyPhone'] ?? '';
-      _selectedRole = s['role'] ?? 'Staff';
+      _selectedRole = StaffRole.values.firstWhere(
+        (r) => r.dbValue == (s['role'] ?? 'CHEF'),
+        orElse: () => StaffRole.chef,
+      );
+      _selectedSubRole = SubRole.values.firstWhere(
+        (sr) => sr.name.toUpperCase() == (s['sub_role'] ?? 'NONE'),
+        orElse: () => SubRole.none,
+      );
+      _selectedShift = StaffShift.values.firstWhere(
+        (ss) => ss.dbValue == (s['shift'] ?? 'FULL_DAY'),
+        orElse: () => StaffShift.fullDay,
+      );
       
       if (s['permissions'] != null) {
         _permissions = Map<String, bool>.from(s['permissions']);
@@ -243,6 +259,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
                           _buildAdditionalInfoSection(cs),
                           const SizedBox(height: 40),
                           _buildRoleSelectionSection(cs),
+                          const SizedBox(height: 40),
+                          _buildSubRoleSelectionSection(cs),
                           const SizedBox(height: 40),
                           _buildPermissionsSection(cs),
                           const SizedBox(height: 40),
@@ -391,7 +409,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "SELECT STAFF ROLE",
+          "SELECT STAFF CATEGORY",
           style: GoogleFonts.plusJakartaSans(
             color: cs.secondary,
             fontSize: 11,
@@ -400,34 +418,76 @@ class _AddStaffPageState extends State<AddStaffPage> {
           ),
         ),
         const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                alignment: WrapAlignment.center,
-                children: [
-                  _buildRoleCard(cs, "BAKER", Icons.cookie_outlined, "BAKER"),
-                  const SizedBox(width: 12),
-                  _buildRoleCard(cs, "CASHIER", Icons.point_of_sale_outlined, "CASHIER"),
-                  const SizedBox(width: 12),
-                  _buildRoleCard(cs, "DELIVERY", Icons.motorcycle_outlined, "DELIVERY"),
-                  const SizedBox(width: 12),
-                  _buildRoleCard(cs, "MANAGER", Icons.badge_outlined, "MANAGER"),
-                ],
-              ),
-            );
-          },
+        Center(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildRoleCard(cs, StaffRole.chef, Icons.cookie_outlined, "CHEF"),
+              _buildRoleCard(cs, StaffRole.support, Icons.volunteer_activism_outlined, "SUPPORT"),
+              _buildRoleCard(cs, StaffRole.cleaning, Icons.cleaning_services_outlined, "HYGIENE"),
+              _buildRoleCard(cs, StaffRole.cashier, Icons.point_of_sale_outlined, "CASHIER"),
+              _buildRoleCard(cs, StaffRole.delivery, Icons.motorcycle_outlined, "DELIVERY"),
+              _buildRoleCard(cs, StaffRole.manager, Icons.badge_outlined, "MANAGER"),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildRoleCard(ColorScheme cs, String role, IconData icon, String label) {
+  Widget _buildSubRoleSelectionSection(ColorScheme cs) {
+    if (_selectedRole != StaffRole.chef && _selectedRole != StaffRole.support) {
+      return const SizedBox.shrink();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "SELECT SPECIALIZATION (SUB-ROLE)",
+          style: GoogleFonts.plusJakartaSans(
+            color: cs.secondary,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<SubRole>(
+          value: _selectedSubRole,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: cs.surfaceContainerLow,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+          items: SubRole.values.map((sr) => DropdownMenuItem(
+            value: sr,
+            child: Text(sr.displayName),
+          )).toList(),
+          onChanged: widget.isReadOnly ? null : (v) => setState(() => _selectedSubRole = v!),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleCard(ColorScheme cs, StaffRole role, IconData icon, String label) {
     bool isSelected = _selectedRole == role;
     return GestureDetector(
-      onTap: widget.isReadOnly ? null : () => setState(() => _selectedRole = role),
+      onTap: widget.isReadOnly ? null : () {
+        setState(() {
+          _selectedRole = role;
+          // Auto-set permissions based on role
+          _permissions['Manage Orders'] = (role == StaffRole.manager || role == StaffRole.chef || role == StaffRole.support || role == StaffRole.cashier);
+          _permissions['Access Inventory'] = (role == StaffRole.manager || role == StaffRole.chef || role == StaffRole.cleaning);
+          _permissions['Staff Management'] = (role == StaffRole.manager);
+          _permissions['Hygiene & Maintenance'] = (role == StaffRole.manager || role == StaffRole.cleaning);
+          _permissions['Menu & Pricing'] = (role == StaffRole.manager);
+          _permissions['Sales Intelligence'] = (role == StaffRole.manager);
+          _permissions['Handle Payments'] = (role == StaffRole.manager || role == StaffRole.cashier);
+        });
+      },
       child: Container(
         width: 130,
         padding: const EdgeInsets.symmetric(vertical: 20),
@@ -778,7 +838,9 @@ class _AddStaffPageState extends State<AddStaffPage> {
         'bloodGroup': _selectedBloodGroup,
         'emergencyName': _emergencyNameController.text,
         'emergencyPhone': _emergencyPhoneController.text.replaceAll(RegExp(r'\D'), ''),
-        'role': _selectedRole,
+        'role': _selectedRole.dbValue,
+        'sub_role': _selectedSubRole.name.toUpperCase(),
+        'shift': _selectedShift.dbValue,
         'permissions': _permissions,
         'shiftStart': _startTimeController.text,
         'shiftEnd': _endTimeController.text,

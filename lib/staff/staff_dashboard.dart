@@ -5,6 +5,7 @@ import '../widgets/staff_sidebar.dart';
 import 'staff_roles.dart';
 import 'profile_page.dart';
 import 'inventory_page.dart';
+import 'manage_staff_page.dart';
 import '../services/supabase_service.dart';
 
 class StaffDashboard extends StatefulWidget {
@@ -55,20 +56,24 @@ class _StaffDashboardState extends State<StaffDashboard> {
       _DashboardContent(cs: cs, isDesktop: isDesktop, role: widget.role),
     ];
 
-    if (widget.role == StaffRole.baker || widget.role == StaffRole.manager) {
+    if (widget.role == StaffRole.chef || widget.role == StaffRole.manager) {
       pages.add(const Center(child: Text("Kitchen Page")));
     }
     
-    if (widget.role == StaffRole.cashier || widget.role == StaffRole.manager) {
+    if (widget.role == StaffRole.support || widget.role == StaffRole.cashier || widget.role == StaffRole.manager) {
       pages.add(const Center(child: Text("Orders Page")));
     }
     
-    if (widget.role == StaffRole.delivery || widget.role == StaffRole.manager) {
-      pages.add(const Center(child: Text("Delivery Page")));
+    if (widget.role == StaffRole.cleaning || widget.role == StaffRole.manager) {
+      pages.add(_CleaningTasksPage(cs: cs, shift: widget.staffData?['shift'] ?? 'MORNING'));
     }
 
-    if (widget.role == StaffRole.manager || widget.role == StaffRole.baker) {
+    if (widget.role == StaffRole.manager || widget.role == StaffRole.chef) {
       pages.add(StaffInventoryPage(cs: cs, isDesktop: isDesktop));
+    }
+
+    if (widget.role == StaffRole.manager) {
+      pages.add(ManageStaffPage(cs: cs, isDesktop: isDesktop));
     }
 
     pages.add(
@@ -206,7 +211,7 @@ class _DashboardContent extends StatelessWidget {
   bool _canAction(String status) {
     final lower = status.toLowerCase();
     if (role == StaffRole.manager) return true;
-    if (role == StaffRole.baker) {
+    if (role == StaffRole.chef) {
       return ['pending', 'prep', 'baking', 'decorating'].contains(lower);
     }
     if (role == StaffRole.delivery) {
@@ -221,7 +226,7 @@ class _DashboardContent extends StatelessWidget {
   bool _shouldSeeOrder(String status) {
     final lower = status.toLowerCase();
     if (role == StaffRole.manager) return true; // Manager sees all
-    if (role == StaffRole.baker) {
+    if (role == StaffRole.chef) {
       return ['pending', 'prep', 'baking', 'decorating'].contains(lower);
     }
     if (role == StaffRole.delivery) {
@@ -237,7 +242,9 @@ class _DashboardContent extends StatelessWidget {
   Widget build(BuildContext context) {
     String greeting;
     switch (role) {
-      case StaffRole.baker: greeting = "Bonjour, Chef"; break;
+      case StaffRole.chef: greeting = "Bonjour, Chef"; break;
+      case StaffRole.support: greeting = "Bonjour, Support"; break;
+      case StaffRole.cleaning: greeting = "Bonjour, Hygiene Specialist"; break;
       case StaffRole.cashier: greeting = "Bonjour, Cashier"; break;
       case StaffRole.delivery: greeting = "Bonjour, Delivery"; break;
       case StaffRole.manager: greeting = "Bonjour, Manager"; break;
@@ -762,20 +769,24 @@ class _StaffBottomNav extends StatelessWidget {
       {'icon': currentIndex == 0 ? Icons.grid_view_rounded : Icons.grid_view_outlined, 'label': "Dashboard"},
     ];
 
-    if (role == StaffRole.baker || role == StaffRole.manager) {
+    if (role == StaffRole.chef || role == StaffRole.manager) {
       navItems.add({'icon': currentIndex == navItems.length ? Icons.bakery_dining_rounded : Icons.bakery_dining_outlined, 'label': "Kitchen"});
     }
     
-    if (role == StaffRole.cashier || role == StaffRole.manager) {
+    if (role == StaffRole.support || role == StaffRole.cashier || role == StaffRole.manager) {
       navItems.add({'icon': currentIndex == navItems.length ? Icons.assignment_rounded : Icons.assignment_outlined, 'label': "Orders"});
     }
     
-    if (role == StaffRole.delivery || role == StaffRole.manager) {
-      navItems.add({'icon': currentIndex == navItems.length ? Icons.local_shipping_rounded : Icons.local_shipping_outlined, 'label': "Delivery"});
+    if (role == StaffRole.cleaning || role == StaffRole.manager) {
+      navItems.add({'icon': currentIndex == navItems.length ? Icons.cleaning_services_rounded : Icons.cleaning_services_outlined, 'label': "Hygiene"});
     }
 
-    if (role == StaffRole.manager || role == StaffRole.baker) {
+    if (role == StaffRole.manager || role == StaffRole.chef) {
       navItems.add({'icon': currentIndex == navItems.length ? Icons.inventory_2_rounded : Icons.inventory_2_outlined, 'label': "Inventory"});
+    }
+
+    if (role == StaffRole.manager) {
+      navItems.add({'icon': currentIndex == navItems.length ? Icons.people_rounded : Icons.people_outline_rounded, 'label': "Staff"});
     }
 
     navItems.add({'icon': currentIndex == navItems.length ? Icons.person_rounded : Icons.person_outline_rounded, 'label': "Profile"});
@@ -898,6 +909,170 @@ class _MetricCard extends StatelessWidget {
               color: cs.secondary.withValues(alpha: 0.4),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CleaningTasksPage extends StatelessWidget {
+  final ColorScheme cs;
+  final String shift;
+  const _CleaningTasksPage({required this.cs, required this.shift});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isMorning = shift.toUpperCase() == 'MORNING';
+    final List<String> tasks = isMorning 
+      ? ["Floor Sanitization", "Utensil Sterilization", "Ingredient Organization", "Oven Surface Cleaning"]
+      : ["Kitchen Closing Sweep", "Waste Disposal", "Deep Utensil Scrub", "Cold Storage Check"];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.cleaning_services_rounded, color: cs.primary, size: 28),
+              const SizedBox(width: 12),
+              Text(
+                "HYGIENE STANDARDS",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: cs.secondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              "${shift.toUpperCase()} SHIFT",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: cs.primary,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          ...tasks.map((task) => _TaskItem(task: task, cs: cs)),
+          const SizedBox(height: 48),
+          _buildCompletionCard(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletionCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [cs.primary, const Color(0xFFFFB6D3)]),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.verified_user_rounded, color: Colors.white, size: 48),
+          const SizedBox(height: 16),
+          Text(
+            "SHIFT COMPLETION",
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2.0,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Submit your shift tasks for review by the manager.",
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white.withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: cs.primary,
+              minimumSize: const Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            child: const Text("SUBMIT REPORT"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskItem extends StatefulWidget {
+  final String task;
+  final ColorScheme cs;
+  const _TaskItem({required this.task, required this.cs});
+
+  @override
+  State<_TaskItem> createState() => _TaskItemState();
+}
+
+class _TaskItemState extends State<_TaskItem> {
+  bool isDone = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDone ? widget.cs.surface : widget.cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDone ? Colors.green.withValues(alpha: 0.3) : widget.cs.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Checkbox(
+            value: isDone,
+            onChanged: (v) => setState(() => isDone = v ?? false),
+            activeColor: Colors.green,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              widget.task,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 16,
+                fontWeight: isDone ? FontWeight.normal : FontWeight.w600,
+                color: isDone ? widget.cs.secondary.withValues(alpha: 0.5) : widget.cs.secondary,
+                decoration: isDone ? TextDecoration.lineThrough : null,
+              ),
+            ),
+          ),
+          if (isDone)
+            const Icon(Icons.check_circle, color: Colors.green, size: 20),
         ],
       ),
     );
