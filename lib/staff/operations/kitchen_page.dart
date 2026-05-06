@@ -41,12 +41,24 @@ class KitchenPage extends StatelessWidget {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: kitchenOrders.length,
-          itemBuilder: (context, index) {
-            final order = kitchenOrders[index];
-            return KitchenOrderCard(order: order, cs: cs);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth > 900;
+            return GridView.builder(
+              padding: const EdgeInsets.all(24),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: isDesktop ? 2 : 1,
+                crossAxisSpacing: 24,
+                mainAxisSpacing: 24,
+                // Adjusting height slightly to accommodate content without clipping
+                mainAxisExtent: 320, 
+              ),
+              itemCount: kitchenOrders.length,
+              itemBuilder: (context, index) {
+                final order = kitchenOrders[index];
+                return KitchenOrderCard(order: order, cs: cs);
+              },
+            );
           },
         );
       },
@@ -70,7 +82,6 @@ class KitchenOrderCard extends StatelessWidget {
         : "${elapsed.inHours}h ago";
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
