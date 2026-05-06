@@ -38,8 +38,16 @@
   --shadow-premium: 0 10px 30px rgba(90, 62, 54, 0.05);
 
   /* Transitions */
-  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-default: all 0.3s ease;
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-default: 0.3s ease;
+}
+
+@utility transition-slow {
+  transition: all var(--transition-slow);
+}
+
+@utility transition-default {
+  transition: all var(--transition-default);
 }
 
 @layer base {

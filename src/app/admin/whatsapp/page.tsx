@@ -569,7 +569,7 @@ const styles: Record<string, React.CSSProperties> = {
   convTitle: { fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9A9A9A", padding: "0 12px", marginBottom: "16px", fontWeight: "700" },
   convList: { display: "flex", flexDirection: "column", gap: "8px" },
   convItem: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease", border: "1px solid transparent" },
-  convAvatar: { width: "32px", height: "32px", borderRadius: "full", backgroundColor: "#E8DED4", color: "#5A3E36", display: "flex", alignItems: "center", justifyCenter: "center", fontSize: "12px", fontWeight: "700" },
+  convAvatar: { width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#E8DED4", color: "#5A3E36", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "700" },
   convInfo: { display: "flex", flexDirection: "column", flex: 1, minWidth: 0 },
   convName: { fontSize: "13px", fontWeight: "600", color: "#2B2B2B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
   convPhone: { fontSize: "11px", color: "#9A9A9A" },
