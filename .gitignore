@@ -52,5 +52,18 @@ app.*.map.json
 .env.test.local
 .env.production.local
 *.secret
-.vercel
 .env*.local
+
+# Vercel
+.vercel
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node/NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
