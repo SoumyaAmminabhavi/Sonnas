@@ -1024,7 +1024,7 @@ async function handleAddressInput(
     // Attempt to reverse geocode if no address provided
     let finalAddress = locAddress;
     if (!finalAddress || finalAddress.length < 5) {
-      console.log(`[WhatsApp] No address in location message. Attempting reverse geocode for ${coordsStr}...`);
+      console.log(`[WhatsApp] No address in location message. Attempting reverse geocode for ${latitude}, ${longitude}...`);
       // Send immediate feedback for better perceived performance
       await sendTextMessage(msg.from, "📍 _Processing your location..._");
       finalAddress = await reverseGeocode(latitude, longitude);
