@@ -86,12 +86,12 @@ class ReadyOrderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.green.withValues(alpha: 0.1)),
+        border: Border.all(color: Colors.teal.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withValues(alpha: 0.05),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
+            color: Colors.teal.withValues(alpha: 0.04),
+            blurRadius: 40,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
@@ -101,10 +101,10 @@ class ReadyOrderCard extends StatelessWidget {
           children: [
             // Ticket Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.03),
-                border: Border(bottom: BorderSide(color: Colors.green.withValues(alpha: 0.05))),
+                color: Colors.teal.withValues(alpha: 0.04),
+                border: Border(bottom: BorderSide(color: Colors.teal.withValues(alpha: 0.08))),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -114,23 +114,23 @@ class ReadyOrderCard extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: Colors.green.shade700.withValues(alpha: 0.6),
-                      letterSpacing: 1.0,
+                      color: Colors.teal.shade800.withValues(alpha: 0.5),
+                      letterSpacing: 1.2,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      color: Colors.teal.shade600,
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       "READY",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w900,
-                        color: Colors.green.shade700,
-                        letterSpacing: 1.0,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),
@@ -141,18 +141,19 @@ class ReadyOrderCard extends StatelessWidget {
             // Content
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.05),
+                        color: Colors.teal.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+                      child: const Icon(Icons.check_circle_rounded, color: Colors.teal, size: 22),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 20),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,18 +162,20 @@ class ReadyOrderCard extends StatelessWidget {
                           Text(
                             (order['customerName'] ?? 'Guest').toUpperCase(),
                             style: GoogleFonts.notoSerif(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
                               color: cs.secondary,
+                              letterSpacing: -0.5,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             SupabaseService.formatPrice(order['totalPrice']),
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
                               color: cs.primary,
                             ),
                           ),
@@ -186,10 +189,10 @@ class ReadyOrderCard extends StatelessWidget {
 
             // Footer Actions
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
+                color: cs.surface,
+                border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.04))),
               ),
               child: Row(
                 children: [
@@ -197,17 +200,17 @@ class ReadyOrderCard extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => SupabaseService.launchWhatsApp(order['phone'], "Hi ${order['customerName']}, your order from Sonna's is ready! 🎂"),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.green,
-                        side: BorderSide(color: Colors.green.withValues(alpha: 0.3)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        foregroundColor: Colors.teal.shade700,
+                        side: BorderSide(color: Colors.teal.withValues(alpha: 0.2)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.message_outlined, size: 16),
                           const SizedBox(width: 8),
-                          Text("NOTIFY", style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
+                          Text("NOTIFY", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800)),
                         ],
                       ),
                     ),
@@ -219,13 +222,13 @@ class ReadyOrderCard extends StatelessWidget {
                         await SupabaseService.updateOrderStatus(order['id'], 'DELIVERED');
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: Colors.teal.shade600,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      child: Text("DELIVERED", style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
+                      child: Text("DELIVERED", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w800)),
                     ),
                   ),
                 ],
