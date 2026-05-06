@@ -1354,28 +1354,18 @@ async function sendOrderStatus(to: string) {
   }
 
   const statusEmoji: Record<string, string> = {
-    PENDING: "⏳",
-    CONFIRMED: "✨",
-    PREPARING: "👨‍🍳",
-    READY: "🚗",
-    DELIVERED: "✅",
-    CANCELLED: "✕",
-  };
-
-  const statusFriendly: Record<string, string> = {
-    PENDING: "Awaiting Confirmation",
-    CONFIRMED: "Confirmed",
-    PREPARING: "Preparing",
-    READY: "Out for Delivery",
-    DELIVERED: "Delivered",
-    CANCELLED: "Cancelled",
+    PENDING: "🕐",
+    CONFIRMED: "✅",
+    PREPARING: "👩‍🍳",
+    READY: "📦",
+    DELIVERED: "🎉",
+    CANCELLED: "❌",
   };
 
   let statusText = "📦 *Your Recent Orders*\n\n";
 
   for (const order of orders) {
     const emoji = statusEmoji[order.status] ?? "📋";
-    const label = statusFriendly[order.status] ?? order.status;
     statusText += `${emoji} *#${order.orderNumber}*\n`;
 
     // Display items
@@ -1386,7 +1376,7 @@ async function sendOrderStatus(to: string) {
     });
 
     statusText += `   💰 Total: ${order.totalPrice}\n`;
-    statusText += `   Status: *${label}*\n`;
+    statusText += `   Status: *${order.status}*\n`;
     statusText += `   Placed: ${order.createdAt.toLocaleDateString("en-IN")}\n\n`;
   }
 
