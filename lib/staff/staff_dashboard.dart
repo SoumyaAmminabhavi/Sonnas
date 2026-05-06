@@ -56,16 +56,21 @@ class _StaffDashboardState extends State<StaffDashboard> {
       _DashboardContent(cs: cs, isDesktop: isDesktop, role: widget.role),
     ];
 
-    if (widget.role == StaffRole.chef || widget.role == StaffRole.manager) {
-      pages.add(const Center(child: Text("Kitchen Page")));
-    }
-    
-    if (widget.role == StaffRole.support || widget.role == StaffRole.cashier || widget.role == StaffRole.manager) {
-      pages.add(const Center(child: Text("Orders Page")));
-    }
-    
-    if (widget.role == StaffRole.cleaning || widget.role == StaffRole.manager) {
-      pages.add(_CleaningTasksPage(cs: cs, shift: widget.staffData?['shift'] ?? 'MORNING'));
+    // Operations Tab (Combines Kitchen, Orders, Hygiene)
+    final bool hasKitchen = widget.role == StaffRole.chef || widget.role == StaffRole.manager;
+    final bool hasOrders = widget.role == StaffRole.support || widget.role == StaffRole.cashier || widget.role == StaffRole.manager;
+    final bool hasHygiene = widget.role == StaffRole.cleaning || widget.role == StaffRole.manager;
+
+    if (hasKitchen || hasOrders || hasHygiene) {
+      pages.add(_OperationsCombinedPage(
+        cs: cs,
+        isDesktop: isDesktop,
+        role: widget.role,
+        shift: widget.staffData?['shift'] ?? 'MORNING',
+        hasKitchen: hasKitchen,
+        hasOrders: hasOrders,
+        hasHygiene: hasHygiene,
+      ));
     }
 
     if (widget.role == StaffRole.manager || widget.role == StaffRole.chef) {
@@ -775,16 +780,15 @@ class _StaffBottomNav extends StatelessWidget {
       {'icon': currentIndex == 0 ? Icons.grid_view_rounded : Icons.grid_view_outlined, 'label': "Dashboard"},
     ];
 
-    if (role == StaffRole.chef || role == StaffRole.manager) {
-      navItems.add({'icon': currentIndex == navItems.length ? Icons.bakery_dining_rounded : Icons.bakery_dining_outlined, 'label': "Kitchen"});
-    }
-    
-    if (role == StaffRole.support || role == StaffRole.cashier || role == StaffRole.manager) {
-      navItems.add({'icon': currentIndex == navItems.length ? Icons.assignment_rounded : Icons.assignment_outlined, 'label': "Orders"});
-    }
-    
-    if (role == StaffRole.cleaning || role == StaffRole.manager) {
-      navItems.add({'icon': currentIndex == navItems.length ? Icons.cleaning_services_rounded : Icons.cleaning_services_outlined, 'label': "Hygiene"});
+    final bool hasKitchen = role == StaffRole.chef || role == StaffRole.manager;
+    final bool hasOrders = role == StaffRole.support || role == StaffRole.cashier || role == StaffRole.manager;
+    final bool hasHygiene = role == StaffRole.cleaning || role == StaffRole.manager;
+
+    if (hasKitchen || hasOrders || hasHygiene) {
+      navItems.add({
+        'icon': currentIndex == navItems.length ? Icons.bakery_dining_rounded : Icons.bakery_dining_outlined, 
+        'label': "Operations"
+      });
     }
 
     if (role == StaffRole.manager || role == StaffRole.chef) {
@@ -1089,6 +1093,72 @@ class _TaskItemState extends State<_TaskItem> {
           if (isDone)
             const Icon(Icons.check_circle, color: Colors.green, size: 20),
         ],
+      ),
+    );
+  }
+}
+
+class _OperationsCombinedPage extends StatelessWidget {
+  final ColorScheme cs;
+  final bool isDesktop;
+  final StaffRole role;
+  final String shift;
+  final bool hasKitchen;
+  final bool hasOrders;
+  final bool hasHygiene;
+
+  const _OperationsCombinedPage({
+    required this.cs,
+    required this.isDesktop,
+    required this.role,
+    required this.shift,
+    required this.hasKitchen,
+    required this.hasOrders,
+    required this.hasHygiene,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    int tabCount = 0;
+    if (hasKitchen) tabCount++;
+    if (hasOrders) tabCount++;
+    if (hasHygiene) tabCount++;
+
+    return DefaultTabController(
+      length: tabCount,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(50),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            bottom: TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              indicatorColor: cs.primary,
+              labelColor: cs.primary,
+              unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
+              labelStyle: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.bold, 
+                fontSize: 13,
+                letterSpacing: 1.2,
+              ),
+              tabs: [
+                if (hasKitchen) const Tab(text: "KITCHEN"),
+                if (hasOrders) const Tab(text: "ORDERS"),
+                if (hasHygiene) const Tab(text: "HYGIENE"),
+              ],
+            ),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            if (hasKitchen) const Center(child: Text("Kitchen Tasks (Coming Soon)")),
+            if (hasOrders) const Center(child: Text("Live Orders (Coming Soon)")),
+            if (hasHygiene) _CleaningTasksPage(cs: cs, shift: shift),
+          ],
+        ),
       ),
     );
   }

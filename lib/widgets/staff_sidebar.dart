@@ -22,16 +22,12 @@ class StaffSidebar extends StatelessWidget {
       {'icon': Icons.grid_view_rounded, 'title': "DASHBOARD"},
     ];
 
-    if (role == StaffRole.chef || role == StaffRole.manager) {
-      menuItems.add({'icon': Icons.bakery_dining_rounded, 'title': "KITCHEN"});
-    }
-    
-    if (role == StaffRole.support || role == StaffRole.cashier || role == StaffRole.manager) {
-      menuItems.add({'icon': Icons.assignment_outlined, 'title': "ORDERS"});
-    }
-    
-    if (role == StaffRole.cleaning || role == StaffRole.manager) {
-      menuItems.add({'icon': Icons.cleaning_services_rounded, 'title': "HYGIENE"});
+    final bool hasKitchen = role == StaffRole.chef || role == StaffRole.manager;
+    final bool hasOrders = role == StaffRole.support || role == StaffRole.cashier || role == StaffRole.manager;
+    final bool hasHygiene = role == StaffRole.cleaning || role == StaffRole.manager;
+
+    if (hasKitchen || hasOrders || hasHygiene) {
+      menuItems.add({'icon': Icons.bakery_dining_rounded, 'title': "OPERATIONS"});
     }
 
     if (role == StaffRole.manager || role == StaffRole.chef) {

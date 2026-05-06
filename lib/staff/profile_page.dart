@@ -448,27 +448,33 @@ class _DutyStatusCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF64FFDA),
-                  shape: BoxShape.circle,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF64FFDA),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                "Currently on Duty",
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    "Currently on Duty",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Text(
             "SHIFT: $shift",
             style: GoogleFonts.plusJakartaSans(
