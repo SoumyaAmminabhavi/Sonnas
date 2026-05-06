@@ -34,8 +34,13 @@ jobs:
       - name: Prepare Vercel Build Output
         run: |
           mkdir -p .vercel/output/static
-          cp -r build/web/* .vercel/output/static/
-          printf '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/(.*)", "dest":"/index.html","status":200}]}' > .vercel/output/config.json
+          cp -r build/web/. .vercel/output/static/
+          printf '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/(.*)","dest":"/index.html","status":200}]}' > .vercel/output/config.json
+          printf '{"projectId":"%s","orgId":"%s"}' "$VERCEL_PROJECT_ID" "$VERCEL_ORG_ID" > .vercel/project.json
+          echo "Static files copied: $(ls .vercel/output/static | wc -l) items"
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
