@@ -71,11 +71,11 @@ export async function POST(req: Request) {
 
           let bill = `✧ *SONNA’S PATISSERIE* ✧\n`;
           bill += `_Luxurious Handcrafted Desserts_\n\n`;
-          
+
           bill += `✅ *Payment Successful*\n`;
           bill += `Order ID: *#${order.orderNumber}*\n`;
           bill += `${dateStr}\n\n`;
-          
+
           bill += `━━━━━━━━━━━━━━\n\n`;
           bill += `*Order Summary*\n\n`;
 
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
           bill += `━━━━━━━━━━━━━━\n`;
           bill += `*Total Paid: ${order.totalPrice}*\n`;
-          bill += `━━━━━━━━━━━━━━\n\n`;
+          bill += `━━━━━━━━━━━━━━ \n\n`;
 
           // Clean up address: remove coords, GPS labels, and raw URLs
           const cleanAddress = order.address
@@ -105,6 +105,7 @@ export async function POST(req: Request) {
             bill += `📝 *Custom Message*\n`;
             bill += `“${order.notes}”\n\n`;
           }
+          bill += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
           bill += `_Your dessert is being handcrafted with care. We'll notify you once it's ready for delivery._ 👩‍🍳\n\n`;
           bill += `*Thank you for choosing Sonna’s.* 💕`;
