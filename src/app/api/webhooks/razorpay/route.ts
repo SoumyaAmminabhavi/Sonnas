@@ -70,42 +70,44 @@ export async function POST(req: Request) {
           });
 
           let bill = `✧ *SONNA’S PATISSERIE* ✧\n`;
-          bill += `_Luxurious Handcrafted Desserts_\n`;
-          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
-          bill += `✅ *PAYMENT SUCCESSFUL*\n`;
-          bill += `Order: *#${order.orderNumber}*\n`;
-          bill += `Date:  *${dateStr}*\n`;
-          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+          bill += `_Luxurious Handcrafted Desserts_\n\n`;
           
-          bill += `✨ *YOUR ORDER DETAILS*\n\n`;
+          bill += `✅ *Payment Successful*\n`;
+          bill += `Order ID: *#${order.orderNumber}*\n`;
+          bill += `${dateStr}\n\n`;
+          
+          bill += `━━━━━━━━━━━━━━\n\n`;
+          bill += `*Order Summary*\n\n`;
 
-          order.items.forEach((item, idx) => {
-            const qtyStr = item.quantity > 1 ? ` x${item.quantity}` : "";
-            bill += `${idx + 1}. *${item.cakeName}*\n    (${item.size})${qtyStr} — ${item.price}\n\n`;
+          order.items.forEach((item) => {
+            const qtyStr = item.quantity > 1 ? ` (${item.quantity} units)` : "";
+            bill += `*${item.cakeName}*${qtyStr}\n`;
+            bill += `${item.size} • ${item.price}\n\n`;
           });
 
-          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
-          bill += `*TOTAL AMOUNT PAID: ${order.totalPrice}*\n`;
-          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+          bill += `━━━━━━━━━━━━━━\n`;
+          bill += `*Total Paid: ${order.totalPrice}*\n`;
+          bill += `━━━━━━━━━━━━━━\n\n`;
 
-          const sanitizedAddress = order.address
-            ?.replace(/📍 Coords:.*?\n/g, "")
-            .replace(/📍 GPS Location:.*?\n/g, "📍 GPS Location\n")
+          // Clean up address: remove coords, GPS labels, and raw URLs
+          const cleanAddress = order.address
+            ?.replace(/🔗 https:\/\/.*$/m, "")
+            .replace(/📍 Coords:.*?\n/g, "")
+            .replace(/📍 GPS Location:.*?\n/g, "")
             .trim();
 
-          bill += `🚚 *DELIVERY INFORMATION*\n\n`;
-          bill += `📍 *Address:*\n${sanitizedAddress ?? "_Address not provided_"}\n\n`;
-          bill += `📅 *Scheduled:* ${order.deliveryDate ?? "Today"}\n`;
-          bill += `🕒 *Time Slot:* ${order.deliveryTime ?? "Anytime"}\n\n`;
+          bill += `*Delivery Information*\n`;
+          bill += `📍 ${cleanAddress ?? "_Address not provided_"}\n`;
+          bill += `📅 ${order.deliveryDate ?? "Today"}\n`;
+          bill += `🕒 ${order.deliveryTime ?? "Anytime"}\n\n`;
 
           if (order.notes) {
-            bill += `📝 *SPECIAL NOTES:*\n_${order.notes}_\n\n`;
+            bill += `📝 *Custom Message*\n`;
+            bill += `“${order.notes}”\n\n`;
           }
 
-          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
-          bill += `_Your order is being handcrafted with love. We'll notify you once it's ready for delivery!_ 👩‍🍳\n\n`;
-          bill += `*Thank you for choosing Sonna’s.* 💕\n`;
-          bill += `━━━━━━━━━━━━━━━━━━━━`;
+          bill += `_Your dessert is being handcrafted with care. We'll notify you once it's ready for delivery._ 👩‍🍳\n\n`;
+          bill += `*Thank you for choosing Sonna’s.* 💕`;
 
           await sendTextMessage(order.phone, bill);
           console.log(`[Razorpay Webhook] Premium WhatsApp bill sent!`);
