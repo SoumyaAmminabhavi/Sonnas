@@ -74,9 +74,9 @@ export async function POST(req: Request) {
 
           bill += `✅ *Payment Successful*\n`;
           bill += `Order ID: *#${order.orderNumber}*\n`;
-          bill += `${dateStr}\n\n`;
+          bill += `Date: ${dateStr}\n\n`;
 
-          bill += `━━━━━━━━━━━━━━\n\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
           bill += `*Order Summary*\n\n`;
 
           order.items.forEach((item) => {
@@ -85,9 +85,9 @@ export async function POST(req: Request) {
             bill += `${item.size} • ${item.price}\n\n`;
           });
 
-          bill += `━━━━━━━━━━━━━━\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n`;
           bill += `*Total Paid: ${order.totalPrice}*\n`;
-          bill += `━━━━━━━━━━━━━━ \n\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
           // Clean up address: remove coords, GPS labels, and raw URLs
           const cleanAddress = order.address
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
             .replace(/📍 GPS Location:.*?\n/g, "")
             .trim();
 
-          bill += `*Delivery Information*\n`;
+          bill += `*Delivery Details*\n`;
           bill += `📍 ${cleanAddress ?? "_Address not provided_"}\n`;
           bill += `📅 ${order.deliveryDate ?? "Today"}\n`;
           bill += `🕒 ${order.deliveryTime ?? "Anytime"}\n\n`;
@@ -105,9 +105,9 @@ export async function POST(req: Request) {
             bill += `📝 *Custom Message*\n`;
             bill += `“${order.notes}”\n\n`;
           }
-          bill += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-          bill += `_Your dessert is being handcrafted with care. We'll notify you once it's ready for delivery._ 👩‍🍳\n\n`;
+          bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+          bill += `_Your dessert is being handcrafted with care. We'll notify you once it's ready._ 👩‍🍳\n\n`;
           bill += `*Thank you for choosing Sonna’s.* 💕`;
 
           await sendTextMessage(order.phone, bill);
