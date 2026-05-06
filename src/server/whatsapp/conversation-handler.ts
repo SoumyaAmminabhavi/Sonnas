@@ -942,38 +942,38 @@ async function handleSizeSelection(
 
 async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
   try {
-    if (msg.interactiveId === "btn_add_to_cart") {
-      if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
-        await addToCart(msg.from, {
-          cakeName: convo.selectedCake,
-          size: convo.selectedSize,
-          price: convo.selectedPrice,
-          quantity: 1
-        });
+    const isCheckout = msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now";
+    const hasActiveSelection = !!(convo.selectedCake && convo.selectedSize && convo.selectedPrice);
 
-        const summary = getCartSummary(convo.cart ?? []);
-
-        await Promise.all([
-          sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added!`),
-          sendInteractiveButtons(msg.from, summary, [
-            { id: "btn_menu", title: "➕ Add More" },
-            { id: "btn_checkout", title: "💳 Checkout" },
-          ]),
-          updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
-        ]);
-      }
-    } else if (msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now") {
-      // If they are checking out with a currently selected cake, add it first
-      if (convo.selectedCake && convo.selectedSize && convo.selectedPrice) {
+    // Case 1: "Add to Cart" clicked OR "Confirm Order" clicked while selecting a cake
+    // In both cases, we show the cart summary first.
+    if (msg.interactiveId === "btn_add_to_cart" || (isCheckout && hasActiveSelection)) {
+      if (hasActiveSelection) {
         await addToCart(msg.from, {
-          cakeName: convo.selectedCake,
-          size: convo.selectedSize,
-          price: convo.selectedPrice,
+          cakeName: convo.selectedCake!,
+          size: convo.selectedSize!,
+          price: convo.selectedPrice!,
           quantity: 1
         });
       }
 
       // Re-fetch convo to get updated cart
+      const updatedConvo = convoCache.get(msg.from) ?? convo;
+      const summary = getCartSummary(updatedConvo.cart ?? []);
+
+      await Promise.all([
+        sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added to cart!`),
+        sendInteractiveButtons(msg.from, summary, [
+          { id: "btn_menu", title: "➕ Add More" },
+          { id: "btn_checkout", title: "💳 Confirm Order" },
+        ]),
+        updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
+      ]);
+      return;
+    }
+
+    // Case 2: "Confirm Order" (btn_checkout) clicked from the cart summary (no active selection)
+    if (isCheckout) {
       const updatedConvo = convoCache.get(msg.from) ?? convo;
       const cart = updatedConvo.cart ?? [];
 
@@ -983,11 +983,6 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           sendMenu(msg.from)
         ]);
         return;
-      }
-
-      // Show "Added to Cart" message if they just added a cake
-      if (convo.selectedCake) {
-        await sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added to cart!`);
       }
 
       await Promise.all([
