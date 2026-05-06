@@ -42,22 +42,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
             letterSpacing: -0.5,
           ),
         ),
-        actions: [
-          if (isDesktop)
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: Center(
-                child: Text(
-                  "Stock Intelligence",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: cs.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-        ],
+        actions: [],
       ),
       body: Row(
         children: [
@@ -89,7 +74,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
                 return CustomScrollView(
                   slivers: [
-                    _buildSliverHeader(cs),
+                    _buildSliverHeader(cs, isDesktop),
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -488,27 +473,39 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
     );
   }
 
-  Widget _buildSliverHeader(ColorScheme cs) {
+  Widget _buildSliverHeader(ColorScheme cs, bool isDesktop) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Stock Intelligence",
-                    style: GoogleFonts.notoSerif(
-                      color: cs.secondary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+            Text(
+              "Stock Intelligence",
+              style: GoogleFonts.notoSerif(
+                fontSize: isDesktop ? 48 : 36,
+                color: cs.secondary,
+                height: 1.1,
               ),
             ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Performance Overview",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
           ],
         ),
       ),

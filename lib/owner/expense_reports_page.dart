@@ -247,36 +247,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                 letterSpacing: -0.5,
               ),
             ),
-            actions: [
-              if (isDesktop)
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: Center(
-                    child: Text(
-                      "Cost Analytics",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: cs.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'pdf') {
-                    await ReportService.downloadExpensePDF(_expenses, _totalExpenses, _categoryBreakdown);
-                  } else if (value == 'csv') {
-                    await ReportService.downloadExpenseCSV(_expenses, _totalExpenses);
-                  }
-                },
-                icon: Icon(Icons.download_rounded, color: cs.primary),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'pdf', child: Text("Download PDF")),
-                  const PopupMenuItem(value: 'csv', child: Text("Download CSV")),
-                ],
-              ),
-            ],
+            actions: [],
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: _showAddExpenseDialog,
@@ -297,7 +268,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                     ? _buildSkeleton(cs)
                     : CustomScrollView(
                         slivers: [
-                          _buildHeader(cs),
+                          _buildHeader(cs, isDesktop),
                           SliverToBoxAdapter(
                             child: Padding(
                               padding: const EdgeInsets.all(24.0),
@@ -324,51 +295,67 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     );
   }
 
-  Widget _buildHeader(ColorScheme cs) {
+  Widget _buildHeader(ColorScheme cs, bool isDesktop) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                "Expense Overview",
-                style: GoogleFonts.notoSerif(
-                  color: cs.secondary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+            Text(
+              "Cost Analytics",
+              style: GoogleFonts.notoSerif(
+                fontSize: isDesktop ? 48 : 36,
+                color: cs.secondary,
+                height: 1.1,
               ),
             ),
-
-            PopupMenuButton<String>(
-              onSelected: (value) async {
-                if (value == 'pdf') {
-                  await ReportService.downloadExpensePDF(_expenses, _totalExpenses, _categoryBreakdown);
-                } else if (value == 'csv') {
-                  await ReportService.downloadExpenseCSV(_expenses, _totalExpenses);
-                }
-              },
-              icon: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    "Expense Overview",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.download_rounded, color: cs.primary, size: 18),
-                    const SizedBox(width: 8),
-                    Text("Export", style: GoogleFonts.plusJakartaSans(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'pdf') {
+                      await ReportService.downloadExpensePDF(_expenses, _totalExpenses, _categoryBreakdown);
+                    } else if (value == 'csv') {
+                      await ReportService.downloadExpenseCSV(_expenses, _totalExpenses);
+                    }
+                  },
+                  icon: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: cs.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.download_rounded, color: cs.primary, size: 18),
+                        const SizedBox(width: 8),
+                        Text("Export", style: GoogleFonts.plusJakartaSans(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'pdf', child: Text("Download PDF")),
+                    const PopupMenuItem(value: 'csv', child: Text("Download CSV")),
                   ],
                 ),
-              ),
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'pdf', child: Text("Download PDF")),
-                const PopupMenuItem(value: 'csv', child: Text("Download CSV")),
               ],
             ),
+            const SizedBox(height: 16),
+            Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
           ],
         ),
       ),

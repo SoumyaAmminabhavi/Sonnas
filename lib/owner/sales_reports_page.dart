@@ -213,22 +213,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 letterSpacing: -0.5,
               ),
             ),
-            actions: [
-              if (isDesktop)
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: Center(
-                    child: Text(
-                      "Sales Intelligence",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: cs.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            actions: [],
           ),
           body: Row(
             children: [
@@ -257,25 +242,37 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                       slivers: [
                         SliverToBoxAdapter(
                           child: Padding(
-                            padding: const EdgeInsets.all(24.0),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Text(
+                                  "Sales Intelligence",
+                                  style: GoogleFonts.notoSerif(
+                                    fontSize: isDesktop ? 48 : 36,
+                                    color: cs.secondary,
+                                    height: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       "Performance Overview",
-                                      style: GoogleFonts.notoSerif(
-                                        color: cs.secondary,
-                                        fontSize: 20,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: cs.primary,
                                         fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                        letterSpacing: 2.0,
                                       ),
                                     ),
                                     _buildExportButton(cs),
                                   ],
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 16),
+                                Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
+                                const SizedBox(height: 32),
                                 _buildMetricsGrid(cs),
                                 const SizedBox(height: 32),
                                 _buildRevenueChart(cs, isDark),

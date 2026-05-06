@@ -362,21 +362,21 @@ class _MainContent extends StatelessWidget {
         children: [
           // Welcome Header
           Text(
+            "Hello, Sonna.",
+            style: GoogleFonts.notoSerif(
+              color: cs.secondary,
+              fontSize: isDesktop ? 48 : 36,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
             "OWNER OVERVIEW",
             style: GoogleFonts.plusJakartaSans(
               color: cs.primary,
               fontWeight: FontWeight.bold,
               fontSize: 12,
               letterSpacing: 2.0,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Hello, Sonna.",
-            style: GoogleFonts.notoSerif(
-              color: cs.secondary,
-              fontSize: isDesktop ? 48 : 36,
-              height: 1.1,
             ),
           ),
           const SizedBox(height: 24),
