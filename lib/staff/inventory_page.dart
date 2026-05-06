@@ -48,6 +48,16 @@ class StaffInventoryPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
+                      "RAW MATERIALS",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
                       "Inventory",
                       style: GoogleFonts.notoSerif(
                         fontSize: 32,
@@ -55,13 +65,11 @@ class StaffInventoryPage extends StatelessWidget {
                         color: cs.secondary,
                       ),
                     ),
+                    const SizedBox(height: 8),
                     Text(
-                      "MONITOR AND MANAGE RAW MATERIALS",
+                      "Monitor and manage raw materials",
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: cs.secondary.withValues(alpha: 0.5),
-                        letterSpacing: 1.2,
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -133,8 +141,15 @@ class StaffInventoryPage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: bgColor,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: cs.primary.withValues(alpha: 0.05),
+              blurRadius: 30,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -284,17 +299,13 @@ class _InventoryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isLow ? Colors.amber.withValues(alpha: 0.5) : cs.primary.withValues(alpha: 0.05),
-          width: isLow ? 2 : 1,
-        ),
         boxShadow: [
           BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: cs.primary.withValues(alpha: 0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

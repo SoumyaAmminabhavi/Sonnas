@@ -113,15 +113,8 @@ class _StaffDashboardState extends State<StaffDashboard> {
             letterSpacing: -0.5,
           ),
         ),
-        actions: [
-          if (isDesktop)
-            Padding(
-              padding: const EdgeInsets.only(right: 24),
-              child: IconButton(
-                icon: Icon(Icons.notifications_none_rounded, color: cs.primary),
-                onPressed: () {},
-              ),
-            ),
+        actions: const [
+          SizedBox(width: 24),
         ],
       ),
       body: Row(
@@ -406,7 +399,7 @@ class _ProductionHeroCard extends StatelessWidget {
     return Container(
       height: 160,
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -587,9 +580,15 @@ class _TaskCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: cs.surfaceContainer,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
@@ -703,8 +702,15 @@ class _CompletedCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surfaceContainer,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.02),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -932,19 +938,23 @@ class _CleaningTasksPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.cleaning_services_rounded, color: cs.primary, size: 28),
-              const SizedBox(width: 12),
-              Text(
-                "HYGIENE STANDARDS",
-                style: GoogleFonts.notoSerif(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: cs.secondary,
-                ),
-              ),
-            ],
+          Text(
+            "HYGIENE & MAINTENANCE",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: cs.primary,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Hygiene Standards",
+            style: GoogleFonts.notoSerif(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: cs.secondary,
+            ),
           ),
           const SizedBox(height: 8),
           Container(
@@ -1045,11 +1055,16 @@ class _TaskItemState extends State<_TaskItem> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDone ? widget.cs.surface : widget.cs.surfaceContainerLow,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDone ? Colors.green.withValues(alpha: 0.3) : widget.cs.outlineVariant.withValues(alpha: 0.3),
-        ),
+        boxShadow: [
+          BoxShadow(
+            color: widget.cs.primary.withValues(alpha: 0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        border: isDone ? Border.all(color: Colors.green.withValues(alpha: 0.3)) : null,
       ),
       child: Row(
         children: [

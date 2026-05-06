@@ -198,46 +198,25 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Row(
+                padding: EdgeInsets.all(widget.isDesktop ? 48.0 : 24.0),
+                child: widget.isDesktop ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Manage Staff",
-                          style: GoogleFonts.notoSerif(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: widget.cs.secondary,
-                          ),
-                        ),
-                        Text(
-                          "Assign roles, shifts, and joining codes",
-                          style: GoogleFonts.plusJakartaSans(
-                            color: widget.cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _showAddStaffDialog,
-                      icon: const Icon(Icons.add),
-                      label: const Text("Add Staff Member"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.cs.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
+                    _buildHeaderInfo(),
+                    _buildAddButton(),
+                  ],
+                ) : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeaderInfo(),
+                    const SizedBox(height: 16),
+                    SizedBox(width: double.infinity, child: _buildAddButton()),
                   ],
                 ),
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(horizontal: widget.isDesktop ? 48 : 24),
                   itemCount: staffList.length,
                   itemBuilder: (context, index) {
                     final staff = staffList[index];
@@ -248,6 +227,53 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildHeaderInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "STAFF OPERATIONS",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: widget.cs.primary,
+            letterSpacing: 1.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Manage Staff",
+          style: GoogleFonts.notoSerif(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+            color: widget.cs.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Assign roles, shifts, and joining codes",
+          style: GoogleFonts.plusJakartaSans(
+            color: widget.cs.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddButton() {
+    return ElevatedButton.icon(
+      onPressed: _showAddStaffDialog,
+      icon: const Icon(Icons.add),
+      label: const Text("Add Staff Member"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: widget.cs.primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -322,9 +348,15 @@ class _StaffCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withValues(alpha: 0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         children: [
