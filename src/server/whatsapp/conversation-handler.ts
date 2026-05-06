@@ -12,6 +12,9 @@ import {
   sendImageMessage,
 } from "~/server/whatsapp";
 import { createPaymentLink } from "~/server/razorpay";
+import natural from "natural";
+
+const { JaroWinklerDistance } = natural;
 
 // ─── Types & Interfaces ──────────────────────────────────────────────────────
 
@@ -60,6 +63,7 @@ export function clearMenuCache() {
 
 // Conversation state cache
 const convoCache = new Map<string, Conversation>();
+const processingLocks = new Map<string, Promise<void>>();
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
 
@@ -123,7 +127,22 @@ async function findCake(query: string | number | null | undefined): Promise<Cake
   const byPartial = cakes.find(c => c.name.toLowerCase().includes(queryStr) || queryStr.includes(c.name.toLowerCase()));
   if (byPartial) return byPartial;
 
-  // 4. DB Fallback for long IDs
+  // 4. Fuzzy match (Jaro-Winkler) - Handles typos like "Choclate"
+  let bestMatch = null;
+  let highestScore = 0;
+  for (const cake of cakes) {
+    const score = JaroWinklerDistance(queryStr, cake.name.toLowerCase());
+    if (score > highestScore && score > 0.8) { // 0.8 is a better balance
+      highestScore = score;
+      bestMatch = cake;
+    }
+  }
+  if (bestMatch) {
+    console.log(`[WhatsApp] Fuzzy match found: "${queryStr}" -> "${bestMatch.name}" (Score: ${highestScore.toFixed(2)})`);
+    return bestMatch;
+  }
+
+  // 5. DB Fallback for long IDs
   if (queryStr.length > 5) {
     try {
       const dbCake = await withTimeout(
@@ -308,6 +327,8 @@ async function addToCart(phone: string, item: { cakeName: string; size: string; 
       update: { quantity: { increment: item.quantity } },
     });
 
+    console.log(`[WhatsApp] CART_UPDATE: ${phone} added ${item.cakeName} (${item.size}) - Abandoned tracking started.`);
+
     const cached = convoCache.get(phone);
     if (cached) {
       const currentCart = cached.cart ?? [];
@@ -447,6 +468,28 @@ async function createCustomOrder(
 // ─── Main handler ──────────────────────────────────────────────────────────
 
 export async function handleIncomingMessage(msg: IncomingMessage) {
+  const phone = msg.from;
+
+  // ── Optimization 2: Concurrency Lock ─────────────────────────────────────
+  const existingLock = processingLocks.get(phone);
+  if (existingLock) {
+    console.log(`[WhatsApp] ⏳ Queuing message from ${phone}...`);
+    await existingLock;
+  }
+
+  const processPromise = (async () => {
+    try {
+      await _internalHandleMessage(msg);
+    } finally {
+      processingLocks.delete(phone);
+    }
+  })();
+
+  processingLocks.set(phone, processPromise);
+  return processPromise;
+}
+
+async function _internalHandleMessage(msg: IncomingMessage) {
   const convo = await getConversation(msg.from, msg.name);
   const state = convo.state as ConversationState;
   const input = msg.text?.trim().toLowerCase() ?? "";
@@ -585,6 +628,15 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
     return;
   }
 
+  if (interactiveId === "btn_clear_cart") {
+    await Promise.all([
+      clearCart(msg.from),
+      sendTextMessage(msg.from, "🗑️ *Cart cleared!*"),
+      sendMenu(msg.from)
+    ]);
+    return;
+  }
+
   if (input === "cancel" || input === "cancel order" || interactiveId === "btn_cancel") {
     await Promise.all([
       clearCart(msg.from),
@@ -619,6 +671,13 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   switch (state) {
     case "IDLE":
+      if (input.length > 3) {
+        const found = await findCake(input);
+        if (found) {
+          await handleCakeSelection({ ...msg, interactiveId: `cake_${found.id}` });
+          return;
+        }
+      }
       await sendWelcome(msg.from, msg.name);
       break;
 
@@ -972,8 +1031,9 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
       await Promise.all([
         sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added to cart!`),
         sendInteractiveButtons(msg.from, summary, [
-          { id: "btn_menu", title: "➕ Add More" },
           { id: "btn_checkout", title: "💳 Confirm Order" },
+          { id: "btn_menu", title: "➕ Add More" },
+          { id: "btn_clear_cart", title: "🗑️ Clear Cart" },
         ]),
         updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
       ]);
