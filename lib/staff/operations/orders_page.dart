@@ -39,12 +39,34 @@ class OrdersPage extends StatelessWidget {
           );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(24),
-          itemCount: readyOrders.length,
-          itemBuilder: (context, index) {
-            final order = readyOrders[index];
-            return ReadyOrderCard(order: order, cs: cs);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isDesktop = constraints.maxWidth > 900;
+            
+            if (isDesktop) {
+              return GridView.builder(
+                padding: const EdgeInsets.all(32),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 24,
+                  mainAxisSpacing: 24,
+                  mainAxisExtent: 220,
+                ),
+                itemCount: readyOrders.length,
+                itemBuilder: (context, index) {
+                  return ReadyOrderCard(order: readyOrders[index], cs: cs);
+                },
+              );
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(24),
+              itemCount: readyOrders.length,
+              itemBuilder: (context, index) {
+                final order = readyOrders[index];
+                return ReadyOrderCard(order: order, cs: cs);
+              },
+            );
           },
         );
       },
@@ -61,10 +83,10 @@ class ReadyOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.green.withValues(alpha: 0.05),
@@ -72,82 +94,145 @@ class ReadyOrderCard extends StatelessWidget {
             offset: const Offset(0, 10),
           ),
         ],
-        border: Border.all(color: Colors.green.withValues(alpha: 0.1)),
       ),
-      child: Column(
-        children: [
-          ListTile(
-            contentPadding: const EdgeInsets.all(20),
-            leading: Container(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // Ticket Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.03),
+                border: Border(bottom: BorderSide(color: Colors.green.withValues(alpha: 0.05))),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "REF #${order['orderNumber'] ?? '---'}",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.green.shade700.withValues(alpha: 0.6),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      "READY",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.green.shade700,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_circle_outline, color: Colors.green, size: 20),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            (order['customerName'] ?? 'Guest').toUpperCase(),
+                            style: GoogleFonts.notoSerif(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: cs.secondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            SupabaseService.formatPrice(order['totalPrice']),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: cs.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Footer Actions
+            Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
               ),
-              child: const Icon(Icons.check_circle_rounded, color: Colors.green),
-            ),
-            title: Text(
-              order['customerName'] ?? 'Guest Customer',
-              style: GoogleFonts.notoSerif(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: cs.secondary,
-              ),
-            ),
-            subtitle: Text(
-              "ORDER #${order['orderNumber'] ?? 'N/A'}",
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                color: cs.secondary.withValues(alpha: 0.5),
-                letterSpacing: 1.0,
-              ),
-            ),
-            trailing: Text(
-              SupabaseService.formatPrice(order['totalPrice']),
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: cs.secondary,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => SupabaseService.launchWhatsApp(order['phone'], "Hi ${order['customerName']}, your order from Sonna's is ready! 🎂"),
-                    icon: const Icon(Icons.message_rounded, size: 18),
-                    label: const Text("NOTIFY"),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.green,
-                      side: const BorderSide(color: Colors.green),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => SupabaseService.launchWhatsApp(order['phone'], "Hi ${order['customerName']}, your order from Sonna's is ready! 🎂"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.green,
+                        side: BorderSide(color: Colors.green.withValues(alpha: 0.3)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.message_outlined, size: 16),
+                          const SizedBox(width: 8),
+                          Text("NOTIFY", style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await SupabaseService.updateOrderStatus(order['id'], 'DELIVERED');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await SupabaseService.updateOrderStatus(order['id'], 'DELIVERED');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text("DELIVERED", style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
-                    child: const Text("DELIVERED"),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
