@@ -268,25 +268,54 @@ class _DashboardContent extends StatelessWidget {
             const SizedBox(height: 48),
             _TaskSectionHeader(title: "Current Tasks", color: cs.primary, isPulse: activeOrders.isNotEmpty),
             const SizedBox(height: 16),
-            if (activeOrders.isEmpty)
-              Center(child: Padding(
-                padding: const EdgeInsets.only(top: 40),
-                child: Text("All caught up!", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4))),
-              ))
-            else
-              ...activeOrders.take(5).map((o) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _TaskCard(
-                  orderNumber: o['orderNumber'] ?? '#---',
-                  title: o['customerName'] ?? 'Customer',
-                  status: o['status']?.toString().toUpperCase() ?? 'PENDING',
-                  onAction: () {
-                    final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
-                    if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
-                  },
-                  actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
-                ),
-              )),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktopList = constraints.maxWidth > 900;
+                if (isDesktopList) {
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 24,
+                      mainAxisSpacing: 24,
+                      mainAxisExtent: 180,
+                    ),
+                    itemCount: activeOrders.length,
+                    itemBuilder: (context, index) {
+                      final o = activeOrders[index];
+                      return _TaskCard(
+                        orderNumber: o['orderNumber'] ?? '---',
+                        title: o['customerName'] ?? 'Customer',
+                        status: o['status']?.toString().toUpperCase() ?? 'PENDING',
+                        onAction: () {
+                          final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
+                          if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
+                        },
+                        actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
+                        cs: cs,
+                      );
+                    },
+                  );
+                }
+                return Column(
+                  children: activeOrders.take(5).map((o) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _TaskCard(
+                      orderNumber: o['orderNumber'] ?? '---',
+                      title: o['customerName'] ?? 'Customer',
+                      status: o['status']?.toString().toUpperCase() ?? 'PENDING',
+                      onAction: () {
+                        final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
+                        if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
+                      },
+                      actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
+                      cs: cs,
+                    ),
+                  )).toList(),
+                );
+              },
+            ),
           ],
         );
       }
@@ -373,43 +402,115 @@ class _TaskCard extends StatelessWidget {
   final String status;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final ColorScheme cs;
 
-  const _TaskCard({required this.orderNumber, required this.title, required this.status, this.actionLabel, this.onAction});
+  const _TaskCard({
+    required this.orderNumber, 
+    required this.title, 
+    required this.status, 
+    this.actionLabel, 
+    this.onAction,
+    required this.cs,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: cs.primary.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 10))],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.08)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(orderNumber, style: GoogleFonts.plusJakartaSans(fontSize: 10, letterSpacing: 1.5, color: cs.secondary.withValues(alpha: 0.6), fontWeight: FontWeight.bold)),
-              Text(status, style: GoogleFonts.plusJakartaSans(fontSize: 10, letterSpacing: 1.5, color: cs.primary, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(title, style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary, fontWeight: FontWeight.bold)),
-          if (actionLabel != null) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: onAction,
-                style: ElevatedButton.styleFrom(backgroundColor: cs.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: Text(actionLabel!),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Ticket Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: cs.secondary.withValues(alpha: 0.03),
+                border: Border(bottom: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "REF #$orderNumber",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: cs.secondary.withValues(alpha: 0.5),
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  Text(
+                    status,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: cs.primary,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ],
               ),
             ),
+            
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 18,
+                        color: cs.secondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Standardized Footer
+            if (actionLabel != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onAction,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cs.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      textStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    child: Text(actionLabel!.toUpperCase()),
+                  ),
+                ),
+              ),
           ],
-        ],
+        ),
       ),
     );
   }

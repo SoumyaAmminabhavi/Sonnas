@@ -220,7 +220,7 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
                   itemCount: staffList.length,
                   itemBuilder: (context, index) {
                     final staff = staffList[index];
-                    return _StaffCard(staff: staff, cs: widget.cs);
+                    return _StaffCard(staff: staff, cs: widget.cs, isDesktop: widget.isDesktop);
                   },
                 ),
               ),
@@ -329,8 +329,9 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
 class _StaffCard extends StatelessWidget {
   final Map<String, dynamic> staff;
   final ColorScheme cs;
+  final bool isDesktop;
 
-  const _StaffCard({required this.staff, required this.cs});
+  const _StaffCard({required this.staff, required this.cs, required this.isDesktop});
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +342,7 @@ class _StaffCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -353,131 +354,169 @@ class _StaffCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
-            child: Text(
-              staff['name']?[0]?.toUpperCase() ?? "?",
-              style: GoogleFonts.notoSerif(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      staff['name'] ?? "Unknown",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: cs.secondary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    _StatusBadge(isActivated: isActivated, cs: cs),
-                  ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
+                child: Text(
+                  staff['name']?[0]?.toUpperCase() ?? "?",
+                  style: GoogleFonts.notoSerif(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 8,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.phone_outlined, size: 14, color: cs.onSurfaceVariant),
+                        Flexible(
+                          child: Text(
+                            staff['name'] ?? "Unknown",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: cs.secondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _StatusBadge(isActivated: isActivated, cs: cs),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.phone_outlined, size: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
                         const SizedBox(width: 4),
                         Text(
                           staff['phone'] ?? "No phone",
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.badge_outlined, size: 14, color: cs.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          "$role • $subRole",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: cs.primary,
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
                     ),
                   ],
+                ),
+              ),
+              if (isDesktop) ...[
+                Text(
+                  shift,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: cs.secondary.withValues(alpha: 0.5),
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                onPressed: () => _confirmDelete(context),
+              ),
+            ],
+          ),
+          if (!isDesktop) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Divider(height: 1, thickness: 0.5),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.badge_outlined, size: 12, color: cs.primary),
+                    const SizedBox(width: 4),
+                    Text(
+                      "$role • $subRole",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  shift,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: cs.secondary.withValues(alpha: 0.5),
+                  ),
                 ),
               ],
             ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                shift,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: cs.secondary.withValues(alpha: 0.5),
-                ),
-              ),
-              if (!isActivated) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: cs.secondaryContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    "CODE: ${staff['joiningCode']}",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: cs.secondary,
-                    ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const SizedBox(width: 64), // Align with text
+                Icon(Icons.badge_outlined, size: 12, color: cs.primary),
+                const SizedBox(width: 4),
+                Text(
+                  "$role • $subRole",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
                   ),
                 ),
               ],
-            ],
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text("Delete Staff Member?"),
-                  content: Text("Are you sure you want to remove ${staff['name']}? This action cannot be undone."),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-                    TextButton(
-                      onPressed: () async {
-                        await SupabaseService.deleteStaff(staff['id']);
-                        if (context.mounted) Navigator.pop(context);
-                      }, 
-                      child: const Text("Delete", style: TextStyle(color: Colors.redAccent))
-                    ),
-                  ],
+            ),
+          ],
+          if (!isActivated) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: cs.secondaryContainer.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                "JOINING CODE: ${staff['joiningCode']}",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: cs.secondary,
+                  letterSpacing: 1.0,
                 ),
-              );
-            },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Staff Member?"),
+        content: Text("Are you sure you want to remove ${staff['name']}? This action cannot be undone."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () async {
+              await SupabaseService.deleteStaff(staff['id']);
+              if (context.mounted) Navigator.pop(context);
+            }, 
+            child: const Text("Delete", style: TextStyle(color: Colors.redAccent))
           ),
         ],
       ),

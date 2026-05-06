@@ -50,8 +50,8 @@ class KitchenPage extends StatelessWidget {
                 crossAxisCount: isDesktop ? 2 : 1,
                 crossAxisSpacing: 24,
                 mainAxisSpacing: 24,
-                // Reduced extent for smaller cards
-                mainAxisExtent: 280, 
+                // Refined extent for the new ticket design
+                mainAxisExtent: 300, 
               ),
               itemCount: kitchenOrders.length,
               itemBuilder: (context, index) {
@@ -84,159 +84,162 @@ class KitchenOrderCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: cs.primary.withValues(alpha: 0.05),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.08)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header (Reduced padding)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Professional Ticket Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: cs.secondary.withValues(alpha: 0.03),
+                border: Border(bottom: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "ORDER #${order['orderNumber'] ?? 'N/A'}",
+                        "REF #${order['orderNumber'] ?? 'N/A'}",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           color: cs.primary,
-                          letterSpacing: 1.5,
+                          letterSpacing: 1.0,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
-                        order['customerName'] ?? 'Guest Customer',
+                        order['customerName']?.toUpperCase() ?? 'GUEST',
                         style: GoogleFonts.notoSerif(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: cs.secondary,
                         ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isAccepted ? Colors.blue.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    isAccepted ? "IN PRODUCTION" : "PENDING",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: isAccepted ? Colors.blue.shade700 : Colors.orange.shade700,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isAccepted ? Colors.blue.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      isAccepted ? "PRODUCTION" : "QUEUED",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        color: isAccepted ? Colors.blue.shade700 : Colors.orange.shade700,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
-          const Divider(height: 1),
-
-          // Items List
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: SupabaseService.fetchOrderItems(order['id']),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                );
-              }
-              final items = snapshot.data ?? [];
-              return ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: items.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, i) {
-                  final item = items[i];
-                  return Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(6),
+            
+            // Items List
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: SupabaseService.fetchOrderItems(order['id']),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)));
+                  }
+                  final items = snapshot.data ?? [];
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final item = items[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 32,
+                              height: 32,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: cs.primary.withValues(alpha: 0.05),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                "${item['quantity']}",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: cs.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                item['cakeName'] ?? 'Cake Item',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.secondary.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          "${item['quantity']}x",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: cs.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          item['cakeName'] ?? 'Cake Item',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: cs.secondary,
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
-
-          const Divider(height: 1),
-
-          // Footer Actions (Reduced padding)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.access_time, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
-                const SizedBox(width: 6),
-                Text(
-                  timeLabel,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: cs.secondary.withValues(alpha: 0.4),
-                  ),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () async {
-                    final String nextStatus = isAccepted ? 'READY' : 'ACCEPTED';
-                    await SupabaseService.updateOrderStatus(order['id'], nextStatus);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isAccepted ? Colors.green : cs.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  child: Text(isAccepted ? "MARK AS READY" : "START PREP"),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+
+            // Footer Actions
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.history_rounded, size: 14, color: cs.secondary.withValues(alpha: 0.4)),
+                  const SizedBox(width: 6),
+                  Text(
+                    timeLabel,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: cs.secondary.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () async {
+                      final String nextStatus = isAccepted ? 'READY' : 'ACCEPTED';
+                      await SupabaseService.updateOrderStatus(order['id'], nextStatus);
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: isAccepted ? Colors.green.withValues(alpha: 0.1) : cs.primary.withValues(alpha: 0.1),
+                      foregroundColor: isAccepted ? Colors.green.shade700 : cs.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: Text(
+                      isAccepted ? "MARK READY" : "START PREP",
+                      style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
