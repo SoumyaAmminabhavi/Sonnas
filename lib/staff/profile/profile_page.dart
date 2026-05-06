@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'staff_roles.dart';
-import '../services/biometric_service.dart';
-import '../services/supabase_service.dart';
-import '../services/session_service.dart';
+import '../../services/biometric_service.dart';
+import '../../services/supabase_service.dart';
+import '../../services/session_service.dart';
+import '../shared/staff_roles.dart';
 
 class StaffProfilePage extends StatefulWidget {
   final ColorScheme cs;
@@ -81,6 +81,28 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Profile Header
+                Text(
+                  "STAFF MEMBER",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: widget.cs.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    letterSpacing: 2.0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Profile",
+                  style: GoogleFonts.notoSerif(
+                    fontSize: widget.isDesktop ? 48 : 36,
+                    color: widget.cs.secondary,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(height: 1, color: widget.cs.secondary.withValues(alpha: 0.3)),
+                const SizedBox(height: 48),
+                
                 Center(
                   child: Column(
                     children: [
@@ -438,7 +460,6 @@ class _DutyStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(

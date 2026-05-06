@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/supabase_service.dart';
-import 'staff_roles.dart';
+import '../../services/supabase_service.dart';
+import '../shared/staff_roles.dart';
 
 class ManageStaffPage extends StatefulWidget {
   final ColorScheme cs;
@@ -163,7 +163,7 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
                     'shift': selectedShift.dbValue,
                     'joiningCode': generatedCode,
                     'isActivated': false,
-                    'permissions': {}, // Placeholder
+                    'permissions': {}, 
                     'shiftStart': '09:00',
                     'shiftEnd': '18:00',
                     'workingDays': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
@@ -241,25 +241,20 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: widget.cs.primary,
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          "Manage Staff",
-          style: GoogleFonts.notoSerif(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: widget.cs.secondary,
+            letterSpacing: 2.0,
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          "Assign roles, shifts, and joining codes",
-          style: GoogleFonts.plusJakartaSans(
-            color: widget.cs.onSurfaceVariant,
+          "Manage Staff",
+          style: GoogleFonts.notoSerif(
+            fontSize: widget.isDesktop ? 48 : 36,
+            color: widget.cs.secondary,
+            height: 1.1,
           ),
         ),
+        const SizedBox(height: 24),
+        Container(height: 1, color: widget.cs.secondary.withValues(alpha: 0.3)),
       ],
     );
   }
@@ -454,7 +449,6 @@ class _StaffCard extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
             onPressed: () {
-              // Confirmation dialog before delete
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(

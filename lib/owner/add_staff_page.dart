@@ -9,7 +9,7 @@ import '../services/supabase_service.dart';
 
 
 
-import '../staff/staff_roles.dart';
+import '../staff/shared/staff_roles.dart';
 
 class AddStaffPage extends StatefulWidget {
   final Map<String, dynamic>? staff;

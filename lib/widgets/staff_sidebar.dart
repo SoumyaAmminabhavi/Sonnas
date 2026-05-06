@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../staff/staff_roles.dart';
+import '../staff/shared/staff_roles.dart';
 
 class StaffSidebar extends StatelessWidget {
   final int currentIndex;

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'owner/owner_dashboard.dart';
 import 'owner/menu_page.dart';
-import 'staff/staff_dashboard.dart';
-import 'staff/staff_roles.dart';
-import 'staff/staff_login_page.dart';
+import 'staff/dashboard/dashboard_page.dart';
+import 'staff/shared/staff_roles.dart';
+import 'staff/auth/login_page.dart';
 
 import 'services/supabase_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/supabase_service.dart';
+import '../../services/supabase_service.dart';
 
 class StaffInventoryPage extends StatelessWidget {
   final ColorScheme cs;
@@ -50,28 +50,23 @@ class StaffInventoryPage extends StatelessWidget {
                     Text(
                       "RAW MATERIALS",
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: cs.primary,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Inventory",
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: cs.secondary,
+                        letterSpacing: 2.0,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Monitor and manage raw materials",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: cs.onSurfaceVariant,
+                      "Inventory",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: isDesktop ? 48 : 36,
+                        color: cs.secondary,
+                        height: 1.1,
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
                   ],
                 ),
                 if (isDesktop)
@@ -93,6 +88,7 @@ class StaffInventoryPage extends StatelessWidget {
             Row(
               children: [
                 _buildQuickStat(
+                  context,
                   "Total Items", 
                   items.length.toString(), 
                   Icons.category_outlined,
@@ -100,6 +96,7 @@ class StaffInventoryPage extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 _buildQuickStat(
+                  context,
                   "Low Stock", 
                   items.where((i) => (i['currentStock'] ?? 0) <= (i['minStock'] ?? 0)).length.toString(), 
                   Icons.warning_amber_rounded,
@@ -136,7 +133,7 @@ class StaffInventoryPage extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickStat(String label, String value, IconData icon, Color bgColor, {Color? iconColor}) {
+  Widget _buildQuickStat(BuildContext context, String label, String value, IconData icon, Color bgColor, {Color? iconColor}) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),

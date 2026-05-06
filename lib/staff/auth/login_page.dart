@@ -2,11 +2,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'staff_roles.dart';
-import 'staff_dashboard.dart';
-import '../services/supabase_service.dart';
-import '../services/biometric_service.dart';
-import '../services/session_service.dart';
+import '../shared/staff_roles.dart';
+import '../dashboard/dashboard_page.dart';
+import '../../services/supabase_service.dart';
+import '../../services/biometric_service.dart';
+import '../../services/session_service.dart';
 
 class StaffLoginPage extends StatefulWidget {
   const StaffLoginPage({super.key});
@@ -43,7 +43,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
   Future<void> _checkExistingSession() async {
     final savedStaff = await SessionService.getStaffSession();
     if (savedStaff != null) {
-      // If biometrics are enabled for this staff, we can try to auto-authenticate
       if (savedStaff['biometricEnabled'] == true) {
         final bool canCheck = await BiometricService.canCheckBiometrics();
         if (canCheck) {
@@ -54,8 +53,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
           }
         }
       }
-      // If biometrics failed or not enabled, but session exists, 
-      // we fill the phone number for them
       if (mounted) {
         setState(() {
           _loginPhoneController.text = savedStaff['phone'] ?? '';
@@ -88,7 +85,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
   }
 
   Future<void> _handleLogin() async {
-    // Strip non-digits just like in add_staff_page
     final phone = _loginPhoneController.text.replaceAll(RegExp(r'\D'), '');
     final password = _loginPasswordController.text;
 
@@ -121,9 +117,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     final bool authenticated = await BiometricService.authenticate();
     if (authenticated) {
-      // For Biometric login, we check if there is a staff member with this phone number.
-      // In a real production app, we would store the last logged-in phone number in Secure Storage (SharedPreferences).
-      // For now, if _loginPhoneController is empty, we'll ask them to enter it once to "link" it.
       final phone = _loginPhoneController.text.replaceAll(RegExp(r'\D'), '');
       
       if (phone.isEmpty || phone.length != 10) {
@@ -132,7 +125,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       }
 
       setState(() => _isLoading = true);
-      // We query the staff directly by phone since biometric passed
       final staff = await SupabaseService.myClient
           .from('Staff')
           .select()
@@ -202,7 +194,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     if (success) {
       await SessionService.saveStaffSession(_verifiedStaff!);
-      // Auto login after registering
       _routeToDashboard(_verifiedStaff!);
     } else {
       _showError("Failed to set password. Please try again.");
@@ -210,7 +201,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
   }
 
   void _routeToDashboard(Map<String, dynamic> staff) {
-    // Map string role to Enum
     final roleStr = (staff['role'] as String? ?? 'SUPPORT').toUpperCase();
     StaffRole mappedRole; 
 
@@ -220,7 +210,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     else if (roleStr.contains('CLEANING')) mappedRole = StaffRole.cleaning;
     else if (roleStr.contains('CASHIER')) mappedRole = StaffRole.cashier;
     else if (roleStr.contains('DELIVERY')) mappedRole = StaffRole.delivery;
-    else mappedRole = StaffRole.support; // New default
+    else mappedRole = StaffRole.support;
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -247,12 +237,10 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background Image
           Image.network(
             'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE',
             fit: BoxFit.cover,
           ),
-          // Gradient Overlay
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -313,8 +301,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 32),
-
-                            // Tabs
                             Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
@@ -340,7 +326,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
                                       () => setState(() {
                                         _isLoginTab = false;
                                         _errorMessage = null;
-                                        _verifiedStaff = null; // reset flow
+                                        _verifiedStaff = null;
                                       }),
                                     ),
                                   ),
@@ -518,7 +504,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
         return RawKeyboardListener(
-          focusNode: FocusNode(), // Dummy node for the listener
+          focusNode: FocusNode(),
           onKey: (event) {
             if (event is RawKeyDownEvent && 
                 event.logicalKey == LogicalKeyboardKey.backspace && 
@@ -560,7 +546,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
                 if (value.isNotEmpty && index < 4) {
                   _pinFocusNodes[index + 1].requestFocus();
                 }
-                // If last digit entered, dismiss keyboard
                 if (index == 4 && value.isNotEmpty) {
                   FocusScope.of(context).unfocus();
                 }
