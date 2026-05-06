@@ -9,43 +9,49 @@ import { api } from "~/trpc/react";
 
 const STATUS_CONFIG: Record<
   string,
-  { label: string; emoji: string; color: string; bg: string }
+  { label: string; emoji: string; color: string; bg: string; border: string }
 > = {
   PENDING: {
-    label: "Pending",
-    emoji: "🕐",
+    label: "Awaiting Confirmation",
+    emoji: "⏳",
     color: "#C9A27E",
-    bg: "rgba(201,162,126,0.12)",
+    bg: "#FFF9F7",
+    border: "#F0EBE4",
   },
   CONFIRMED: {
     label: "Confirmed",
-    emoji: "✅",
+    emoji: "✨",
     color: "#5A8F5A",
-    bg: "rgba(90,143,90,0.12)",
+    bg: "#F4F9F4",
+    border: "#E8F0E8",
   },
   PREPARING: {
-    label: "Preparing",
-    emoji: "👩‍🍳",
+    label: "Artisan Kitchen",
+    emoji: "👨‍🍳",
     color: "#8B6FC0",
-    bg: "rgba(139,111,192,0.12)",
+    bg: "#F7F5FB",
+    border: "#EFECF6",
   },
   READY: {
-    label: "Ready",
-    emoji: "📦",
+    label: "Ready for Departure",
+    emoji: "🎀",
     color: "#4A90D9",
-    bg: "rgba(74,144,217,0.12)",
+    bg: "#F4F8FD",
+    border: "#E8F0F9",
   },
   DELIVERED: {
-    label: "Delivered",
-    emoji: "🎉",
+    label: "Enjoyed",
+    emoji: "💝",
     color: "#5A3E36",
-    bg: "rgba(90,62,54,0.12)",
+    bg: "#F7F3EF",
+    border: "#E8DED4",
   },
   CANCELLED: {
     label: "Cancelled",
-    emoji: "❌",
+    emoji: "✕",
     color: "#D88C8C",
-    bg: "rgba(216,140,140,0.12)",
+    bg: "#FDF4F4",
+    border: "#F9E8E8",
   },
 };
 
@@ -55,27 +61,27 @@ const PAYMENT_STATUS_CONFIG: Record<
 > = {
   PENDING: {
     label: "Unpaid",
-    emoji: "⏳",
-    color: "#C9A27E",
-    bg: "rgba(201,162,126,0.12)",
+    emoji: "⚪",
+    color: "#9A9A9A",
+    bg: "rgba(154,154,154,0.1)",
   },
   PAID: {
     label: "Paid",
-    emoji: "💰",
-    color: "#5A8F5A",
-    bg: "rgba(90,143,90,0.12)",
+    emoji: "💎",
+    color: "#C9A27E",
+    bg: "rgba(201,162,126,0.15)",
   },
   FAILED: {
     label: "Failed",
     emoji: "⚠️",
     color: "#D88C8C",
-    bg: "rgba(216,140,140,0.12)",
+    bg: "rgba(216,140,140,0.1)",
   },
   REFUNDED: {
     label: "Refunded",
     emoji: "↩️",
     color: "#8B6FC0",
-    bg: "rgba(139,111,192,0.12)",
+    bg: "rgba(139,111,192,0.1)",
   },
 };
 
@@ -159,8 +165,6 @@ function WhatsAppAdminContent() {
     },
   });
 
-
-
   const filteredOrders = useMemo(() => {
     if (!ordersData?.orders) return [];
     let filtered = ordersData.orders;
@@ -175,20 +179,12 @@ function WhatsAppAdminContent() {
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
         filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === tomorrowStr);
       } else {
-        // Handle calendar date picker (YYYY-MM-DD)
         filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === dateFilter);
       }
     }
     
-    // Explicitly sort by createdAt descending
     return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [ordersData?.orders, dateFilter]);
-
-
-
-  // ─── Handlers ──────────────────────────────────────────────────────────
-
-
 
   return (
     <div style={styles.container}>
@@ -201,20 +197,24 @@ function WhatsAppAdminContent() {
           pointerEvents: isSidebarCollapsed ? "none" : "auto",
         }}
       >
+        <div style={styles.sidebarHeader}>
+           <h2 style={styles.sidebarTitle}>Order Studio</h2>
+           <p style={styles.sidebarSubtitle}>Managing Sonna&apos;s Boutique</p>
+        </div>
 
-        {/* Filter Tabs */}
         <nav style={styles.filterNav}>
           <button
             style={{
               ...styles.filterBtn,
-              ...(statusFilter === "ALL" ? styles.filterBtnActive : {}),
+              ...(statusFilter === "ALL" && !customFilter ? styles.filterBtnActive : {}),
             }}
             onClick={() => {
               setStatusFilter("ALL");
               setCustomFilter(false);
             }}
           >
-            All Orders
+            <span style={styles.filterIcon}>📋</span>
+            <span style={styles.filterLabel}>All Orders</span>
           </button>
           <button
             style={{
@@ -226,8 +226,12 @@ function WhatsAppAdminContent() {
               setStatusFilter("ALL");
             }}
           >
-            🎨 Custom Requests
+            <span style={styles.filterIcon}>🎨</span>
+            <span style={styles.filterLabel}>Custom Requests</span>
           </button>
+          
+          <div style={styles.filterSeparator}>Statuses</div>
+
           {STATUS_FLOW.map((s) => {
             const cfg = STATUS_CONFIG[s]!;
             return (
@@ -242,7 +246,8 @@ function WhatsAppAdminContent() {
                   setCustomFilter(false);
                 }}
               >
-                {cfg.emoji} {cfg.label}
+                <span style={styles.filterIcon}>{cfg.emoji}</span>
+                <span style={styles.filterLabel}>{cfg.label}</span>
               </button>
             );
           })}
@@ -256,38 +261,30 @@ function WhatsAppAdminContent() {
               setCustomFilter(false);
             }}
           >
-            ❌ Cancelled
+            <span style={styles.filterIcon}>✕</span>
+            <span style={styles.filterLabel}>Cancelled</span>
           </button>
-
-          <div style={{ marginTop: 20, padding: "0 12px" }}>
-            {/* Date filter removed from here */}
-          </div>
         </nav>
 
-        {/* Recent Conversations */}
         <div style={styles.convSection}>
-          <h3 style={styles.convTitle}>💬 Recent Chats</h3>
+          <h3 style={styles.convTitle}>Recent Inquiries</h3>
           <div style={styles.convList}>
             {conversations?.map((c) => (
-              <div key={c.id} style={styles.convItem}>
+              <div key={c.id} style={styles.convItem} onClick={() => setReplyPhone(c.phone)}>
                 <div style={styles.convAvatar}>
                   {(c.name ?? c.phone).charAt(0).toUpperCase()}
                 </div>
                 <div style={styles.convInfo}>
-                  <span style={styles.convName}>{c.name ?? "Unknown"}</span>
+                  <span style={styles.convName}>{c.name ?? "Guest"}</span>
                   <span style={styles.convPhone}>{c.phone}</span>
                 </div>
-                <button
-                  style={styles.convReplyBtn}
-                  onClick={() => setReplyPhone(c.phone)}
-                  title="Reply via WhatsApp"
-                >
-                  💬
-                </button>
+                <div style={styles.convAction}>
+                   <span className="text-gold text-[10px]">REPLY</span>
+                </div>
               </div>
             ))}
             {(!conversations || conversations.length === 0) && (
-              <p style={styles.emptyText}>No conversations yet</p>
+              <p style={styles.emptyText}>No recent chats</p>
             )}
           </div>
         </div>
@@ -295,360 +292,197 @@ function WhatsAppAdminContent() {
 
       {/* ─── Main Content ────────────────────────────────────── */}
       <main style={styles.main}>
-        {/* Stats Bar */}
         <div style={styles.statsBar}>
-          <StatCard
-            label="Today's Orders"
-            value={stats?.todaysOrders ?? 0}
-            emoji="📋"
-          />
-          <StatCard
-            label="Pending"
-            value={stats?.pendingOrders ?? 0}
-            emoji="🕐"
-            highlight
-          />
-          <StatCard
-            label="Total Orders"
-            value={stats?.totalOrders ?? 0}
-            emoji="📦"
-          />
-          <StatCard
-            label="Revenue"
-            value={`₹${(stats?.totalRevenue ?? 0).toLocaleString("en-IN")}`}
-            emoji="💰"
-          />
-          <StatCard
-            label="Customers"
-            value={stats?.totalConversations ?? 0}
-            emoji="👥"
-          />
-          <StatCard
-            label="Most Popular"
-            value={stats?.popularCake ?? "N/A"}
-            emoji="⭐"
-            isText
-          />
+          <StatCard label="Today's Orders" value={stats?.todaysOrders ?? 0} icon="🧁" />
+          <StatCard label="Pending Confirmation" value={stats?.pendingOrders ?? 0} icon="⌛" highlight />
+          <StatCard label="Revenue" value={`₹${(stats?.totalRevenue ?? 0).toLocaleString("en-IN")}`} icon="✨" />
+          <StatCard label="Guests" value={stats?.totalConversations ?? 0} icon="👥" />
+          <StatCard label="Most Desired" value={stats?.popularCake ?? "N/A"} icon="⭐" isText />
         </div>
 
-        {/* Orders Table */}
         <div style={styles.tableWrapper}>
           <div style={styles.tableHeader}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <h2 style={styles.tableTitle}>
-                {statusFilter !== "ALL"
-                  ? `${STATUS_CONFIG[statusFilter]?.emoji} ${STATUS_CONFIG[statusFilter]?.label} Orders`
-                  : "📋 All Orders"}
+                {statusFilter !== "ALL" ? `${STATUS_CONFIG[statusFilter]?.label} Orders` : "Recent Orders"}
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
-                <span style={{ fontSize: 13, color: '#9A9A9A' }}>📅</span>
                 <input 
                   type="date" 
                   value={dateFilter === "ALL" || dateFilter === "TODAY" || dateFilter === "TOMORROW" ? "" : dateFilter}
                   onChange={(e) => setDateFilter(e.target.value || "ALL")}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #E8DED4',
-                    fontSize: 13,
-                    color: '#5A3E36',
-                    outline: 'none',
-                    backgroundColor: '#FFFFFF'
-                  }}
+                  style={styles.datePicker}
                 />
-                {dateFilter !== "ALL" && (
-                  <button 
-                    onClick={() => setDateFilter("ALL")}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#D88C8C',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      padding: 4
-                    }}
-                  >
-                    Clear
-                  </button>
-                )}
               </div>
             </div>
-            <span style={styles.orderCount}>{filteredOrders.length} orders</span>
+            <span style={styles.orderCount}>{filteredOrders.length} collections</span>
           </div>
 
           {ordersLoading ? (
-            <div style={styles.loading}>Loading orders...</div>
+            <div style={styles.loading}>Preparing the studio...</div>
           ) : filteredOrders.length === 0 ? (
             <div style={styles.emptyState}>
-              <span style={{ fontSize: 48 }}>🧁</span>
-              <p style={styles.emptyText}>No orders found</p>
-              <p style={styles.emptySubtext}>
-                Orders placed via WhatsApp will appear here
-              </p>
+              <span style={{ fontSize: 40, opacity: 0.5 }}>🧁</span>
+              <p style={styles.emptyText}>The studio is currently quiet</p>
+              <p style={styles.emptySubtext}>Upcoming orders will appear here.</p>
             </div>
           ) : (
             <div style={styles.orderGrid}>
               {filteredOrders.map((order) => {
                 const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.PENDING!;
                 const isSelected = selectedOrderId === order.id;
+                const o = order as unknown as AdminOrder;
 
                 return (
                   <div
                     key={order.id}
-                    style={{
-                      ...styles.orderCard,
-                      ...(isSelected ? styles.orderCardSelected : {}),
-                    }}
-                    onClick={() =>
-                      setSelectedOrderId(isSelected ? null : order.id)
-                    }
+                    style={{ ...styles.orderCard, ...(isSelected ? styles.orderCardSelected : {}) }}
+                    onClick={() => setSelectedOrderId(isSelected ? null : order.id)}
                   >
-                    {/* Explicitly cast to our typed interface */}
-                    {(() => {
-                      const o = order as unknown as AdminOrder;
-                      return (
-                        <>
-                          <div style={styles.orderCardTop}>
-                            <span style={styles.orderNumber}>
-                              #{o.orderNumber}
+                    <div style={styles.orderCardHeader}>
+                      <div style={styles.orderIdentity}>
+                        <span style={styles.orderNumber}>#{o.orderNumber}</span>
+                        <span style={styles.orderTimestamp}>
+                          {new Date(o.createdAt).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div style={styles.badges}>
+                        <span style={{ ...styles.statusBadge, color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}>
+                          {cfg.label}
+                        </span>
+                        {(() => {
+                          const pCfg = PAYMENT_STATUS_CONFIG[o.paymentStatus] ?? PAYMENT_STATUS_CONFIG.PENDING!;
+                          return (
+                            <span style={{ ...styles.paymentBadge, color: pCfg.color, backgroundColor: pCfg.bg }}>
+                              {pCfg.label}
                             </span>
-                            <span
-                              style={{
-                                ...styles.statusPill,
-                                color: cfg.color,
-                                backgroundColor: cfg.bg,
-                              }}
-                            >
-                              {cfg.emoji} {cfg.label}
-                            </span>
-                            
-                            {/* Payment Status Badge */}
-                            {(() => {
-                              const pCfg = PAYMENT_STATUS_CONFIG[o.paymentStatus] ?? PAYMENT_STATUS_CONFIG.PENDING!;
+                          );
+                        })()}
+                      </div>
+                    </div>
+
+                    <div style={styles.productInfo}>
+                      <h3 style={styles.cakeNameMain}>
+                        {o.items && o.items.length > 0 
+                          ? (o.items.length > 1 ? `${o.items[0]?.cakeName} & More` : o.items[0]?.cakeName)
+                          : "Artisanal Selection"}
+                      </h3>
+                      {o.isCustom && <span style={styles.customTag}>Custom Creation</span>}
+                    </div>
+
+                    <div style={styles.orderDetailsCompact}>
+                      <div style={styles.detailItem}>
+                        <span style={styles.detailIcon}>👤</span>
+                        <span style={styles.detailText}>{o.customerName ?? "Guest"}</span>
+                      </div>
+                      <div style={styles.detailItem}>
+                        <span style={styles.detailIcon}>📅</span>
+                        <span style={styles.detailText}>
+                          {(() => {
+                            if (!o.deliveryDate) return "Today";
+                            if (o.deliveryDate.includes(",")) return o.deliveryDate.split(',')[0];
+                            const date = new Date(o.deliveryDate);
+                            return isNaN(date.getTime()) ? o.deliveryDate : date.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric', month: 'short' });
+                          })()}
+                        </span>
+                      </div>
+                      <div style={styles.detailItem}>
+                        <span style={styles.detailIcon}>🕒</span>
+                        <span style={styles.detailText}>{o.deliveryTime ?? "Anytime"}</span>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div style={styles.expandedContent}>
+                        <div style={styles.itemList}>
+                          {o.items.map(item => (
+                            <div key={item.id} style={styles.productRow}>
+                              {item.image && (
+                                <div style={styles.productThumb}>
+                                  <Image src={item.image} alt={item.cakeName} width={48} height={48} unoptimized />
+                                </div>
+                              )}
+                              <div style={styles.productMeta}>
+                                <p style={styles.productName}>{item.cakeName}</p>
+                                <p style={styles.productSpec}>{item.size} • {item.price}</p>
+                              </div>
+                              <div style={styles.productQty}>×{item.quantity}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {o.address && (
+                          <div style={styles.addressSection}>
+                            <p style={styles.sectionLabel}>Boutique Destination</p>
+                            <div style={styles.addressBox}>
+                              <span style={styles.addressText}>{o.address.split('\n')[0]}</span>
+                              {o.address.includes('https://') && (
+                                <a href={o.address.split('🔗').pop()?.trim()} target="_blank" rel="noreferrer" style={styles.mapPill}>
+                                  View Map
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {o.notes && (
+                          <div style={styles.notesSection}>
+                            <p style={styles.sectionLabel}>Client Notes</p>
+                            <p style={styles.notesBody}>“{o.notes}”</p>
+                          </div>
+                        )}
+
+                        {o.isCustom && o.customImageUrl && (
+                          <div style={styles.imagePreview}>
+                            {o.customImageUrl.split(',').map((url, idx) => (
+                              <Image
+                                key={idx}
+                                src={url.trim()}
+                                alt={`Custom Reference ${idx + 1}`}
+                                style={styles.previewImg}
+                                width={180}
+                                height={140}
+                                unoptimized
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={styles.cardActions}>
+                          <div style={styles.actionGrid}>
+                            {STATUS_FLOW.filter(s => s !== order.status).slice(0, 3).map(s => {
+                              const sCfg = STATUS_CONFIG[s]!;
                               return (
-                                <span
-                                  style={{
-                                    ...styles.statusPill,
-                                    color: pCfg.color,
-                                    backgroundColor: pCfg.bg,
-                                    marginLeft: 8
+                                <button
+                                  key={s}
+                                  style={{ ...styles.actionPill, backgroundColor: sCfg.bg, color: sCfg.color, borderColor: sCfg.border }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateStatus.mutate({ id: order.id, status: s as OrderStatus, notifyCustomer: true });
                                   }}
                                 >
-                                  {pCfg.emoji} {pCfg.label}
-                                </span>
+                                  {sCfg.label}
+                                </button>
                               );
-                            })()}
-
-                            {o.isCustom && (
-                              <span
-                                style={{
-                                  ...styles.statusPill,
-                                  color: "#D88C8C",
-                                  backgroundColor: "rgba(216,140,140,0.12)",
-                                  marginLeft: 8
-                                }}
-                              >
-                                ✨ Custom Design
-                              </span>
-                            )}
+                            })}
                           </div>
-
-                          <h3 style={styles.cakeName}>
-                            {o.items && o.items.length > 0 
-                              ? (o.items.length > 1 
-                                  ? `${o.items[0]?.cakeName} (+${o.items.length - 1})` 
-                                  : o.items[0]?.cakeName)
-                              : "No Items"}
-                          </h3>
-
-                          <div style={styles.customerLine}>
-                            <span style={styles.customerLabel}>Customer:</span>
-                            <a 
-                              href={`https://wa.me/${o.phone}`} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              style={styles.customerLink}
-                            >
-                              👤 {o.customerName ?? "Guest"} • 📞 {o.phone}
-                            </a>
-                          </div>
-
-                          <div style={styles.orderMeta}>
-                            <span>💰 {o.totalPrice ?? "Quote Pending"}</span>
-                            <span>📦 {o.items ? o.items.reduce((sum, item) => sum + item.quantity, 0) : 0} items</span>
-                          </div>
-
-                          {isSelected && o.items && o.items.length > 0 && (
-                            <div style={{ marginBottom: 12, padding: '8px 12px', backgroundColor: '#F9F9F9', borderRadius: 8, fontSize: 12, color: '#5A3E36', border: '1px solid #E8DED4' }}>
-                              {o.items.map(item => (
-                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '4px 0' }}>
-                                  {item.image && (
-                                    <div style={{ width: 40, height: 40, borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid #E8DED4' }}>
-                                      <Image src={item.image} alt={item.cakeName} width={40} height={40} style={{ width: '100%', height: '100%', objectFit: 'cover' }} unoptimized />
-                                    </div>
-                                  )}
-                                  <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between' }}>
-                                    <span>• {item.cakeName} ({item.size})</span>
-                                    <span>x{item.quantity}</span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {o.address && (
-                            <div style={styles.orderNotes}>
-                              <span style={styles.notesIcon}>📍</span>
-                              <div style={styles.notesText}>
-                                {o.address.split('\n').map((line, i) => {
-                                  if (line.includes('https://')) {
-                                    const url = line.split('🔗').pop()?.trim() ?? line;
-                                    return (
-                                      <a 
-                                        key={i} 
-                                        href={url} 
-                                        target="_blank" 
-                                        rel="noreferrer" 
-                                        style={{ 
-                                          color: '#4A90D9', 
-                                          textDecoration: 'underline', 
-                                          display: 'inline-flex', 
-                                          alignItems: 'center',
-                                          gap: 4,
-                                          marginTop: 4,
-                                          fontWeight: 600
-                                        }}
-                                      >
-                                        🔗 Open in Google Maps
-                                      </a>
-                                    );
-                                  }
-                                  return <div key={i}>{line}</div>;
-                                })}
-                              </div>
-                            </div>
-                          )}
-
-                          {o.deliveryDate && (
-                            <div style={styles.orderNotes}>
-                              <span style={styles.notesIcon}>🗓️</span>
-                              <div style={styles.notesText}>
-                                Delivery: <b>{(() => {
-                                  if (!o.deliveryDate) return "";
-                                  if (o.deliveryDate.includes(",")) return o.deliveryDate;
-                                  try {
-                                    const date = new Date(o.deliveryDate);
-                                    if (!isNaN(date.getTime())) {
-                                      return date.toLocaleDateString("en-IN", {
-                                        weekday: "short",
-                                        day: "numeric",
-                                        month: "short",
-                                        year: "numeric"
-                                      });
-                                    }
-                                  } catch {}
-                                  return o.deliveryDate;
-                                })()}</b> {o.deliveryTime && ` at `} <b>{o.deliveryTime}</b>
-                              </div>
-                            </div>
-                          )}
-
-                          {o.notes && (
-                            <div style={styles.orderNotes}>
-                              <span style={styles.notesIcon}>📝</span>
-                              <span style={styles.notesText}>{o.notes}</span>
-                            </div>
-                          )}
-
-                          {o.isCustom && o.customImageUrl && (
-                            <div style={styles.imagePreview}>
-                              {o.customImageUrl.split(',').map((url, idx) => (
-                                <Image
-                                  key={idx}
-                                  src={url.trim()}
-                                  alt={`Custom Cake Reference ${idx + 1}`}
-                                  style={styles.previewImg}
-                                  width={180}
-                                  height={140}
-                                  unoptimized
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                          <div style={styles.orderFooter}>
-                            <span style={styles.orderDate}>
-                              {new Date(o.createdAt).toLocaleDateString("en-IN", {
-                                day: "numeric",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
-                          </div>
-                        </>
-                      );
-                    })()}
-
-                    {/* Expanded actions */}
-                    {isSelected && (
-                      <div style={styles.orderActions}>
-                        <div style={styles.actionRow}>
-                          {STATUS_FLOW.filter(
-                            (s) => s !== order.status
-                          ).map((s) => {
-                            const sCfg = STATUS_CONFIG[s]!;
-                            return (
-                              <button
-                                key={s}
-                                style={{
-                                  ...styles.actionBtn,
-                                  borderColor: sCfg.color,
-                                  color: sCfg.color,
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  updateStatus.mutate({
-                                    id: order.id,
-                                    status: s as OrderStatus,
-                                    notifyCustomer: true,
-                                  });
-                                }}
-                                disabled={updateStatus.isPending}
-                              >
-                                {sCfg.emoji} {sCfg.label}
-                              </button>
-                            );
-                          })}
-                          {order.status !== "CANCELLED" && (
-                            <button
-                              style={{
-                                ...styles.actionBtn,
-                                borderColor: "#D88C8C",
-                                color: "#D88C8C",
-                              }}
+                          <div style={styles.footerActions}>
+                            <button style={styles.secondaryAction} onClick={(e) => { e.stopPropagation(); setReplyPhone(order.phone); }}>
+                              Contact Client
+                            </button>
+                            <button 
+                              style={styles.cancelAction} 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                updateStatus.mutate({
-                                  id: order.id,
-                                  status: "CANCELLED",
-                                  notifyCustomer: true,
-                                });
+                                if(confirm("Cancel this artisanal order?")) {
+                                  updateStatus.mutate({ id: order.id, status: "CANCELLED", notifyCustomer: true });
+                                }
                               }}
-                              disabled={updateStatus.isPending}
                             >
-                              ❌ Cancel
+                              Cancel Order
                             </button>
-                          )}
+                          </div>
                         </div>
-                        <button
-                          style={styles.replyBtn}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setReplyPhone(order.phone);
-                          }}
-                        >
-                          💬 Message Customer
-                        </button>
                       </div>
                     )}
                   </div>
@@ -663,35 +497,27 @@ function WhatsAppAdminContent() {
       {replyPhone && (
         <div style={styles.modalOverlay} onClick={() => setReplyPhone(null)}>
           <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 style={styles.modalTitle}>💬 Send WhatsApp Message</h3>
-            <p style={styles.modalPhone}>To: {replyPhone}</p>
+            <h3 style={styles.modalTitle}>Client Correspondence</h3>
+            <p style={styles.modalPhone}>Sending to: {replyPhone}</p>
             <textarea
               style={styles.modalTextarea}
-              placeholder="Type your message..."
+              placeholder="Craft your message..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               rows={4}
             />
             <div style={styles.modalActions}>
-              <button
-                style={styles.modalCancel}
-                onClick={() => setReplyPhone(null)}
-              >
-                Cancel
-              </button>
+              <button style={styles.modalCancel} onClick={() => setReplyPhone(null)}>Close</button>
               <button
                 style={styles.modalSend}
                 onClick={() => {
                   if (replyText.trim()) {
-                    sendMessage.mutate({
-                      phone: replyPhone,
-                      message: replyText.trim(),
-                    });
+                    sendMessage.mutate({ phone: replyPhone, message: replyText.trim() });
                   }
                 }}
                 disabled={!replyText.trim() || sendMessage.isPending}
               >
-                {sendMessage.isPending ? "Sending..." : "Send ✉️"}
+                {sendMessage.isPending ? "Sending..." : "Send Message"}
               </button>
             </div>
           </div>
@@ -703,36 +529,16 @@ function WhatsAppAdminContent() {
 
 // ─── Stat Card ──────────────────────────────────────────────────────────────
 
-function StatCard({
-  label,
-  value,
-  emoji,
-  highlight,
-  isText,
-}: {
-  label: string;
-  value: string | number;
-  emoji: string;
-  highlight?: boolean;
-  isText?: boolean;
-}) {
+function StatCard({ label, value, icon, highlight, isText }: { label: string; value: string | number; icon: string; highlight?: boolean; isText?: boolean; }) {
   return (
-    <div
-      style={{
-        ...styles.statCard,
-        ...(highlight ? styles.statCardHighlight : {}),
-      }}
-    >
-      <span style={styles.statEmoji}>{emoji}</span>
-      <span
-        style={{
-          ...styles.statValue,
-          ...(isText ? { fontSize: 14 } : {}),
-        }}
-      >
-        {value}
-      </span>
-      <span style={styles.statLabel}>{label}</span>
+    <div style={{ ...styles.statCard, ...(highlight ? styles.statCardHighlight : {}) }}>
+      <div style={styles.statIconWrapper}>
+        <span style={styles.statEmoji}>{icon}</span>
+      </div>
+      <div style={styles.statContent}>
+        <span style={{ ...styles.statValue, ...(isText ? { fontSize: 13, letterSpacing: '0' } : {}) }}>{value}</span>
+        <span style={styles.statLabel}>{label}</span>
+      </div>
     </div>
   );
 }
@@ -745,526 +551,93 @@ export default function WhatsAppAdminPage() {
   );
 }
 
-// ─── Styles (inline CSS-in-JS matching Sonna's design system) ───────────────
+// ─── Styles (Luxury Sonna's Design System) ───────────────────────────────────
 
 const styles: Record<string, React.CSSProperties> = {
-  // Layout
-  container: {
-    display: "flex",
-    height: "calc(100vh - 80px)",
-    overflow: "hidden",
-    fontFamily: "Inter, sans-serif",
-    backgroundColor: "#FFF9F7",
-  },
-
-  // Sidebar
-  sidebar: {
-    width: 280,
-    height: "100%",
-    backgroundColor: "#2B2B2B",
-    color: "#FFF9F7",
-    display: "flex",
-    flexDirection: "column",
-    flexShrink: 0,
-    overflow: "hidden",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-  },
-  sidebarHeader: {
-    padding: "20px 24px",
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-    backgroundColor: "transparent",
-  },
-  sidebarTitle: {
-    margin: 0,
-    fontSize: 18,
-    fontWeight: 700,
-    color: "#F4C2C2",
-    letterSpacing: "-0.01em",
-  },
-  filterSelect: {
-    flex: 1,
-    padding: "8px 10px",
-    borderRadius: 8,
-    border: "1px solid rgba(255,255,255,0.1)",
-    fontSize: 12,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    color: "#FFF",
-    outline: "none",
-    cursor: "pointer",
-    minWidth: 0,
-  },
-  sidebarLogo: {
-    fontFamily: "Playfair Display, serif",
-    fontSize: 22,
-    fontWeight: 700,
-    color: "#F4C2C2",
-    margin: 0,
-    letterSpacing: 2,
-  },
-  sidebarSubtitle: {
-    fontSize: 12,
-    color: "#9A9A9A",
-    letterSpacing: 1,
-    textTransform: "uppercase" as const,
-    marginTop: 4,
-    display: "block",
-  },
-
-  // Filters
-  filterNav: {
-    padding: "16px 12px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
-  },
-  filterBtn: {
-    background: "none",
-    border: "none",
-    color: "#9A9A9A",
-    fontSize: 13,
-    padding: "8px 12px",
-    borderRadius: 8,
-    textAlign: "left" as const,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  filterBtnActive: {
-    backgroundColor: "rgba(244,194,194,0.12)",
-    color: "#F4C2C2",
-    fontWeight: 600,
-  },
-
-  // Conversations
-  convSection: {
-    padding: "16px 12px",
-    flex: 1,
-    overflow: "auto",
-  },
-  convTitle: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#9A9A9A",
-    textTransform: "uppercase" as const,
-    letterSpacing: 1,
-    margin: "0 0 12px 4px",
-  },
-  convList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-  },
-  convItem: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "8px 10px",
-    borderRadius: 8,
-    cursor: "pointer",
-    transition: "background 0.2s",
-  },
-  convAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: "50%",
-    backgroundColor: "#5A3E36",
-    color: "#F4C2C2",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 14,
-    fontWeight: 600,
-    flexShrink: 0,
-  },
-  convInfo: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-  },
-  convName: {
-    fontSize: 13,
-    fontWeight: 500,
-    color: "#FFF9F7",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap" as const,
-  },
-  convPhone: {
-    fontSize: 11,
-    color: "#6E6E6E",
-  },
-  convReplyBtn: {
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 16,
-    padding: 4,
-    borderRadius: 4,
-    flexShrink: 0,
-  },
-
-  // Main
-  main: {
-    flex: 1,
-    height: "100%",
-    padding: "28px 32px",
-    overflowY: "auto" as const,
-    position: "relative" as const,
-    transition: "padding 0.3s ease",
-  },
-
-  // Stats
-  statsBar: {
-    display: "grid",
-    gridTemplateColumns: "repeat(6, 1fr)",
-    gap: 16,
-    marginBottom: 28,
-  },
-  statCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: "18px 16px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 4,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-    border: "1px solid #E8DED4",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-  },
-  statCardHighlight: {
-    backgroundColor: "#FFF0F0",
-    borderColor: "#F4C2C2",
-  },
-  statEmoji: {
-    fontSize: 24,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 700,
-    color: "#2B2B2B",
-    fontFamily: "Playfair Display, serif",
-  },
-  statLabel: {
-    fontSize: 11,
-    color: "#9A9A9A",
-    textTransform: "uppercase" as const,
-    letterSpacing: 0.5,
-  },
-
-  // Table
-  tableWrapper: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    border: "1px solid #E8DED4",
-    overflow: "hidden",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-  },
-  tableHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "20px 24px",
-    borderBottom: "1px solid #E8DED4",
-  },
-  tableTitle: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: "#2B2B2B",
-    fontFamily: "Playfair Display, serif",
-    margin: 0,
-  },
-  orderCount: {
-    fontSize: 13,
-    color: "#9A9A9A",
-  },
-
-  // Order Grid
-  orderGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(320, 1fr))",
-    gap: 0,
-  },
-
-  orderCard: {
-    padding: "20px 24px",
-    borderBottom: "1px solid #F7F3EF",
-    cursor: "pointer",
-    transition: "background 0.15s ease",
-  },
-  orderCardSelected: {
-    backgroundColor: "#FFF9F7",
-    borderLeft: "3px solid #F4C2C2",
-  },
-  orderCardTop: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  orderNumber: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#5A3E36",
-    fontFamily: "monospace",
-  },
-  statusPill: {
-    fontSize: 12,
-    fontWeight: 600,
-    padding: "4px 10px",
-    borderRadius: 20,
-    letterSpacing: 0.3,
-  },
-  cakeName: {
-    fontSize: 16,
-    fontWeight: 600,
-    color: "#2B2B2B",
-    margin: "0 0 8px",
-    fontFamily: "Playfair Display, serif",
-  },
-  orderMeta: {
-    display: "flex",
-    gap: 16,
-    fontSize: 13,
-    color: "#6E6E6E",
-    marginBottom: 8,
-  },
-  orderFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    fontSize: 12,
-    color: "#9A9A9A",
-  },
-  customerName: {
-    fontWeight: 500,
-    color: "#6E6E6E",
-  },
-  customerLine: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 8,
-    marginBottom: 8,
-    padding: "8px 12px",
-    backgroundColor: "rgba(37, 211, 102, 0.08)",
-    borderRadius: 8,
-    border: "1px solid rgba(37, 211, 102, 0.2)",
-  },
-  customerLabel: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#128C7E",
-  },
-  orderNotes: {
-    display: "flex",
-    gap: 10,
-    marginTop: 8,
-    padding: "10px 14px",
-    backgroundColor: "#FDFCFB",
-    borderRadius: 10,
-    border: "1px solid #E8DED4",
-    alignItems: "flex-start",
-  },
-  notesIcon: {
-    fontSize: 16,
-    flexShrink: 0,
-  },
-  notesText: {
-    fontSize: 13,
-    color: "#5A3E36",
-    lineHeight: 1.6,
-    flex: 1,
-    whiteSpace: "pre-wrap",
-  },
-  customerLink: {
-    fontSize: 13,
-    color: "#075E54",
-    textDecoration: "none",
-    fontWeight: 600,
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-  },
-  orderDate: {},
-
-  // Order Actions
-  orderActions: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTop: "1px solid #E8DED4",
-    display: "flex",
-    flexDirection: "column",
-    gap: 10,
-  },
-  actionRow: {
-    display: "flex",
-    flexWrap: "wrap" as const,
-    gap: 8,
-  },
-  actionBtn: {
-    fontSize: 12,
-    fontWeight: 600,
-    padding: "6px 14px",
-    borderRadius: 8,
-    border: "1.5px solid",
-    backgroundColor: "transparent",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  replyBtn: {
-    fontSize: 13,
-    fontWeight: 500,
-    padding: "8px 16px",
-    borderRadius: 8,
-    border: "none",
-    backgroundColor: "#2B2B2B",
-    color: "#FFF9F7",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    alignSelf: "flex-start",
-  },
-
-  // Empty / Loading
-  loading: {
-    padding: 48,
-    textAlign: "center" as const,
-    color: "#9A9A9A",
-    fontSize: 14,
-  },
-  emptyState: {
-    padding: 64,
-    textAlign: "center" as const,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 8,
-  },
-  emptyText: {
-    color: "#6E6E6E",
-    fontSize: 14,
-    margin: 0,
-  },
-  emptySubtext: {
-    color: "#9A9A9A",
-    fontSize: 12,
-    margin: 0,
-  },
-
-  // Reply Modal
-  modalOverlay: {
-    position: "fixed" as const,
-    inset: 0,
-    backgroundColor: "rgba(43,43,43,0.5)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 50,
-  },
-  modal: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 32,
-    width: 440,
-    maxWidth: "90vw",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: "#2B2B2B",
-    margin: "0 0 4px",
-    fontFamily: "Playfair Display, serif",
-  },
-  modalPhone: {
-    fontSize: 13,
-    color: "#9A9A9A",
-    margin: "0 0 16px",
-  },
-  modalTextarea: {
-    width: "100%",
-    padding: "12px 14px",
-    borderRadius: 10,
-    border: "1.5px solid #E8DED4",
-    fontSize: 14,
-    fontFamily: "Inter, sans-serif",
-    resize: "vertical" as const,
-    outline: "none",
-    transition: "border-color 0.2s",
-    boxSizing: "border-box" as const,
-  },
-  modalActions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: 10,
-    marginTop: 16,
-  },
-  modalCancel: {
-    padding: "10px 20px",
-    borderRadius: 8,
-    border: "1px solid #E8DED4",
-    backgroundColor: "transparent",
-    color: "#6E6E6E",
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-  },
-  modalSend: {
-    padding: "10px 24px",
-    borderRadius: 8,
-    border: "none",
-    backgroundColor: "#5A3E36",
-    color: "#FFF9F7",
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "background 0.2s ease",
-  },
-  imagePreview: {
-    marginTop: 12,
-    marginBottom: 12,
-    display: "flex",
-    flexDirection: "row",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  previewImg: {
-    borderRadius: 10,
-    overflow: "hidden",
-    border: "1px solid #E8DED4",
-    objectFit: "cover" as const,
-    backgroundColor: "#F7F3EF",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-  },
-  collapseBtnInternal: {
-    backgroundColor: "transparent",
-    border: "none",
-    color: "#9A9A9A",
-    fontSize: 20,
-    cursor: "pointer",
-    padding: "10px 20px",
-    textAlign: "right" as const,
-    width: "100%",
-    transition: "color 0.2s",
-  },
-  expandBtn: {
-    backgroundColor: "#F4C2C2",
-    color: "#2B2B2B",
-    border: "none",
-    borderRadius: "0 20px 20px 0",
-    padding: "10px 20px",
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: "pointer",
-    position: "absolute" as const,
-    left: 0,
-    bottom: 40,
-    zIndex: 40,
-    boxShadow: "4px 0 12px rgba(0,0,0,0.1)",
-    transition: "all 0.2s ease",
-  },
+  container: { display: "flex", height: "calc(100vh - 64px)", overflow: "hidden", backgroundColor: "#F7F3EF", fontFamily: "'Inter', sans-serif" },
+  sidebar: { backgroundColor: "#FFF9F7", borderRight: "1px solid #F0EBE4", display: "flex", flexDirection: "column", flexShrink: 0, transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)", zIndex: 40, overflow: "hidden" },
+  sidebarHeader: { padding: "32px 28px 24px" },
+  sidebarTitle: { fontFamily: "'Playfair Display', serif", fontSize: "20px", fontWeight: "700", color: "#5A3E36", margin: 0, letterSpacing: "-0.02em" },
+  sidebarSubtitle: { fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#C9A27E", marginTop: "4px", fontWeight: "600" },
+  filterNav: { padding: "0 16px", display: "flex", flexDirection: "column", gap: "4px" },
+  filterSeparator: { fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#9A9A9A", margin: "20px 12px 10px", fontWeight: "700" },
+  filterBtn: { display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "12px", border: "none", backgroundColor: "transparent", color: "#6E6E6E", fontSize: "13px", fontWeight: "500", textAlign: "left", cursor: "pointer", transition: "all 0.2s ease" },
+  filterBtnActive: { backgroundColor: "#F4C2C220", color: "#5A3E36", fontWeight: "700" },
+  filterIcon: { fontSize: "16px", width: "24px", display: "flex", justifyContent: "center" },
+  filterLabel: { flex: 1 },
+  convSection: { marginTop: "auto", padding: "24px 16px 32px", borderTop: "1px solid #F0EBE4" },
+  convTitle: { fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.08em", color: "#9A9A9A", padding: "0 12px", marginBottom: "16px", fontWeight: "700" },
+  convList: { display: "flex", flexDirection: "column", gap: "8px" },
+  convItem: { display: "flex", alignItems: "center", gap: "10px", padding: "8px 12px", borderRadius: "12px", cursor: "pointer", transition: "all 0.2s ease", border: "1px solid transparent" },
+  convAvatar: { width: "32px", height: "32px", borderRadius: "full", backgroundColor: "#E8DED4", color: "#5A3E36", display: "flex", alignItems: "center", justifyCenter: "center", fontSize: "12px", fontWeight: "700" },
+  convInfo: { display: "flex", flexDirection: "column", flex: 1, minWidth: 0 },
+  convName: { fontSize: "13px", fontWeight: "600", color: "#2B2B2B", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  convPhone: { fontSize: "11px", color: "#9A9A9A" },
+  convAction: { padding: "4px 8px", borderRadius: "8px", backgroundColor: "#F7F3EF" },
+  main: { flex: 1, overflowY: "auto", padding: "32px 40px", scrollBehavior: "smooth" },
+  statsBar: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "20px", marginBottom: "40px" },
+  statCard: { backgroundColor: "#FFFFFF", padding: "16px 20px", borderRadius: "20px", boxShadow: "0 2px 10px rgba(90, 62, 54, 0.03)", display: "flex", alignItems: "center", gap: "16px", border: "1px solid #F0EBE4" },
+  statCardHighlight: { backgroundColor: "#FFF9F7", borderColor: "#F4C2C240" },
+  statIconWrapper: { width: "44px", height: "44px", borderRadius: "14px", backgroundColor: "#F7F3EF", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" },
+  statContent: { display: "flex", flexDirection: "column" },
+  statValue: { fontSize: "20px", fontWeight: "800", color: "#2B2B2B", fontFamily: "'Playfair Display', serif" },
+  statLabel: { fontSize: "11px", color: "#9A9A9A", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px", fontWeight: "600" },
+  statEmoji: {},
+  tableWrapper: { maxWidth: "1100px" },
+  tableHeader: { display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "24px", padding: "0 4px" },
+  tableTitle: { fontFamily: "'Playfair Display', serif", fontSize: "24px", color: "#5A3E36", margin: 0 },
+  datePicker: { padding: "8px 16px", borderRadius: "12px", border: "1px solid #E8DED4", fontSize: "13px", color: "#5A3E36", backgroundColor: "#FFFFFF", outline: "none", boxShadow: "0 2px 5px rgba(0,0,0,0.02)" },
+  orderCount: { fontSize: "12px", color: "#C9A27E", fontStyle: "italic", fontFamily: "'Playfair Display', serif" },
+  orderGrid: { display: "flex", flexDirection: "column", gap: "16px" },
+  orderCard: { backgroundColor: "#FFFFFF", borderRadius: "24px", padding: "24px", cursor: "pointer", transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)", border: "1px solid #F0EBE4", position: "relative", overflow: "hidden" },
+  orderCardSelected: { boxShadow: "0 10px 30px rgba(90, 62, 54, 0.08)", borderColor: "#F4C2C2", transform: "translateY(-2px)" },
+  orderCardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
+  orderIdentity: { display: "flex", alignItems: "center", gap: "12px" },
+  orderNumber: { fontSize: "12px", fontWeight: "800", color: "#C9A27E", letterSpacing: "0.05em" },
+  orderTimestamp: { fontSize: "11px", color: "#9A9A9A", paddingLeft: "12px", borderLeft: "1px solid #F0EBE4" },
+  badges: { display: "flex", gap: "8px" },
+  statusBadge: { padding: "6px 14px", borderRadius: "30px", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.05em", border: "1px solid" },
+  paymentBadge: { padding: "6px 12px", borderRadius: "30px", fontSize: "10px", fontWeight: "700", textTransform: "uppercase" },
+  productInfo: { display: "flex", alignItems: "center", gap: "16px", marginBottom: "12px" },
+  cakeNameMain: { fontFamily: "'Playfair Display', serif", fontSize: "20px", color: "#2B2B2B", margin: 0, fontWeight: "700" },
+  customTag: { fontSize: "10px", padding: "4px 8px", borderRadius: "6px", backgroundColor: "#FDF4F4", color: "#D88C8C", fontWeight: "700", textTransform: "uppercase" },
+  orderDetailsCompact: { display: "flex", gap: "24px" },
+  detailItem: { display: "flex", alignItems: "center", gap: "8px" },
+  detailIcon: { fontSize: "14px", opacity: 0.6 },
+  detailText: { fontSize: "13px", color: "#6E6E6E", fontWeight: "500" },
+  expandedContent: { marginTop: "24px", paddingTop: "24px", borderTop: "1px solid #F0EBE4", display: "flex", flexDirection: "column", gap: "20px" },
+  itemList: { display: "flex", flexDirection: "column", gap: "12px", backgroundColor: "#F7F3EF", padding: "16px", borderRadius: "16px" },
+  productRow: { display: "flex", alignItems: "center", gap: "16px" },
+  productThumb: { width: "48px", height: "48px", borderRadius: "10px", overflow: "hidden", border: "1px solid #E8DED4" },
+  productMeta: { flex: 1 },
+  productName: { fontSize: "14px", fontWeight: "700", color: "#2B2B2B", margin: 0 },
+  productSpec: { fontSize: "12px", color: "#9A9A9A", margin: 0 },
+  productQty: { fontSize: "14px", fontWeight: "800", color: "#5A3E36" },
+  addressSection: { padding: "0 4px" },
+  sectionLabel: { fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "#C9A27E", marginBottom: "8px", fontWeight: "700" },
+  addressBox: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" },
+  addressText: { fontSize: "13px", color: "#5A3E36", lineHeight: "1.5" },
+  mapPill: { padding: "6px 14px", borderRadius: "30px", backgroundColor: "#F7F3EF", color: "#C9A27E", fontSize: "11px", fontWeight: "700", textDecoration: "none", border: "1px solid #E8DED4" },
+  notesSection: { backgroundColor: "#FFF9F7", padding: "16px", borderRadius: "16px", border: "1px dotted #F4C2C2" },
+  notesBody: { fontSize: "13px", color: "#5A3E36", fontStyle: "italic", margin: 0 },
+  imagePreview: { marginTop: 12, marginBottom: 12, display: "flex", flexDirection: "row", gap: 10, flexWrap: "wrap" },
+  previewImg: { borderRadius: 10, overflow: "hidden", border: "1px solid #E8DED4", objectFit: "cover", backgroundColor: "#F7F3EF", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" },
+  cardActions: { marginTop: "8px", display: "flex", flexDirection: "column", gap: "16px" },
+  actionGrid: { display: "flex", gap: "8px", flexWrap: "wrap" },
+  actionPill: { padding: "10px 20px", borderRadius: "30px", fontSize: "12px", fontWeight: "700", border: "1px solid", cursor: "pointer", transition: "all 0.2s ease" },
+  footerActions: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "16px", borderTop: "1px solid #F0EBE4" },
+  secondaryAction: { background: "none", border: "none", color: "#C9A27E", fontSize: "12px", fontWeight: "700", cursor: "pointer", textTransform: "uppercase", letterSpacing: "0.05em" },
+  cancelAction: { background: "none", border: "none", color: "#D88C8C", fontSize: "11px", fontWeight: "600", cursor: "pointer" },
+  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(90, 62, 54, 0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
+  modal: { backgroundColor: "#FFFFFF", borderRadius: "32px", padding: "40px", width: "100%", maxWidth: "500px", boxShadow: "0 20px 50px rgba(0,0,0,0.15)", border: "1px solid #F0EBE4" },
+  modalTitle: { fontFamily: "'Playfair Display', serif", fontSize: "24px", color: "#5A3E36", margin: "0 0 8px 0" },
+  modalPhone: { fontSize: "13px", color: "#C9A27E", marginBottom: "24px", fontWeight: "600" },
+  modalTextarea: { width: "100%", padding: "16px", borderRadius: "16px", border: "1px solid #E8DED4", fontSize: "14px", color: "#2B2B2B", outline: "none", resize: "none", backgroundColor: "#F7F3EF", marginBottom: "24px" },
+  modalActions: { display: "flex", justifyContent: "flex-end", gap: "12px" },
+  modalCancel: { padding: "12px 24px", borderRadius: "30px", border: "1px solid #E8DED4", backgroundColor: "transparent", color: "#9A9A9A", fontSize: "13px", fontWeight: "700", cursor: "pointer" },
+  modalSend: { padding: "12px 32px", borderRadius: "30px", border: "none", backgroundColor: "#C9A27E", color: "#FFFFFF", fontSize: "13px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 10px rgba(201, 162, 126, 0.3)" },
+  loading: { padding: 40, textAlign: "center", color: "#C9A27E", fontStyle: "italic" },
+  emptyState: { padding: 80, textAlign: "center" },
+  emptyText: { fontSize: 18, color: "#5A3E36", fontWeight: "700", fontFamily: "'Playfair Display', serif", marginTop: 16 },
+  emptySubtext: { fontSize: 13, color: "#9A9A9A", marginTop: 8 },
 };
-
-// hi
