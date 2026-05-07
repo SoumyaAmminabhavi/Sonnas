@@ -33,12 +33,12 @@ class _PaymentsPageState extends State<PaymentsPage>
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getAllOrdersStream(),
+      stream: SupabaseService.getOrdersStream(),
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
-        final pendingOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING') == 'PENDING').toList();
+        final pendingOrders = orders.where((o) => (o['status'] ?? 'PENDING') == 'PENDING').toList();
         final completedHistory = orders.where((o) {
-          if ((o['paymentStatus'] ?? 'PENDING') != 'COMPLETED') return false;
+          if ((o['status'] ?? 'PENDING') != 'COMPLETED') return false;
           final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
           if (date == null) return false;
           return date.isAfter(DateTime.now().subtract(const Duration(days: 7)));
@@ -52,7 +52,7 @@ class _PaymentsPageState extends State<PaymentsPage>
         double weeklyGross = 0;
         final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
         for (var o in orders) {
-          if ((o['paymentStatus'] ?? 'PENDING') == 'COMPLETED') {
+          if ((o['status'] ?? 'PENDING') == 'COMPLETED') {
             final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
             if (date != null && date.isAfter(sevenDaysAgo)) {
               weeklyGross += double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0;
@@ -294,7 +294,7 @@ class _PaymentsPageState extends State<PaymentsPage>
 
   Widget _buildCompactCard(BuildContext context, Map<String, dynamic> item) {
     final cs = Theme.of(context).colorScheme;
-    final String status = item['paymentStatus'] ?? 'PENDING';
+    final String status = item['status'] ?? 'PENDING';
     final isCompleted = status == 'COMPLETED';
 
     return Container(

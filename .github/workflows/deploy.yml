@@ -36,9 +36,9 @@ jobs:
 
       - name: Deploy to Vercel
         run: |
-          cp vercel.json build/web/
           vercel deploy build/web \
           --prod \
+          --local-config=vercel.json \
           --token=${{ secrets.VERCEL_TOKEN }} \
           --yes
         env:
