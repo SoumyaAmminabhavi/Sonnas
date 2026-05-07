@@ -13,15 +13,7 @@ import { db } from "~/server/db";
 import { sendTextMessage } from "~/server/whatsapp";
 
 const REMINDER_DELAY_MS = 30 * 60 * 1000; // 30 minutes
-const CRON_SECRET = process.env.CRON_SECRET;
-
 export async function GET(request: NextRequest) {
-  // Authenticate cron requests
-  const authHeader = request.headers.get("authorization");
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const cutoff = new Date(Date.now() - REMINDER_DELAY_MS);
 
