@@ -1,10 +1,10 @@
 
 import { db } from "~/server/db";
-import { getServerAuthSession } from "~/server/auth";
+import { auth } from "~/server/auth";
 import { redirect } from "next/navigation";
 
 export default async function DebugDBPage() {
-  const session = await getServerAuthSession();
+  const session = await auth();
   if (!session) redirect("/api/auth/signin");
 
   let orders = [];
