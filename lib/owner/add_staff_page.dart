@@ -34,7 +34,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     'Sales Intelligence': false,
     'Handle Payments': false,
   };
-  List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
+  final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
 
   final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   
@@ -57,33 +57,6 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
   String? _selectedBloodGroup;
 
-  Future<void> _selectDate(BuildContext context) async {
-    if (widget.isReadOnly) return;
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        _dobController.text = "${picked.day}/${picked.month}/${picked.year}";
-      });
-    }
-  }
-
-  Future<void> _selectTime(BuildContext context, TextEditingController controller) async {
-    if (widget.isReadOnly) return;
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        controller.text = picked.format(context);
-      });
-    }
-  }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -456,7 +429,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          value: _selectedSubRole,
+          initialValue: _selectedSubRole,
           decoration: InputDecoration(
             filled: true,
             fillColor: cs.surfaceContainerLow,
@@ -529,29 +502,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     );
   }
 
-  Widget _buildPermissionTile(ColorScheme cs, String title) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: SwitchListTile(
-        value: _permissions[title] ?? false,
-        onChanged: widget.isReadOnly ? null : (val) => setState(() => _permissions[title] = val),
-        title: Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            color: cs.secondary,
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
-        ),
-        activeColor: cs.primary,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
+
 
 
   Widget _buildPermissionsSection(ColorScheme cs) {

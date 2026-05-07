@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -112,7 +111,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(e.key.toString().isNotEmpty ? e.key.toString() : "Uncategorized"),
-                  pw.Text("Rs. ${(e.value ?? 0).toStringAsFixed(0)}"),
+                  pw.Text("Rs. ${e.value.toStringAsFixed(0)}"),
                 ],
               ),
             )),

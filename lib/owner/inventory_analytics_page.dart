@@ -19,7 +19,6 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDesktop = MediaQuery.sizeOf(context).width > 1100;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -349,7 +348,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: selectedCategory,
+                    initialValue: selectedCategory,
                     items: _categories.skip(1).map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
                     onChanged: (val) => setSheetState(() => selectedCategory = val!),
                     decoration: InputDecoration(

@@ -295,17 +295,20 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                         ),
                         trailing: Switch(
                           value: _biometricEnabled,
-                          activeColor: widget.cs.primary,
+                          activeThumbColor: widget.cs.primary,
                           onChanged: (val) async {
                             if (val) {
                               final bool canCheck = await BiometricService.canCheckBiometrics();
                               if (!canCheck) {
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                if (!mounted) return;
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text("No biometric hardware detected on this device."),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
+                                }
                                 return;
                               }
                               final bool success = await BiometricService.authenticate();
@@ -313,18 +316,22 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                                 final bool dbUpdated = await SupabaseService.updateBiometricStatus(widget.staffId, true);
                                 if (dbUpdated && mounted) {
                                   setState(() => _biometricEnabled = true);
+                                  if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text("Biometric Login Enabled! ✅")),
                                   );
+                                  }
                                 }
                               }
                             } else {
                               final bool dbUpdated = await SupabaseService.updateBiometricStatus(widget.staffId, false);
                               if (dbUpdated && mounted) {
                                 setState(() => _biometricEnabled = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text("Biometric Login Disabled")),
                                 );
+                                }
                               }
                             }
                           },

@@ -131,7 +131,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedCategory,
+                  initialValue: selectedCategory,
                   decoration: _inputDecoration("Category"),
                   items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                   onChanged: (val) => setDialogState(() => selectedCategory = val!),

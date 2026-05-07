@@ -108,41 +108,6 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     }
   }
 
-  Future<void> _handleBiometricLogin() async {
-    final bool canCheck = await BiometricService.canCheckBiometrics();
-    if (!canCheck) {
-      _showError("Biometric authentication (Windows Hello / Fingerprint) is not available on this device.");
-      return;
-    }
-
-    final bool authenticated = await BiometricService.authenticate();
-    if (authenticated) {
-      final phone = _loginPhoneController.text.replaceAll(RegExp(r'\D'), '');
-      
-      if (phone.isEmpty || phone.length != 10) {
-        _showError("Please enter your 10-digit mobile number once to link it with Biometrics.");
-        return;
-      }
-
-      setState(() => _isLoading = true);
-      final staff = await SupabaseService.myClient
-          .from('Staff')
-          .select()
-          .eq('phone', phone)
-          .eq('isActivated', true)
-          .maybeSingle();
-
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (staff != null) {
-        await SessionService.saveStaffSession(staff);
-        _routeToDashboard(staff);
-      } else {
-        _showError("No activated staff member found for this number.");
-      }
-    }
-  }
 
   Future<void> _handleVerifyCode() async {
     final phone = _regPhoneController.text.replaceAll(RegExp(r'\D'), '');
@@ -204,13 +169,21 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     final roleStr = (staff['role'] as String? ?? 'SUPPORT').toUpperCase();
     StaffRole mappedRole; 
 
-    if (roleStr.contains('MANAGER')) mappedRole = StaffRole.manager;
-    else if (roleStr.contains('CHEF')) mappedRole = StaffRole.chef;
-    else if (roleStr.contains('SUPPORT')) mappedRole = StaffRole.support;
-    else if (roleStr.contains('CLEANING')) mappedRole = StaffRole.cleaning;
-    else if (roleStr.contains('CASHIER')) mappedRole = StaffRole.cashier;
-    else if (roleStr.contains('DELIVERY')) mappedRole = StaffRole.delivery;
-    else mappedRole = StaffRole.support;
+    if (roleStr.contains('MANAGER')) {
+      mappedRole = StaffRole.manager;
+    } else if (roleStr.contains('CHEF')) {
+      mappedRole = StaffRole.chef;
+    } else if (roleStr.contains('SUPPORT')) {
+      mappedRole = StaffRole.support;
+    } else if (roleStr.contains('CLEANING')) {
+      mappedRole = StaffRole.cleaning;
+    } else if (roleStr.contains('CASHIER')) {
+      mappedRole = StaffRole.cashier;
+    } else if (roleStr.contains('DELIVERY')) {
+      mappedRole = StaffRole.delivery;
+    } else {
+      mappedRole = StaffRole.support;
+    }
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -503,10 +476,10 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
-        return RawKeyboardListener(
+        return KeyboardListener(
           focusNode: FocusNode(),
-          onKey: (event) {
-            if (event is RawKeyDownEvent && 
+          onKeyEvent: (event) {
+            if (event is KeyDownEvent && 
                 event.logicalKey == LogicalKeyboardKey.backspace && 
                 _pinControllers[index].text.isEmpty && 
                 index > 0) {

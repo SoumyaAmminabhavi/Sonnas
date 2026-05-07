@@ -21,6 +21,7 @@ class StaffDashboard extends StatefulWidget {
 class _StaffDashboardState extends State<StaffDashboard> {
   int _selectedIndex = 0;
   late PageController _pageController;
+  final GlobalKey<ManageStaffPageState> _staffManagementKey = GlobalKey<ManageStaffPageState>();
 
   @override
   void initState() {
@@ -35,6 +36,13 @@ class _StaffDashboardState extends State<StaffDashboard> {
   }
 
   void _onItemTapped(int index) {
+    if (_selectedIndex == index) {
+      // If tapping the same tab, check if it's the staff management tab and reset it
+      // We need to find the actual index of the staff management tab
+      // For simplicity, we just try to call reset on the key if it exists
+      _staffManagementKey.currentState?.reset();
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -78,7 +86,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
     }
 
     if (widget.role == StaffRole.manager) {
-      pages.add(ManageStaffPage(cs: cs, isDesktop: isDesktop));
+      pages.add(ManageStaffPage(key: _staffManagementKey, cs: cs, isDesktop: isDesktop));
     }
 
     pages.add(
@@ -204,8 +212,14 @@ class _DashboardContent extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         
         final allOrders = snapshot.data ?? [];
-        final activeOrders = allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').toList();
-        final completedOrdersCount = allOrders.length - activeOrders.length;
+        
+        // --- ROLE BASED FILTERING ---
+        final bool isCleaning = role == StaffRole.cleaning;
+        
+        // Only show production orders to Chefs, Managers, and All-rounders
+        final activeOrders = isCleaning ? [] : allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').toList();
+        
+        final completedOrdersCount = allOrders.length - allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').length;
 
         return ListView(
           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 24, vertical: 32),
@@ -239,6 +253,17 @@ class _DashboardContent extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 final bool useGrid = constraints.maxWidth < 600;
+                
+                // Hide order metrics for cleaning staff
+                if (isCleaning) {
+                  return _MetricCard(
+                    icon: Icons.cleaning_services_outlined, 
+                    value: "Standards", 
+                    label: "HYGIENE COMPLIANCE", 
+                    fullWidth: true
+                  );
+                }
+
                 if (useGrid) {
                   return Column(
                     children: [
@@ -266,8 +291,20 @@ class _DashboardContent extends StatelessWidget {
               }
             ),
             const SizedBox(height: 48),
-            _TaskSectionHeader(title: "Current Tasks", color: cs.primary, isPulse: activeOrders.isNotEmpty),
+            _TaskSectionHeader(
+              title: isCleaning ? "Hygiene Tasks" : "Current Tasks", 
+              color: isCleaning ? Colors.green : cs.primary, 
+              isPulse: !isCleaning && activeOrders.isNotEmpty
+            ),
             const SizedBox(height: 16),
+            if (isCleaning)
+              _MetricCard(
+                icon: Icons.checklist_rtl_rounded, 
+                value: "View All", 
+                label: "TAP OPERATIONS FOR CHECKLIST", 
+                fullWidth: true
+              ),
+            if (!isCleaning)
             LayoutBuilder(
               builder: (context, constraints) {
                 final isDesktopList = constraints.maxWidth > 900;

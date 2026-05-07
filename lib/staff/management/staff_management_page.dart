@@ -1,8 +1,7 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/supabase_service.dart';
-import '../shared/staff_roles.dart';
+import 'staff_add_page.dart';
 
 class ManageStaffPage extends StatefulWidget {
   final ColorScheme cs;
@@ -15,219 +14,90 @@ class ManageStaffPage extends StatefulWidget {
   });
 
   @override
-  State<ManageStaffPage> createState() => _ManageStaffPageState();
+  State<ManageStaffPage> createState() => ManageStaffPageState();
 }
 
-class _ManageStaffPageState extends State<ManageStaffPage> {
-  String _generateJoiningCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No O, 0, I, 1
-    final rnd = Random();
-    return String.fromCharCodes(Iterable.generate(
-        5, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
+class ManageStaffPageState extends State<ManageStaffPage> {
+  bool _isAddingStaff = false;
+  Map<String, dynamic>? _editingStaff;
+
+  void reset() {
+    setState(() {
+      _isAddingStaff = false;
+      _editingStaff = null;
+    });
   }
 
-  void _showAddStaffDialog() {
-    final nameController = TextEditingController();
-    final phoneController = TextEditingController();
-    StaffRole selectedRole = StaffRole.chef;
-    SubRole selectedSubRole = SubRole.none;
-    StaffShift selectedShift = StaffShift.fullDay;
-    String generatedCode = _generateJoiningCode();
-    bool isSubmitting = false;
+  void _showAddStaff({Map<String, dynamic>? staff}) {
+    setState(() {
+      _isAddingStaff = true;
+      _editingStaff = staff;
+    });
+  }
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            "Add New Staff Member",
-            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: "Full Name",
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(
-                    labelText: "Mobile Number",
-                    prefixIcon: Icon(Icons.phone_outlined),
-                    prefixText: "+91 ",
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
-                _buildRoleSelection(widget.cs, selectedRole, (v) => setDialogState(() => selectedRole = v!)),
-                const SizedBox(height: 24),
-                if (selectedRole == StaffRole.chef || selectedRole == StaffRole.support)
-                  DropdownButtonFormField<SubRole>(
-                    value: selectedSubRole,
-                    decoration: InputDecoration(
-                      labelText: "Specialization (Sub-Role)",
-                      prefixIcon: const Icon(Icons.stars_outlined),
-                      filled: true,
-                      fillColor: widget.cs.surfaceContainerLow,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    ),
-                    items: SubRole.values.map((sr) => DropdownMenuItem(
-                      value: sr,
-                      child: Text(sr.displayName),
-                    )).toList(),
-                    onChanged: (v) => setDialogState(() => selectedSubRole = v!),
-                  ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<StaffShift>(
-                  value: selectedShift,
-                  decoration: InputDecoration(
-                    labelText: "Shift",
-                    prefixIcon: const Icon(Icons.access_time),
-                    filled: true,
-                    fillColor: widget.cs.surfaceContainerLow,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  ),
-                  items: StaffShift.values.map((s) => DropdownMenuItem(
-                    value: s,
-                    child: Text(s.displayName),
-                  )).toList(),
-                  onChanged: (v) => setDialogState(() => selectedShift = v!),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: widget.cs.primaryContainer.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: widget.cs.primary.withValues(alpha: 0.2)),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        "JOINING CODE",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2.0,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            generatedCode,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                              color: widget.cs.primary,
-                              letterSpacing: 4.0,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.refresh, size: 20),
-                            onPressed: () => setDialogState(() => generatedCode = _generateJoiningCode()),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: isSubmitting ? null : () async {
-                if (nameController.text.isEmpty || phoneController.text.isEmpty) {
-                  return;
-                }
-                setDialogState(() => isSubmitting = true);
-                try {
-                  await SupabaseService.addStaff({
-                    'name': nameController.text.trim(),
-                    'phone': phoneController.text.trim(),
-                    'role': selectedRole.dbValue,
-                    'sub_role': selectedSubRole.name.toUpperCase(),
-                    'shift': selectedShift.dbValue,
-                    'joiningCode': generatedCode,
-                    'isActivated': false,
-                    'permissions': {}, 
-                    'shiftStart': '09:00',
-                    'shiftEnd': '18:00',
-                    'workingDays': ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-                  });
-                  if (mounted) Navigator.pop(context);
-                } catch (e) {
-                  setDialogState(() => isSubmitting = false);
-                }
-              },
-              child: isSubmitting 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-                : const Text("Add Staff"),
-            ),
-          ],
-        ),
-      ),
-    );
+  void _hideAddStaff() {
+    setState(() {
+      _isAddingStaff = false;
+      _editingStaff = null;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: SupabaseService.getStaffStream(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final staffList = snapshot.data ?? [];
+    if (_isAddingStaff) {
+      return StaffAddPage(
+        cs: widget.cs,
+        staff: _editingStaff,
+        onClose: _hideAddStaff,
+        isNested: true,
+      );
+    }
 
-          return Column(
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.all(widget.isDesktop ? 48.0 : 24.0),
+          child: widget.isDesktop ? Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Padding(
-                padding: EdgeInsets.all(widget.isDesktop ? 48.0 : 24.0),
-                child: widget.isDesktop ? Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildHeaderInfo(),
-                    _buildAddButton(),
-                  ],
-                ) : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeaderInfo(),
-                    const SizedBox(height: 16),
-                    SizedBox(width: double.infinity, child: _buildAddButton()),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: widget.isDesktop ? 48 : 24),
-                  itemCount: staffList.length,
-                  itemBuilder: (context, index) {
-                    final staff = staffList[index];
-                    return _StaffCard(staff: staff, cs: widget.cs, isDesktop: widget.isDesktop);
-                  },
-                ),
-              ),
+              _buildHeaderInfo(),
+              _buildAddButton(),
             ],
-          );
-        },
-      ),
+          ) : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeaderInfo(),
+              const SizedBox(height: 16),
+              SizedBox(width: double.infinity, child: _buildAddButton()),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: SupabaseService.getStaffStream(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final staffList = snapshot.data ?? [];
+
+              return ListView.builder(
+                padding: EdgeInsets.symmetric(horizontal: widget.isDesktop ? 48 : 24),
+                itemCount: staffList.length,
+                itemBuilder: (context, index) {
+                  final staff = staffList[index];
+                  return _StaffCard(
+                    staff: staff, 
+                    cs: widget.cs, 
+                    isDesktop: widget.isDesktop,
+                    onTap: () => _showAddStaff(staff: staff),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -261,7 +131,7 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
 
   Widget _buildAddButton() {
     return ElevatedButton.icon(
-      onPressed: _showAddStaffDialog,
+      onPressed: () => _showAddStaff(),
       icon: const Icon(Icons.add),
       label: const Text("Add Staff Member"),
       style: ElevatedButton.styleFrom(
@@ -272,66 +142,20 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
       ),
     );
   }
-
-  Widget _buildRoleSelection(ColorScheme cs, StaffRole selected, ValueChanged<StaffRole?> onChanged) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "CATEGORY",
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: cs.primary.withValues(alpha: 0.7),
-            letterSpacing: 1.5,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: StaffRole.values.where((r) => r != StaffRole.manager).map((role) {
-              final isSelected = selected == role;
-              IconData icon;
-              switch (role) {
-                case StaffRole.manager: icon = Icons.badge_outlined; break;
-                case StaffRole.chef: icon = Icons.cookie_outlined; break;
-                case StaffRole.support: icon = Icons.volunteer_activism_outlined; break;
-                case StaffRole.cleaning: icon = Icons.cleaning_services_outlined; break;
-                case StaffRole.cashier: icon = Icons.point_of_sale_outlined; break;
-                case StaffRole.delivery: icon = Icons.motorcycle_outlined; break;
-              }
-
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ChoiceChip(
-                  label: Text(role.displayName),
-                  avatar: Icon(icon, size: 16, color: isSelected ? Colors.white : cs.primary),
-                  selected: isSelected,
-                  onSelected: (val) => onChanged(role),
-                  selectedColor: cs.primary,
-                  labelStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : cs.secondary,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class _StaffCard extends StatelessWidget {
   final Map<String, dynamic> staff;
   final ColorScheme cs;
   final bool isDesktop;
+  final VoidCallback onTap;
 
-  const _StaffCard({required this.staff, required this.cs, required this.isDesktop});
+  const _StaffCard({
+    required this.staff, 
+    required this.cs, 
+    required this.isDesktop,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -342,163 +166,129 @@ class _StaffCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: cs.primary.withValues(alpha: 0.05),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
-                child: Text(
-                  staff['name']?[0]?.toUpperCase() ?? "?",
-                  style: GoogleFonts.notoSerif(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: cs.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            staff['name'] ?? "Unknown",
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: cs.secondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _StatusBadge(isActivated: isActivated, cs: cs),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(Icons.phone_outlined, size: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
-                        const SizedBox(width: 4),
-                        Text(
-                          staff['phone'] ?? "No phone",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: cs.onSurfaceVariant.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (isDesktop) ...[
-                Text(
-                  shift,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: cs.secondary.withValues(alpha: 0.5),
-                  ),
-                ),
-                const SizedBox(width: 16),
-              ],
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                onPressed: () => _confirmDelete(context),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: cs.primary.withValues(alpha: 0.05),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          if (!isDesktop) ...[
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: Divider(height: 1, thickness: 0.5),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.badge_outlined, size: 12, color: cs.primary),
-                    const SizedBox(width: 4),
-                    Text(
-                      "$role • $subRole",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 24,
+                    backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
+                    backgroundImage: staff['imageUrl'] != null ? NetworkImage(staff['imageUrl']) : null,
+                    child: staff['imageUrl'] == null ? Text(
+                      staff['name']?[0]?.toUpperCase() ?? "?",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: cs.primary,
                       ),
+                    ) : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                staff['name'] ?? "Unknown",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: cs.secondary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _StatusBadge(isActivated: isActivated, cs: cs),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.phone_outlined, size: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
+                            const SizedBox(width: 4),
+                            Text(
+                              staff['phone'] ?? "No phone",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
+                  ),
+                  if (isDesktop) ...[
+                    Text(
+                      shift,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
                   ],
-                ),
-                Text(
-                  shift,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: cs.secondary.withValues(alpha: 0.5),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                    onPressed: () => _confirmDelete(context),
                   ),
-                ),
-              ],
-            ),
-          ] else ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const SizedBox(width: 64), // Align with text
-                Icon(Icons.badge_outlined, size: 12, color: cs.primary),
-                const SizedBox(width: 4),
-                Text(
-                  "$role • $subRole",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: cs.primary,
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Divider(height: 1, thickness: 0.5),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.badge_outlined, size: 12, color: cs.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        "$role • $subRole",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ],
-          if (!isActivated) ...[
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: cs.secondaryContainer.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
+                  if (!isActivated)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4)),
+                      child: Text("CODE: ${staff['joiningCode']}", style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: cs.primary)),
+                    ),
+                  Icon(Icons.arrow_forward_ios_rounded, size: 10, color: cs.primary.withValues(alpha: 0.3)),
+                ],
               ),
-              child: Text(
-                "JOINING CODE: ${staff['joiningCode']}",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: cs.secondary,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -506,15 +296,15 @@ class _StaffCard extends StatelessWidget {
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text("Delete Staff Member?"),
         content: Text("Are you sure you want to remove ${staff['name']}? This action cannot be undone."),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
               await SupabaseService.deleteStaff(staff['id']);
-              if (context.mounted) Navigator.pop(context);
+              if (ctx.mounted) Navigator.pop(ctx);
             }, 
             child: const Text("Delete", style: TextStyle(color: Colors.redAccent))
           ),
@@ -548,7 +338,7 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         isActivated ? "ACTIVE" : "PENDING",
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
+          fontSize: 8,
           fontWeight: FontWeight.bold,
           color: isActivated ? Colors.green.shade700 : Colors.orange.shade700,
         ),

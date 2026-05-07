@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'order_details_page.dart';
 import '../services/supabase_service.dart';

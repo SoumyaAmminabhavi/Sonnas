@@ -202,7 +202,7 @@ class StaffInventoryPage extends StatelessWidget {
                   builder: (context, snapshot) {
                     final items = snapshot.data ?? [];
                     return DropdownButtonFormField<String>(
-                      value: selectedItem?['id'],
+                      initialValue: selectedItem?['id'],
                       decoration: const InputDecoration(labelText: "Select Ingredient"),
                       items: items.map((item) => DropdownMenuItem(
                         value: item['id'] as String,
