@@ -500,6 +500,12 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
               ),
               keyboardType: TextInputType.text,
               textCapitalization: TextCapitalization.characters,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                TextInputFormatter.withFunction((oldValue, newValue) {
+                  return newValue.copyWith(text: newValue.text.toUpperCase());
+                }),
+              ],
               maxLength: 1,
               decoration: InputDecoration(
                 counterText: "",
