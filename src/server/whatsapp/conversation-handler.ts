@@ -1722,7 +1722,7 @@ async function sendOrderStatus(to: string) {
   await sendTextMessage(to, statusText);
 }
 
-// ─── Handle confirmation ───────────────────────────────────────────────────
+// ─── Handle confirmation (Robust Version v2) ───────────────────────────────
 
 async function handleConfirmation(
   msg: IncomingMessage,
