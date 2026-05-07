@@ -1300,7 +1300,6 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
     const isAdding = !!(msg.interactiveId?.startsWith("qty_") ?? msg.text ?? (msg.interactiveId === "btn_add_to_cart"));
 
     if (isAdding && hasActiveSelection) {
-      const quantity = convo.selectedQuantity ?? 1;
       await addToCart(msg.from, {
         cakeName: convo.selectedCake!,
         size: convo.selectedSize!,
@@ -1308,36 +1307,43 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         quantity: quantity
       });
 
-      // Re-fetch convo to get updated cart
-      const updatedConvo = convoCache.get(msg.from) ?? convo;
+      // Force fresh fetch to ensure cart is populated correctly
+      const updatedConvo = await getConversation(msg.from);
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
       const cartButtons = [
-        { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
-        { id: "btn_menu", title: "\u2795 Add More" },
+        { id: "btn_checkout", title: "💳 Place My Order" },
+        { id: "btn_menu", title: "➕ Add More" },
       ];
       
       if (updatedConvo.cart && updatedConvo.cart.length > 1) {
-        cartButtons.push({ id: "btn_remove_last", title: "\u274c Remove Last" });
+        cartButtons.push({ id: "btn_remove_last", title: "❌ Remove Last" });
       } else {
-        cartButtons.push({ id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" });
+        cartButtons.push({ id: "btn_clear_cart", title: "🔄 Start Fresh" });
       }
 
       await Promise.all([
-        sendTextMessage(msg.from, `\u2728 *${convo.selectedCake}* added to your order!`),
+        sendTextMessage(msg.from, `✨ *${convo.selectedCake}* added to your order!`),
         sendInteractiveButtons(msg.from, summary, cartButtons),
-        updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null, selectedQuantity: null })
+        updateState(msg.from, "IDLE", { 
+          selectedCake: null, 
+          selectedSize: null, 
+          selectedPrice: null, 
+          selectedQuantity: null 
+        })
       ]);
       return;
     }
 
     // Case 2: "Confirm Order" (btn_checkout) clicked from the cart summary (no active selection)
     if (isCheckout) {
-      const updatedConvo = convoCache.get(msg.from) ?? convo;
+      console.log(`[WhatsApp] CHECKOUT_START: ${msg.from}`);
+      const updatedConvo = await getConversation(msg.from);
       const cart = updatedConvo.cart ?? [];
 
       if (cart.length === 0) {
-        await sendTextMessage(msg.from, "Your selection is empty! Let me show you our cakes \ud83e\uddc1");
+        console.warn(`[WhatsApp] CHECKOUT_FAIL: Empty cart for ${msg.from}`);
+        await sendTextMessage(msg.from, "Your selection is empty! Let me show you our cakes 🧁");
         await sendMenu(msg.from);
         return;
       }
