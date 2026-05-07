@@ -49,17 +49,22 @@ export const whatsappRouter = createTRPCRouter({
 
       console.log(`[Admin] Found ${orders.length} orders in DB.`);
 
-      // Fetch all cakes to map images
-      const cakes = await ctx.db.cake.findMany({
-        select: { name: true, image: true }
-      });
-      const cakeImageMap = new Map(cakes.map(c => [c.name, c.image]));
+      // Fetch all cakes to map images (don't let this fail the whole query)
+      let cakeImageMap = new Map<string, string>();
+      try {
+        const cakes = await ctx.db.cake.findMany({
+          select: { name: true, image: true }
+        });
+        cakeImageMap = new Map(cakes.map(c => [c.name, c.image || ""]));
+      } catch (e) {
+        console.error("[Admin] Failed to fetch cakes for images:", e);
+      }
 
       const ordersWithImages = orders.map(order => ({
         ...order,
-        items: order.items.map(item => ({
+        items: (order.items || []).map(item => ({
           ...item,
-          image: cakeImageMap.get(item.cakeName)
+          image: cakeImageMap.get(item.cakeName) || null
         }))
       }));
 
@@ -204,7 +209,11 @@ export const whatsappRouter = createTRPCRouter({
       ctx.db.whatsAppOrder.count(),
       ctx.db.whatsAppOrder.count({ where: { status: "PENDING" } }),
       ctx.db.whatsAppOrder.count({
-        where: { createdAt: { gte: today } },
+        where: { 
+          createdAt: { 
+            gte: new Date(new Date().setHours(0, 0, 0, 0)) 
+          } 
+        },
       }),
       ctx.db.whatsAppConversation.count(),
       ctx.db.whatsAppOrder.findMany({
