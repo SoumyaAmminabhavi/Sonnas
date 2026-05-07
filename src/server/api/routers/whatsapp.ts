@@ -55,16 +55,16 @@ export const whatsappRouter = createTRPCRouter({
         const cakes = await ctx.db.cake.findMany({
           select: { name: true, image: true }
         });
-        cakeImageMap = new Map(cakes.map(c => [c.name, c.image || ""]));
+        cakeImageMap = new Map(cakes.map(c => [c.name, c.image ?? ""]));
       } catch (e) {
         console.error("[Admin] Failed to fetch cakes for images:", e);
       }
 
       const ordersWithImages = orders.map(order => ({
         ...order,
-        items: (order.items || []).map(item => ({
+        items: (order.items ?? []).map(item => ({
           ...item,
-          image: cakeImageMap.get(item.cakeName) || null
+          image: cakeImageMap.get(item.cakeName) ?? null
         }))
       }));
 
