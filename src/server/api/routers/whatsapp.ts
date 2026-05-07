@@ -24,6 +24,10 @@ export const whatsappRouter = createTRPCRouter({
       if (input.status) where.status = input.status;
       if (input.customOnly) where.isCustom = true;
 
+      console.log(`[Admin] Fetching orders with filter:`, where);
+      const dbUrl = process.env.DATABASE_URL?.split('@')[1] ?? "unknown";
+      console.log(`[Admin] Using DB: ${dbUrl}`);
+
       const orders = await ctx.db.whatsAppOrder.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -42,6 +46,8 @@ export const whatsappRouter = createTRPCRouter({
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
       });
+
+      console.log(`[Admin] Found ${orders.length} orders in DB.`);
 
       // Fetch all cakes to map images
       const cakes = await ctx.db.cake.findMany({
@@ -215,6 +221,8 @@ export const whatsappRouter = createTRPCRouter({
         },
       }),
     ]);
+
+    console.log(`[Admin Stats] Total: ${totalOrders}, Today: ${todaysOrders}, Convos: ${totalConversations}`);
 
     // Calculate revenue (parse ₹ prices)
     const totalRevenue = allOrders.reduce((sum, o) => {
