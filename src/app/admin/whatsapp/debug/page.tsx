@@ -1,11 +1,13 @@
 
 import { db } from "~/server/db";
-import { auth } from "~/server/auth";
-import { redirect } from "next/navigation";
 
-export default async function DebugDBPage() {
-  const session = await auth();
-  if (!session) redirect("/api/auth/signin");
+export default async function DebugDBPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pw?: string }>;
+}) {
+  const { pw } = await searchParams;
+  if (pw !== "israr123") return <div style={{ padding: 40 }}>🚫 Access Denied. Use the secret key.</div>;
 
   let orders: unknown[] = [];
   let error: string | null = null;
