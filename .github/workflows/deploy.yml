@@ -31,9 +31,6 @@ jobs:
       - name: Build Flutter Web
         run: flutter build web --release --base-href "/"
 
-      - name: Copy Vercel Config
-        run: cp vercel.json build/web/
-
       - name: Install Vercel CLI
         run: npm install -g vercel
 
@@ -41,6 +38,7 @@ jobs:
         run: |
           vercel deploy build/web \
           --prod \
+          --local-config=vercel.json \
           --token=${{ secrets.VERCEL_TOKEN }} \
           --yes
         env:
