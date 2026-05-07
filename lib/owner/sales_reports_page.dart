@@ -226,7 +226,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 ),
               Expanded(
                 child: StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: SupabaseService.getOrdersStream(),
+                  stream: SupabaseService.getAllOrdersStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
                       return _buildSkeleton(cs);

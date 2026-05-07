@@ -94,21 +94,57 @@ class SupabaseService {
     }
   }
 
-  // Real-time stream for WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
-  static Stream<List<Map<String, dynamic>>> getOrdersStream() {
+  // Real-time stream for all orders (Used by Analytics - does not fetch items to save bandwidth)
+  static Stream<List<Map<String, dynamic>>> getAllOrdersStream() {
     return client
         .from('WhatsAppOrder')
         .stream(primaryKey: ['id'])
         .map((data) {
           final list = data.map((e) => Map<String, dynamic>.from(e)).toList();
-          // Sort by createdAt descending in Dart to be 100% sure
-          list.sort((a, b) {
-            final dateA = DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime(2000);
-            final dateB = DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime(2000);
-            return dateB.compareTo(dateA);
-          });
           return list;
         });
+  }
+
+  // Real-time stream for Recent Orders (Matching Prisma 'WhatsAppOrder') - Used by UI
+  static Stream<List<Map<String, dynamic>>> getRecentOrdersStream() async* {
+    final stream = client
+        .from('WhatsAppOrder')
+        .stream(primaryKey: ['id'])
+        .order('createdAt', ascending: false)
+        .limit(100);
+
+    await for (final data in stream) {
+      if (data.isEmpty) {
+        yield [];
+        continue;
+      }
+      
+      final orderIds = data.map((e) => e['id'] as String).toList();
+      
+      try {
+        final items = await client
+            .from('WhatsAppOrderItem')
+            .select()
+            .inFilter('orderId', orderIds);
+            
+        final itemsMap = <String, List<Map<String, dynamic>>>{};
+        for (final item in items) {
+          final orderId = item['orderId'] as String;
+          itemsMap.putIfAbsent(orderId, () => []).add(item);
+        }
+        
+        final enrichedData = data.map((order) {
+          final map = Map<String, dynamic>.from(order);
+          map['items'] = itemsMap[order['id']] ?? [];
+          return map;
+        }).toList();
+        
+        yield enrichedData;
+      } catch (e) {
+        debugPrint('Error fetching items for stream: $e');
+        yield data.map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    }
   }
 
 
@@ -119,7 +155,7 @@ class SupabaseService {
     int? targetMonth,
     int? targetYear,
   }) {
-    return getOrdersStream().map((orders) {
+    return getAllOrdersStream().map((orders) {
       final Map<int, double> salesData = {};
       final now = DateTime.now();
       final year = targetYear ?? now.year;
@@ -184,7 +220,7 @@ class SupabaseService {
 
   // Real-time Dashboard Stats
   static Stream<Map<String, dynamic>> getDashboardStatsStream() {
-    return getOrdersStream().map((orders) {
+    return getAllOrdersStream().map((orders) {
       double totalRevenue = 0;
       final Set<String> customers = {};
       

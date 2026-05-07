@@ -37,7 +37,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
   }
 
   void _setupOrderListener() {
-    _orderSubscription = SupabaseService.getOrdersStream().listen((orders) {
+    _orderSubscription = SupabaseService.getRecentOrdersStream().listen((orders) {
       if (_lastOrderCount != null && orders.length > _lastOrderCount!) {
         // New order received!
         final newOrder = orders.first;
@@ -466,7 +466,7 @@ class _MainContent extends StatelessWidget {
 
           // Orders List
           StreamBuilder<List<Map<String, dynamic>>>(
-            stream: SupabaseService.getOrdersStream(),
+            stream: SupabaseService.getRecentOrdersStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Shimmer.fromColors(

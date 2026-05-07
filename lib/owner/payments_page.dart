@@ -33,7 +33,7 @@ class _PaymentsPageState extends State<PaymentsPage>
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getOrdersStream(),
+      stream: SupabaseService.getAllOrdersStream(),
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
         final pendingOrders = orders.where((o) => (o['status'] ?? 'PENDING') == 'PENDING').toList();

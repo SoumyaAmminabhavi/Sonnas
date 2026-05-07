@@ -9,7 +9,7 @@ class KitchenPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getOrdersStream(),
+      stream: SupabaseService.getRecentOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -146,13 +146,14 @@ class KitchenOrderCard extends StatelessWidget {
             
             // Items List
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: SupabaseService.fetchOrderItems(order['id']),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)));
+              child: Builder(
+                builder: (context) {
+                  final items = (order['items'] as List<dynamic>?)?.map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Text("No items", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.4))),
+                    );
                   }
-                  final items = snapshot.data ?? [];
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: items.length,

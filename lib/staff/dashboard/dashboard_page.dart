@@ -207,7 +207,7 @@ class _DashboardContent extends StatelessWidget {
     }
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getOrdersStream(),
+      stream: SupabaseService.getRecentOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         
