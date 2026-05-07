@@ -143,6 +143,11 @@ function WhatsAppAdminContent() {
   const searchParams = useSearchParams();
   const isSidebarCollapsed = searchParams.get("sidebar") === "collapsed";
 
+  const { data: settings, refetch: refetchSettings } = api.whatsapp.getSettings.useQuery();
+  const updateSetting = api.whatsapp.updateSetting.useMutation({
+    onSuccess: () => refetchSettings(),
+  });
+
   const statsQuery = api.whatsapp.getStats.useQuery(undefined, {
     refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
   });
@@ -153,6 +158,20 @@ function WhatsAppAdminContent() {
     }, {
       refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
     });
+  
+  // ── Audio Alert Logic ───────────────────────────────────────────────────
+  const lastOrderCount = React.useRef(0);
+  React.useEffect(() => {
+    if (ordersData?.orders && ordersData.orders.length > lastOrderCount.current) {
+      if (lastOrderCount.current > 0) {
+        // Play soft notification chime
+        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3");
+        audio.volume = 0.4;
+        void audio.play().catch(() => null);
+      }
+      lastOrderCount.current = ordersData.orders.length;
+    }
+  }, [ordersData?.orders]);
   
   const { data: conversations, refetch: refetchConvos } = 
     api.whatsapp.getConversations.useQuery({ limit: 50 }, {
@@ -328,6 +347,32 @@ function WhatsAppAdminContent() {
             )}
           </div>
         </div>
+
+        <div style={styles.sidebarFooter}>
+           <div style={styles.maintenanceRow}>
+              <div style={styles.maintenanceInfo}>
+                 <span style={styles.maintenanceLabel}>Maintenance Mode</span>
+                 <span style={styles.maintenanceStatus}>
+                    {settings?.MAINTENANCE_MODE === "true" ? "Bot Paused" : "Bot Active"}
+                 </span>
+              </div>
+              <button
+                onClick={() => updateSetting.mutate({ 
+                  key: "MAINTENANCE_MODE", 
+                  value: settings?.MAINTENANCE_MODE === "true" ? "false" : "true" 
+                })}
+                style={{
+                  ...styles.toggleBtn,
+                  backgroundColor: settings?.MAINTENANCE_MODE === "true" ? "#D88C8C" : "#E8DED4",
+                }}
+              >
+                <div style={{
+                  ...styles.toggleCircle,
+                  transform: settings?.MAINTENANCE_MODE === "true" ? "translateX(20px)" : "translateX(0)",
+                }} />
+              </button>
+           </div>
+        </div>
       </aside>
 
       {/* ─── Main Content ────────────────────────────────────── */}
@@ -336,8 +381,28 @@ function WhatsAppAdminContent() {
           <StatCard label="Today's Orders" value={stats?.todaysOrders ?? 0} icon="🧁" />
           <StatCard label="Pending Confirmation" value={stats?.pendingOrders ?? 0} icon="⌛" highlight />
           <StatCard label="Revenue" value={`₹${(stats?.totalRevenue ?? 0).toLocaleString("en-IN")}`} icon="✨" />
+          
+          {/* Revenue Trend Chart */}
+          <div style={styles.trendCard}>
+            <div style={styles.trendHeader}>
+               <span style={styles.statLabel}>7-Day Trend</span>
+               <span style={styles.trendIndicator}>GROWTH</span>
+            </div>
+            <div style={styles.trendChart}>
+               {stats?.revenueTrend?.map((day, i) => {
+                 const max = Math.max(...stats.revenueTrend.map(d => d.revenue), 100);
+                 const height = (day.revenue / max) * 100;
+                 return (
+                   <div key={i} style={styles.trendColumn} title={`${day.date}: ₹${day.revenue}`}>
+                      <div style={{ ...styles.trendBar, height: `${Math.max(height, 5)}%` }} />
+                      <span style={styles.trendDate}>{day.date.split(' ')[0]}</span>
+                   </div>
+                 );
+               })}
+            </div>
+          </div>
+
           <StatCard label="Guests" value={stats?.totalConversations ?? 0} icon="👥" />
-          <StatCard label="Most Desired" value={stats?.popularCake ?? "N/A"} icon="⭐" isText />
         </div>
 
         <div style={styles.tableWrapper}>
@@ -718,5 +783,22 @@ const styles: Record<string, React.CSSProperties> = {
   loading: { padding: 40, textAlign: "center", color: "#C9A27E", fontStyle: "italic" },
   emptyState: { padding: 80, textAlign: "center" },
   emptyText: { fontSize: 18, color: "#5A3E36", fontWeight: "700", fontFamily: "'Playfair Display', serif", marginTop: 16 },
-  emptySubtext: { fontSize: 13, color: "#9A9A9A", marginTop: 8 },
+  emptySubtext: { fontSize: "12px", color: "#9A9A9A", marginTop: "4px" },
+
+  // New Styles for Sprint 6
+  sidebarFooter: { padding: "20px 24px", borderTop: "1px solid #F0EBE4", marginTop: "auto" },
+  maintenanceRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" },
+  maintenanceInfo: { display: "flex", flexDirection: "column" },
+  maintenanceLabel: { fontSize: "11px", fontWeight: "700", color: "#5A3E36", textTransform: "uppercase", letterSpacing: "0.05em" },
+  maintenanceStatus: { fontSize: "10px", color: "#9A9A9A", marginTop: "2px" },
+  toggleBtn: { width: "42px", height: "22px", borderRadius: "20px", border: "none", position: "relative", cursor: "pointer", transition: "all 0.3s ease", padding: "3px" },
+  toggleCircle: { width: "16px", height: "16px", borderRadius: "50%", backgroundColor: "#FFF", transition: "all 0.3s ease", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" },
+  
+  trendCard: { backgroundColor: "#FFF", borderRadius: "20px", padding: "18px 20px", border: "1px solid #F0EBE4", display: "flex", flexDirection: "column", gap: "10px", flex: 1, minWidth: "180px" },
+  trendHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  trendIndicator: { fontSize: "8px", fontWeight: "800", color: "#5A8F5A", backgroundColor: "#F4F9F4", padding: "2px 6px", borderRadius: "4px" },
+  trendChart: { display: "flex", alignItems: "flex-end", gap: "6px", height: "40px", padding: "2px 0" },
+  trendColumn: { display: "flex", flexDirection: "column", alignItems: "center", flex: 1, gap: "4px" },
+  trendBar: { width: "100%", backgroundColor: "#E8DED4", borderRadius: "2px", transition: "height 0.6s ease" },
+  trendDate: { fontSize: "7px", color: "#9A9A9A", fontWeight: "600" },
 };

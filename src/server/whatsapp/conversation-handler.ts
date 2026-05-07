@@ -521,6 +521,17 @@ async function createCustomOrder(
   });
 }
 
+async function isBotPaused(): Promise<boolean> {
+  try {
+    const setting = await db.whatsAppSetting.findUnique({
+      where: { key: "MAINTENANCE_MODE" }
+    });
+    return setting?.value === "true";
+  } catch {
+    return false;
+  }
+}
+
 // ─── Main handler ──────────────────────────────────────────────────────────
 
 export async function handleIncomingMessage(msg: IncomingMessage) {
@@ -537,6 +548,14 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   const processPromise = existingLock.then(async () => {
     try {
+      // Check Maintenance Mode
+      if (await isBotPaused() && msg.text?.toLowerCase() !== "status") {
+        await sendTextMessage(
+          msg.from, 
+          "\ud83c\udf38 *Sonna's Patisserie is currently resting.*\n\nOur artisan kitchen is taking a short break to prepare for upcoming collections. We'll be back shortly to delight you! \u2728\n\n_If you have an existing order, don't worry \u2014 our team is still working on it!_"
+        );
+        return;
+      }
       await _internalHandleMessage(msg);
     } catch (err) {
       console.error(`[WhatsApp] Processing error for ${phone}:`, err);
@@ -791,10 +810,38 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   if (interactiveId === "btn_pickup") {
     await Promise.all([
       updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: "🏪 Store Pickup" }),
-      sendTextMessage(msg.from, "\u2728 *Store pickup selected!*\n\n\u2728 *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! \ud83c\udf89\")_\n\nReply *Skip* if no message needed.")
+      sendInteractiveButtons(
+        msg.from,
+        "\u2728 *Store Pickup Selected*\n\nWhat message would you like on your cake?\n\nReply *Skip* if none.",
+        [{ id: "btn_back", title: "⬅️ Back" }]
+      )
     ]);
     return;
   }
+
+  if (interactiveId === "saved_addr_yes") {
+    try {
+      const lastOrder = await db.whatsAppOrder.findFirst({
+        where: { phone: msg.from, status: { not: "CANCELLED" }, address: { not: null } },
+        orderBy: { createdAt: "desc" },
+        select: { address: true }
+      });
+      if (lastOrder?.address) {
+        await Promise.all([
+          updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: lastOrder.address }),
+          sendInteractiveButtons(
+            msg.from,
+            `\u2705 *Address set!* (\ud83d\udccd Previous used)\n\n\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?`,
+            [{ id: "btn_back", title: "⬅️ Back" }]
+          )
+        ]);
+        return;
+      }
+    } catch (err) {
+      console.error("[WhatsApp] Error applying saved address:", err);
+    }
+  }
+
   if (interactiveId === "btn_delivery") {
     await Promise.all([
       updateState(msg.from, "ASKING_ADDRESS"),
@@ -1295,7 +1342,32 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         return;
       }
 
-      // HIGH-13: Offer pickup or delivery choice
+      // Check for saved address
+      try {
+        const lastOrder = await db.whatsAppOrder.findFirst({
+          where: { phone: msg.from, status: { not: "CANCELLED" }, address: { not: null } },
+          orderBy: { createdAt: "desc" },
+          select: { address: true }
+        });
+
+        if (lastOrder?.address && !lastOrder.address.includes("Store Pickup")) {
+          await sendInteractiveButtons(
+            msg.from,
+            `\ud83d\udccd *Would you like to use your previous address?*\n\n_${lastOrder.address.split('\n')[0]}_`,
+            [
+              { id: `saved_addr_yes`, title: "\u2705 Use Previous" },
+              { id: "btn_delivery", title: "\ud83d\ude9a New Address" },
+              { id: "btn_pickup", title: "\ud83c\udfea Store Pickup" },
+            ]
+          );
+          await updateState(msg.from, "ASKING_ADDRESS");
+          return;
+        }
+      } catch (err) {
+        console.error("[WhatsApp] Error fetching saved address:", err);
+      }
+
+      // Default: Offer pickup or delivery choice
       await Promise.all([
         updateState(msg.from, "ASKING_ADDRESS"),
         sendInteractiveButtons(

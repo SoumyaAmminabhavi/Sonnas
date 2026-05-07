@@ -222,6 +222,39 @@ export const whatsappRouter = createTRPCRouter({
       return sum + (isNaN(amount) ? 0 : amount);
     }, 0);
 
+    // Calculate 7-day revenue trend
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+
+    const revenueTrend = await Promise.all(
+      last7Days.map(async (date) => {
+        const nextDay = new Date(date);
+        nextDay.setDate(date.getDate() + 1);
+
+        const dayOrders = await ctx.db.whatsAppOrder.findMany({
+          where: {
+            createdAt: { gte: date, lt: nextDay },
+            paymentStatus: "PAID",
+          },
+          select: { totalPrice: true },
+        });
+
+        const dayRevenue = dayOrders.reduce((sum, o) => {
+          const amount = parseInt((o.totalPrice ?? "0").replace(/[^\d]/g, ""), 10);
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0);
+
+        return {
+          date: date.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric' }),
+          revenue: dayRevenue,
+        };
+      })
+    );
+
     // Find most popular cake
     const cakeCounts: Record<string, number> = {};
     allOrders.forEach((o) => {
@@ -240,8 +273,26 @@ export const whatsappRouter = createTRPCRouter({
       totalConversations,
       totalRevenue,
       popularCake,
+      revenueTrend,
     };
   }),
+
+  // ─── Settings ──────────────────────────────────────────────────────────
+
+  getSettings: protectedProcedure.query(async ({ ctx }) => {
+    const settings = await ctx.db.whatsAppSetting.findMany();
+    return settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {} as Record<string, string>);
+  }),
+
+  updateSetting: protectedProcedure
+    .input(z.object({ key: z.string(), value: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.whatsAppSetting.upsert({
+        where: { key: input.key },
+        update: { value: input.value },
+        create: { key: input.key, value: input.value },
+      });
+    }),
 
   // ─── Send message from admin ──────────────────────────────────────────
 
