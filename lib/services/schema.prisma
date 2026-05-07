@@ -129,6 +129,8 @@ model WhatsAppCartItem {
     createdAt      DateTime @default(now())
     
     conversation   WhatsAppConversation @relation(fields: [phone], references: [phone], onDelete: Cascade)
+
+    @@index([phone])
 }model WhatsAppOrder {
     id             String   @id @default(cuid())
     orderNumber    String   @unique
@@ -139,17 +141,35 @@ model WhatsAppCartItem {
     address        String?
     notes        String?
     status       String   @default("PENDING")
+    paymentStatus  String   @default("PENDING")
+    razorpayOrderId String?
+    paymentId      String?
+    paymentLink    String?
     
     isCustom     Boolean  @default(false)
     customImageUrl String?
     
     deliveryDate   String?
     deliveryTime   String?
+    paymentReminderSent Boolean @default(false)
+    followUpSent      Boolean @default(false)
+    
     createdAt    DateTime @default(now())
     updatedAt      DateTime @updatedAt
 
     items          WhatsAppOrderItem[]
     conversation   WhatsAppConversation @relation(fields: [phone], references: [phone])
+
+    @@index([phone])
+    @@index([status])
+    @@index([createdAt])
+    @@index([paymentStatus])
+}
+
+model WhatsAppSetting {
+    id    String @id @default(cuid())
+    key   String @unique
+    value String
 }
 
 model WhatsAppOrderItem {

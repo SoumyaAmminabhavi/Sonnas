@@ -1063,11 +1063,14 @@ class _OrderCardReactive extends StatelessWidget {
           orderSubtitle = items.length > 1 ? "$firstName + ${items.length - 1} more" : firstName;
         }
 
+        final paymentStatus = data['paymentStatus'] ?? 'PENDING';
+
         return _OrderCard(
           id: "#${data['orderNumber'] ?? '---'}",
           status: status,
           statusColor: statusColor,
           statusBg: statusColor.withValues(alpha: 0.1),
+          paymentStatus: paymentStatus,
           customerName: data['customerName'] ?? 'Guest Customer',
           price: data['totalPrice'] != null
               ? SupabaseService.formatPrice(data['totalPrice'])
@@ -1087,6 +1090,7 @@ class _OrderCardReactive extends StatelessWidget {
 class _OrderCard extends StatelessWidget {
   final String id;
   final String status;
+  final String paymentStatus;
   final Color statusColor;
   final Color statusBg;
   final String customerName;
@@ -1099,6 +1103,7 @@ class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.id,
     required this.status,
+    required this.paymentStatus,
     required this.statusColor,
     required this.statusBg,
     required this.customerName,
@@ -1176,6 +1181,25 @@ class _OrderCard extends StatelessWidget {
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (paymentStatus == 'COMPLETED' ? Colors.green : Colors.orange).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          paymentStatus == 'COMPLETED' ? "PAID" : "UNPAID",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: paymentStatus == 'COMPLETED' ? Colors.green : Colors.orange,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),

@@ -190,6 +190,9 @@ class SupabaseService {
         if (createdAt == null) continue;
         
         final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
+        final isPaid = (order['paymentStatus'] ?? 'PENDING') == 'COMPLETED';
+
+        if (!isPaid) continue; // Only count completed payments for sales charts
 
         if (range == SalesRange.today) {
           if (createdAt.year == now.year && createdAt.month == now.month && createdAt.day == now.day) {
@@ -226,7 +229,9 @@ class SupabaseService {
       
       for (var order in orders) {
         final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
-        totalRevenue += price;
+        if ((order['paymentStatus'] ?? 'PENDING') == 'COMPLETED') {
+          totalRevenue += price;
+        }
         if (order['phone'] != null) customers.add(order['phone']);
       }
       
@@ -321,14 +326,73 @@ class SupabaseService {
   // Update Payment Status
   static Future<void> updatePaymentStatus(String id, String status) async {
     try {
-      // Try updating 'paymentStatus' column first
       await client
           .from('WhatsAppOrder')
           .update({'paymentStatus': status})
           .eq('id', id);
     } catch (e) {
-      // Fallback: Use 'status' if 'paymentStatus' doesn't exist
-      await updateOrderStatus(id, status);
+      debugPrint('Error updating payment status: $e');
+    }
+  }
+
+  // Update Payment Details (Integration with Razorpay)
+  static Future<void> updatePaymentDetails({
+    required String id,
+    String? paymentStatus,
+    String? razorpayOrderId,
+    String? paymentId,
+    String? paymentLink,
+  }) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (paymentStatus != null) updates['paymentStatus'] = paymentStatus;
+      if (razorpayOrderId != null) updates['razorpayOrderId'] = razorpayOrderId;
+      if (paymentId != null) updates['paymentId'] = paymentId;
+      if (paymentLink != null) updates['paymentLink'] = paymentLink;
+      
+      if (updates.isNotEmpty) {
+        await client.from('WhatsAppOrder').update(updates).eq('id', id);
+      }
+    } catch (e) {
+      debugPrint('Error updating payment details: $e');
+    }
+  }
+
+  // Update Automation Flags
+  static Future<void> updateAutomationFlags(String id, {bool? paymentReminderSent, bool? followUpSent}) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (paymentReminderSent != null) updates['paymentReminderSent'] = paymentReminderSent;
+      if (followUpSent != null) updates['followUpSent'] = followUpSent;
+      
+      if (updates.isNotEmpty) {
+        await client.from('WhatsAppOrder').update(updates).eq('id', id);
+      }
+    } catch (e) {
+      debugPrint('Error updating automation flags: $e');
+    }
+  }
+
+  // Manage WhatsApp Settings
+  static Future<String?> getWhatsAppSetting(String key) async {
+    try {
+      final data = await client
+          .from('WhatsAppSetting')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle();
+      return data?['value'];
+    } catch (e) {
+      debugPrint('Error getting setting: $e');
+      return null;
+    }
+  }
+
+  static Future<void> updateWhatsAppSetting(String key, String value) async {
+    try {
+      await client.from('WhatsAppSetting').upsert({'key': key, 'value': value}, onConflict: 'key');
+    } catch (e) {
+      debugPrint('Error updating setting: $e');
     }
   }
 
