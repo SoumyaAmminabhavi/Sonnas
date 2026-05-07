@@ -151,7 +151,7 @@ function WhatsAppAdminContent() {
   const statsQuery = api.whatsapp.getStats.useQuery(undefined, {
     refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
   });
-  const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading } = 
+  const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading, error: ordersError } = 
     api.whatsapp.getOrders.useQuery({ 
       status: statusFilter === "ALL" ? undefined : statusFilter,
       customOnly: customFilter || undefined
@@ -471,7 +471,14 @@ function WhatsAppAdminContent() {
             </div>
           </div>
 
-          {ordersLoading ? (
+          {ordersError ? (
+            <div style={{ ...styles.emptyState, color: 'red' }}>
+              <span style={{ fontSize: 40 }}>⚠️</span>
+              <p style={styles.emptyText}>Failed to load orders</p>
+              <p style={styles.emptySubtext}>{ordersError.message}</p>
+              <button onClick={() => void refetchOrders()} style={{ ...styles.filterBtn, marginTop: 20 }}>Retry</button>
+            </div>
+          ) : ordersLoading ? (
             <div style={styles.loading}>Preparing the studio...</div>
           ) : filteredOrders.length === 0 ? (
             <div style={styles.emptyState}>
