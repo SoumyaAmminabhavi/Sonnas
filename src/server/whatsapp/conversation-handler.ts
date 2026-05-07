@@ -1848,8 +1848,9 @@ async function handleConfirmation(
     console.log(`[WhatsApp] handleConfirmation: Success for ${msg.from}`);
 
   } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
     console.error("[WhatsApp] handleConfirmation CRASH:", error);
-    await sendTextMessage(msg.from, "⚠️ Something went wrong while placing your order. Please try again or contact us directly. 🙏");
+    await sendTextMessage(msg.from, `⚠️ *Order Placement Error*\n\nDetails: _${errorMsg}_\n\nPlease try again or contact us directly. 🙏`);
   }
 }
 
