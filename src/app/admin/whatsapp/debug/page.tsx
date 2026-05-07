@@ -7,18 +7,19 @@ export default async function DebugDBPage() {
   const session = await auth();
   if (!session) redirect("/api/auth/signin");
 
-  let orders: any[] = [];
-  let error = null;
+  let orders: unknown[] = [];
+  let error: string | null = null;
   let dbUrl = "Hidden";
 
   try {
-    orders = await db.whatsAppOrder.findMany({
+    const rawOrders = await db.whatsAppOrder.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' }
     });
-    dbUrl = process.env.DATABASE_URL?.split('@')[1] || "Not Found";
-  } catch (err: any) {
-    error = err.message || "Unknown Error";
+    orders = rawOrders;
+    dbUrl = process.env.DATABASE_URL?.split('@')[1] ?? "Not Found";
+  } catch (err: unknown) {
+    error = err instanceof Error ? err.message : "Unknown Error";
   }
 
   return (
