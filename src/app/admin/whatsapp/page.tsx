@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, Suspense, useEffect, useRef } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { api } from "~/trpc/react";

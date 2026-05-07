@@ -1816,7 +1816,7 @@ async function handleConfirmation(
     console.log(`[WhatsApp] handleConfirmation: DB Order created: ${dbOrder.id}`);
 
     let paymentLink = "";
-    if (rzpLinkResult && rzpLinkResult.short_url) {
+    if (rzpLinkResult?.short_url) {
       paymentLink = rzpLinkResult.short_url;
       // Update order with payment details
       await db.whatsAppOrder.update({
