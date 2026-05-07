@@ -253,10 +253,10 @@ function generateOrderNumber(): string {
 
 // ─── Get or create conversation ────────────────────────────────────────────
 
-async function getConversation(phone: string, name?: string): Promise<Conversation> {
+async function getConversation(phone: string, name?: string, force = false): Promise<Conversation> {
   // ── Cache hit: skip DB entirely ──────────────────────────────────────────
   const cached = convoCache.get(phone);
-  if (cached) {
+  if (cached && !force) {
     // Patch the name if we didn't have it before (fire-and-forget)
     if (name && !cached.name) {
       cached.name = name;
@@ -267,8 +267,8 @@ async function getConversation(phone: string, name?: string): Promise<Conversati
     return cached;
   }
 
-  // ── Cache miss: load from DB and warm the cache ──────────────────────────
-  console.log(`[WhatsApp] Conversation cache miss for ${phone}. Loading from DB...`);
+  // ── Cache miss or Forced: load from DB and warm the cache ──────────────────────────
+  console.log(`[WhatsApp] Conversation ${force ? "FORCED" : "cache miss"} for ${phone}. Loading from DB...`);
   try {
     let convo = await withTimeout(
       db.whatsAppConversation.findUnique({
@@ -1309,7 +1309,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
       });
 
       // Force fresh fetch to ensure cart is populated correctly
-      const updatedConvo = await getConversation(msg.from);
+      const updatedConvo = await getConversation(msg.from, undefined, true);
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
       const cartButtons = [
@@ -1339,7 +1339,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
     // Case 2: "Confirm Order" (btn_checkout) clicked from the cart summary (no active selection)
     if (isCheckout) {
       console.log(`[WhatsApp] CHECKOUT_START: ${msg.from}`);
-      const updatedConvo = await getConversation(msg.from);
+      const updatedConvo = await getConversation(msg.from, undefined, true);
       const cart = updatedConvo.cart ?? [];
 
       if (cart.length === 0) {
