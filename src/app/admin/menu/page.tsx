@@ -62,13 +62,13 @@ export default function AdminMenuPage() {
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  const openModal = (cake?: { 
-    id: string; 
-    name: string; 
-    description: string | null; 
-    category?: string | null; 
-    image: string; 
-    options: CakeOptionInput[] 
+  const openModal = (cake?: {
+    id: string;
+    name: string;
+    description: string | null;
+    category?: string | null;
+    image: string;
+    options: CakeOptionInput[]
   }) => {
     if (cake) {
       setFormData({
@@ -258,24 +258,24 @@ export default function AdminMenuPage() {
                           onChange={async (e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            
+
                             const btn = e.target.parentElement;
                             if (btn) btn.style.opacity = "0.5";
-                            
+
                             const formDataUpload = new FormData();
                             formDataUpload.append("file", file);
-                            
+
                             try {
                               const res = await fetch("/api/upload", {
                                 method: "POST",
                                 body: formDataUpload,
                               });
-                              const data = (await res.json()) as { 
-                                imageUrl?: string; 
+                              const data = (await res.json()) as {
+                                imageUrl?: string;
                                 error?: string;
                                 message?: string;
                               };
-                              
+
                               if (data.imageUrl) {
                                 setFormData({ ...formData, image: data.imageUrl });
                               } else {
@@ -330,7 +330,7 @@ export default function AdminMenuPage() {
                       + Add Size
                     </button>
                   </div>
-                  
+
                   {formData.options.map((opt, idx) => (
                     <div key={idx} className="flex gap-4 items-end bg-[#FFF9F7] p-4 rounded-2xl border border-[#F4C2C2]/20">
                       <div className="flex-1 space-y-1">
@@ -400,3 +400,4 @@ export default function AdminMenuPage() {
     </div>
   );
 }
+// hi
