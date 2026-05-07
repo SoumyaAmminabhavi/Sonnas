@@ -1729,6 +1729,7 @@ async function handleConfirmation(
   convo: Conversation
 ) {
   try {
+    console.log(`[WhatsApp] handleConfirmation: Start for ${msg.from}`);
     const isConfirm =
       msg.interactiveId === "btn_confirm" ||
       msg.text?.toLowerCase() === "yes" ||
@@ -1740,7 +1741,6 @@ async function handleConfirmation(
       msg.text?.toLowerCase() === "cancel";
 
     if (!isConfirm && !isCancel) {
-      // Unrelated input — acknowledge and re-prompt
       await sendTextMessage(msg.from, "Please confirm your order or cancel it to start over. 👇");
       await rePromptState(msg.from, "CONFIRMING", convo);
       return;
@@ -1756,27 +1756,25 @@ async function handleConfirmation(
       return;
     }
 
-    // Use cached cart instead of DB fetch
-    const cart = convoCache.get(msg.from)?.cart ?? [];
-
+    // Use cached cart
+    const cart = convoCache.get(msg.from)?.cart ?? convo.cart ?? [];
     if (cart.length === 0) {
+      console.warn(`[WhatsApp] handleConfirmation: Cart empty for ${msg.from}`);
       await updateState(msg.from, "IDLE");
-      await sendTextMessage(
-        msg.from,
-        "Your cart is empty. Let's start over — reply *Menu*."
-      );
+      await sendTextMessage(msg.from, "Your cart is empty. Let's start over — reply *Menu*.");
       return;
     }
 
-    // Create the order (HIGH-11: use fresh cache data consistently)
     const orderNumber = generateOrderNumber();
-    const freshConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
     const totalPriceStr = getCartTotal(cart);
     const totalAmount = parseInt(totalPriceStr.replace(/[^\d]/g, ""), 10);
 
-    console.log(`[WhatsApp] Confirming order ${orderNumber}...`);
+    console.log(`[WhatsApp] handleConfirmation: Creating order ${orderNumber} (₹${totalAmount})`);
 
-    // Parallelize Razorpay call and DB creation
+    // Fetch fresh convo to ensure address/notes are latest
+    const freshConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
+
+    // Parallelize Razorpay and DB Order Creation
     const [rzpLinkResult, dbOrder] = await Promise.all([
       createPaymentLink({
         orderNumber,
@@ -1784,25 +1782,25 @@ async function handleConfirmation(
         phone: msg.from,
         name: freshConvo?.name ?? msg.name ?? "Customer",
       }).catch(err => {
-        console.error("[WhatsApp] Razorpay failed:", err);
+        console.error("[WhatsApp] Razorpay Link Error:", err);
         return null;
       }),
       db.whatsAppOrder.create({
         data: {
           orderNumber,
           phone: msg.from,
-          customerName: freshConvo?.name ?? msg.name,
+          customerName: freshConvo?.name ?? msg.name ?? "Customer",
           totalPrice: totalPriceStr,
-          address: freshConvo.selectedAddress,
-          notes: freshConvo.selectedNotes,
-          deliveryDate: freshConvo.selectedDeliveryDate,
-          deliveryTime: freshConvo.selectedDeliveryTime,
+          address: freshConvo.selectedAddress ?? null,
+          notes: freshConvo.selectedNotes ?? null,
+          deliveryDate: freshConvo.selectedDeliveryDate ?? null,
+          deliveryTime: freshConvo.selectedDeliveryTime ?? null,
           status: "PENDING",
           paymentStatus: "PENDING",
-          razorpayOrderId: "", // Will update if RZP succeeds
+          razorpayOrderId: "", 
           paymentLink: "",
           isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
-          customImageUrl: freshConvo.customImageUrl,
+          customImageUrl: freshConvo.customImageUrl ?? null,
           items: {
             create: cart.map((item) => ({
               cakeName: item.cakeName,
@@ -1815,38 +1813,43 @@ async function handleConfirmation(
       })
     ]);
 
+    console.log(`[WhatsApp] handleConfirmation: DB Order created: ${dbOrder.id}`);
+
     let paymentLink = "";
-    if (rzpLinkResult) {
+    if (rzpLinkResult && rzpLinkResult.short_url) {
       paymentLink = rzpLinkResult.short_url;
-      // Await RZP link update to prevent data loss (HIGH-03)
+      // Update order with payment details
       await db.whatsAppOrder.update({
         where: { id: dbOrder.id },
         data: {
           paymentLink: rzpLinkResult.short_url,
           razorpayOrderId: rzpLinkResult.id
         },
-      }).catch(e => console.error("[WhatsApp] Failed to save payment link:", e));
+      }).catch(e => console.error("[WhatsApp] Failed to save payment link to DB:", e));
     }
 
+    // Cleanup
     await Promise.all([
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE)
     ]);
 
-    let message = `🎉 *Order #${orderNumber} Placed!*\n\n`;
-    message += `📅 *${freshConvo.selectedDeliveryDate ?? "Today"}* | 🕒 *${freshConvo.selectedDeliveryTime ?? "Anytime"}*\n`;
-    message += `📍 ${freshConvo.selectedAddress ?? "_Address pending_"}\n\n`;
+    let successMessage = `🎉 *Order #${orderNumber} Placed!*\n\n`;
+    successMessage += `📅 *${freshConvo.selectedDeliveryDate ?? "Today"}* | 🕒 *${freshConvo.selectedDeliveryTime ?? "Anytime"}*\n`;
+    successMessage += `📍 ${freshConvo.selectedAddress ?? "Store Pickup"}\n\n`;
 
     if (paymentLink) {
-      message += `💳 Pay *${totalPriceStr}* to confirm:\n${paymentLink}\n\n_You'll receive a confirmation receipt once payment is complete._ ✅`;
+      successMessage += `💳 Pay *${totalPriceStr}* to confirm:\n${paymentLink}\n\n_You'll receive a confirmation receipt once payment is complete._ ✅`;
     } else {
-      message += `💰 Total: *${totalPriceStr}*\n\nWe'll contact you shortly to confirm. 💕`;
+      successMessage += `💰 Total: *${totalPriceStr}*\n\nWe'll contact you shortly to confirm details. 💕`;
     }
 
-    await sendTextMessage(msg.from, message);
+    await sendTextMessage(msg.from, successMessage);
+    console.log(`[WhatsApp] handleConfirmation: Success for ${msg.from}`);
+
   } catch (error) {
     console.error("[WhatsApp] handleConfirmation CRASH:", error);
-    await sendTextMessage(msg.from, "⚠️ Something went wrong. Please try again or contact us directly. 🙏");
+    await sendTextMessage(msg.from, "⚠️ Something went wrong while placing your order. Please try again or contact us directly. 🙏");
   }
 }
 
