@@ -1,19 +1,18 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SessionService {
   static const String _staffSessionKey = 'staff_session';
+  static const _storage = FlutterSecureStorage();
 
-  /// Save staff data to local storage
+  /// Save staff data to encrypted local storage
   static Future<void> saveStaffSession(Map<String, dynamic> staffData) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_staffSessionKey, jsonEncode(staffData));
+    await _storage.write(key: _staffSessionKey, value: jsonEncode(staffData));
   }
 
-  /// Retrieve staff data from local storage
+  /// Retrieve staff data from encrypted local storage
   static Future<Map<String, dynamic>?> getStaffSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final sessionStr = prefs.getString(_staffSessionKey);
+    final sessionStr = await _storage.read(key: _staffSessionKey);
     if (sessionStr != null) {
       return jsonDecode(sessionStr) as Map<String, dynamic>;
     }
@@ -22,7 +21,6 @@ class SessionService {
 
   /// Clear session on logout
   static Future<void> clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_staffSessionKey);
+    await _storage.delete(key: _staffSessionKey);
   }
 }

@@ -18,9 +18,7 @@ This is a critical part of securing your bakery’s data. Based on the roles we'
 
 ### **Key Insights for your Boss:**
 
-1. **The "Two-Gate" Rule**: Only the **Owner** and **Manager (Ashwini)** can see how much money the bakery is making.
-2. **Chef Independence**: Mustafa and the kitchen team can add stock (e.g., when a bag of flour arrives), but they cannot delete items or change prices.
-3. **Support Access**: Akshata needs to see orders to pack them, but she doesn't need to see the "Hygiene" checklist or "Recipe Costs."
-4. **Cleaning Focus**: Manjula and Rajeshwari have the most restricted access. They only see the items they need to clean and can view stock levels (to report if soap/detergent is running low).
-
-**Would you like me to implement these specific "Access Blocks" into the app code now?** (For example, making sure the "Delete" button only appears for Ashwini).
+1. **The "Two-Gate" Rule**: Only the **Owner** and **Authorized Manager** can see how much money the bakery is making.
+2. **Chef Independence**: The kitchen team can add stock (e.g., when a bag of flour arrives), but they cannot delete items or change prices.
+3. **Support Access**: Support staff needs to see orders to pack them, but they don't need to see the "Hygiene" checklist or "Recipe Costs."
+4. **Cleaning Focus**: Cleaning staff have the most restricted access. They only see the items they need to clean and can view stock levels (to report if soap/detergent is running low).

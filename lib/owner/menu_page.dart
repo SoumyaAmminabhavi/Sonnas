@@ -603,26 +603,16 @@ class _AddMenuContentState extends State<_AddMenuContent> {
   @override
   void initState() {
     super.initState();
-    
-    // Safety helper to filter out "null" strings from database
-    String safeGet(dynamic val) {
-      if (val == null || val.toString().toLowerCase() == "null") return "";
-      return val.toString();
-    }
+    final data = widget.initialData;
+    final options = data?['CakeOption'] as List? ?? [];
+    final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
 
-    _nameController = TextEditingController(text: safeGet(widget.initialData?['name']));
-    _selectedCategory = widget.initialData?['category']?.toString() == "null" ? null : widget.initialData?['category'];
-    
-    final options = widget.initialData?['CakeOption'] as List? ?? [];
-    
-    final initialPrice = options.isNotEmpty ? safeGet(options[0]['price']) : safeGet(widget.initialData?['price']);
-    final initialWeight = options.isNotEmpty ? safeGet(options[0]['weight']) : '';
-    final initialServes = options.isNotEmpty ? safeGet(options[0]['serves']) : '';
-
-    _priceController = TextEditingController(text: initialPrice);
-    _descriptionController = TextEditingController(text: safeGet(widget.initialData?['description']));
-    _weightController = TextEditingController(text: initialWeight);
-    _servesController = TextEditingController(text: initialServes);
+    _nameController = TextEditingController(text: data?['name']?.toString());
+    _selectedCategory = data?['category']?.toString();
+    _priceController = TextEditingController(text: firstOption?['price']?.toString() ?? '');
+    _descriptionController = TextEditingController(text: data?['description']?.toString());
+    _weightController = TextEditingController(text: firstOption?['weight']?.toString() ?? '');
+    _servesController = TextEditingController(text: firstOption?['serves']?.toString() ?? '');
   }
 
   @override
@@ -634,6 +624,42 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     _servesController.dispose();
     super.dispose();
   }
+
+  Future<void> _saveItem() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      final cakeId = await SupabaseService.upsertCake({
+        if (widget.initialData != null) 'id': widget.initialData!['id'],
+        'name': _nameController.text,
+        'category': _selectedCategory,
+        'description': _descriptionController.text,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+
+      await SupabaseService.upsertCakeOption({
+        'cakeId': cakeId,
+        'price': double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0,
+        'weight': _weightController.text,
+        'serves': _servesController.text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Catalog updated successfully")),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -788,38 +814,28 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              widget.initialData != null
-                                  ? "Changes saved successfully!"
-                                  : "Product added successfully!",
-                            ),
-                          ),
-                        );
-                        Navigator.pop(context);
-                      },
+                      onPressed: _saveItem,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: cs.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
+                        elevation: 0,
                       ),
                       child: Text(
                         widget.initialData != null
                             ? "SAVE CHANGES"
-                            : "ADD PRODUCT TO MENU",
+                            : "CATALOG CREATION",
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          letterSpacing: 1.5,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 64),
+                  const SizedBox(height: 100),
                 ],
               );
             },

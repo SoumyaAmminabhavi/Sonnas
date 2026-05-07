@@ -585,9 +585,12 @@ class _CustomerInfoCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Expanded(
-                          child: _GeocodedAddress(
-                            address: address,
-                            cs: cs,
+                          child: Text(
+                            address,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: cs.secondary.withValues(alpha: 0.5),
+                            ),
                           ),
                         ),
                       ],
@@ -615,81 +618,6 @@ class _CustomerInfoCard extends StatelessWidget {
 
   bool _isCoordinates(String s) {
     return RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(s.trim());
-  }
-}
-
-class _GeocodedAddress extends StatelessWidget {
-  final String address;
-  final ColorScheme cs;
-
-  const _GeocodedAddress({required this.address, required this.cs});
-
-  Future<String> _fetchReadableAddress() async {
-    final cleanAddress = address.replaceAll('Location: ', '').trim();
-    if (!RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(cleanAddress)) {
-      return address;
-    }
-
-    try {
-      final parts = cleanAddress.split(',');
-      final lat = parts[0].trim();
-      final lon = parts[1].trim();
-
-      final response = await http.get(
-        Uri.parse('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lon'),
-        headers: {
-          'User-Agent': 'SonnaBakeryAdminApp/1.0',
-        },
-      ).timeout(const Duration(seconds: 5));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final displayName = data['display_name'] as String?;
-        if (displayName != null) {
-          // Clean up long addresses (take first 3-4 segments)
-          final segments = displayName.split(',');
-          if (segments.length > 4) {
-            return segments.take(4).join(',').trim();
-          }
-          return displayName;
-        }
-      }
-    } catch (e) {
-      debugPrint('Geocoding error: $e');
-    }
-    return address; // Fallback to raw coordinates
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cleanAddress = address.replaceAll('Location: ', '').trim();
-    final isCoord = RegExp(r'^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$').hasMatch(cleanAddress);
-    
-    if (!isCoord) {
-      return Text(
-        address,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          color: cs.secondary.withValues(alpha: 0.5),
-        ),
-      );
-    }
-
-    return FutureBuilder<String>(
-      future: _fetchReadableAddress(),
-      builder: (context, snapshot) {
-        final display = snapshot.data ?? address;
-        final isLoading = snapshot.connectionState == ConnectionState.waiting;
-
-        return Text(
-          isLoading ? "Pinpointing location..." : display,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            color: cs.secondary.withValues(alpha: 0.5),
-          ),
-        );
-      },
-    );
   }
 }
 

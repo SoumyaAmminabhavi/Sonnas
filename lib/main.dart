@@ -40,17 +40,20 @@ class PatisserieApp extends StatefulWidget {
 }
 
 class _PatisserieAppState extends State<PatisserieApp> {
+  late final VoidCallback _themeListener;
+
   @override
   void initState() {
     super.initState();
-    themeController.addListener(() {
-      setState(() {});
-    });
+    _themeListener = () {
+      if (mounted) setState(() {});
+    };
+    themeController.addListener(_themeListener);
   }
 
   @override
   void dispose() {
-    themeController.removeListener(() {});
+    themeController.removeListener(_themeListener);
     super.dispose();
   }
 
@@ -478,12 +481,55 @@ class ModernDrawer extends StatelessWidget {
                 icon: Icons.admin_panel_settings_outlined,
                 label: "Login as Owner",
                 onTap: () {
-                  // Close the drawer before navigating
-                  Navigator.of(context).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      settings: const RouteSettings(name: 'OwnerDashboard'),
-                      builder: (context) => const OwnerDashboard(),
+                  Navigator.of(context).pop(); // Close drawer
+                  
+                  // Security: Prompt for PIN
+                  final pinController = TextEditingController();
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text("Owner Authentication", style: GoogleFonts.notoSerif()),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text("Please enter your admin PIN to continue.", 
+                            style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: pinController,
+                            obscureText: true,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              hintText: "Enter PIN",
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("CANCEL"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (pinController.text == "1234") { // Default setup PIN
+                              Navigator.pop(context);
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  settings: const RouteSettings(name: 'OwnerDashboard'),
+                                  builder: (context) => const OwnerDashboard(),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Incorrect PIN")),
+                              );
+                            }
+                          },
+                          child: const Text("VERIFY"),
+                        ),
+                      ],
                     ),
                   );
                 },

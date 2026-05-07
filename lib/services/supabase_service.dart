@@ -235,10 +235,13 @@ class SupabaseService {
         if (order['phone'] != null) customers.add(order['phone']);
       }
       
+      final paidOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING') == 'PAID').toList();
+      
       return {
         'totalOrders': orders.length,
         'totalRevenue': totalRevenue,
         'activeCustomers': customers.length,
+        'avgOrderValue': paidOrders.isEmpty ? 0 : totalRevenue / paidOrders.length,
       };
     });
   }
@@ -603,6 +606,27 @@ class SupabaseService {
     }
   }
 
+  // ─── Menu Persistence (Critical Fix) ──────────────────────────────────
+  
+  static Future<String> upsertCake(Map<String, dynamic> cake) async {
+    try {
+      final response = await client.from('Cake').upsert(cake).select().single();
+      return response['id'] as String;
+    } catch (e) {
+      debugPrint('Error upserting cake: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> upsertCakeOption(Map<String, dynamic> option) async {
+    try {
+      await client.from('CakeOption').upsert(option);
+    } catch (e) {
+      debugPrint('Error upserting cake option: $e');
+      rethrow;
+    }
+  }
+
   // ─── Inventory Management ──────────────────────────────────────────────────
 
   static Stream<List<Map<String, dynamic>>> getInventoryStream() {
@@ -621,8 +645,14 @@ class SupabaseService {
     }
   }
 
-  static Future<void> updateInventoryStock(String id, double newStock) async {
+  // Atomic-style update (fetching current then updating)
+  // For true atomic updates in Supabase, an RPC function should be used.
+  static Future<void> updateInventoryStock(String id, double amount, {bool isIncrement = true}) async {
     try {
+      final current = await myClient.from('InventoryItem').select('currentStock').eq('id', id).single();
+      final double currentStock = double.tryParse(current['currentStock'].toString()) ?? 0;
+      final double newStock = isIncrement ? currentStock + amount : amount;
+
       await myClient.from('InventoryItem').update({
         'currentStock': newStock,
         'updatedAt': DateTime.now().toIso8601String(),
@@ -632,7 +662,6 @@ class SupabaseService {
       rethrow;
     }
   }
-
   static Future<void> deleteInventoryItem(String id) async {
     try {
       await myClient.from('InventoryItem').delete().eq('id', id);

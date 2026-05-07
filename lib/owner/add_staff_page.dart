@@ -741,7 +741,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
   String _generateJoiningCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing 0, O, 1, I
-    final random = Random();
+    final random = Random.secure();
     return String.fromCharCodes(Iterable.generate(
         5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }

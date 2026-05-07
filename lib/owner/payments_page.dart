@@ -352,7 +352,7 @@ class _PaymentsPageState extends State<PaymentsPage>
               if (!isCompleted)
                 ElevatedButton(
                   onPressed: () async {
-                    await SupabaseService.updatePaymentStatus(item['id'].toString(), 'COMPLETED');
+                    await SupabaseService.updatePaymentStatus(item['id'].toString(), 'PAID');
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
