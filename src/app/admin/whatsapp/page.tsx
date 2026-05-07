@@ -211,8 +211,17 @@ function WhatsAppAdminContent() {
     
     // ADMIN-04: Date filter (supports both order date and delivery date)
     if (dateFilter !== "ALL") {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      // Normalize dateFilter to YYYY-MM-DD if it's in DD-MM-YYYY
+      let normalizedFilter = dateFilter;
+      if (dateFilter.includes('-') && dateFilter.split('-')[0]?.length === 2) {
+        const [d, m, y] = dateFilter.split('-');
+        normalizedFilter = `${y}-${m}-${d}`;
+      }
+
       if (dateFilter === "TODAY") {
-        const todayStr = new Date().toISOString().split('T')[0];
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
           if (filterByDelivery && order.deliveryDate) {
@@ -234,10 +243,12 @@ function WhatsAppAdminContent() {
       } else {
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
+          const orderCreatedDate = new Date(o.createdAt).toISOString().split('T')[0];
+          
           if (filterByDelivery && order.deliveryDate) {
-            return order.deliveryDate.includes(dateFilter);
+            return order.deliveryDate.includes(normalizedFilter) || order.deliveryDate.includes(dateFilter);
           }
-          return new Date(o.createdAt).toISOString().split('T')[0] === dateFilter;
+          return orderCreatedDate === normalizedFilter || orderCreatedDate === dateFilter;
         });
       }
     }
