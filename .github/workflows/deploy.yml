@@ -1,4 +1,5 @@
-name: Deploy to Vercel
+name: Deploy Flutter Web to Vercel
+
 on:
   push:
     branches:
@@ -7,16 +8,15 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
 
       - name: Create .env file
         run: |
@@ -25,28 +25,25 @@ jobs:
           echo "MY_SUPABASE_URL=${{ secrets.MY_SUPABASE_URL }}" >> .env
           echo "MY_SUPABASE_ANON_KEY=${{ secrets.MY_SUPABASE_ANON_KEY }}" >> .env
 
-      - name: Get dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Web
-        run: flutter build web --release
+      - name: Build Flutter Web
+        run: flutter build web --release --base-href "/"
 
-      - name: Prepare Vercel Build Output
-        run: |
-          mkdir -p .vercel/output/static
-          cp -r build/web/. .vercel/output/static/
-          printf '{"version":3,"routes":[{"handle":"filesystem"},{"src":"/(.*)","dest":"/index.html","status":200}]}' > .vercel/output/config.json
-          printf '{"projectId":"%s","orgId":"%s"}' "$VERCEL_PROJECT_ID" "$VERCEL_ORG_ID" > .vercel/project.json
-          echo "Static files copied: $(ls .vercel/output/static | wc -l) items"
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      - name: Copy Vercel Config
+        run: cp vercel.json build/web/
 
       - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+        run: npm install -g vercel
 
       - name: Deploy to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+        run: |
+          cd build/web
+          vercel deploy \
+          --prod \
+          --token=${{ secrets.VERCEL_TOKEN }} \
+          --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
