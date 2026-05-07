@@ -15,18 +15,21 @@ export async function POST(req: Request) {
       return new NextResponse("Missing signature", { status: 400 });
     }
 
-    // Verify signature
+    // Verify signature — reject ALL webhooks if secret is not configured
     const secret = env.RAZORPAY_WEBHOOK_SECRET;
-    if (secret) {
-      const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(body)
-        .digest("hex");
+    if (!secret) {
+      console.error("[Razorpay Webhook] RAZORPAY_WEBHOOK_SECRET not configured — rejecting webhook for safety.");
+      return new NextResponse("Server misconfigured", { status: 500 });
+    }
 
-      if (expectedSignature !== signature) {
-        console.warn("[Razorpay Webhook] Invalid signature");
-        return new NextResponse("Invalid signature", { status: 400 });
-      }
+    const expectedSignature = crypto
+      .createHmac("sha256", secret)
+      .update(body)
+      .digest("hex");
+
+    if (expectedSignature !== signature) {
+      console.warn("[Razorpay Webhook] Invalid signature — possible tampering attempt.");
+      return new NextResponse("Invalid signature", { status: 400 });
     }
 
 

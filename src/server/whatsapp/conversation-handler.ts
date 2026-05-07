@@ -65,6 +65,22 @@ export function clearMenuCache() {
 const convoCache = new Map<string, Conversation>();
 const processingLocks = new Map<string, Promise<void>>();
 
+// ─── Message Deduplication (HIGH-07) ──────────────────────────────────────
+// Prevents duplicate processing when WhatsApp retries webhook delivery
+const processedMessages = new Set<string>();
+const MAX_PROCESSED_IDS = 2000;
+
+function markMessageProcessed(messageId: string): boolean {
+  if (processedMessages.has(messageId)) return false; // Already processed
+  processedMessages.add(messageId);
+  // Evict oldest entries when set grows too large
+  if (processedMessages.size > MAX_PROCESSED_IDS) {
+    const first = processedMessages.values().next().value;
+    if (first) processedMessages.delete(first);
+  }
+  return true; // First time seeing this message
+}
+
 const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
 
 const RESET_STATE = {
@@ -228,9 +244,10 @@ interface IncomingMessage {
 
 function generateOrderNumber(): string {
   const prefix = "SPC";
-  const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
-  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-  return `${prefix}-${timestamp}${random}`;
+  const now = new Date();
+  const dateStr = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}`;
+  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `${prefix}-${dateStr}-${random}`;
 }
 
 // ─── Get or create conversation ────────────────────────────────────────────
@@ -280,6 +297,22 @@ async function getConversation(phone: string, name?: string): Promise<Conversati
     }
 
     const result = convo as unknown as Conversation;
+
+    // HIGH-05: Clear stale cart items (older than 24 hours)
+    if (result.cart && Array.isArray(result.cart) && result.cart.length > 0) {
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const rawItems = result.cart as unknown as Array<{ createdAt?: Date | string }>;
+      const hasStaleItems = rawItems.some((item) => {
+        if (!item.createdAt) return false;
+        return new Date(item.createdAt) < oneDayAgo;
+      });
+      if (hasStaleItems) {
+        console.log(`[WhatsApp] Clearing stale cart for ${phone} (items older than 24h)`);
+        void db.whatsAppCartItem.deleteMany({ where: { phone } }).catch(() => null);
+        result.cart = [] as unknown as CartItem[];
+      }
+    }
+
     convoCache.set(phone, result);
     return result;
   } catch {
@@ -398,10 +431,10 @@ async function reverseGeocode(lat: number, lon: number): Promise<string | undefi
 
 function getCartSummary(cart: CartItem[]): string {
   if (!cart || cart.length === 0) return "Your cart is empty.";
-  let summary = `🛒 *Your Cart*\n\n`;
+  let summary = `\u2728 *Your Selection*\n\n`;
   cart.forEach((item, idx) => {
     const displayPrice = formatItemTotal(item.price, item.quantity);
-    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${item.quantity > 1 ? ` x${item.quantity}` : ""} — ${displayPrice}\n`;
+    summary += `${idx + 1}. *${item.cakeName}* (${item.size})${item.quantity > 1 ? ` x${item.quantity}` : ""} \u2014 ${displayPrice}\n`;
   });
   summary += `\n*Total: ${getCartTotal(cart)}*`;
   return summary;
@@ -422,7 +455,7 @@ function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
   summary += `📝 Notes: ${convo.selectedNotes ?? "_None_"}\n`;
   summary += `📅 Delivery: *${convo.selectedDeliveryDate ?? "Today"}*\n`;
   summary += `🕒 Timing: *${convo.selectedDeliveryTime ?? "Anytime"}*\n\n`;
-  summary += `Shall I place this order?`;
+  summary += `\n\nShall we prepare this for you?`;
   return summary;
 }
 
@@ -470,22 +503,33 @@ async function createCustomOrder(
 export async function handleIncomingMessage(msg: IncomingMessage) {
   const phone = msg.from;
 
-  // ── Optimization 2: Concurrency Lock ─────────────────────────────────────
-  const existingLock = processingLocks.get(phone);
-  if (existingLock) {
-    console.log(`[WhatsApp] ⏳ Queuing message from ${phone}...`);
-    await existingLock;
+  // ── Message Deduplication (HIGH-07) ──────────────────────────────────────
+  if (!markMessageProcessed(msg.messageId)) {
+    console.log(`[WhatsApp] ⚡ Duplicate message ${msg.messageId} skipped.`);
+    return;
   }
 
-  const processPromise = (async () => {
+  // ── Concurrency Lock — properly chained (HIGH-02) ───────────────────────
+  const existingLock = processingLocks.get(phone) ?? Promise.resolve();
+
+  const processPromise = existingLock.then(async () => {
     try {
       await _internalHandleMessage(msg);
-    } finally {
-      processingLocks.delete(phone);
+    } catch (err) {
+      console.error(`[WhatsApp] Processing error for ${phone}:`, err);
     }
-  })();
+  });
 
   processingLocks.set(phone, processPromise);
+
+  // Clean up lock after processing completes
+  void processPromise.then(() => {
+    // Only delete if this is still the latest promise in the chain
+    if (processingLocks.get(phone) === processPromise) {
+      processingLocks.delete(phone);
+    }
+  });
+
   return processPromise;
 }
 
@@ -502,11 +546,8 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     if (state === "IDLE") {
       await sendWelcome(msg.from, msg.name);
     } else {
-      const greeting = msg.name ? `Hi ${msg.name}! 👋` : "Hi! 👋";
-      await Promise.all([
-        sendTextMessage(msg.from, `${greeting} Let's continue from where we left off.`),
-        rePromptState(msg.from, state, convo)
-      ]);
+      // MED-12: Single combined message instead of greeting + re-prompt
+      await rePromptState(msg.from, state, convo);
     }
     return;
   }
@@ -515,9 +556,9 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     await Promise.all([
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
-      sendTextMessage(msg.from, "❌ Order cancelled."),
-      sendWelcome(msg.from, msg.name)
     ]);
+    await sendTextMessage(msg.from, "No worries! Everything's been cleared. \u2728\n\nWhenever you're ready, I'm here to help you find the perfect cake. \ud83c\udf38");
+    await sendWelcome(msg.from, msg.name);
     return;
   }
 
@@ -631,7 +672,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   if (interactiveId === "btn_clear_cart") {
     await Promise.all([
       clearCart(msg.from),
-      sendTextMessage(msg.from, "🗑️ *Cart cleared!*"),
+      sendTextMessage(msg.from, "\u2728 *Selection cleared!*\n\nLet's start fresh \u2014 here's our menu:"),
       sendMenu(msg.from)
     ]);
     return;
@@ -641,15 +682,29 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     await Promise.all([
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
-      sendTextMessage(msg.from, "❌ Order cancelled."),
-      sendWelcome(msg.from, msg.name)
     ]);
+    await sendTextMessage(msg.from, "No worries at all! Your order has been cleared. \ud83c\udf38\n\nWhenever you're ready, we're here to craft something special for you. Just say *hi* to start again! \u2728");
     return;
   }
 
 
 
   // ── Global Interactive ID handling (Resilience for old messages) ───────
+  if (interactiveId === "btn_pickup") {
+    await Promise.all([
+      updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: "🏪 Store Pickup" }),
+      sendTextMessage(msg.from, "\u2728 *Store pickup selected!*\n\n\u2728 *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! \ud83c\udf89\")_\n\nReply *Skip* if no message needed.")
+    ]);
+    return;
+  }
+  if (interactiveId === "btn_delivery") {
+    await Promise.all([
+      updateState(msg.from, "ASKING_ADDRESS"),
+      sendTextMessage(msg.from, "\ud83d\udccd *Delivery Address*\n\nPlease share your delivery address or tap the \ud83d\udcce icon to send your *GPS Location*.")
+    ]);
+    return;
+  }
+
   if (interactiveId.startsWith("cake_")) {
     await handleCakeSelection(msg);
     return;
@@ -664,6 +719,31 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   }
   if (interactiveId.startsWith("time_")) {
     await handleDeliveryTimeInput(msg, convo);
+    return;
+  }
+
+  // ── Global: Image sent outside custom flow (MED-11) ───────────────────
+  if (msg.type === "image" && state !== "REQUESTING_CUSTOM" && state !== "UPLOADING_REFERENCE_IMAGE") {
+    await sendInteractiveButtons(
+      msg.from,
+      "\ud83d\udcf8 Beautiful photo! If you'd like us to create a custom cake based on this design, tap below:",
+      [
+        { id: "btn_custom", title: "\ud83c\udfa8 Start Custom Order" },
+        { id: "btn_menu", title: "\ud83d\udccb Browse Menu" },
+      ]
+    );
+    return;
+  }
+
+  // ── Global: Location sent outside address flow (HIGH-09) ─────────────
+  if (msg.type === "location" && state !== "ASKING_ADDRESS") {
+    // Save location for later use
+    if (msg.location) {
+      const mapsUrl = `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}`;
+      const addr = msg.location.address ?? msg.location.name ?? `GPS: ${msg.location.latitude}, ${msg.location.longitude}`;
+      await updateState(msg.from, state as ConversationState, { selectedAddress: `${addr}\n\ud83d\udd17 ${mapsUrl}` });
+    }
+    await sendTextMessage(msg.from, "\ud83d\udccd Location saved! I'll use this when you're ready to place an order. \u2728\n\nReply *Menu* to browse our cakes!");
     return;
   }
 
@@ -729,14 +809,43 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 // ─── Welcome message ───────────────────────────────────────────────────────
 
 async function sendWelcome(to: string, name?: string) {
-  const greeting = name ? `Hi ${name}! 👋` : "Hi there! 👋";
+  // CVR-04: Check for returning customers
+  try {
+    const lastOrder = await db.whatsAppOrder.findFirst({
+      where: { phone: to, status: { not: "CANCELLED" } },
+      orderBy: { createdAt: "desc" },
+      select: {
+        items: { select: { cakeName: true }, take: 1 },
+        createdAt: true,
+      },
+    });
+
+    if (lastOrder?.items[0]) {
+      const cakeName = lastOrder.items[0].cakeName;
+      const greeting = name ? `Welcome back, ${name}! \u2728` : "Welcome back! \u2728";
+      await sendInteractiveButtons(
+        to,
+        `${greeting}\n\nSo lovely to see you again at *Sonna's Patisserie*! \ud83c\udf38\n\nWould you like to reorder your *${cakeName}*, or explore something new?`,
+        [
+          { id: `cake_${cakeName}`, title: "\ud83d\udd04 Reorder Last" },
+          { id: "btn_menu", title: "\ud83d\udccb Browse Cakes" },
+          { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
+        ]
+      );
+      return;
+    }
+  } catch {
+    // Fall through to default welcome if DB query fails
+  }
+
+  const greeting = name ? `Hi ${name}! \u2728` : "Welcome! \u2728";
   await sendInteractiveButtons(
     to,
-    `${greeting}\n\nWelcome to *Sonna's Patisserie* 🎂\nHandcrafted cakes made with love.\n\n💡 *Quick Commands:*\n• *Menu* — Browse cakes\n• *Status* — Track order\n• *Restart | Cancel* — Cancel all and start over\n• Send 📍 Location for delivery`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today?`,
     [
-      { id: "btn_menu", title: "📋 View Menu" },
-      { id: "btn_custom", title: "🎨 Custom Cake" },
-      { id: "btn_status", title: "📦 Order Status" },
+      { id: "btn_menu", title: "\ud83d\udccb Browse Our Cakes" },
+      { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
+      { id: "btn_status", title: "\ud83d\udce6 Track My Order" },
     ]
   );
 }
@@ -903,9 +1012,13 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   if (!selectedProduct) {
-    await sendTextMessage(
+    await sendInteractiveButtons(
       msg.from,
-      "Couldn't find that cake. 🤔\n\nReply *Menu* to see our full list!"
+      "Hmm, I couldn't quite match that to our menu. \ud83e\uddc1\n\nLet me show you our full collection \u2014 you might find something even more tempting!",
+      [
+        { id: "btn_menu", title: "\ud83d\udccb View Our Menu" },
+        { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
+      ]
     );
     return;
   }
@@ -983,7 +1096,7 @@ async function handleSizeSelection(
     return;
   }
 
-  // Offer to add to cart or checkout immediately
+  // Offer to add to order or checkout immediately
   await Promise.all([
     updateState(msg.from, "SELECTING_SIZE", {
       selectedSize: selectedOption.size,
@@ -991,11 +1104,11 @@ async function handleSizeSelection(
     }),
     sendInteractiveButtons(
       msg.from,
-      `Great choice! *${convo.selectedCake}* (${selectedOption.size}) — ${selectedOption.price}.\n\nWhat would you like to do?`,
+      `Great choice! *${convo.selectedCake}* (${selectedOption.size}) \u2014 ${selectedOption.price}\n\nWhat would you like to do?`,
       [
-        { id: "btn_add_to_cart", title: "🛒 Add to Cart" },
-        { id: "btn_checkout", title: "💳 Confirm Order" },
-        { id: "btn_menu", title: "📋 Back to Menu" },
+        { id: "btn_add_to_cart", title: "\u2728 Add to Order" },
+        { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
+        { id: "btn_menu", title: "\ud83d\udccb Back to Menu" },
       ]
     )
   ]);
@@ -1029,11 +1142,11 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
       await Promise.all([
-        sendTextMessage(msg.from, `✅ *${convo.selectedCake}* added to cart!`),
+        sendTextMessage(msg.from, `\u2728 *${convo.selectedCake}* added to your order!`),
         sendInteractiveButtons(msg.from, summary, [
-          { id: "btn_checkout", title: "💳 Confirm Order" },
-          { id: "btn_menu", title: "➕ Add More" },
-          { id: "btn_clear_cart", title: "🗑️ Clear Cart" },
+          { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
+          { id: "btn_menu", title: "\u2795 Add More" },
+          { id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" },
         ]),
         updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
       ]);
@@ -1046,18 +1159,21 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
       const cart = updatedConvo.cart ?? [];
 
       if (cart.length === 0) {
-        await Promise.all([
-          sendTextMessage(msg.from, "🛒 *Your cart is empty!*\n\nPlease select a cake from the menu first. 🎂"),
-          sendMenu(msg.from)
-        ]);
+        await sendTextMessage(msg.from, "Your selection is empty! Let me show you our cakes \ud83e\uddc1");
+        await sendMenu(msg.from);
         return;
       }
 
+      // HIGH-13: Offer pickup or delivery choice
       await Promise.all([
         updateState(msg.from, "ASKING_ADDRESS"),
-        sendTextMessage(
+        sendInteractiveButtons(
           msg.from,
-          "📍 Send your delivery address or share your *GPS Location*."
+          "\ud83c\udfe0 *How would you like to receive your order?*",
+          [
+            { id: "btn_delivery", title: "\ud83d\ude9a Delivery" },
+            { id: "btn_pickup", title: "\ud83c\udfea Store Pickup" },
+          ]
         )
       ]);
     }
@@ -1103,7 +1219,7 @@ async function handleAddressInput(
   }
 
   if (!address || address.length < 5 || GREETINGS.includes(address.toLowerCase())) {
-    await sendTextMessage(msg.from, "⚠️ *Invalid Address*\n\nPlease provide a complete delivery address (Street, Building, Landmark) or send your *GPS Location* to continue. 📍");
+    await sendTextMessage(msg.from, "Could you share a bit more detail? \ud83d\udccd\n\nA full address with building name and landmark helps our delivery team find you perfectly! \ud83c\udfe0");
     return;
   }
 
@@ -1114,7 +1230,7 @@ async function handleAddressInput(
     }),
     sendTextMessage(
       msg.from,
-      "✅ *Address saved!* 📍\n\n🎂 *Cake Customization*\n\n• What would you like **written on the cake**?\n• Any special message, name, or age to add?\n• Any extra design instructions or customizations?\n\n✍️ Please reply with all your details (or reply *'Skip'* if none)."
+      "\u2728 *Address saved!*\n\n\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! \ud83c\udf89\")_\n\nReply *Skip* if no message needed."
     )
   ]);
 }
@@ -1134,7 +1250,7 @@ async function handleInstructionsInput(
   const notes = isSkip ? null : input;
 
   if (!isSkip && (input.length < 2 || GREETINGS.includes(input.toLowerCase()))) {
-    await sendTextMessage(msg.from, "🎂 Please provide your cake customization details (Text on cake, name, age, or design instructions). Reply *'Skip'* if none.");
+    await sendTextMessage(msg.from, "What message would you like on your cake? \u270d\ufe0f\n\n_(e.g., \"Happy Birthday Priya!\")_\n\nReply *Skip* if none.");
     return;
   }
 
@@ -1241,9 +1357,8 @@ async function handleDeliveryTimeInput(
 
   if (msg.interactiveId?.startsWith("time_")) {
     const timeId = msg.interactiveId.replace("time_", "");
-    deliveryTime = timeId.replace("_", " to ").replace("pm", " PM");
-    // Format nicely: "12pm to 3pm" -> "12 PM to 3 PM"
-    deliveryTime = deliveryTime.toUpperCase();
+    // Format nicely: "12pm_3pm" -> "12 PM to 3 PM" (HIGH-08: replaceAll for both occurrences)
+    deliveryTime = timeId.replaceAll("_", " to ").replaceAll("pm", " PM");
   } else if (msg.text?.trim()) {
     deliveryTime = msg.text.trim();
   } else {
@@ -1346,9 +1461,13 @@ async function sendOrderStatus(to: string) {
   });
 
   if (orders.length === 0) {
-    await sendTextMessage(
+    await sendInteractiveButtons(
       to,
-      "You don't have any orders yet! 🛒\n\nReply *Menu* to see our cakes and place your first order! 🎂"
+      "You haven't placed an order yet \u2014 let's change that! \ud83e\uddc1\n\nBrowse our handcrafted collection and treat yourself to something special.",
+      [
+        { id: "btn_menu", title: "\ud83d\udccb Browse Our Cakes" },
+        { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
+      ]
     );
     return;
   }
@@ -1431,11 +1550,11 @@ async function handleConfirmation(
       return;
     }
 
-    // Create the order
+    // Create the order (HIGH-11: use fresh cache data consistently)
     const orderNumber = generateOrderNumber();
+    const freshConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
     const totalPriceStr = getCartTotal(cart);
     const totalAmount = parseInt(totalPriceStr.replace(/[^\d]/g, ""), 10);
-    const existingConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
 
     console.log(`[WhatsApp] Confirming order ${orderNumber}...`);
 
@@ -1445,7 +1564,7 @@ async function handleConfirmation(
         orderNumber,
         amount: totalAmount,
         phone: msg.from,
-        name: existingConvo?.name ?? msg.name ?? "Customer",
+        name: freshConvo?.name ?? msg.name ?? "Customer",
       }).catch(err => {
         console.error("[WhatsApp] Razorpay failed:", err);
         return null;
@@ -1454,18 +1573,18 @@ async function handleConfirmation(
         data: {
           orderNumber,
           phone: msg.from,
-          customerName: existingConvo?.name ?? msg.name,
+          customerName: freshConvo?.name ?? msg.name,
           totalPrice: totalPriceStr,
-          address: convo.selectedAddress,
-          notes: convo.selectedNotes,
-          deliveryDate: existingConvo?.selectedDeliveryDate,
-          deliveryTime: existingConvo?.selectedDeliveryTime,
+          address: freshConvo.selectedAddress,
+          notes: freshConvo.selectedNotes,
+          deliveryDate: freshConvo.selectedDeliveryDate,
+          deliveryTime: freshConvo.selectedDeliveryTime,
           status: "PENDING",
           paymentStatus: "PENDING",
           razorpayOrderId: "", // Will update if RZP succeeds
           paymentLink: "",
           isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
-          customImageUrl: convo.customImageUrl,
+          customImageUrl: freshConvo.customImageUrl,
           items: {
             create: cart.map((item) => ({
               cakeName: item.cakeName,
@@ -1481,14 +1600,14 @@ async function handleConfirmation(
     let paymentLink = "";
     if (rzpLinkResult) {
       paymentLink = rzpLinkResult.short_url;
-      // Update DB with RZP info in background
-      void db.whatsAppOrder.update({
+      // Await RZP link update to prevent data loss (HIGH-03)
+      await db.whatsAppOrder.update({
         where: { id: dbOrder.id },
         data: {
           paymentLink: rzpLinkResult.short_url,
           razorpayOrderId: rzpLinkResult.id
         },
-      });
+      }).catch(e => console.error("[WhatsApp] Failed to save payment link:", e));
     }
 
     await Promise.all([
@@ -1497,11 +1616,11 @@ async function handleConfirmation(
     ]);
 
     let message = `🎉 *Order #${orderNumber} Placed!*\n\n`;
-    message += `📅 *${existingConvo?.selectedDeliveryDate}* | 🕒 *${existingConvo?.selectedDeliveryTime}*\n`;
-    message += `📍 ${convo.selectedAddress}\n\n`;
+    message += `📅 *${freshConvo.selectedDeliveryDate ?? "Today"}* | 🕒 *${freshConvo.selectedDeliveryTime ?? "Anytime"}*\n`;
+    message += `📍 ${freshConvo.selectedAddress ?? "_Address pending_"}\n\n`;
 
     if (paymentLink) {
-      message += `💳 Pay *${totalPriceStr}* to confirm:\n${paymentLink}\n\n_Order auto-confirms on payment._`;
+      message += `💳 Pay *${totalPriceStr}* to confirm:\n${paymentLink}\n\n_You'll receive a confirmation receipt once payment is complete._ ✅`;
     } else {
       message += `💰 Total: *${totalPriceStr}*\n\nWe'll contact you shortly to confirm. 💕`;
     }

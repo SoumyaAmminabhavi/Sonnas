@@ -134,6 +134,8 @@ function WhatsAppAdminContent() {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [customFilter, setCustomFilter] = useState<boolean>(false);
   const [dateFilter, setDateFilter] = useState<string>("ALL");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filterByDelivery, setFilterByDelivery] = useState<boolean>(true);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [replyPhone, setReplyPhone] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -141,15 +143,21 @@ function WhatsAppAdminContent() {
   const searchParams = useSearchParams();
   const isSidebarCollapsed = searchParams.get("sidebar") === "collapsed";
 
-  const statsQuery = api.whatsapp.getStats.useQuery();
+  const statsQuery = api.whatsapp.getStats.useQuery(undefined, {
+    refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
+  });
   const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading } = 
     api.whatsapp.getOrders.useQuery({ 
       status: statusFilter === "ALL" ? undefined : statusFilter,
       customOnly: customFilter || undefined
+    }, {
+      refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
     });
   
   const { data: conversations, refetch: refetchConvos } = 
-    api.whatsapp.getConversations.useQuery({ limit: 50 });
+    api.whatsapp.getConversations.useQuery({ limit: 50 }, {
+      refetchInterval: 30_000,
+    });
 
   const stats = statsQuery.data;
 
@@ -169,22 +177,54 @@ function WhatsAppAdminContent() {
     if (!ordersData?.orders) return [];
     let filtered = ordersData.orders;
     
+    // ADMIN-03: Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(o => {
+        const order = o as unknown as AdminOrder;
+        return (
+          order.orderNumber.toLowerCase().includes(q) ||
+          (order.customerName?.toLowerCase().includes(q) ?? false) ||
+          order.phone.includes(q)
+        );
+      });
+    }
+    
+    // ADMIN-04: Date filter (supports both order date and delivery date)
     if (dateFilter !== "ALL") {
       if (dateFilter === "TODAY") {
         const todayStr = new Date().toISOString().split('T')[0];
-        filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === todayStr);
+        filtered = filtered.filter(o => {
+          const order = o as unknown as AdminOrder;
+          if (filterByDelivery && order.deliveryDate) {
+            return order.deliveryDate.includes(todayStr ?? "") || order.deliveryDate.toLowerCase().includes("today");
+          }
+          return new Date(o.createdAt).toISOString().split('T')[0] === todayStr;
+        });
       } else if (dateFilter === "TOMORROW") {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === tomorrowStr);
+        filtered = filtered.filter(o => {
+          const order = o as unknown as AdminOrder;
+          if (filterByDelivery && order.deliveryDate) {
+            return order.deliveryDate.includes(tomorrowStr ?? "") || order.deliveryDate.toLowerCase().includes("tomorrow");
+          }
+          return new Date(o.createdAt).toISOString().split('T')[0] === tomorrowStr;
+        });
       } else {
-        filtered = filtered.filter(o => new Date(o.createdAt).toISOString().split('T')[0] === dateFilter);
+        filtered = filtered.filter(o => {
+          const order = o as unknown as AdminOrder;
+          if (filterByDelivery && order.deliveryDate) {
+            return order.deliveryDate.includes(dateFilter);
+          }
+          return new Date(o.createdAt).toISOString().split('T')[0] === dateFilter;
+        });
       }
     }
     
     return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [ordersData?.orders, dateFilter]);
+  }, [ordersData?.orders, dateFilter, searchQuery, filterByDelivery]);
 
   return (
     <div style={styles.container}>
@@ -307,6 +347,23 @@ function WhatsAppAdminContent() {
                 {statusFilter !== "ALL" ? `${STATUS_CONFIG[statusFilter]?.label} Orders` : "Recent Orders"}
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+                <button
+                  onClick={() => setFilterByDelivery(!filterByDelivery)}
+                  style={{
+                    ...styles.datePicker,
+                    cursor: 'pointer',
+                    fontSize: 10,
+                    padding: '4px 10px',
+                    backgroundColor: filterByDelivery ? 'rgba(201,162,126,0.15)' : 'transparent',
+                    border: '1px solid #E8DED4',
+                    borderRadius: 6,
+                    color: '#5A3E36',
+                    whiteSpace: 'nowrap' as const,
+                  }}
+                  title={filterByDelivery ? 'Filtering by delivery date' : 'Filtering by order date'}
+                >
+                  {filterByDelivery ? '📅 Delivery' : '📋 Ordered'}
+                </button>
                 <input 
                   type="date" 
                   value={dateFilter === "ALL" || dateFilter === "TODAY" || dateFilter === "TOMORROW" ? "" : dateFilter}
@@ -315,7 +372,27 @@ function WhatsAppAdminContent() {
                 />
               </div>
             </div>
-            <span style={styles.orderCount}>{filteredOrders.length} collections</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <input
+                type="text"
+                placeholder="Search order, name, phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  border: '1px solid #E8DED4',
+                  fontSize: 12,
+                  fontFamily: 'inherit',
+                  color: '#5A3E36',
+                  backgroundColor: 'rgba(255,249,247,0.6)',
+                  outline: 'none',
+                  width: 200,
+                  transition: 'border-color 0.2s',
+                }}
+              />
+              <span style={styles.orderCount}>{filteredOrders.length} collections</span>
+            </div>
           </div>
 
           {ordersLoading ? (
@@ -458,7 +535,9 @@ function WhatsAppAdminContent() {
                                   style={{ ...styles.actionPill, backgroundColor: sCfg.bg, color: sCfg.color, borderColor: sCfg.border }}
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    updateStatus.mutate({ id: order.id, status: s as OrderStatus, notifyCustomer: true });
+                                    if (confirm(`Update to "${sCfg.label}"? This will notify the customer via WhatsApp.`)) {
+                                      updateStatus.mutate({ id: order.id, status: s as OrderStatus, notifyCustomer: true });
+                                    }
                                   }}
                                 >
                                   {sCfg.label}

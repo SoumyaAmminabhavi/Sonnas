@@ -3,14 +3,14 @@
  * Endpoints for managing orders, viewing conversations, and sending messages
  */
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { sendTextMessage } from "~/server/whatsapp";
 import { env } from "~/env";
 
 export const whatsappRouter = createTRPCRouter({
   // ─── Orders ────────────────────────────────────────────────────────────
 
-  getOrders: publicProcedure
+  getOrders: protectedProcedure
     .input(
       z.object({
         status: z.string().optional(),
@@ -66,7 +66,7 @@ export const whatsappRouter = createTRPCRouter({
       return { orders: ordersWithImages, nextCursor };
     }),
 
-  getOrder: publicProcedure
+  getOrder: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const order = await ctx.db.whatsAppOrder.findUnique({
@@ -102,7 +102,7 @@ export const whatsappRouter = createTRPCRouter({
       };
     }),
 
-  updateOrderStatus: publicProcedure
+  updateOrderStatus: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -163,7 +163,7 @@ export const whatsappRouter = createTRPCRouter({
 
   // ─── Conversations ────────────────────────────────────────────────────
 
-  getConversations: publicProcedure
+  getConversations: protectedProcedure
     .input(
       z.object({
         limit: z.number().min(1).max(100).default(50),
@@ -184,7 +184,7 @@ export const whatsappRouter = createTRPCRouter({
 
   // ─── Stats ────────────────────────────────────────────────────────────
 
-  getStats: publicProcedure.query(async ({ ctx }) => {
+  getStats: protectedProcedure.query(async ({ ctx }) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -245,7 +245,7 @@ export const whatsappRouter = createTRPCRouter({
 
   // ─── Send message from admin ──────────────────────────────────────────
 
-  sendMessage: publicProcedure
+  sendMessage: protectedProcedure
     .input(
       z.object({
         phone: z.string(),
