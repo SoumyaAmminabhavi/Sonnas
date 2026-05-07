@@ -1300,6 +1300,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
     const isAdding = !!(msg.interactiveId?.startsWith("qty_") ?? msg.text ?? (msg.interactiveId === "btn_add_to_cart"));
 
     if (isAdding && hasActiveSelection) {
+      const quantity = convo.selectedQuantity ?? 1;
       await addToCart(msg.from, {
         cakeName: convo.selectedCake!,
         size: convo.selectedSize!,
