@@ -7,7 +7,7 @@ export default async function DebugDBPage() {
   const session = await auth();
   if (!session) redirect("/api/auth/signin");
 
-  let orders = [];
+  let orders: any[] = [];
   let error = null;
   let dbUrl = "Hidden";
 
