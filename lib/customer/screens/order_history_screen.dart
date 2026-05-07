@@ -51,8 +51,8 @@ class CustomerOrderHistoryScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: primary.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 8))],
-        border: Border.all(color: primary.withOpacity(0.05)),
+        boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 8))],
+        border: Border.all(color: primary.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -67,7 +67,7 @@ class CustomerOrderHistoryScreen extends StatelessWidget {
                     Text("#SN-2024-0$index", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 13, color: berryText)),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                      decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                       child: Text(status, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -82,7 +82,7 @@ class CustomerOrderHistoryScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         "Belgian Chocolate, Wildberry Sensation",
-                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: berryText.withOpacity(0.7)),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: berryText.withValues(alpha: 0.7)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -102,16 +102,16 @@ class CustomerOrderHistoryScreen extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: primary.withOpacity(0.02), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20))),
+            decoration: BoxDecoration(color: primary.withValues(alpha: 0.02), borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20))),
             child: Row(
               children: [
                 Expanded(
                   child: TextButton(
                     onPressed: () => _showOrderDetails(context, index),
-                    child: Text("VIEW DETAILS", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: berryText.withOpacity(0.5))),
+                    child: Text("VIEW DETAILS", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: berryText.withValues(alpha: 0.5))),
                   ),
                 ),
-                Container(width: 1, height: 20, color: primary.withOpacity(0.1)),
+                Container(width: 1, height: 20, color: primary.withValues(alpha: 0.1)),
                 Expanded(
                   child: TextButton(
                     onPressed: () {

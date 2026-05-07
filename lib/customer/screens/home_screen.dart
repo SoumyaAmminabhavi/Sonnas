@@ -65,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     const Color primaryColor = Color(0xFFFF4D8D);
-    const Color onSurfaceColor = Color(0xFF2B1606);
     const Color background = Color(0xFFFFF0F6);
 
 
@@ -128,8 +127,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.2),
-                          background.withOpacity(1.0),
+                          Colors.black.withValues(alpha: 0.2),
+                          background.withValues(alpha: 1.0),
                         ],
                         stops: const [0.0, 1.0],
                       ),
@@ -215,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 180,
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.05),
+                                color: primaryColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: ClipRRect(
@@ -298,8 +297,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 colors: [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
               )
             : null,
-        border: isGradient ? null : Border.all(color: primaryColor.withOpacity(0.2)),
-        color: isGradient ? null : Colors.white.withOpacity(0.8),
+        border: isGradient ? null : Border.all(color: primaryColor.withValues(alpha: 0.2)),
+        color: isGradient ? null : Colors.white.withValues(alpha: 0.8),
       ),
       child: Material(
         color: Colors.transparent,

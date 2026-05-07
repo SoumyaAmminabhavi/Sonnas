@@ -106,7 +106,7 @@ class _AuthScreenState extends State<AuthScreen> {
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: accent.withOpacity(0.1),
+                color: accent.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
             ),
@@ -129,7 +129,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2,
-                      color: primary.withOpacity(0.6),
+                      color: primary.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -138,7 +138,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: GoogleFonts.notoSerif(
                       fontSize: 36,
                       fontWeight: FontWeight.w400,
-                      color: const Color(0xFF2B1606),
+                      color: const Color(0xFF701235),
                       height: 1.1,
                     ),
                   ),
@@ -239,7 +239,7 @@ class _AuthScreenState extends State<AuthScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF701235).withOpacity(0.6),
+            color: const Color(0xFF701235).withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 8),
@@ -248,7 +248,7 @@ class _AuthScreenState extends State<AuthScreen> {
           obscureText: isPassword,
           autofillHints: autofillHints,
           keyboardType: keyboardType,
-          style: GoogleFonts.plusJakartaSans(fontSize: 16, color: const Color(0xFF2B1606)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 16, color: const Color(0xFF701235)),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.plusJakartaSans(color: Colors.black12),

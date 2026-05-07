@@ -6,7 +6,7 @@ import 'screens/cart_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/profile_screen.dart';
-import 'dart:ui';
+
 
 class CustomerMainScreen extends StatefulWidget {
   const CustomerMainScreen({super.key});
@@ -28,6 +28,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       const ChatScreen(),
       const CartScreen(),
       const OrdersScreen(),
+      const ProfileScreen(),
     ];
   }
 
@@ -43,7 +44,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         return Scaffold(
           backgroundColor: surfaceColor,
           appBar: isDesktop ? null : AppBar(
-            backgroundColor: surfaceColor.withOpacity(0.95),
+            backgroundColor: surfaceColor.withValues(alpha: 0.95),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
@@ -87,7 +88,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF701235).withOpacity(0.06),
+                  color: const Color(0xFF701235).withValues(alpha: 0.06),
                   blurRadius: 40,
                   offset: const Offset(0, -4),
                 ),
@@ -121,7 +122,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       width: 280,
       decoration: BoxDecoration(
         color: surfaceColor,
-        border: Border(right: BorderSide(color: secondaryColor.withOpacity(0.05))),
+        border: Border(right: BorderSide(color: secondaryColor.withValues(alpha: 0.05))),
       ),
       child: Column(
         children: [
@@ -146,7 +147,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 4,
-                    color: secondaryColor.withOpacity(0.4),
+                    color: secondaryColor.withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -177,50 +178,56 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           // Bottom Profile
           Padding(
             padding: const EdgeInsets.all(24),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: secondaryColor.withOpacity(0.05),
-                    blurRadius: 20,
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 20,
-                    backgroundImage: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuC906zMoWpz20EzIX9rHUQWXwqHop9zHMqiJpL1cJocICMrUqiDRvZ6lbtZvxpEoxIbK0XyFhMe1gwGbSOa0ZMvULR4ivkTjlvx8Ds7CY03emu5eZpoZnkVlASDBsPOejOGv2YsYhdQVkt5j_tYptsfaQ3v__rxbDkK_7NK4V0RzprQlmaHd2rBFkNdcZcVqKZ41cC5SBLn8tyUkqqTFodANgA7CSqnNLBpPJ7o7VfLt2f994NtQX_u6MAPSP1M_fWHt7GgmcDs69AZ"),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          "Amelie L.",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF2B1606),
-                          ),
-                        ),
-                        Text(
-                          "CONNOISSEUR",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: primaryColor,
-                          ),
-                        ),
-                      ],
+            child: InkWell(
+              onTap: () {
+                setState(() => _currentIndex = 5);
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: secondaryColor.withValues(alpha: 0.05),
+                      blurRadius: 20,
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 20,
+                      backgroundImage: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuC906zMoWpz20EzIX9rHUQWXwqHop9zHMqiJpL1cJocICMrUqiDRvZ6lbtZvxpEoxIbK0XyFhMe1gwGbSOa0ZMvULR4ivkTjlvx8Ds7CY03emu5eZpoZnkVlASDBsPOejOGv2YsYhdQVkt5j_tYptsfaQ3v__rxbDkK_7NK4V0RzprQlmaHd2rBFkNdcZcVqKZ41cC5SBLn8tyUkqqTFodANgA7CSqnNLBpPJ7o7VfLt2f994NtQX_u6MAPSP1M_fWHt7GgmcDs69AZ"),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "My Profile",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF701235),
+                            ),
+                          ),
+                          Text(
+                            "ACCOUNT SETTINGS",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -246,7 +253,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: primaryColor.withOpacity(0.3),
+                color: primaryColor.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               ),
@@ -256,7 +263,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : secondaryColor.withOpacity(0.5),
+              color: isSelected ? Colors.white : secondaryColor.withValues(alpha: 0.5),
               size: 22,
             ),
             const SizedBox(width: 16),
@@ -266,7 +273,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 fontSize: 11,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 letterSpacing: 1.5,
-                color: isSelected ? Colors.white : secondaryColor.withOpacity(0.6),
+                color: isSelected ? Colors.white : secondaryColor.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -288,7 +295,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: isSelected
             ? BoxDecoration(
-                color: primaryContainerColor.withOpacity(0.1),
+                color: primaryContainerColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               )
             : null,
@@ -297,7 +304,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? primaryColor : secondaryColor.withOpacity(0.6),
+              color: isSelected ? primaryColor : secondaryColor.withValues(alpha: 0.6),
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -307,7 +314,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 letterSpacing: 1.2,
-                color: isSelected ? primaryColor : secondaryColor.withOpacity(0.6),
+                color: isSelected ? primaryColor : secondaryColor.withValues(alpha: 0.6),
               ),
             ),
           ],

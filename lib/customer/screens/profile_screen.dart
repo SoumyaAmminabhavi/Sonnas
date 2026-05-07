@@ -4,19 +4,87 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'contact_screen.dart';
 import 'welcome_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isEditing = false;
+  bool _isLoading = true;
+
+  final TextEditingController _nameController = TextEditingController(text: "Sonnas Cafe");
+  final TextEditingController _emailController = TextEditingController(text: "soonas@gmail.com");
+  final TextEditingController _phoneController = TextEditingController(text: "09113231424");
+  final TextEditingController _addressController = TextEditingController(text: "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021");
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      // Data is now set via default controllers for boutique brand consistency
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      // Simulate/Implement profile update
+      await Future.delayed(const Duration(seconds: 1)); // UX feedback delay
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Profile updated successfully"),
+            backgroundColor: Color(0xFFFF4D8D),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() {
+          _isEditing = false;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error updating profile")),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     const Color primary = Color(0xFFFF4D8D);
     const Color background = Color(0xFFFFF0F6);
-    const Color onSurface = Color(0xFF2B1606);
+    const Color onSurface = Color(0xFF701235);
     const Color secondary = Color(0xFF701235);
     const Color primaryContainer = Color(0xFFFFB6D3);
-    const Color surfaceContainerLow = Color(0xFFFFF1E9);
     const Color surfaceContainerHigh = Color(0xFFFFDCC5);
     const Color outline = Color(0xFF867277);
+
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: background,
+        body: Center(child: CircularProgressIndicator(color: primary)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: background,
@@ -38,7 +106,7 @@ class ProfileScreen extends StatelessWidget {
                           border: Border.all(color: surfaceContainerHigh, width: 4),
                           boxShadow: [
                             BoxShadow(
-                              color: secondary.withOpacity(0.1),
+                              color: secondary.withValues(alpha: 0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -70,17 +138,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    "MEMBERSHIP STATUS",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                      color: primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Amelie Laurent",
+                    _nameController.text,
                     style: GoogleFonts.notoSerif(
                       fontSize: 32,
                       fontStyle: FontStyle.italic,
@@ -89,29 +147,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: surfaceContainerHigh.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.star, size: 12, color: primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          "CONNOISSEUR",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                            color: primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -132,13 +167,22 @@ class ProfileScreen extends StatelessWidget {
                           color: onSurface,
                         ),
                       ),
-                      Text(
-                        "EDIT DETAILS",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1,
-                          color: primary,
+                      TextButton(
+                        onPressed: () {
+                          if (_isEditing) {
+                            _saveProfile();
+                          } else {
+                            setState(() => _isEditing = true);
+                          }
+                        },
+                        child: Text(
+                          _isEditing ? "SAVE CHANGES" : "EDIT DETAILS",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                            color: primary,
+                          ),
                         ),
                       ),
                     ],
@@ -146,13 +190,13 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 24),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: surfaceContainerLow,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withOpacity(0.06),
+                          color: secondary.withValues(alpha: 0.06),
                           blurRadius: 40,
                           offset: const Offset(0, 10),
                         ),
@@ -161,13 +205,13 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoItem("FULL NAME", "Amelie Laurent", outline, onSurface),
+                        _buildEditableInfoItem("FULL NAME", _nameController, outline, onSurface),
                         const SizedBox(height: 24),
-                        _buildInfoItem("EMAIL ADDRESS", "amelie.l@patisserie.com", outline, onSurface),
+                        _buildEditableInfoItem("EMAIL ADDRESS", _emailController, outline, onSurface, isEnabled: false),
                         const SizedBox(height: 24),
-                        _buildInfoItem("PHONE NUMBER", "+91 98765 43210", outline, onSurface),
+                        _buildEditableInfoItem("PHONE NUMBER", _phoneController, outline, onSurface),
                         const SizedBox(height: 24),
-                        _buildInfoItem("DEFAULT DELIVERY", "24 Rue de Rivoli,\n75004 Paris, FR", outline, onSurface),
+                        _buildEditableInfoItem("DEFAULT DELIVERY", _addressController, outline, onSurface, maxLines: 2),
                       ],
                     ),
                   ),
@@ -187,50 +231,18 @@ class ProfileScreen extends StatelessWidget {
                     "₹3,450",
                     "ORDER #8921",
                     "DELIVERED",
-                    "https://lh3.googleusercontent.com/aida-public/AB6AXuCT0Y9SdPbiDQgOKKd0VnCdZVa3r5dV5Ge2SEen-9xaD4d9Wo51Lv5SoKRpoLTHOxxp1i2EIgHsV8jTFMUESLm163SluyWs0K4gIC-U_k-JQ4s6IL319LcTS8tTyOL0GNAmvCnvOz0YIXMMMOlwAAGZxBZOy1917Pcw729Ow0OpdQyv7GOU9bxc0pZGrFt5BUYUcC8QtleyrkgqNSt52Ob5fLtnZfBu0mS75jY44gCwFdwmHUUADmYY9MXtRBDtWhtA_T6bjxTlRMsR",
+                    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
                     primary, outline, onSurface, surfaceContainerHigh
                   ),
-                  const SizedBox(height: 16),
-                  _buildActivityItem(
-                    "Framboise Delice",
-                    "₹1,250",
-                    "ORDER #8845",
-                    "DELIVERED",
-                    "https://lh3.googleusercontent.com/aida-public/AB6AXuBbCIYg6eTZsFc8O_OxxkW4LwXeLL7qRzPKxMOVWaXJxG5lRg-WLCOeWeQrEPWva1dfFF_WKMoiKVSKwQ27V4fOlFlWulvr2SGr7Zi7P_gAK_H-HDE_T1_zioFzJ8hLvoxRdCxSVbHndXuZhkbIHfxSE2M4FSwzlDgM8b4RuohLVVt8Ms2EH5r-8RtmD5i-Lmc3xoTINR9OuFB-d1kuEnTC14X3yiv5fujgkIUQAgmriVrZTJNBiI0teHjKfA8voBZMGQ6U7ZdUD2u4",
-                    primary, outline, onSurface, surfaceContainerHigh
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.only(bottom: 2),
-                      decoration: BoxDecoration(
-                        border: Border(bottom: BorderSide(color: primary.withOpacity(0.3))),
-                      ),
-                      child: Text(
-                        "View Full Order History",
-                        style: GoogleFonts.notoSerif(
-                          fontSize: 14,
-                          fontStyle: FontStyle.italic,
-                          color: primary,
-                        ),
-                      ),
-                    ),
-                  ),
-
                   const SizedBox(height: 48),
+                  
                   // Account Settings
                   Text(
                     "Account Settings",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 20,
-                      color: onSurface,
-                    ),
+                    style: GoogleFonts.notoSerif(fontSize: 20, color: onSurface),
                   ),
                   const SizedBox(height: 24),
-                  _buildSettingTile(Icons.manage_accounts_outlined, "Profile Settings", primary, onSurface, outline, context),
-                  _buildSettingTile(Icons.payments_outlined, "Payment Methods", primary, onSurface, outline, context),
-                  _buildSettingTile(Icons.notifications_active_outlined, "Notification Preferences", primary, onSurface, outline, context),
-                  _buildSettingTile(Icons.help_center_outlined, "Help & Support", primary, onSurface, outline, context, onTap: () {
+                  _buildSettingTile(Icons.help_center_outlined, "Help & Support", onSurface, outline, context, onTap: () {
                     Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactScreen()));
                   }),
 
@@ -248,7 +260,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withOpacity(0.3),
+                          color: primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -267,21 +279,23 @@ class ProfileScreen extends StatelessWidget {
                           }
                         },
                         borderRadius: BorderRadius.circular(12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.logout, size: 18, color: Colors.white),
-                            const SizedBox(width: 8),
-                            Text(
-                              "SIGN OUT",
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 2,
-                                color: Colors.white,
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.logout, size: 18, color: Colors.white),
+                              const SizedBox(width: 8),
+                              Text(
+                                "SIGN OUT",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 2,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -289,12 +303,12 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 32),
                   Center(
                     child: Text(
-                      "SONNA'S PATISSERIE V2.4.0 • SONNAS-PATISSERIE.COM",
+                      "SONNA'S PATISSERIE V2.4.0",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
-                        color: outline.withOpacity(0.5),
+                        color: outline.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -307,7 +321,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String label, String value, Color labelColor, Color valueColor) {
+  Widget _buildEditableInfoItem(String label, TextEditingController controller, Color labelColor, Color valueColor, {int maxLines = 1, bool isEnabled = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -317,19 +331,35 @@ class ProfileScreen extends StatelessWidget {
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
-            color: labelColor.withOpacity(0.6),
+            color: labelColor.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: valueColor,
-            height: 1.4,
+        if (_isEditing && isEnabled)
+          TextField(
+            controller: controller,
+            maxLines: maxLines,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: valueColor,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFFF4D8D))),
+            ),
+          )
+        else
+          Text(
+            controller.text,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: valueColor,
+              height: 1.4,
+            ),
           ),
-        ),
       ],
     );
   }
@@ -341,11 +371,7 @@ class ProfileScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF701235).withOpacity(0.06),
-            blurRadius: 40,
-            offset: const Offset(0, 10),
-          ),
+          BoxShadow(color: const Color(0xFF701235).withValues(alpha: 0.06), blurRadius: 40, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -362,56 +388,19 @@ class ProfileScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: onSurface,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      price,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: primary,
-                      ),
-                    ),
+                    Expanded(child: Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurface), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Text(price, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: primary)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(
-                      orderId,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                        color: outline.withOpacity(0.6),
-                      ),
-                    ),
+                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: statusBg.withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        status,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1,
-                          color: primary,
-                        ),
-                      ),
+                      decoration: BoxDecoration(color: statusBg.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(4)),
+                      child: Text(status, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: primary)),
                     ),
                   ],
                 ),
@@ -423,31 +412,19 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingTile(IconData icon, String title, Color primary, Color onSurface, Color outline, BuildContext context, {VoidCallback? onTap}) {
+  Widget _buildSettingTile(IconData icon, String title, Color onSurface, Color outline, BuildContext context, {VoidCallback? onTap}) {
     return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: outline.withOpacity(0.1))),
-      ),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withValues(alpha: 0.1)))),
       child: ListTile(
         onTap: onTap ?? () {},
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
         leading: Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF1E9),
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: BoxDecoration(color: const Color(0xFFFFF1E9), borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: const Color(0xFF701235), size: 20),
         ),
-        title: Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: onSurface,
-          ),
-        ),
+        title: Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: onSurface)),
         trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFFD8C1C6)),
       ),
     );

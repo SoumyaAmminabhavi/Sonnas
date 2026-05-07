@@ -161,7 +161,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    Icon(Icons.calendar_today_outlined, size: 16, color: cs.primary.withOpacity(0.6)),
+                                    Icon(Icons.calendar_today_outlined, size: 16, color: cs.primary.withValues(alpha: 0.6)),
                                     const SizedBox(width: 8),
                                     Text(
                                       formattedDate,
@@ -172,7 +172,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 16),
-                                    Icon(Icons.schedule_outlined, size: 16, color: cs.primary.withOpacity(0.6)),
+                                    Icon(Icons.schedule_outlined, size: 16, color: cs.primary.withValues(alpha: 0.6)),
                                     const SizedBox(width: 8),
                                     Text(
                                       deliveryTime,
@@ -203,7 +203,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                 children: [
                                   CircleAvatar(
                                     radius: 24,
-                                    backgroundColor: cs.primaryContainer.withOpacity(0.3),
+                                    backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
                                     child: Icon(Icons.person, color: cs.primary),
                                   ),
                                   const SizedBox(width: 16),
@@ -370,7 +370,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                       'updatedAt': DateTime.now().toUtc().toIso8601String(),
                     })
                     .eq('id', widget.orderId);
-                if (mounted) {
+                if (context.mounted) {
                   Navigator.pop(context);
                   _fetchOrderDetails();
                 }
@@ -537,7 +537,7 @@ class _SelectionTile extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) => Container(
               width: 64,
               height: 64,
-              color: cs.primaryContainer.withOpacity(0.2),
+              color: cs.primaryContainer.withValues(alpha: 0.2),
               child: Icon(Icons.cake, color: cs.primary),
             ),
           ),

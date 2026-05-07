@@ -57,7 +57,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       }
 
       final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       String? finalAddress;
@@ -149,7 +149,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             const SizedBox(height: 16),
             _buildTextField("Recipient Name", Icons.person_outline, controller: _nameController),
             const SizedBox(height: 12),
-            _buildTextField("Contact Number", Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+            _buildTextField("Contact Number", Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]),
             const SizedBox(height: 12),
             _buildMapView(),
             const SizedBox(height: 12),
@@ -178,7 +178,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: primary.withOpacity(0.05))),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: primary.withValues(alpha: 0.05))),
               child: Column(
                 children: [
                   _summaryRow("Subtotal", "₹${cart.total.toInt()}"),
@@ -204,6 +204,18 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                   if (_nameController.text.isEmpty || _phoneController.text.isEmpty || _addressController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Please fill in all delivery details")),
+                    );
+                    return;
+                  }
+                  
+                  final addressLower = _addressController.text.toLowerCase();
+                  if (!addressLower.contains('hubli') && !addressLower.contains('hubballi')) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("In your city it is not available. We currently serve Hubli only."),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
                     );
                     return;
                   }
@@ -239,7 +251,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   }
 
   Widget _sectionTitle(String title) {
-    return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: const Color(0xFF4A152C).withOpacity(0.5)));
+    return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: const Color(0xFF4A152C).withValues(alpha: 0.5)));
   }
 
   Widget _buildTextField(String hint, IconData icon, {int maxLines = 1, TextEditingController? controller, TextInputType? keyboardType, List<TextInputFormatter>? inputFormatters}) {
@@ -254,7 +266,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFFC2185B)),
         filled: true,
         fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withOpacity(0.05))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC2185B))),
       ),
     );
@@ -265,7 +277,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFC2185B).withOpacity(0.1)),
+        border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.1)),
       ),
       clipBehavior: Clip.antiAlias,
       child: FlutterMap(
@@ -283,7 +295,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         children: [
           TileLayer(
             urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            userAgentPackageName: 'com.example.app',
+            userAgentPackageName: 'com.sonnas.patisserie',
           ),
           MarkerLayer(
             markers: [
@@ -331,29 +343,35 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     } catch (e) {
       debugPrint("Reverse Geocoding Error: $e");
     } finally {
-      setState(() => _isGettingLocation = false);
+      if (mounted) setState(() => _isGettingLocation = false);
     }
   }
 
   Widget _buildAddressField() {
     return TextField(
       controller: _addressController,
-      maxLines: 3,
+      maxLines: null, // Allow expanding for long addresses
+      minLines: 2,
+      style: const TextStyle(fontSize: 13, height: 1.4),
       decoration: InputDecoration(
         hintText: "Full Delivery Address",
-        hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
         prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: Color(0xFFC2185B)),
-        suffixIcon: _isGettingLocation 
-          ? const SizedBox(width: 20, height: 20, child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC2185B))))
-          : IconButton(
-              icon: const Icon(Icons.my_location, size: 20, color: Color(0xFFC2185B)),
-              onPressed: _getCurrentLocation,
-              tooltip: "Get Current Location",
-            ),
+        suffixIcon: Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: _isGettingLocation 
+            ? const UnconstrainedBox(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC2185B))))
+            : IconButton(
+                icon: const Icon(Icons.my_location, size: 20, color: Color(0xFFC2185B)),
+                onPressed: _getCurrentLocation,
+                tooltip: "Get Current Location",
+              ),
+        ),
         filled: true,
         fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withOpacity(0.05))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC2185B))),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
@@ -366,7 +384,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       },
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withOpacity(0.05))),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
         child: Row(
           children: [
             const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFFC2185B)),
@@ -381,7 +399,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   Widget _buildTimePicker() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withOpacity(0.05))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           hint: const Text("Time", style: TextStyle(fontSize: 14)),
@@ -407,8 +425,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? primary : primary.withOpacity(0.05)),
-          boxShadow: isSelected ? [BoxShadow(color: primary.withOpacity(0.05), blurRadius: 10)] : null,
+          border: Border.all(color: isSelected ? primary : primary.withValues(alpha: 0.05)),
+          boxShadow: isSelected ? [BoxShadow(color: primary.withValues(alpha: 0.05), blurRadius: 10)] : null,
         ),
         child: Row(
           children: [
@@ -454,7 +472,7 @@ class SuccessScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: primary.withOpacity(0.1), blurRadius: 40)]),
+                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.1), blurRadius: 40)]),
                 child: const Icon(Icons.check_circle, size: 80, color: Colors.green),
               ),
               const SizedBox(height: 40),
@@ -464,7 +482,7 @@ class SuccessScreen extends StatelessWidget {
               const SizedBox(height: 48),
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: primary.withOpacity(0.05))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: primary.withValues(alpha: 0.05))),
                 child: Column(
                   children: [
                     const Text("ORDER ID", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.grey)),
@@ -485,7 +503,7 @@ class SuccessScreen extends StatelessWidget {
                 child: const Text("TRACK ORDER", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 16),
-              TextButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: Text("VIEW ALL ORDERS", style: TextStyle(color: primary.withOpacity(0.6), fontWeight: FontWeight.bold))),
+              TextButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: Text("VIEW ALL ORDERS", style: TextStyle(color: primary.withValues(alpha: 0.6), fontWeight: FontWeight.bold))),
             ],
           ),
         ),

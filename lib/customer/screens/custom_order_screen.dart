@@ -26,7 +26,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
     const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color onSurfaceColor = Color(0xFF2B1606);
+    const Color onSurfaceColor = Color(0xFF701235);
     const Color secondaryColor = Color(0xFF701235);
     const Color outlineVariantColor = Color(0xFFD8C1C6);
 
@@ -39,7 +39,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: surfaceColor.withOpacity(0.9),
+            backgroundColor: surfaceColor.withValues(alpha: 0.9),
             surfaceTintColor: Colors.transparent,
             leading: const Padding(
               padding: EdgeInsets.all(12.0),
@@ -113,10 +113,10 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                   height: 320,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1E9).withOpacity(0.5),
+                    color: const Color(0xFFFFF1E9).withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: outlineVariantColor.withOpacity(0.3),
+                      color: outlineVariantColor.withValues(alpha: 0.3),
                       width: 2,
                     ),
                   ),
@@ -139,7 +139,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                         style: GoogleFonts.notoSerif(
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
-                          color: secondaryColor.withOpacity(0.5),
+                          color: secondaryColor.withValues(alpha: 0.5),
                         ),
                       ),
                     ],
@@ -159,10 +159,10 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                     hintStyle: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w300,
-                      color: secondaryColor.withOpacity(0.4),
+                      color: secondaryColor.withValues(alpha: 0.4),
                     ),
                     enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: outlineVariantColor.withOpacity(0.3)),
+                      borderSide: BorderSide(color: outlineVariantColor.withValues(alpha: 0.3)),
                     ),
                     focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: primaryColor),
@@ -193,7 +193,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: selectedDate == null ? secondaryColor.withOpacity(0.4) : secondaryColor,
+                          color: selectedDate == null ? secondaryColor.withValues(alpha: 0.4) : secondaryColor,
                         ),
                       ),
                     ),
@@ -241,7 +241,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                   padding: const EdgeInsets.only(top: 32),
                   decoration: BoxDecoration(
                     border: Border(
-                      top: BorderSide(color: outlineVariantColor.withOpacity(0.2)),
+                      top: BorderSide(color: outlineVariantColor.withValues(alpha: 0.2)),
                     ),
                   ),
                   child: Column(
@@ -252,7 +252,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: primaryContainerColor.withOpacity(0.2),
+                              color: primaryContainerColor.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.info_outline, color: primaryColor),
@@ -276,7 +276,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 1,
-                                    color: secondaryColor.withOpacity(0.6),
+                                    color: secondaryColor.withValues(alpha: 0.6),
                                   ),
                                 ),
                               ],
@@ -297,7 +297,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: primaryColor.withOpacity(0.2),
+                              color: primaryColor.withValues(alpha: 0.2),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -377,7 +377,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: 2,
-                                        color: secondaryColor.withOpacity(0.5),
+                                        color: secondaryColor.withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],
@@ -442,7 +442,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
           style: GoogleFonts.notoSerif(
             fontSize: 22,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF2B1606),
+            color: const Color(0xFF701235),
           ),
         ),
         const SizedBox(height: 4),
@@ -452,7 +452,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.5,
-            color: const Color(0xFF701235).withOpacity(0.6),
+            color: const Color(0xFF701235).withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -468,31 +468,32 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
           color: const Color(0xFFFFF1E9),
           borderRadius: BorderRadius.circular(16),
         ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: const Color(0xFFFF4D8D)),
-          const SizedBox(height: 12),
-          Text(
-            label.toUpperCase(),
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.5,
-              color: const Color(0xFF701235).withOpacity(0.7),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: const Color(0xFFD8C1C6).withOpacity(0.3)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: const Color(0xFFFF4D8D)),
+            const SizedBox(height: 12),
+            Text(
+              label.toUpperCase(),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: const Color(0xFF701235).withValues(alpha: 0.7),
               ),
             ),
-            child: child,
-          ),
-        ],
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
+                ),
+              ),
+              child: child,
+            ),
+          ],
+        ),
       ),
     );
   }

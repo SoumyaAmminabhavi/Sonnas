@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:ui';
+
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -17,7 +17,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   static const Color primary = Color(0xFFFF4D8D);
   static const Color background = Color(0xFFFFF0F6);
-  static const Color onSurface = Color(0xFF2B1606);
+  static const Color onSurface = Color(0xFF701235);
   static const Color secondary = Color(0xFF701235);
 
   @override
@@ -51,6 +51,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
             return {
               "id": order['orderNumber'] ?? order['id'],
+              "uuid": order['id'],
               "date": _formatDate(order['createdAt']),
               "title": firstItemTitle,
               "price": "₹${order['totalPrice'] ?? '0'}",
@@ -79,6 +80,142 @@ class _OrdersScreenState extends State<OrdersScreen> {
     return "${date.day}/${date.month}/${date.year}";
   }
 
+  Future<void> _cancelOrder(String uuid) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Cancel Order", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+        content: Text("Are you sure you want to cancel this order?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("NO")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("YES, CANCEL", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final supabase = Supabase.instance.client;
+        await supabase
+            .from('WhatsAppOrder')
+            .update({'status': 'CANCELLED'})
+            .eq('id', uuid);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Cancellation request sent"), backgroundColor: Colors.red),
+          );
+          _fetchOrders(); // Refresh
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error: $e")),
+          );
+        }
+      }
+    }
+  }
+
+  void _showReviewDialog() {
+    double rating = 5;
+    final commentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 32,
+            top: 32,
+            left: 32,
+            right: 32,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                "Rate Your Experience",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: secondary,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      color: primary,
+                      size: 40,
+                    ),
+                    onPressed: () => setModalState(() => rating = index + 1.0),
+                  );
+                }),
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: commentController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "What did you love about your order?",
+                  filled: true,
+                  fillColor: background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Thank you for your feedback! 💖"), backgroundColor: primary),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    elevation: 0,
+                  ),
+                  child: const Text("SUBMIT REVIEW"),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -99,7 +236,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2.0,
-                      color: primary.withOpacity(0.6),
+                      color: primary.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -154,7 +291,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                   ),
                                 ),
                                 Text(
@@ -200,12 +337,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: secondary.withOpacity(0.04),
+            color: secondary.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: secondary.withOpacity(0.05)),
+        border: Border.all(color: secondary.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -231,13 +368,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: secondary.withOpacity(0.5),
+                        color: secondary.withValues(alpha: 0.5),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: primary.withOpacity(0.1),
+                        color: primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -266,13 +403,49 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
-                    color: secondary.withOpacity(0.8),
+                    color: secondary.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    if (order['status'] == 'PENDING' || order['status'] == 'CONFIRMED')
+                      TextButton(
+                        onPressed: () => _cancelOrder(order['uuid']),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.only(right: 16),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          "CANCEL",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: Colors.red.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ),
+                    if (order['status'] == 'DELIVERED' || order['status'] == 'COMPLETED')
+                      TextButton(
+                        onPressed: _showReviewDialog,
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.only(right: 16),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          "REVIEW",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                            color: primary,
+                          ),
+                        ),
+                      ),
                     TextButton(
                       onPressed: () {
                         if (order['isActive'] == "true") {

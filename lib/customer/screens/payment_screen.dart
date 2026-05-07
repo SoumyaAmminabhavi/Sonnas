@@ -12,6 +12,7 @@ class PaymentScreen extends StatefulWidget {
   final String? deliveryDate;
   final String? deliveryTime;
   final String? notes;
+  final bool isSelfCheckout;
 
   const PaymentScreen({
     super.key,
@@ -21,6 +22,7 @@ class PaymentScreen extends StatefulWidget {
     this.deliveryDate,
     this.deliveryTime,
     this.notes,
+    this.isSelfCheckout = false,
   });
 
   @override
@@ -71,7 +73,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'deliveryDate': widget.deliveryDate,
         'deliveryTime': widget.deliveryTime,
         'notes': widget.notes,
-        'totalPrice': (cart.total + 150 + (cart.total * 0.05)).toString(),
+        'totalPrice': (cart.total + (widget.isSelfCheckout ? 0 : 150) + (cart.total * 0.05)).toString(),
         'status': 'PENDING',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
@@ -80,7 +82,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       
       // 3. Insert Items
       final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
-        'id': "ITEM-${orderId}-${entry.key}",
+        'id': "ITEM-$orderId-${entry.key}",
         'orderId': orderId,
         'cakeName': entry.value.name,
         'size': 'Standard', // Default size from schema requirement
@@ -120,7 +122,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
     const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color onSurfaceColor = Color(0xFF2B1606);
+    const Color onSurfaceColor = Color(0xFF701235);
     const Color secondaryColor = Color(0xFF701235);
     const Color outlineVariantColor = Color(0xFFD8C1C6);
 
@@ -136,7 +138,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               width: 400,
               height: 400,
               decoration: BoxDecoration(
-                color: primaryContainerColor.withOpacity(0.05),
+                color: primaryContainerColor.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -149,7 +151,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: surfaceColor.withOpacity(0.8),
+                backgroundColor: surfaceColor.withValues(alpha: 0.8),
                 surfaceTintColor: Colors.transparent,
                 leading: IconButton(
                   onPressed: () => Navigator.pop(context),
@@ -186,7 +188,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: primaryColor.withOpacity(0.7),
+                          color: primaryColor.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -228,7 +230,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: secondaryColor.withOpacity(0.6),
+                          color: secondaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -246,7 +248,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: outlineVariantColor.withOpacity(0.1)),
+                                border: Border.all(color: outlineVariantColor.withValues(alpha: 0.1)),
                               ),
                               child: Column(
                                 children: [
@@ -262,7 +264,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: secondaryColor.withOpacity(0.6),
+                                      color: secondaryColor.withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ],
@@ -287,7 +289,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     child: TextField(
                                       decoration: InputDecoration(
                                         hintText: "Enter UPI ID (e.g. user@bank)",
-                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withOpacity(0.3)),
+                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withValues(alpha: 0.3)),
                                         filled: true,
                                         fillColor: const Color(0xFFFFF1E9),
                                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -350,7 +352,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: secondaryColor.withOpacity(0.08),
+                          color: secondaryColor.withValues(alpha: 0.08),
                           blurRadius: 80,
                           offset: const Offset(0, 40),
                         ),
@@ -376,7 +378,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               Expanded(
                                 child: Text(
                                   "${item.name} (x${item.quantity})",
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withOpacity(0.7)),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withValues(alpha: 0.7)),
                                 ),
                               ),
                               Text(
@@ -385,7 +387,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               ),
                             ],
                           ),
-                        )).toList(),
+                        )),
                         
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 24),
@@ -405,14 +407,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "₹${(cart.total + 150 + (cart.total * 0.05)).toInt()}",
+                                  "₹${(cart.total + (widget.isSelfCheckout ? 0 : 150) + (cart.total * 0.05)).toInt()}",
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
                             ),
                             Text(
                               "Incl. all taxes",
-                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withOpacity(0.4)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -437,7 +439,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               boxShadow: [
                                 if (!_isLoading)
                                   BoxShadow(
-                                    color: primaryColor.withOpacity(0.2),
+                                    color: primaryColor.withValues(alpha: 0.2),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -471,7 +473,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1,
-                                color: const Color(0xFF867277).withOpacity(0.4),
+                                color: const Color(0xFF867277).withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -503,7 +505,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }) {
     final bool isSelected = _selectedMethod == id;
     const Color primaryColor = Color(0xFFFF4D8D);
-    const Color onSurfaceColor = Color(0xFF2B1606);
+    const Color onSurfaceColor = Color(0xFF701235);
     const Color secondaryColor = Color(0xFF701235);
 
     return AnimatedContainer(
@@ -513,10 +515,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isSelected ? primaryColor.withOpacity(0.2) : const Color(0xFFD8C1C6).withOpacity(0.1)),
+        border: Border.all(color: isSelected ? primaryColor.withValues(alpha: 0.2) : const Color(0xFFD8C1C6).withValues(alpha: 0.1)),
         boxShadow: [
           if (isSelected)
-            BoxShadow(color: secondaryColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: secondaryColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: InkWell(
@@ -529,7 +531,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFB6D3).withOpacity(0.2),
+                    color: const Color(0xFFFFB6D3).withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: primaryColor, size: 20),
@@ -546,7 +548,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       if (!isSelected)
                         Text(
                           subtitle,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: secondaryColor.withOpacity(0.6)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: secondaryColor.withValues(alpha: 0.6)),
                         ),
                     ],
                   ),
@@ -581,7 +583,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Center(
         child: Text(
           name,
-          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withOpacity(0.4)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withValues(alpha: 0.4)),
         ),
       ),
     );
@@ -593,93 +595,172 @@ class _PaymentScreenState extends State<PaymentScreen> {
     const Color surfaceColor = Color(0xFFFFF0F6);
 
     return Material(
-      color: surfaceColor.withOpacity(0.6),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(40),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(48),
-              boxShadow: [
-                BoxShadow(color: secondaryColor.withOpacity(0.1), blurRadius: 80, offset: const Offset(0, 40)),
-              ],
-              border: Border.all(color: primaryColor.withOpacity(0.1)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFB6D3).withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.check_circle, color: primaryColor, size: 64),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(colors: [primaryColor, Color(0xFFFFB6D3)]),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.favorite, color: Colors.white, size: 14),
-                      ),
+      color: surfaceColor.withValues(alpha: 0.95),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Aesthetic Success Icon
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.15),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-                Text(
-                  "Payment Successful",
-                  style: GoogleFonts.notoSerif(fontSize: 32, fontWeight: FontWeight.w400),
+                child: Center(
+                  child: Container(
+                    width: 60,
+                    height: 60,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF4CAF50),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check, color: Colors.white, size: 32),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  "Your order is being prepared with love. Our artisans are currently crafting your selection for the perfect sensory delight.",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withOpacity(0.7), height: 1.6),
+              ),
+              const SizedBox(height: 40),
+              
+              // Heading
+              Text(
+                "Order Placed Successfully 🎉",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.notoSerif(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: secondaryColor,
+                  height: 1.2,
                 ),
-                const SizedBox(height: 40),
-                ElevatedButton(
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "Your boutique selection is being prepared\nby our expert artisans.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: secondaryColor.withValues(alpha: 0.6),
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Info Card
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: secondaryColor.withValues(alpha: 0.04),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    _buildInfoRow("Order ID", "#${_placedOrderId?.split('-').last ?? '...'}"),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Divider(height: 1, thickness: 0.5),
+                    ),
+                    _buildInfoRow("Total Paid", "₹${(context.read<CartProvider>().total + (widget.isSelfCheckout ? 0 : 150) + (context.read<CartProvider>().total * 0.05)).toInt()}"),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                      child: Divider(height: 1, thickness: 0.5),
+                    ),
+                    _buildInfoRow("Est. Preparation", "15 - 20 Mins"),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 48),
+
+              // Primary Action
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => CustomerTrackingScreen(orderId: _placedOrderId)),
+                      MaterialPageRoute(
+                        builder: (context) => CustomerTrackingScreen(
+                          orderId: _placedOrderId,
+                          isSelfCheckout: widget.isSelfCheckout,
+                        ),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: secondaryColor,
-                    elevation: 0,
-                    side: const BorderSide(color: Color(0xFFD8C1C6)),
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 10,
+                    shadowColor: primaryColor.withValues(alpha: 0.4),
                   ),
-                  child: Text("TRACK YOUR ORDER", style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5)),
-                ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
                   child: Text(
-                    "Back to Sonna's Patisserie",
-                    style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: primaryColor, fontStyle: FontStyle.italic),
+                    "TRACK ORDER",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+
+              // Secondary Action
+              TextButton(
+                onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+                child: Text(
+                  "Back to Home",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w700,
+                    color: secondaryColor.withValues(alpha: 0.5),
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF701235).withValues(alpha: 0.4),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF701235),
+          ),
+        ),
+      ],
     );
   }
 }

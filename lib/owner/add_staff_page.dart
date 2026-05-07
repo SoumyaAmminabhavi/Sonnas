@@ -209,7 +209,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             label: "PHONE NUMBER",
             placeholder: "+1 (555) 000-0000",
             keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
           ),
           const SizedBox(height: 24),
           _buildGhostInput(
@@ -225,7 +225,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   label: "PHONE NUMBER",
                   placeholder: "+1 (555) 000-0000",
                   keyboardType: TextInputType.phone,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
                 ),
               ),
               const SizedBox(width: 24),

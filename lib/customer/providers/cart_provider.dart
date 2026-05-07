@@ -10,36 +10,34 @@ class CartItem {
 }
 
 class CartProvider with ChangeNotifier {
-  final List<CartItem> _items = [];
+  final Map<String, CartItem> _items = {};
 
-  List<CartItem> get items => _items;
+  List<CartItem> get items => _items.values.toList();
 
   double get total {
-    return _items.fold(0, (sum, item) => sum + (item.price * item.quantity));
+    return _items.values.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
   void addItem(String name, double price, String imageUrl) {
-    final index = _items.indexWhere((item) => item.name == name);
-    if (index >= 0) {
-      _items[index].quantity++;
+    if (_items.containsKey(name)) {
+      _items[name]!.quantity++;
     } else {
-      _items.add(CartItem(name: name, price: price, imageUrl: imageUrl));
+      _items[name] = CartItem(name: name, price: price, imageUrl: imageUrl);
     }
     notifyListeners();
   }
 
   void removeItem(String name) {
-    _items.removeWhere((item) => item.name == name);
+    _items.remove(name);
     notifyListeners();
   }
 
   void decrementItem(String name) {
-    final index = _items.indexWhere((item) => item.name == name);
-    if (index >= 0) {
-      if (_items[index].quantity > 1) {
-        _items[index].quantity--;
+    if (_items.containsKey(name)) {
+      if (_items[name]!.quantity > 1) {
+        _items[name]!.quantity--;
       } else {
-        _items.removeAt(index);
+        _items.remove(name);
       }
       notifyListeners();
     }

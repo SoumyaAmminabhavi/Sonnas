@@ -268,7 +268,7 @@ class _OrderCompactCard extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 90,
                   height: 90,
-                  color: cs.primaryContainer.withOpacity(0.2),
+                  color: cs.primaryContainer.withValues(alpha: 0.2),
                   child: Icon(Icons.cake, color: cs.primary),
                 ),
               ),
