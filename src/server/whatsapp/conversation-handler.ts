@@ -194,6 +194,7 @@ type ConversationState =
   | "BROWSING_MENU"
   | "SELECTING_CATEGORY"
   | "SELECTING_SIZE"
+  | "SELECTING_QUANTITY"
   | "ASKING_ADDRESS"
   | "ASKING_INSTRUCTIONS"
   | "ASKING_DELIVERY_DATE"
@@ -389,6 +390,28 @@ async function clearCart(phone: string) {
     }
   } catch (e) {
     console.error("[WhatsApp] clearCart failed:", e);
+  }
+}
+
+async function removeLastItem(phone: string) {
+  try {
+    const cached = convoCache.get(phone);
+    const cart = cached?.cart ?? [];
+    if (cart.length === 0) return;
+
+    const lastItem = cart[cart.length - 1];
+    if (!lastItem) return;
+
+    await db.whatsAppCartItem.delete({ where: { id: lastItem.id } });
+    
+    if (cached) {
+      cached.cart = cart.slice(0, -1);
+      convoCache.set(phone, cached);
+    }
+    return lastItem.cakeName;
+  } catch (e) {
+    console.error("[WhatsApp] removeLastItem failed:", e);
+    return null;
   }
 }
 
@@ -690,6 +713,81 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
 
   // ── Global Interactive ID handling (Resilience for old messages) ───────
+  if (interactiveId === "btn_back") {
+    // Smart Back Navigation
+    let targetState: ConversationState = "IDLE";
+
+    switch (state) {
+      case "SELECTING_SIZE":
+        targetState = "BROWSING_MENU";
+        break;
+      case "SELECTING_QUANTITY":
+        targetState = "SELECTING_SIZE";
+        break;
+      case "ASKING_ADDRESS":
+        // Back from address selection goes to Cart View
+        await updateState(msg.from, "IDLE");
+        const updatedConvo = convoCache.get(msg.from) ?? convo;
+        const summary = getCartSummary(updatedConvo.cart ?? []);
+        await sendInteractiveButtons(msg.from, summary, [
+          { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
+          { id: "btn_menu", title: "\u2795 Add More" },
+          { id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" },
+        ]);
+        return;
+      case "ASKING_INSTRUCTIONS":
+        // If pickup, go back to pickup/delivery choice. If delivery, go back to address.
+        if (convo.selectedAddress === "🏪 Store Pickup") {
+          await updateState(msg.from, "ASKING_ADDRESS");
+          await sendInteractiveButtons(
+            msg.from,
+            "\ud83c\udfe0 *How would you like to receive your order?*",
+            [
+              { id: "btn_delivery", title: "\ud83d\ude9a Delivery" },
+              { id: "btn_pickup", title: "\ud83c\udfea Store Pickup" },
+            ]
+          );
+        } else {
+          targetState = "ASKING_ADDRESS";
+        }
+        break;
+      case "ASKING_DELIVERY_DATE":
+        targetState = "ASKING_INSTRUCTIONS";
+        break;
+      case "ASKING_DELIVERY_TIME":
+        targetState = "ASKING_DELIVERY_DATE";
+        break;
+      case "CONFIRMING":
+        targetState = "ASKING_DELIVERY_TIME";
+        break;
+      default:
+        targetState = "IDLE";
+    }
+
+    if (targetState === "IDLE") {
+      await sendWelcome(msg.from, msg.name);
+    } else {
+      await updateState(msg.from, targetState);
+      await rePromptState(msg.from, targetState, convo);
+    }
+    return;
+  }
+
+  if (interactiveId === "btn_remove_last") {
+    const removedName = await removeLastItem(msg.from);
+    if (removedName) {
+      await sendTextMessage(msg.from, `\u2728 *${removedName}* has been removed from your selection.`);
+    }
+    const updatedConvo = convoCache.get(msg.from) ?? convo;
+    const summary = getCartSummary(updatedConvo.cart ?? []);
+    await sendInteractiveButtons(msg.from, summary, [
+      { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
+      { id: "btn_menu", title: "\u2795 Add More" },
+      { id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" },
+    ]);
+    return;
+  }
+
   if (interactiveId === "btn_pickup") {
     await Promise.all([
       updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: "🏪 Store Pickup" }),
@@ -771,6 +869,10 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
     case "SELECTING_SIZE":
       await handleSizeSelection(msg, convo);
+      break;
+
+    case "SELECTING_QUANTITY":
+      await handleQuantitySelection(msg, convo);
       break;
 
     case "ASKING_ADDRESS":
@@ -1096,22 +1198,50 @@ async function handleSizeSelection(
     return;
   }
 
-  // Offer to add to order or checkout immediately
+  // Move to quantity selection
   await Promise.all([
-    updateState(msg.from, "SELECTING_SIZE", {
+    updateState(msg.from, "SELECTING_QUANTITY", {
       selectedSize: selectedOption.size,
       selectedPrice: selectedOption.price,
     }),
     sendInteractiveButtons(
       msg.from,
-      `Great choice! *${convo.selectedCake}* (${selectedOption.size}) \u2014 ${selectedOption.price}\n\nWhat would you like to do?`,
+      `*${convo.selectedCake}* (${selectedOption.size})\n\nHow many would you like to order? \ud83e\udde1`,
       [
-        { id: "btn_add_to_cart", title: "\u2728 Add to Order" },
-        { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
-        { id: "btn_menu", title: "\ud83d\udccb Back to Menu" },
+        { id: "qty_1", title: "1" },
+        { id: "qty_2", title: "2" },
+        { id: "btn_back", title: "⬅️ Back" },
       ]
     )
   ]);
+}
+
+// ─── Handle quantity selection ─────────────────────────────────────────────
+
+async function handleQuantitySelection(
+  msg: IncomingMessage,
+  convo: Conversation
+) {
+  let quantity = 1;
+
+  if (msg.interactiveId?.startsWith("qty_")) {
+    quantity = parseInt(msg.interactiveId.replace("qty_", ""), 10);
+  } else if (msg.text) {
+    const num = parseInt(msg.text.replace(/[^\d]/g, ""), 10);
+    if (!isNaN(num) && num > 0 && num <= 50) {
+      quantity = num;
+    } else if (GREETINGS.includes(msg.text.toLowerCase())) {
+      return; // Ignore greeting, will be caught by global re-prompt if needed
+    } else {
+      await sendTextMessage(msg.from, "Please enter a valid quantity (e.g., 1, 2, 5). \ud83d\udcac");
+      return;
+    }
+  }
+
+  await updateState(msg.from, "SELECTING_QUANTITY", { selectedQuantity: quantity });
+  
+  // Transition to Cart Actions
+  await handleCartActions(msg, { ...convo, selectedQuantity: quantity } as Conversation);
 }
 
 async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
@@ -1119,36 +1249,37 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
     const isCheckout = msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now";
     const hasActiveSelection = !!(convo.selectedCake && convo.selectedSize && convo.selectedPrice);
 
-    // Case 1: "Add to Cart" clicked OR "Confirm Order" clicked while selecting a cake
-    // In both cases, we show the cart summary first.
-    if (msg.interactiveId === "btn_add_to_cart" || (isCheckout && hasActiveSelection)) {
-      if (hasActiveSelection) {
-        await addToCart(msg.from, {
-          cakeName: convo.selectedCake!,
-          size: convo.selectedSize!,
-          price: convo.selectedPrice!,
-          quantity: 1
-        });
-      } else {
-        // Fallback: if somehow active selection is missing but they clicked the button
-        console.warn(`[WhatsApp] handleCartActions: Missing active selection for ${msg.interactiveId}`);
-        await sendTextMessage(msg.from, "⚠️ Selection lost. Please select your cake again from the menu.");
-        await sendMenu(msg.from);
-        return;
-      }
+    // Case 1: Transitioning from Quantity selection OR "Add to Order" clicked
+    const isAdding = !!(msg.interactiveId?.startsWith("qty_") ?? msg.text ?? (msg.interactiveId === "btn_add_to_cart"));
+
+    if (isAdding && hasActiveSelection) {
+      const quantity = convo.selectedQuantity ?? 1;
+      await addToCart(msg.from, {
+        cakeName: convo.selectedCake!,
+        size: convo.selectedSize!,
+        price: convo.selectedPrice!,
+        quantity: quantity
+      });
 
       // Re-fetch convo to get updated cart
       const updatedConvo = convoCache.get(msg.from) ?? convo;
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
+      const cartButtons = [
+        { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
+        { id: "btn_menu", title: "\u2795 Add More" },
+      ];
+      
+      if (updatedConvo.cart && updatedConvo.cart.length > 1) {
+        cartButtons.push({ id: "btn_remove_last", title: "\u274c Remove Last" });
+      } else {
+        cartButtons.push({ id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" });
+      }
+
       await Promise.all([
         sendTextMessage(msg.from, `\u2728 *${convo.selectedCake}* added to your order!`),
-        sendInteractiveButtons(msg.from, summary, [
-          { id: "btn_checkout", title: "\ud83d\udcb3 Place My Order" },
-          { id: "btn_menu", title: "\u2795 Add More" },
-          { id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" },
-        ]),
-        updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null })
+        sendInteractiveButtons(msg.from, summary, cartButtons),
+        updateState(msg.from, "IDLE", { selectedCake: null, selectedSize: null, selectedPrice: null, selectedQuantity: null })
       ]);
       return;
     }
@@ -1173,6 +1304,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
           [
             { id: "btn_delivery", title: "\ud83d\ude9a Delivery" },
             { id: "btn_pickup", title: "\ud83c\udfea Store Pickup" },
+            { id: "btn_back", title: "⬅️ Back" },
           ]
         )
       ]);
@@ -1228,9 +1360,12 @@ async function handleAddressInput(
     updateState(msg.from, "ASKING_INSTRUCTIONS", {
       selectedAddress: address,
     }),
-    sendTextMessage(
+    sendInteractiveButtons(
       msg.from,
-      "\u2728 *Address saved!*\n\n\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! \ud83c\udf89\")_\n\nReply *Skip* if no message needed."
+      "\u2728 *Address saved!*\n\n\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! \ud83c\udf89\")_\n\nReply *Skip* if no message needed.",
+      [
+        { id: "btn_back", title: "⬅️ Back" },
+      ]
     )
   ]);
 }
@@ -1260,6 +1395,11 @@ async function handleInstructionsInput(
       selectedNotes: notes,
     }),
     sendDeliveryDateOptions(msg.from)
+  ]);
+  
+  // Send a separate Back button since the list doesn't have one
+  await sendInteractiveButtons(msg.from, "_Need to change something?_", [
+    { id: "btn_back", title: "⬅️ Back" },
   ]);
 }
 
@@ -1326,6 +1466,11 @@ async function handleDeliveryDateInput(
       }),
       sendDeliveryTimeOptions(msg.from)
     ]);
+
+    // Send a separate Back button since the list doesn't have one
+    await sendInteractiveButtons(msg.from, "_Need to change the date?_", [
+      { id: "btn_back", title: "⬅️ Back" },
+    ]);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error("[WhatsApp] Error in handleDeliveryDateInput:", errorMsg);
@@ -1381,6 +1526,7 @@ async function handleDeliveryTimeInput(
       buildOrderSummary(cart, currentConvo),
       [
         { id: "btn_confirm", title: "✅ Confirm Order" },
+        { id: "btn_back", title: "⬅️ Back" },
         { id: "btn_cancel", title: "❌ Cancel" },
       ]
     );
@@ -1651,7 +1797,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
             id: `size_${idx}`,
             title: `${opt.size} — ${opt.price}`,
           }));
-          buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
+          buttons.push({ id: "btn_back", title: "⬅️ Back to Menu" });
           await sendInteractiveButtons(phone, `Choose your size for *${cake.name}*:`, buttons);
         } else {
           await sendMenu(phone);
@@ -1660,23 +1806,55 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         await sendMenu(phone);
       }
       break;
+    case "SELECTING_QUANTITY":
+      await sendInteractiveButtons(
+        phone,
+        `*${convo.selectedCake}* (${convo.selectedSize})\n\nHow many would you like to order? \ud83e\udde1`,
+        [
+          { id: "qty_1", title: "1" },
+          { id: "qty_2", title: "2" },
+          { id: "btn_back", title: "⬅️ Back" },
+        ]
+      );
+      break;
     case "ASKING_ADDRESS":
-      await sendTextMessage(phone, "📍 Send your delivery address or share your *GPS Location*.");
+      await sendInteractiveButtons(
+        phone,
+        "\ud83c\udfe0 *How would you like to receive your order?*",
+        [
+          { id: "btn_delivery", title: "\ud83d\ude9a Delivery" },
+          { id: "btn_pickup", title: "\ud83c\udfea Store Pickup" },
+          { id: "btn_back", title: "⬅️ Back" },
+        ]
+      );
       break;
     case "ASKING_INSTRUCTIONS":
-      await sendTextMessage(phone, "🎂 *Cake Customization*\n\n• What would you like written on the cake?\n• Any special message, name, or age to add?\n• Any extra design instructions?\n\n✍️ Reply with your details or *'Skip'*.");
+      await sendInteractiveButtons(
+        phone,
+        "\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n\nReply *Skip* if none.",
+        [
+          { id: "btn_back", title: "⬅️ Back" },
+        ]
+      );
       break;
     case "ASKING_DELIVERY_DATE":
       await sendDeliveryDateOptions(phone);
+      await sendInteractiveButtons(phone, "_Need to change something?_", [
+        { id: "btn_back", title: "⬅️ Back" },
+      ]);
       break;
     case "ASKING_DELIVERY_TIME":
       await sendDeliveryTimeOptions(phone);
+      await sendInteractiveButtons(phone, "_Need to change the date?_", [
+        { id: "btn_back", title: "⬅️ Back" },
+      ]);
       break;
     case "CONFIRMING":
       // Use cached cart
       const cart = convoCache.get(phone)?.cart ?? [];
       await sendInteractiveButtons(phone, buildOrderSummary(cart, convo), [
         { id: "btn_confirm", title: "✅ Confirm Order" },
+        { id: "btn_back", title: "⬅️ Back" },
         { id: "btn_cancel", title: "❌ Cancel" },
       ]);
       break;
