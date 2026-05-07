@@ -6,18 +6,13 @@
 # testing
 /coverage
 
-# database
-/prisma/*.db
-/prisma/*.db-journal
-dev.db
-dev.db-journal
-
 # next.js
 /.next/
 /out/
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -45,7 +40,13 @@ next-env.d.ts
 
 # prisma
 /generated
-/prisma/migrations
+/prisma/*.db
+/prisma/*.db-journal
+
+# custom scratch/temp
+/scratch
+/tmp
+.temp
 
 # IDE / Editors
 .vscode/*
