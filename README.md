@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+# Sonna
+=======
 # Sonna's Patisserie & Cafe 🍰✨
 
 A premium, luxury Flutter application designed for high-end bakeries. This app features a charming "Sweet Pink & Gold" aesthetic, tailored for a sophisticated and girlish brand identity.
@@ -53,3 +56,4 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
 
 ---
 *Created with ❤️ for Sonna's Patisserie & Cafe*
+>>>>>>> fe14e49 (Initial Setup)

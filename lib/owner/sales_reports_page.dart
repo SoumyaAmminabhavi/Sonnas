@@ -66,6 +66,10 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
     _totalOrders = _orders.length;
 
     for (var order in _orders) {
+      // Only count revenue from completed payments
+      final isPaid = (order['paymentStatus'] ?? 'PENDING') == 'PAID';
+      if (!isPaid) continue;
+
       final priceStr = order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
       final total = double.tryParse(priceStr) ?? 0.0;
       _totalRevenue += total;
@@ -226,7 +230,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 ),
               Expanded(
                 child: StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: SupabaseService.getOrdersStream(),
+                  stream: SupabaseService.getAllOrdersStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
                       return _buildSkeleton(cs);

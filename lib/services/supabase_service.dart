@@ -94,21 +94,57 @@ class SupabaseService {
     }
   }
 
-  // Real-time stream for WhatsApp Orders (Matching Prisma 'WhatsAppOrder')
-  static Stream<List<Map<String, dynamic>>> getOrdersStream() {
+  // Real-time stream for all orders (Used by Analytics - does not fetch items to save bandwidth)
+  static Stream<List<Map<String, dynamic>>> getAllOrdersStream() {
     return client
         .from('WhatsAppOrder')
         .stream(primaryKey: ['id'])
         .map((data) {
           final list = data.map((e) => Map<String, dynamic>.from(e)).toList();
-          // Sort by createdAt descending in Dart to be 100% sure
-          list.sort((a, b) {
-            final dateA = DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime(2000);
-            final dateB = DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime(2000);
-            return dateB.compareTo(dateA);
-          });
           return list;
         });
+  }
+
+  // Real-time stream for Recent Orders (Matching Prisma 'WhatsAppOrder') - Used by UI
+  static Stream<List<Map<String, dynamic>>> getRecentOrdersStream() async* {
+    final stream = client
+        .from('WhatsAppOrder')
+        .stream(primaryKey: ['id'])
+        .order('createdAt', ascending: false)
+        .limit(100);
+
+    await for (final data in stream) {
+      if (data.isEmpty) {
+        yield [];
+        continue;
+      }
+      
+      final orderIds = data.map((e) => e['id'] as String).toList();
+      
+      try {
+        final items = await client
+            .from('WhatsAppOrderItem')
+            .select()
+            .inFilter('orderId', orderIds);
+            
+        final itemsMap = <String, List<Map<String, dynamic>>>{};
+        for (final item in items) {
+          final orderId = item['orderId'] as String;
+          itemsMap.putIfAbsent(orderId, () => []).add(item);
+        }
+        
+        final enrichedData = data.map((order) {
+          final map = Map<String, dynamic>.from(order);
+          map['items'] = itemsMap[order['id']] ?? [];
+          return map;
+        }).toList();
+        
+        yield enrichedData;
+      } catch (e) {
+        debugPrint('Error fetching items for stream: $e');
+        yield data.map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    }
   }
 
 
@@ -119,7 +155,7 @@ class SupabaseService {
     int? targetMonth,
     int? targetYear,
   }) {
-    return getOrdersStream().map((orders) {
+    return getAllOrdersStream().map((orders) {
       final Map<int, double> salesData = {};
       final now = DateTime.now();
       final year = targetYear ?? now.year;
@@ -154,6 +190,9 @@ class SupabaseService {
         if (createdAt == null) continue;
         
         final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
+        final isPaid = (order['paymentStatus'] ?? 'PENDING') == 'PAID';
+
+        if (!isPaid) continue; // Only count completed payments for sales charts
 
         if (range == SalesRange.today) {
           if (createdAt.year == now.year && createdAt.month == now.month && createdAt.day == now.day) {
@@ -184,13 +223,15 @@ class SupabaseService {
 
   // Real-time Dashboard Stats
   static Stream<Map<String, dynamic>> getDashboardStatsStream() {
-    return getOrdersStream().map((orders) {
+    return getAllOrdersStream().map((orders) {
       double totalRevenue = 0;
       final Set<String> customers = {};
       
       for (var order in orders) {
         final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
-        totalRevenue += price;
+        if ((order['paymentStatus'] ?? 'PENDING') == 'PAID') {
+          totalRevenue += price;
+        }
         if (order['phone'] != null) customers.add(order['phone']);
       }
       
@@ -285,14 +326,73 @@ class SupabaseService {
   // Update Payment Status
   static Future<void> updatePaymentStatus(String id, String status) async {
     try {
-      // Try updating 'paymentStatus' column first
       await client
           .from('WhatsAppOrder')
           .update({'paymentStatus': status})
           .eq('id', id);
     } catch (e) {
-      // Fallback: Use 'status' if 'paymentStatus' doesn't exist
-      await updateOrderStatus(id, status);
+      debugPrint('Error updating payment status: $e');
+    }
+  }
+
+  // Update Payment Details (Integration with Razorpay)
+  static Future<void> updatePaymentDetails({
+    required String id,
+    String? paymentStatus,
+    String? razorpayOrderId,
+    String? paymentId,
+    String? paymentLink,
+  }) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (paymentStatus != null) updates['paymentStatus'] = paymentStatus;
+      if (razorpayOrderId != null) updates['razorpayOrderId'] = razorpayOrderId;
+      if (paymentId != null) updates['paymentId'] = paymentId;
+      if (paymentLink != null) updates['paymentLink'] = paymentLink;
+      
+      if (updates.isNotEmpty) {
+        await client.from('WhatsAppOrder').update(updates).eq('id', id);
+      }
+    } catch (e) {
+      debugPrint('Error updating payment details: $e');
+    }
+  }
+
+  // Update Automation Flags
+  static Future<void> updateAutomationFlags(String id, {bool? paymentReminderSent, bool? followUpSent}) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (paymentReminderSent != null) updates['paymentReminderSent'] = paymentReminderSent;
+      if (followUpSent != null) updates['followUpSent'] = followUpSent;
+      
+      if (updates.isNotEmpty) {
+        await client.from('WhatsAppOrder').update(updates).eq('id', id);
+      }
+    } catch (e) {
+      debugPrint('Error updating automation flags: $e');
+    }
+  }
+
+  // Manage WhatsApp Settings
+  static Future<String?> getWhatsAppSetting(String key) async {
+    try {
+      final data = await client
+          .from('WhatsAppSetting')
+          .select('value')
+          .eq('key', key)
+          .maybeSingle();
+      return data?['value'];
+    } catch (e) {
+      debugPrint('Error getting setting: $e');
+      return null;
+    }
+  }
+
+  static Future<void> updateWhatsAppSetting(String key, String value) async {
+    try {
+      await client.from('WhatsAppSetting').upsert({'key': key, 'value': value}, onConflict: 'key');
+    } catch (e) {
+      debugPrint('Error updating setting: $e');
     }
   }
 
