@@ -44,7 +44,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
       }
 
       // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
-      final orderIds = _orders.take(50).map((o) => o['id'] as String).toList();
+      final orderIds = _orders.map((o) => o['id'] as String).toList();
       final allItems = await SupabaseService.fetchBulkOrderItems(orderIds);
 
       if (mounted) {
@@ -65,17 +65,19 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
     _totalRevenue = 0;
     _totalOrders = _orders.length;
 
+    int paidOrdersCount = 0;
     for (var order in _orders) {
       // Only count revenue from completed payments
       final isPaid = (order['paymentStatus'] ?? 'PENDING') == 'PAID';
       if (!isPaid) continue;
 
+      paidOrdersCount++;
       final priceStr = order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
       final total = double.tryParse(priceStr) ?? 0.0;
       _totalRevenue += total;
     }
 
-    _avgOrderValue = _totalOrders > 0 ? _totalRevenue / _totalOrders : 0;
+    _avgOrderValue = paidOrdersCount > 0 ? _totalRevenue / paidOrdersCount : 0;
   }
 
   void _processItems(List<Map<String, dynamic>> items, List<Map<String, dynamic>> menu) {

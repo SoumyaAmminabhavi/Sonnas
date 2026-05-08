@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/supabase_service.dart';
 import 'staff_add_page.dart';
+import '../../widgets/secure_avatar.dart';
 
 class ManageStaffPage extends StatefulWidget {
   final ColorScheme cs;
@@ -187,18 +188,11 @@ class _StaffCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
+                  SecureAvatar(
+                    path: staff['imageUrl'],
+                    bucket: 'staff_photos',
+                    name: staff['name'] ?? '?',
                     radius: 24,
-                    backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
-                    backgroundImage: staff['imageUrl'] != null ? NetworkImage(staff['imageUrl']) : null,
-                    child: staff['imageUrl'] == null ? Text(
-                      staff['name']?[0]?.toUpperCase() ?? "?",
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: cs.primary,
-                      ),
-                    ) : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(

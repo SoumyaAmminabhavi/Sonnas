@@ -211,7 +211,23 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 icon: Icon(Icons.more_horiz, color: cs.secondary.withValues(alpha: 0.4), size: 18),
                 onSelected: (val) async {
                   if (val == 'delete') {
-                    await SupabaseService.deleteInventoryItem(item['id']);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Delete Item?"),
+                        content: Text("Are you sure you want to remove '${item['name']}' from inventory? This cannot be undone."),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("CANCEL")),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true), 
+                            child: const Text("DELETE", style: TextStyle(color: Colors.red))
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await SupabaseService.deleteInventoryItem(item['id']);
+                    }
                   } else if (val == 'edit') {
                     _showEditStockDialog(context, cs, item);
                   }
@@ -280,8 +296,18 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
-              final newVal = double.tryParse(controller.text) ?? 0.0;
-              await SupabaseService.updateInventoryStock(item['id'], newVal);
+              final val = controller.text.trim();
+              if (val.isEmpty) return;
+              
+              final double? newVal = double.tryParse(val);
+              if (newVal == null || newVal < 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please enter a valid positive number")),
+                );
+                return;
+              }
+              
+              await SupabaseService.updateInventoryStock(item['id'], newVal, isIncrement: false);
               if (context.mounted) Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(

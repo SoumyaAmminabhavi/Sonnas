@@ -1,4 +1,3 @@
-Viewed manage_staff_page.dart:1-31
 
 This is a critical part of securing your bakery’s data. Based on the roles we've established, here is a recommended **Permissions Matrix** to ensure everyone sees only what they need:
 

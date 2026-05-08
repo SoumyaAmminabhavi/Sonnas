@@ -65,6 +65,28 @@ class MenuDetailsPage extends StatelessWidget {
               );
             }
 
+            if (snapshot.hasError) {
+              return Scaffold(
+                backgroundColor: cs.surface,
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_off_rounded, color: cs.error, size: 48),
+                      const SizedBox(height: 16),
+                      Text("Connection Error", style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary)),
+                      Text("Unable to fetch artisan details.", style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant)),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("GO BACK"),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             if (cake == null) {
               return Scaffold(
                 backgroundColor: cs.surface,
@@ -369,7 +391,7 @@ class _OptionCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                "Serves ${opt['serves']}",
+                "Serves ${opt['serves']?.toString() ?? 'N/A'}",
                 style: GoogleFonts.notoSerif(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,

@@ -34,9 +34,9 @@ class _AddStaffPageState extends State<AddStaffPage> {
     'Sales Intelligence': false,
     'Handle Payments': false,
   };
-  final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
+  final List<String> _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
-  final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  final List<String> _allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   XFile? _pickedImage;
   Uint8List? _imageBytes;
@@ -264,7 +264,6 @@ class _AddStaffPageState extends State<AddStaffPage> {
           onTap: widget.isReadOnly ? null : _pickImage,
           child: Stack(
             children: [
-
               Container(
                 width: 80,
                 height: 80,
@@ -276,26 +275,23 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     style: BorderStyle.solid,
                     width: 2,
                   ),
-                  image: _imageBytes != null
-                      ? DecorationImage(
-                          image: MemoryImage(_imageBytes!),
-                          fit: BoxFit.cover,
-                        )
-                      : (widget.staff?['imageUrl'] != null
-                          ? DecorationImage(
-                              image: NetworkImage(widget.staff!['imageUrl']),
-                              fit: BoxFit.cover,
-                            )
-                          : null),
                 ),
-                child: (_imageBytes == null && widget.staff?['imageUrl'] == null)
-                    ? Icon(
-                        Icons.add_a_photo_outlined,
-                        color: cs.secondary,
-                        size: 30,
-                      )
-                    : null,
-
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(40),
+                  child: _imageBytes != null
+                      ? Image.memory(_imageBytes!, fit: BoxFit.cover)
+                      : (widget.staff?['imageUrl'] != null
+                          ? FutureBuilder<String?>(
+                              future: SupabaseService.getSignedUrl('staff_photos', widget.staff!['imageUrl']),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return Image.network(snapshot.data!, fit: BoxFit.cover);
+                                }
+                                return Icon(Icons.add_a_photo_outlined, color: cs.secondary, size: 30);
+                              },
+                            )
+                          : Icon(Icons.add_a_photo_outlined, color: cs.secondary, size: 30)),
+                ),
               ),
               Positioned(
                 bottom: 0,
@@ -429,7 +425,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          initialValue: _selectedSubRole,
+          value: _selectedSubRole,
           decoration: InputDecoration(
             filled: true,
             fillColor: cs.surfaceContainerLow,
@@ -557,7 +553,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
   Widget _buildToggle(ColorScheme cs, bool value, ValueChanged<bool> onChanged) {
     return GestureDetector(
-      onTap: () => onChanged(!value),
+      onTap: widget.isReadOnly ? null : () => onChanged(!value),
       child: Container(
         width: 40,
         height: 20,
@@ -685,7 +681,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           children: _allDays.map((day) {
             bool isSelected = _workingDays.contains(day);
             return GestureDetector(
-              onTap: () {
+              onTap: widget.isReadOnly ? null : () {
                 setState(() {
                   if (isSelected) {
                     _workingDays.remove(day);
@@ -695,15 +691,15 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 });
               },
               child: Container(
-                width: 32,
+                width: 38,
                 height: 32,
                 decoration: BoxDecoration(
                   color: isSelected ? cs.primary : cs.surfaceContainerLow,
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  day,
+                  day.substring(0, 1),
                   style: GoogleFonts.plusJakartaSans(
                     color: isSelected
                         ? cs.onPrimary
@@ -1082,7 +1078,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          initialValue: _selectedBloodGroup,
+          value: _selectedBloodGroup,
           hint: Text(
             "Select Group",
             style: GoogleFonts.plusJakartaSans(

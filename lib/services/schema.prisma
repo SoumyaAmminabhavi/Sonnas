@@ -86,7 +86,7 @@ model CakeOption {
     id        String   @id @default(cuid())
     size      String
     serves    String
-    price     String
+    price     Decimal  @db.Decimal(12, 2)
     
     cakeId    String
     cake      Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
@@ -101,7 +101,7 @@ model WhatsAppConversation {
     state          String   @default("IDLE")
     selectedCake   String?
     selectedSize   String?
-    selectedPrice  String?
+    selectedPrice  Decimal? @db.Decimal(12, 2)
     selectedAddress String?
     selectedNotes    String?
     selectedQuantity Int?     @default(1)
@@ -124,7 +124,7 @@ model WhatsAppCartItem {
     phone          String
     cakeName       String
     size           String
-    price          String
+    price          Decimal  @db.Decimal(12, 2)
     quantity       Int      @default(1)
     createdAt      DateTime @default(now())
     
@@ -137,7 +137,7 @@ model WhatsAppCartItem {
     phone          String
     customerName   String?
     
-    totalPrice     String?
+    totalPrice     Decimal? @db.Decimal(12, 2)
     address        String?
     notes        String?
     status       String   @default("PENDING")
@@ -177,7 +177,7 @@ model WhatsAppOrderItem {
     orderId        String
     cakeName       String
     size           String
-    price          String
+    price          Decimal  @db.Decimal(12, 2)
     quantity       Int      @default(1)
     
     order          WhatsAppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -186,7 +186,7 @@ model WhatsAppOrderItem {
 model Expense {
     id          String   @id @default(cuid())
     title       String
-    amount      Float
+    amount      Decimal  @db.Decimal(12, 2)
     category    String
     date        DateTime @default(now())
     description String?
@@ -226,8 +226,8 @@ model InventoryItem {
     name            String
     category        String
     unit            String   // e.g., kg, liters, units
-    currentStock    Float    @default(0)
-    minStock        Float    @default(0) // Threshold for alerts
+    currentStock    Decimal    @default(0) @db.Decimal(12, 2)
+    minStock        Decimal    @default(0) @db.Decimal(12, 2) // Threshold for alerts
     lastRestocked   DateTime @default(now())
     createdAt       DateTime @default(now())
     updatedAt       DateTime @updatedAt

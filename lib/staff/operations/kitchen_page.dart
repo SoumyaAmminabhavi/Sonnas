@@ -14,6 +14,20 @@ class KitchenPage extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: cs.error, size: 48),
+                const SizedBox(height: 16),
+                Text("Unable to load orders", style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary)),
+                Text("Check your internet connection", style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant)),
+              ],
+            ),
+          );
+        }
         
         final allOrders = snapshot.data ?? [];
         // Only show orders that need kitchen work
@@ -75,11 +89,20 @@ class KitchenOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isAccepted = order['status'] == 'ACCEPTED';
-    final createdAt = DateTime.tryParse(order['createdAt'] ?? '') ?? DateTime.now();
-    final elapsed = DateTime.now().difference(createdAt);
-    final String timeLabel = elapsed.inMinutes < 60 
-        ? "${elapsed.inMinutes}m ago" 
-        : "${elapsed.inHours}h ago";
+    final createdAt = DateTime.tryParse(order['createdAt'] ?? '');
+    final String timeLabel;
+    if (createdAt == null) {
+      timeLabel = "NEW ORDER";
+    } else {
+      final elapsed = DateTime.now().difference(createdAt);
+      if (elapsed.inMinutes < 1) {
+        timeLabel = "JUST NOW";
+      } else if (elapsed.inMinutes < 60) {
+        timeLabel = "${elapsed.inMinutes}m ago";
+      } else {
+        timeLabel = "${elapsed.inHours}h ago";
+      }
+    }
 
     return Container(
       decoration: BoxDecoration(

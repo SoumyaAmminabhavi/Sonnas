@@ -378,9 +378,17 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                         Expanded(
                                           child: _ElegantAction(
                                             icon: Icons.check_circle_outline,
-                                            label: "CONFIRM",
+                                            label: order['status'] == 'PENDING' ? "CONFIRM" : "ACCEPTED",
                                             cs: cs,
                                             isPrimary: true,
+                                            onPressed: order['status'] == 'PENDING' ? () async {
+                                              await SupabaseService.updateOrderStatus(order['id'], 'ACCEPTED');
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text("Order Accepted & Sent to Kitchen")),
+                                                );
+                                              }
+                                            } : null,
                                           ),
                                         ),
                                         const SizedBox(width: 16),
@@ -609,10 +617,17 @@ class _CustomerInfoCard extends StatelessWidget {
     if (p == 'Contact hidden') return p;
     // Remove non-numeric characters
     final clean = p.replaceAll(RegExp(r'[^0-9]'), '');
-    if (clean.length == 10) return '+91 $p';
-    if (clean.length == 12 && clean.startsWith('91')) {
-      return '+${clean.substring(0, 2)} ${clean.substring(2)}';
+    
+    // If it's a 10-digit Indian number, format it
+    if (clean.length == 10) {
+      return "+91 ${clean.substring(0, 5)} ${clean.substring(5)}";
     }
+    
+    // If it's a 12-digit number starting with 91
+    if (clean.length == 12 && clean.startsWith('91')) {
+      return "+91 ${clean.substring(2, 7)} ${clean.substring(7)}";
+    }
+
     return p.startsWith('+') ? p : '+$p';
   }
 

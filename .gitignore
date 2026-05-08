@@ -74,6 +74,10 @@ scratch/
 issues.txt
 run_log.txt
 *.log
-*.png
+# Ignore random images but keep app assets
+# *.png  <-- Removed global ignore
 !assets/**/*.png
+!ios/Runner/Assets.xcassets/**/*.png
+!macos/Runner/Assets.xcassets/**/*.png
+!android/app/src/main/res/**/*.png
 

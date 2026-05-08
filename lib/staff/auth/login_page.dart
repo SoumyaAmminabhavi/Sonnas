@@ -477,7 +477,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
         return KeyboardListener(
-          focusNode: FocusNode(),
+          focusNode: _pinFocusNodes[index],
           onKeyEvent: (event) {
             if (event is KeyDownEvent && 
                 event.logicalKey == LogicalKeyboardKey.backspace && 

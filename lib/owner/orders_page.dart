@@ -720,7 +720,7 @@ class _AllOrdersFilterViewState extends State<_AllOrdersFilterView> {
                         });
                       }
                     },
-                    items: <String>['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED']
+                    items: <String>['ALL', 'PENDING', 'ACCEPTED', 'CONFIRMED', 'READY', 'SHIPPED', 'CANCELLED', 'COMPLETED']
                         .map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,

@@ -514,7 +514,11 @@ class _MainContent extends StatelessWidget {
                 future: SupabaseService.fetchMenu(),
                 builder: (context, menuSnapshot) {
                   final orders = rawOrders.map((data) {
-                    return _OrderCardReactive(data: data, cs: cs);
+                    return _OrderCardReactive(
+                      data: data, 
+                      cs: cs,
+                      menu: menuSnapshot.data ?? [],
+                    );
                   }).toList();
 
                   return LayoutBuilder(
@@ -1023,19 +1027,20 @@ class _MainContent extends StatelessWidget {
 class _OrderCardReactive extends StatelessWidget {
   final Map<String, dynamic> data;
   final ColorScheme cs;
+  final List<Map<String, dynamic>> menu;
 
-  const _OrderCardReactive({required this.data, required this.cs});
+  const _OrderCardReactive({
+    required this.data, 
+    required this.cs,
+    required this.menu,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        SupabaseService.fetchMenu(),
-        SupabaseService.fetchOrderItems(data['id']),
-      ]),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: SupabaseService.fetchOrderItems(data['id']),
       builder: (context, snapshot) {
-        final menu = snapshot.data?[0] ?? [];
-        final items = snapshot.data?[1] ?? [];
+        final items = snapshot.data ?? [];
 
         final status = data['status'] ?? 'PENDING';
         Color statusColor = cs.primary;

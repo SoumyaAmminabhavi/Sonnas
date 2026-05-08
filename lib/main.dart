@@ -483,54 +483,88 @@ class ModernDrawer extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).pop(); // Close drawer
                   
-                  // Security: Prompt for PIN
                   final pinController = TextEditingController();
                   showDialog(
                     context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text("Owner Authentication", style: GoogleFonts.notoSerif()),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text("Please enter your admin PIN to continue.", 
-                            style: GoogleFonts.plusJakartaSans(fontSize: 12)),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: pinController,
-                            obscureText: true,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              hintText: "Enter PIN",
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ],
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("CANCEL"),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (pinController.text == "1234") { // Default setup PIN
-                              Navigator.pop(context);
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  settings: const RouteSettings(name: 'OwnerDashboard'),
-                                  builder: (context) => const OwnerDashboard(),
+                    builder: (context) {
+                      bool isLoading = false;
+                      int attempts = 0;
+                      DateTime? lockoutUntil;
+
+                      return StatefulBuilder(
+                        builder: (context, setDialogState) {
+                          return AlertDialog(
+                            title: Text("Owner Authentication", style: GoogleFonts.notoSerif()),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text("Please enter your admin PIN to continue.", 
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: pinController,
+                                  obscureText: true,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    hintText: "Enter PIN",
+                                    border: OutlineInputBorder(),
+                                  ),
                                 ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Incorrect PIN")),
-                              );
-                            }
-                          },
-                          child: const Text("VERIFY"),
-                        ),
-                      ],
-                    ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("CANCEL"),
+                              ),
+                              ElevatedButton(
+                                onPressed: isLoading ? null : () async {
+                                  if (lockoutUntil != null && DateTime.now().isBefore(lockoutUntil!)) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text("Too many attempts. Try again in ${lockoutUntil!.difference(DateTime.now()).inSeconds}s")),
+                                    );
+                                    return;
+                                  }
+
+                                  setDialogState(() => isLoading = true);
+                                  try {
+                                    final isValid = await SupabaseService.verifyOwnerPin(pinController.text);
+                                    if (isValid) {
+                                      if (context.mounted) {
+                                        Navigator.pop(context);
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            settings: const RouteSettings(name: 'OwnerDashboard'),
+                                            builder: (context) => const OwnerDashboard(),
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      attempts++;
+                                      if (attempts >= 3) {
+                                        lockoutUntil = DateTime.now().add(const Duration(seconds: 30));
+                                      }
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Incorrect PIN")),
+                                        );
+                                      }
+                                    }
+                                  } finally {
+                                    if (context.mounted) {
+                                      setDialogState(() => isLoading = false);
+                                    }
+                                  }
+                                },
+                                child: isLoading 
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : const Text("VERIFY"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               ),

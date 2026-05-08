@@ -249,8 +249,7 @@ class StaffInventoryPage extends StatelessWidget {
                 setDialogState(() => isSubmitting = true);
                 
                 try {
-                  final double currentStock = (selectedItem!['currentStock'] ?? 0).toDouble();
-                  await SupabaseService.updateInventoryStock(selectedItem!['id'], currentStock + qty);
+                  await SupabaseService.updateInventoryStock(selectedItem!['id'], qty);
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(

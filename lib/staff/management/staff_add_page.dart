@@ -39,8 +39,8 @@ class _StaffAddPageState extends State<StaffAddPage> {
     'Sales Intelligence': false,
     'Handle Payments': false,
   };
-  final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
-  final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  final List<String> _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  final List<String> _allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
   XFile? _pickedImage;
   Uint8List? _imageBytes;
@@ -517,7 +517,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         Text("SELECT SPECIALIZATION (SUB-ROLE)", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2.0)),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          initialValue: _selectedSubRole,
+          value: _selectedSubRole,
           decoration: InputDecoration(filled: true, fillColor: cs.surfaceContainerLow, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
           items: SubRole.values.map((sr) => DropdownMenuItem(value: sr, child: Text(sr.displayName))).toList(),
           onChanged: widget.isReadOnly ? null : (v) => setState(() => _selectedSubRole = v!),
@@ -610,10 +610,10 @@ class _StaffAddPageState extends State<StaffAddPage> {
             return GestureDetector(
               onTap: widget.isReadOnly ? null : () => setState(() => isSelected ? _workingDays.remove(day) : _workingDays.add(day)),
               child: Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(color: isSelected ? cs.primary : cs.surfaceContainerLow, shape: BoxShape.circle),
+                width: 38, height: 32,
+                decoration: BoxDecoration(color: isSelected ? cs.primary : cs.surfaceContainerLow, borderRadius: BorderRadius.circular(8)),
                 alignment: Alignment.center,
-                child: Text(day, style: GoogleFonts.plusJakartaSans(color: isSelected ? cs.onPrimary : cs.secondary.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold)),
+                child: Text(day.substring(0, day == 'Sun' || day == 'Sat' || day == 'Tue' || day == 'Thu' ? 2 : 1), style: GoogleFonts.plusJakartaSans(color: isSelected ? cs.onPrimary : cs.secondary.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold)),
               ),
             );
           }).toList(),
@@ -668,7 +668,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         Text("BLOOD GROUP (OPTIONAL)", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          initialValue: _selectedBloodGroup,
+          value: _selectedBloodGroup,
           hint: Text("Select Group", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.3), fontSize: 14)),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(vertical: 12),

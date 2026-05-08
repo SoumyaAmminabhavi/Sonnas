@@ -8,6 +8,7 @@ import 'expense_reports_page.dart';
 
 import '../services/supabase_service.dart';
 import '../widgets/skeleton.dart';
+import '../widgets/secure_avatar.dart';
 
 
 
@@ -479,18 +480,16 @@ class _SettingsContentState extends State<_SettingsContent> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: cs.primary.withValues(alpha: 0.1),
-            backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-            child: imageUrl == null
-                ? Text(
-                    name.isNotEmpty ? name[0] : "?",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                : null,
+          SecureAvatar(
+            path: imageUrl,
+            bucket: 'staff_photos',
+            name: name,
+            radius: 20,
+            textStyle: GoogleFonts.plusJakartaSans(
+              color: cs.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(

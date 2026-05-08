@@ -100,9 +100,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
       ),
     );
 
-    if (_selectedIndex >= pages.length) {
-      _selectedIndex = 0; 
-    }
+    final int safeIndex = _selectedIndex >= pages.length ? 0 : _selectedIndex;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -138,14 +136,14 @@ class _StaffDashboardState extends State<StaffDashboard> {
           children: [
             if (isDesktop)
               StaffSidebar(
-                currentIndex: _selectedIndex,
+                currentIndex: safeIndex,
                 onTap: _onItemTapped,
                 role: widget.role,
               ),
             Expanded(
               child: isDesktop
                   ? IndexedStack(
-                      index: _selectedIndex,
+                      index: safeIndex,
                       children: pages,
                     )
                   : PageView(

@@ -246,7 +246,7 @@ class ReportService {
                   dateStr,
                   e['title']?.toString() ?? 'N/A',
                   e['category']?.toString() ?? 'Other',
-                  "Rs. ${e['amount']}",
+                  "Rs. ${e['amount']?.toString() ?? '0'}",
                 ];
               }).toList(),
             ),
