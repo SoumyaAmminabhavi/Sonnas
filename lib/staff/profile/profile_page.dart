@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/biometric_service.dart';
-import '../../services/supabase_service.dart';
+import '../../services/staff_service.dart';
 import '../../services/session_service.dart';
 import '../shared/staff_roles.dart';
 
@@ -313,18 +313,16 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                               }
                               final bool success = await BiometricService.authenticate();
                               if (success) {
-                                final bool dbUpdated = await SupabaseService.updateBiometricStatus(widget.staffId, true);
-                                if (dbUpdated && mounted) {
-                                  setState(() => _biometricEnabled = true);
-                                  if (context.mounted) {
+                                await StaffService.updateBiometricStatus(widget.staffId, val);
+                                setState(() => _biometricEnabled = val);
+                                if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(content: Text("Biometric Login Enabled! ✅")),
                                   );
-                                  }
                                 }
                               }
                             } else {
-                              final bool dbUpdated = await SupabaseService.updateBiometricStatus(widget.staffId, false);
+                              final bool dbUpdated = await StaffService.updateBiometricStatus(widget.staffId, false);
                               if (dbUpdated && mounted) {
                                 setState(() => _biometricEnabled = false);
                                 if (context.mounted) {
@@ -347,7 +345,7 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                   width: double.infinity,
                   child: TextButton.icon(
                     onPressed: () async {
-                      await SupabaseService.updateBiometricStatus(widget.staffId, false);
+                      await StaffService.updateBiometricStatus(widget.staffId, false);
                       await SessionService.clearSession();
                       if (context.mounted) {
                         Navigator.of(context).popUntil((route) => route.isFirst);

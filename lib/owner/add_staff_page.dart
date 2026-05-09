@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
+import '../services/staff_service.dart';
 
 
 
@@ -425,7 +426,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          value: _selectedSubRole,
+          initialValue: _selectedSubRole,
           decoration: InputDecoration(
             filled: true,
             fillColor: cs.surfaceContainerLow,
@@ -767,7 +768,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       String? imageUrl;
       if (_pickedImage != null && _imageBytes != null) {
         final fileName = 'staff_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        imageUrl = await SupabaseService.uploadStaffImage(fileName, _imageBytes!);
+        imageUrl = await StaffService.uploadStaffImage(fileName, _imageBytes!);
       }
 
       String? joiningCode;
@@ -797,7 +798,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       };
 
       if (isEdit) {
-        await SupabaseService.updateStaff(widget.staff!['id'], staff);
+        await StaffService.updateStaff(widget.staff!['id'], staff);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Staff member updated")),
@@ -805,7 +806,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           Navigator.pop(context);
         }
       } else {
-        await SupabaseService.addStaff(staff);
+        await StaffService.addStaff(staff);
         if (mounted) {
           _showSuccessDialog(joiningCode!);
         }
@@ -1078,7 +1079,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: _selectedBloodGroup,
+          initialValue: _selectedBloodGroup,
           hint: Text(
             "Select Group",
             style: GoogleFonts.plusJakartaSans(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/supabase_service.dart';
+import '../../services/inventory_service.dart';
 
 class StaffInventoryPage extends StatelessWidget {
   final ColorScheme cs;
@@ -11,7 +11,7 @@ class StaffInventoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getInventoryStream(),
+      stream: InventoryService.getInventoryStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -70,15 +70,30 @@ class StaffInventoryPage extends StatelessWidget {
                   ],
                 ),
                 if (isDesktop)
-                  ElevatedButton.icon(
-                    onPressed: () => _showAddStockDialog(context),
-                    icon: const Icon(Icons.add_shopping_cart_rounded),
-                    label: const Text("Purchase Entry"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: cs.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => _showAddStockDialog(context, isConsumption: true),
+                        icon: const Icon(Icons.remove_shopping_cart_rounded),
+                        label: const Text("Usage Entry"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: cs.error,
+                          side: BorderSide(color: cs.error.withValues(alpha: 0.2)),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddStockDialog(context),
+                        icon: const Icon(Icons.add_shopping_cart_rounded),
+                        label: const Text("Purchase Entry"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cs.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -180,7 +195,7 @@ class StaffInventoryPage extends StatelessWidget {
     );
   }
 
-  void _showAddStockDialog(BuildContext context, {Map<String, dynamic>? preselectedItem}) {
+  void _showAddStockDialog(BuildContext context, {Map<String, dynamic>? preselectedItem, bool isConsumption = false}) {
     final TextEditingController quantityController = TextEditingController();
     Map<String, dynamic>? selectedItem = preselectedItem;
     bool isSubmitting = false;
@@ -190,20 +205,23 @@ class StaffInventoryPage extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
-            preselectedItem != null ? "Update Stock" : "Purchase Entry",
-            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
+            isConsumption ? "Record Usage" : (preselectedItem != null ? "Update Stock" : "Purchase Entry"),
+            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, color: isConsumption ? cs.error : cs.secondary),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (preselectedItem == null)
                 StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: SupabaseService.getInventoryStream(),
+                  stream: InventoryService.getInventoryStream(),
                   builder: (context, snapshot) {
                     final items = snapshot.data ?? [];
                     return DropdownButtonFormField<String>(
-                      initialValue: selectedItem?['id'],
-                      decoration: const InputDecoration(labelText: "Select Ingredient"),
+                      value: selectedItem?['id'],
+                      decoration: InputDecoration(
+                        labelText: "Select Ingredient",
+                        labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
+                      ),
                       items: items.map((item) => DropdownMenuItem(
                         value: item['id'] as String,
                         child: Text(item['name'] ?? ''),
@@ -218,18 +236,26 @@ class StaffInventoryPage extends StatelessWidget {
               else
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    "Ingredient: ${preselectedItem['name']}",
-                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                  child: Row(
+                    children: [
+                      Icon(Icons.inventory_2_outlined, size: 16, color: cs.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        "${preselectedItem['name']}",
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 16),
+                      ),
+                    ],
                   ),
                 ),
               const SizedBox(height: 16),
               TextField(
                 controller: quantityController,
+                autofocus: true,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: preselectedItem != null ? "Quantity to Add" : "Purchase Quantity",
+                  labelText: isConsumption ? "Quantity Used" : (preselectedItem != null ? "Quantity to Add" : "Purchase Quantity"),
                   suffixText: selectedItem?['unit'] ?? '',
+                  helperText: isConsumption ? "This will be deducted from current stock" : "This will be added to current stock",
                 ),
               ),
             ],
@@ -237,7 +263,7 @@ class StaffInventoryPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
+              child: Text("Cancel", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5))),
             ),
             ElevatedButton(
               onPressed: isSubmitting ? null : () async {
@@ -249,11 +275,21 @@ class StaffInventoryPage extends StatelessWidget {
                 setDialogState(() => isSubmitting = true);
                 
                 try {
-                  await SupabaseService.updateInventoryStock(selectedItem!['id'], qty);
+                  if (isConsumption) {
+                    await InventoryService.recordConsumption(selectedItem!['id'], qty);
+                  } else {
+                    await InventoryService.updateInventoryStock(selectedItem!['id'], qty);
+                  }
+                  
                   if (context.mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Stock updated for ${selectedItem!['name']}! 📦")),
+                      SnackBar(
+                        content: Text(isConsumption 
+                          ? "Recorded consumption of $qty ${selectedItem!['unit']} ${selectedItem!['name']}"
+                          : "Stock updated for ${selectedItem!['name']}! 📦"),
+                        backgroundColor: isConsumption ? cs.error : Colors.green.shade700,
+                      ),
                     );
                   }
                 } catch (e) {
@@ -266,10 +302,15 @@ class StaffInventoryPage extends StatelessWidget {
                   if (context.mounted) setDialogState(() => isSubmitting = false);
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: cs.primary, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isConsumption ? cs.error : cs.primary, 
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               child: isSubmitting 
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text("Update"),
+                : Text(isConsumption ? "Record Usage" : "Update Stock"),
             ),
           ],
         ),

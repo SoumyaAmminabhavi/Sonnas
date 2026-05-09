@@ -6,7 +6,7 @@ import 'inventory_analytics_page.dart';
 import 'sales_reports_page.dart';
 import 'expense_reports_page.dart';
 
-import '../services/supabase_service.dart';
+import '../services/staff_service.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
 
@@ -220,7 +220,7 @@ class _SettingsContentState extends State<_SettingsContent> {
       child: Column(
         children: [
           StreamBuilder<List<Map<String, dynamic>>>(
-            stream: SupabaseService.getStaffStream(),
+            stream: StaffService.getStaffStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return SkeletonWrapper(
@@ -566,7 +566,7 @@ class _SettingsContentState extends State<_SettingsContent> {
                     ),
                   );
                   if (confirm == true) {
-                    await SupabaseService.deleteStaff(staffData['id']);
+                    await StaffService.deleteStaff(staffData['id']);
                   }
                 }
 

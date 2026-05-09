@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
+import '../services/order_service.dart';
 import 'menu_page.dart';
 
 class MenuDetailsPage extends StatelessWidget {
@@ -401,7 +402,7 @@ class _OptionCard extends StatelessWidget {
             ],
           ),
           Text(
-            SupabaseService.formatPrice(opt['price']),
+            OrderService.formatPrice(opt['price']),
             style: GoogleFonts.notoSerif(
               fontSize: 20,
               fontWeight: FontWeight.bold,

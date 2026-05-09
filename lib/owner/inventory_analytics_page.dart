@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/supabase_service.dart';
+import '../services/inventory_service.dart';
 import '../widgets/owner_sidebar.dart';
 import '../widgets/skeleton.dart';
 
@@ -54,7 +54,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
             ),
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: SupabaseService.getInventoryStream(),
+              stream: InventoryService.getInventoryStream(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return _buildSkeleton(cs);
@@ -226,7 +226,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       ),
                     );
                     if (confirm == true) {
-                      await SupabaseService.deleteInventoryItem(item['id']);
+                      await InventoryService.deleteInventoryItem(item['id']);
                     }
                   } else if (val == 'edit') {
                     _showEditStockDialog(context, cs, item);
@@ -307,7 +307,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 return;
               }
               
-              await SupabaseService.updateInventoryStock(item['id'], newVal, isIncrement: false);
+              await InventoryService.updateInventoryStock(item['id'], newVal, isIncrement: false);
               if (context.mounted) Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
@@ -403,7 +403,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                   onPressed: () async {
                     if (nameController.text.isEmpty) return;
                     
-                    await SupabaseService.addInventoryItem({
+                    await InventoryService.addInventoryItem({
                       'name': nameController.text,
                       'category': selectedCategory,
                       'unit': unitController.text,

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../shared/staff_roles.dart';
 import '../dashboard/dashboard_page.dart';
-import '../../services/supabase_service.dart';
+import '../../services/auth_service.dart';
 import '../../services/biometric_service.dart';
 import '../../services/session_service.dart';
 
@@ -95,7 +95,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     setState(() => _isLoading = true);
 
-    final staff = await SupabaseService.loginStaff(phone, password);
+    final staff = await AuthService.loginStaff(phone, password);
     
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -120,7 +120,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     setState(() => _isLoading = true);
 
-    final staff = await SupabaseService.verifyStaffCode(phone, code);
+    final staff = await AuthService.verifyStaffCode(phone, code);
     
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -152,7 +152,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     setState(() => _isLoading = true);
 
-    final success = await SupabaseService.registerStaff(_verifiedStaff!['id'], password);
+    final success = await AuthService.registerStaff(_verifiedStaff!['id'], password);
     
     if (!mounted) return;
     setState(() => _isLoading = false);

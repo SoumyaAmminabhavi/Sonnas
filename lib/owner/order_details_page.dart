@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
+import '../services/order_service.dart';
+import '../services/menu_service.dart';
 
 class OwnerOrderDetailsView extends StatelessWidget {
   final String orderId;
@@ -20,7 +20,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
     final cleanId = orderId.replaceFirst('#', '');
 
     return StreamBuilder<Map<String, dynamic>?>(
-      stream: SupabaseService.getSingleOrderStream(cleanId),
+      stream: OrderService.getSingleOrderStream(cleanId),
       builder: (context, streamSnapshot) {
         final streamOrder = streamSnapshot.data;
 
@@ -229,8 +229,8 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                       const SizedBox(height: 16),
                                       FutureBuilder<List<dynamic>>(
                                         future: Future.wait([
-                                          SupabaseService.fetchMenu(),
-                                          SupabaseService.fetchOrderItems(
+                                          MenuService.fetchMenu(),
+                                          OrderService.fetchOrderItems(
                                             order['id'],
                                           ),
                                         ]),
@@ -279,10 +279,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                                   title: cakeName,
                                                   subtitle:
                                                       "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
-                                                  price:
-                                                      SupabaseService.formatPrice(
-                                                        item['price'],
-                                                      ),
+                                                  price: OrderService.formatPrice(item['price']),
                                                   imageUrl:
                                                       SupabaseService.getPublicUrl(
                                                         displayImageUrl,
@@ -382,7 +379,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             cs: cs,
                                             isPrimary: true,
                                             onPressed: order['status'] == 'PENDING' ? () async {
-                                              await SupabaseService.updateOrderStatus(order['id'], 'ACCEPTED');
+                                              await OrderService.updateOrderStatus(order['id'], 'ACCEPTED');
                                               if (context.mounted) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   const SnackBar(content: Text("Order Accepted & Sent to Kitchen")),
@@ -409,7 +406,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                               final cake =
                                                   order['cakeName'] ??
                                                   'your cake';
-                                              SupabaseService.launchWhatsApp(
+                                              OrderService.launchWhatsApp(
                                                 phone,
                                                 "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).",
                                               );
@@ -582,7 +579,7 @@ class _CustomerInfoCard extends StatelessWidget {
                 if (address.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   InkWell(
-                    onTap: _isCoordinates(address) ? () => SupabaseService.launchMaps(address) : null,
+                    onTap: _isCoordinates(address) ? () => OrderService.launchMaps(address) : null,
                     borderRadius: BorderRadius.circular(4),
                     child: Row(
                       children: [

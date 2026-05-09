@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'order_details_page.dart';
+import '../services/order_service.dart';
+import '../services/menu_service.dart';
 import '../services/supabase_service.dart';
 import '../widgets/skeleton.dart';
 
@@ -111,7 +113,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
                 controller: _tabController,
                 children: [
                   _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.today),
-                  _AllOrdersFilterView(cs: cs, onTabChanged: widget.onTabChanged),
+                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.all),
                   _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.completed),
                   _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.custom),
                 ],
@@ -131,13 +133,10 @@ class _OrdersList extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
   final _OrderFilter filter;
 
-  final String? statusFilter;
-
   const _OrdersList({
     required this.cs,
     required this.filter,
     this.onTabChanged,
-    this.statusFilter,
   });
 
   String _getEmptyStateMessage(_OrderFilter filter) {
@@ -156,7 +155,7 @@ class _OrdersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getRecentOrdersStream(),
+      stream: OrderService.getRecentOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return SkeletonWrapper(
@@ -231,9 +230,6 @@ class _OrdersList extends StatelessWidget {
                      createdAt.day == now.day;
             case _OrderFilter.all:
               if (isCustom) return false;
-              if (statusFilter != null && statusFilter != 'ALL') {
-                return status == statusFilter;
-              }
               return true;
           }
         }).toList();
@@ -270,7 +266,7 @@ class _OrdersList extends StatelessWidget {
         }
 
         return FutureBuilder<List<Map<String, dynamic>>>(
-          future: SupabaseService.fetchMenu(), // Fetch menu for image lookups
+          future: MenuService.fetchMenu(), // Fetch menu for image lookups
           builder: (context, menuSnapshot) {
             final orders = rawOrders.map((data) {
               final status = data['status'] ?? 'PENDING';
@@ -344,9 +340,9 @@ class _OrderTile extends StatelessWidget {
     final String customerName = data['customerName'] ?? 'Boutique Order';
     final String status = data['status'] ?? 'PENDING';
     final String price = data['totalPrice'] != null
-        ? SupabaseService.formatPrice(data['totalPrice'])
+        ? OrderService.formatPrice(data['totalPrice'])
         : (items.isNotEmpty
-              ? SupabaseService.formatPrice(items[0]['price'])
+              ? OrderService.formatPrice(items[0]['price'])
               : '---');
     final String rawDate = data['deliveryDate'] ?? '';
     String dateStr = 'Not scheduled';
@@ -666,82 +662,4 @@ class _IconInfoRow extends StatelessWidget {
     );
   }
 }
-class _AllOrdersFilterView extends StatefulWidget {
-  final ColorScheme cs;
-  final ValueChanged<int>? onTabChanged;
 
-  const _AllOrdersFilterView({required this.cs, this.onTabChanged});
-
-  @override
-  State<_AllOrdersFilterView> createState() => _AllOrdersFilterViewState();
-}
-
-class _AllOrdersFilterViewState extends State<_AllOrdersFilterView> {
-  String _selectedStatus = 'ALL';
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-          child: Row(
-            children: [
-              Text(
-                "FILTER BY STATUS",
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                  color: widget.cs.secondary.withValues(alpha: 0.4),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: widget.cs.surfaceContainer,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: widget.cs.secondary.withValues(alpha: 0.1)),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedStatus,
-                    icon: Icon(Icons.keyboard_arrow_down, size: 16, color: widget.cs.primary),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: widget.cs.secondary,
-                    ),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedStatus = newValue;
-                        });
-                      }
-                    },
-                    items: <String>['ALL', 'PENDING', 'ACCEPTED', 'CONFIRMED', 'READY', 'SHIPPED', 'CANCELLED', 'COMPLETED']
-                        .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: _OrdersList(
-            cs: widget.cs,
-            onTabChanged: widget.onTabChanged,
-            filter: _OrderFilter.all,
-            statusFilter: _selectedStatus,
-          ),
-        ),
-      ],
-    );
-  }
-}

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../shared/staff_roles.dart';
-import '../../services/supabase_service.dart';
+import '../../services/staff_service.dart';
 
 class StaffAddPage extends StatefulWidget {
   final Map<String, dynamic>? staff;
@@ -126,7 +126,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
 
   String _generateJoiningCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final random = Random();
+    final random = Random.secure();
     return String.fromCharCodes(Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
@@ -146,7 +146,9 @@ class _StaffAddPageState extends State<StaffAddPage> {
     try {
       String? imageUrl = widget.staff?['imageUrl'];
       if (_pickedImage != null && _imageBytes != null) {
-        imageUrl = await SupabaseService.uploadStaffImage('${_phoneController.text}_${DateTime.now().millisecondsSinceEpoch}.jpg', _imageBytes!);
+        // Fix 1.6: Use a random UUID-like hash instead of phone number to protect PII
+        final String fileHash = DateTime.now().millisecondsSinceEpoch.toString();
+        imageUrl = await StaffService.uploadStaffImage('staff_$fileHash.jpg', _imageBytes!);
       }
 
       String? joiningCode;
@@ -176,12 +178,12 @@ class _StaffAddPageState extends State<StaffAddPage> {
       };
 
       if (widget.staff == null) {
-        await SupabaseService.addStaff(staffData);
+        await StaffService.addStaff(staffData);
         if (mounted) {
           _showSuccessDialog(joiningCode!);
         }
       } else {
-        await SupabaseService.updateStaff(widget.staff!['id'], staffData);
+        await StaffService.updateStaff(widget.staff!['id'], staffData);
         if (mounted) {
           if (widget.isNested && widget.onClose != null) {
             widget.onClose!();
@@ -517,7 +519,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         Text("SELECT SPECIALIZATION (SUB-ROLE)", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2.0)),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          value: _selectedSubRole,
+          initialValue: _selectedSubRole,
           decoration: InputDecoration(filled: true, fillColor: cs.surfaceContainerLow, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
           items: SubRole.values.map((sr) => DropdownMenuItem(value: sr, child: Text(sr.displayName))).toList(),
           onChanged: widget.isReadOnly ? null : (v) => setState(() => _selectedSubRole = v!),
@@ -668,7 +670,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         Text("BLOOD GROUP (OPTIONAL)", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: _selectedBloodGroup,
+          initialValue: _selectedBloodGroup,
           hint: Text("Select Group", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.3), fontSize: 14)),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(vertical: 12),

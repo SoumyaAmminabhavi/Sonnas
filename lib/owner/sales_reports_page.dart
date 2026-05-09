@@ -4,6 +4,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/supabase_service.dart';
+import '../services/order_service.dart';
+import '../services/menu_service.dart';
 import '../services/report_service.dart';
 import '../widgets/owner_sidebar.dart';
 
@@ -32,8 +34,8 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
 
   Future<void> _loadData() async {
     try {
-      final orders = await SupabaseService.fetchOrders();
-      final menu = await SupabaseService.fetchMenu();
+      final orders = await OrderService.fetchOrders();
+      final menu = await MenuService.fetchMenu();
 
       if (mounted) {
         setState(() {
@@ -45,7 +47,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
 
       // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
       final orderIds = _orders.map((o) => o['id'] as String).toList();
-      final allItems = await SupabaseService.fetchBulkOrderItems(orderIds);
+      final allItems = await OrderService.fetchBulkOrderItems(orderIds);
 
       if (mounted) {
         setState(() {
@@ -232,7 +234,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                 ),
               Expanded(
                 child: StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: SupabaseService.getAllOrdersStream(),
+                  stream: OrderService.getAllOrdersStream(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
                       return _buildSkeleton(cs);

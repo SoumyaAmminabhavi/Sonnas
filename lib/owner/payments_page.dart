@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/supabase_service.dart';
+import '../services/order_service.dart';
 import 'package:intl/intl.dart';
 
 class PaymentsPage extends StatefulWidget {
@@ -33,7 +33,7 @@ class _PaymentsPageState extends State<PaymentsPage>
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getAllOrdersStream(),
+      stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
         final pendingOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING') == 'PENDING').toList();
@@ -341,7 +341,7 @@ class _PaymentsPageState extends State<PaymentsPage>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                SupabaseService.formatPrice(item['totalPrice']),
+                OrderService.formatPrice(item['totalPrice']),
                 style: GoogleFonts.notoSerif(
                   color: cs.onSurface,
                   fontSize: 20,
@@ -352,7 +352,7 @@ class _PaymentsPageState extends State<PaymentsPage>
               if (!isCompleted)
                 ElevatedButton(
                   onPressed: () async {
-                    await SupabaseService.updatePaymentStatus(item['id'].toString(), 'PAID');
+                    await OrderService.updatePaymentStatus(item['id'].toString(), 'PAID');
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -488,7 +488,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                         ),
                       ),
                       Text(
-                        SupabaseService.formatPrice(item['totalPrice']),
+                        OrderService.formatPrice(item['totalPrice']),
                         style: GoogleFonts.notoSerif(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,

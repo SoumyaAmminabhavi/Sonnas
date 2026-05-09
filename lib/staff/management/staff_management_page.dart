@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../services/supabase_service.dart';
+import '../../services/staff_service.dart';
 import 'staff_add_page.dart';
 import '../../widgets/secure_avatar.dart';
 
@@ -75,7 +75,7 @@ class ManageStaffPageState extends State<ManageStaffPage> {
         ),
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: SupabaseService.getStaffStream(),
+            stream: StaffService.getStaffStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -275,7 +275,7 @@ class _StaffCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(4)),
-                      child: Text("CODE: ${staff['joiningCode']}", style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: cs.primary)),
+                      child: Text("ID: ${staff['id'].toString().substring(0, 5)}", style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, color: cs.primary)),
                     ),
                   Icon(Icons.arrow_forward_ios_rounded, size: 10, color: cs.primary.withValues(alpha: 0.3)),
                 ],
@@ -297,7 +297,7 @@ class _StaffCard extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
-              await SupabaseService.deleteStaff(staff['id']);
+              await StaffService.deleteStaff(staff['id']);
               if (ctx.mounted) Navigator.pop(ctx);
             }, 
             child: const Text("Delete", style: TextStyle(color: Colors.redAccent))

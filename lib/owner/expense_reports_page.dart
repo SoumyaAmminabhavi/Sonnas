@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
-import '../services/supabase_service.dart';
+import '../services/finance_service.dart';
 import '../services/report_service.dart';
 import '../widgets/owner_sidebar.dart';
 
@@ -41,7 +41,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
 
   Future<void> _loadData() async {
     try {
-      final expenses = await SupabaseService.fetchExpenses();
+      final expenses = await FinanceService.fetchExpenses();
       if (mounted) {
         setState(() {
           _expenses = List<Map<String, dynamic>>.from(expenses);
@@ -189,7 +189,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                 };
 
                 try {
-                  await SupabaseService.addExpense(expense);
+                  await FinanceService.addExpense(expense);
                   if (context.mounted) {
                     Navigator.pop(context);
                     _loadData();

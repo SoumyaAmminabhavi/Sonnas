@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
-import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
+import '../services/order_service.dart';
+import '../services/menu_service.dart';
+import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
 
 // ─────────────────────────────────────────────
@@ -51,10 +53,10 @@ class _MenuPageState extends State<MenuPage> {
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
           body: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: SupabaseService.getMenuStream(),
+            stream: MenuService.getMenuStream(),
             builder: (context, snapshot) {
               return FutureBuilder<List<Map<String, dynamic>>>(
-                future: SupabaseService.fetchMenu(),
+                future: MenuService.fetchMenu(),
                 builder: (context, menuSnapshot) {
                   if (!menuSnapshot.hasData && snapshot.connectionState == ConnectionState.waiting) {
                     final cs2 = Theme.of(context).colorScheme;
@@ -97,9 +99,9 @@ class _MenuPageState extends State<MenuPage> {
               final List<_MenuItem> allItems = rawCakes.map((data) {
                 final options = data['CakeOption'] as List? ?? [];
                 final basePrice = options.isNotEmpty
-                    ? SupabaseService.formatPrice(options[0]['price'])
+                    ? OrderService.formatPrice(options[0]['price'])
                     : (data['price'] != null
-                          ? SupabaseService.formatPrice(data['price'])
+                          ? OrderService.formatPrice(data['price'])
                           : "Price on Request");
                 final baseServes = options.isNotEmpty
                     ? "Serves ${options[0]['serves']}"
@@ -113,7 +115,7 @@ class _MenuPageState extends State<MenuPage> {
                   description: data['description'] ?? '',
                   serves: baseServes,
                   weight: "Standard",
-                  imageUrl: SupabaseService.getPublicUrl(data['image']),
+                  imageUrl: SupabaseService.getPublicUrl(data['image'], width: 250, height: 250),
                 );
               }).toList();
 
@@ -629,7 +631,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final cakeId = await SupabaseService.upsertCake({
+      final cakeId = await MenuService.upsertCake({
         if (widget.initialData != null) 'id': widget.initialData!['id'],
         'name': _nameController.text,
         'category': _selectedCategory,
@@ -637,7 +639,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
-      await SupabaseService.upsertCakeOption({
+      await MenuService.upsertCakeOption({
         'cakeId': cakeId,
         'price': double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0,
         'weight': _weightController.text,

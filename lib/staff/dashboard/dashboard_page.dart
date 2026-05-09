@@ -7,7 +7,7 @@ import '../management/staff_management_page.dart';
 import '../operations/kitchen_page.dart';
 import '../operations/orders_page.dart';
 import '../../widgets/staff_sidebar.dart';
-import '../../services/supabase_service.dart';
+import '../../services/order_service.dart';
 
 class StaffDashboard extends StatefulWidget {
   final StaffRole role;
@@ -205,7 +205,7 @@ class _DashboardContent extends StatelessWidget {
     }
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: SupabaseService.getRecentOrdersStream(),
+      stream: OrderService.getRecentOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         
@@ -325,7 +325,7 @@ class _DashboardContent extends StatelessWidget {
                         status: o['status']?.toString().toUpperCase() ?? 'PENDING',
                         onAction: () {
                           final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
-                          if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
+                          if (next != null) OrderService.updateOrderStatus(o['id'], next);
                         },
                         actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
                         cs: cs,
@@ -342,7 +342,7 @@ class _DashboardContent extends StatelessWidget {
                       status: o['status']?.toString().toUpperCase() ?? 'PENDING',
                       onAction: () {
                         final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
-                        if (next != null) SupabaseService.updateOrderStatus(o['id'], next);
+                        if (next != null) OrderService.updateOrderStatus(o['id'], next);
                       },
                       actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
                       cs: cs,
@@ -666,8 +666,8 @@ class _OperationsCombinedPage extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            if (hasKitchen) KitchenPage(cs: cs),
-            if (hasOrders) OrdersPage(cs: cs),
+            if (hasKitchen) const KitchenPage(),
+            if (hasOrders) const StaffOrdersPage(),
             if (hasHygiene) _CleaningTasksPage(cs: cs, shift: shift),
           ],
         ),
