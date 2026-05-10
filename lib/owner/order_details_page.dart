@@ -168,14 +168,13 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                           Text(
                                             () {
                                               if (order['deliveryDate'] == null) return "Date not scheduled yet";
-                                              try {
-                                                final date = DateTime.parse(order['deliveryDate'].toString());
+                                              final date = OrderService.parseDate(order['deliveryDate'].toString());
+                                              if (date != null) {
                                                 final formattedDate = DateFormat('MMMM d, y').format(date);
                                                 final time = order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : '';
                                                 return "Scheduled for $formattedDate$time";
-                                              } catch (e) {
-                                                return "Scheduled for ${order['deliveryDate']}${order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : ''}";
                                               }
+                                              return "Scheduled for ${order['deliveryDate']}${order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : ''}";
                                             }(),
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,
@@ -379,11 +378,19 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             cs: cs,
                                             isPrimary: true,
                                             onPressed: order['status'] == 'PENDING' ? () async {
-                                              await OrderService.updateOrderStatus(order['id'], 'ACCEPTED');
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text("Order Accepted & Sent to Kitchen")),
-                                                );
+                                              try {
+                                                await OrderService.updateOrderStatus(order['id'], 'ACCEPTED');
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    const SnackBar(content: Text("Order Accepted & Sent to Kitchen")),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(content: Text("Failed to accept order: $e")),
+                                                  );
+                                                }
                                               }
                                             } : null,
                                           ),

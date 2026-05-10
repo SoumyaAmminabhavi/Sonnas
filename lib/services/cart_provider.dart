@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/order.dart';
+
 
 class CartItem {
   final Map<String, dynamic> product; // Raw menu item
@@ -37,11 +37,12 @@ class CartNotifier extends Notifier<CartState> {
   CartState build() => CartState();
 
   void addItem(Map<String, dynamic> product, {int quantity = 1, String? options}) {
+    if (quantity <= 0) return;
     final existingIndex = state.items.indexWhere((item) => 
       item.product['id'] == product['id'] && item.selectedOptions == options
     );
 
-    if (existingIndex != null && existingIndex != -1) {
+    if (existingIndex != -1) {
       final updatedItems = List<CartItem>.from(state.items);
       updatedItems[existingIndex].quantity += quantity;
       state = state.copyWith(items: updatedItems);
@@ -51,11 +52,13 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void removeItem(int index) {
+    if (index < 0 || index >= state.items.length) return;
     final updatedItems = List<CartItem>.from(state.items)..removeAt(index);
     state = state.copyWith(items: updatedItems);
   }
 
   void updateQuantity(int index, int delta) {
+    if (index < 0 || index >= state.items.length) return;
     final updatedItems = List<CartItem>.from(state.items);
     final newQty = updatedItems[index].quantity + delta;
     if (newQty > 0) {

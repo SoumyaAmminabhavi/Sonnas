@@ -8,7 +8,7 @@ import 'services/supabase_service.dart';
 import 'widgets/landing_page.dart';
 import 'widgets/modern_drawer.dart';
 import 'widgets/glass_bottom_nav.dart';
-import 'customer/catalog_page.dart';
+
 
 void main() async {
   try {

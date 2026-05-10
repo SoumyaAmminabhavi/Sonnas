@@ -10,7 +10,7 @@ class FinanceService {
       final res = await _myClient.from('Expense').select().order('date', ascending: false);
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 

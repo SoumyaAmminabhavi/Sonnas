@@ -95,7 +95,8 @@ class OrderService {
       for (final order in orders) {
         final dateStr = order['createdAt']?.toString();
         if (dateStr == null) continue;
-        final date = DateTime.parse(dateStr);
+        final date = DateTime.tryParse(dateStr);
+        if (date == null) continue;
         final amount = double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0;
 
         int key;
@@ -142,10 +143,11 @@ class OrderService {
   }
 
   /// Submit a new order from the public customer platform
-  static Future<void> submitPublicOrder(Map<String, dynamic> orderData) async {
+  static Future<void> submitPublicOrder(Map<String, dynamic> data) async {
+    final orderData = Map<String, dynamic>.from(data);
     final items = orderData.remove('items') as List<dynamic>;
     
-    final response = await SupabaseService.client
+    final response = await _client
         .from('WhatsAppOrder')
         .insert(orderData)
         .select()
@@ -161,7 +163,7 @@ class OrderService {
       'price': item['price'],
     }).toList();
     
-    await SupabaseService.client.from('OrderItem').insert(orderItems);
+    await _client.from('WhatsAppOrderItem').insert(orderItems);
   }
 
   /// Launch WhatsApp with a message
@@ -170,5 +172,25 @@ class OrderService {
     final query = Uri.encodeComponent(message);
     final url = Uri.parse("whatsapp://send?phone=$phone&text=$query");
     debugPrint("Launching WhatsApp: $url");
+  }
+  /// Robust date parsing for various formats (ISO, DD/MM/YYYY, etc.)
+  static DateTime? parseDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return null;
+    try {
+      return DateTime.parse(dateStr);
+    } catch (_) {
+      try {
+        // Try DD/MM/YYYY
+        final parts = dateStr.split('/');
+        if (parts.length == 3) {
+          return DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
+          );
+        }
+      } catch (_) {}
+      return null;
+    }
   }
 }

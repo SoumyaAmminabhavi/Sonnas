@@ -24,12 +24,14 @@ class InventoryService {
     if (isIncrement) {
       await _client.rpc('increment_inventory', params: {'item_id': id, 'amount': value});
     } else {
+      if (value < 0) throw Exception("Stock level cannot be negative");
       await _client.from('InventoryItem').update({'currentStock': value}).eq('id', id);
     }
   }
 
   /// Record consumption (decrements stock)
   static Future<void> recordConsumption(String id, double quantity) async {
+    if (quantity <= 0) throw Exception("Consumption quantity must be positive");
     // We reuse updateInventoryStock with a negative value
     await updateInventoryStock(id, -quantity, isIncrement: true);
   }

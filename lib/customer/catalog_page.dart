@@ -16,6 +16,13 @@ class CustomerCatalogPage extends ConsumerStatefulWidget {
 
 class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
   String _selectedCategory = 'ALL';
+  late Future<List<Map<String, dynamic>>> _menuFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _menuFuture = MenuService.fetchMenu();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +65,11 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.search_rounded),
-          onPressed: () {},
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Search feature coming soon! 🔍")),
+            );
+          },
         ),
         const SizedBox(width: 8),
       ],
@@ -67,7 +78,7 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
 
   Widget _buildCategoryFilter(ColorScheme cs) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: MenuService.fetchMenu(),
+      future: _menuFuture,
       builder: (context, snapshot) {
         final categories = {'ALL', ...snapshot.data?.map((e) => e['category']?.toString().toUpperCase() ?? 'OTHER') ?? {}};
         
@@ -108,7 +119,7 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
 
   Widget _buildProductGrid(ColorScheme cs) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: MenuService.fetchMenu(),
+      future: _menuFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));

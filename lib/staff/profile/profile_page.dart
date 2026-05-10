@@ -313,12 +313,14 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                               }
                               final bool success = await BiometricService.authenticate();
                               if (success) {
-                                await StaffService.updateBiometricStatus(widget.staffId, val);
-                                setState(() => _biometricEnabled = val);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Biometric Login Enabled! ✅")),
-                                  );
+                                final bool dbUpdated = await StaffService.updateBiometricStatus(widget.staffId, val);
+                                if (dbUpdated && mounted) {
+                                  setState(() => _biometricEnabled = val);
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Biometric Login Enabled! ✅")),
+                                    );
+                                  }
                                 }
                               }
                             } else {
@@ -345,7 +347,7 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                   width: double.infinity,
                   child: TextButton.icon(
                     onPressed: () async {
-                      await StaffService.updateBiometricStatus(widget.staffId, false);
+                      // Do NOT clear biometric status on logout
                       await SessionService.clearSession();
                       if (context.mounted) {
                         Navigator.of(context).popUntil((route) => route.isFirst);

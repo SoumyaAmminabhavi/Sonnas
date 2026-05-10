@@ -15,7 +15,7 @@ class MenuService {
       final res = await _client.from('Cake').select('*, CakeOption(*)').order('name');
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      return [];
+      rethrow;
     }
   }
 

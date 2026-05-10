@@ -25,6 +25,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
   Map<String, double> _categorySales = {};
   List<Map<String, dynamic>> _topItems = [];
   List<Map<String, dynamic>> _cachedMenu = [];
+  String _lastProcessedIds = "";
 
   @override
   void initState() {
@@ -129,7 +130,22 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
   }
 
   void _processItemsFromOrders(List<Map<String, dynamic>> orders, List<Map<String, dynamic>> menu) {
-    if (menu.isEmpty) return;
+    if (menu.isEmpty || orders.isEmpty) return;
+    
+    // Performance: Only fetch if order IDs have changed
+    final currentIds = orders.map((o) => o['id'].toString()).join(',');
+    if (currentIds == _lastProcessedIds) return;
+    _lastProcessedIds = currentIds;
+
+    OrderService.fetchBulkOrderItems(orders.map((o) => o['id'] as String).toList()).then((items) {
+      if (mounted) {
+        setState(() {
+          _processItems(items, menu);
+        });
+      }
+    }).catchError((e) {
+      debugPrint("Error processing live items: $e");
+    });
   }
 
   Widget _buildExportButton(ColorScheme cs) {

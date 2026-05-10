@@ -15,7 +15,6 @@ class CustomerProductDetailPage extends ConsumerStatefulWidget {
 
 class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetailPage> {
   int _quantity = 1;
-  String? _selectedOptions;
 
   @override
   Widget build(BuildContext context) {

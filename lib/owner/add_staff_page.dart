@@ -426,7 +426,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          initialValue: _selectedSubRole,
+          value: _selectedSubRole,
           decoration: InputDecoration(
             filled: true,
             fillColor: cs.surfaceContainerLow,
@@ -1079,7 +1079,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          initialValue: _selectedBloodGroup,
+          value: _selectedBloodGroup,
           hint: Text(
             "Select Group",
             style: GoogleFonts.plusJakartaSans(
