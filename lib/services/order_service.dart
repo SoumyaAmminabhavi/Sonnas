@@ -43,8 +43,8 @@ class OrderService {
   static Stream<Map<String, dynamic>?> getSingleOrderStream(String id) async* {
     String actualId = id;
     
-    // If it looks like an order number (starts with SN-), resolve the real ID first
-    if (id.startsWith('SN-')) {
+    // If it looks like an order number (contains SNAP or SN- or SPC- or SN-), resolve the real ID first
+    if (id.contains('-') && !id.startsWith('c')) { // CUIDs often start with 'c'
       final res = await _client
           .from('WhatsAppOrder')
           .select('id')

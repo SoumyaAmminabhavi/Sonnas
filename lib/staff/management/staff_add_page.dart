@@ -522,7 +522,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         Text("SELECT SPECIALIZATION (SUB-ROLE)", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2.0)),
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
-          value: _selectedSubRole,
+          initialValue: _selectedSubRole,
           decoration: InputDecoration(filled: true, fillColor: cs.surfaceContainerLow, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
           items: SubRole.values.map((sr) => DropdownMenuItem(value: sr, child: Text(sr.displayName))).toList(),
           onChanged: widget.isReadOnly ? null : (v) => setState(() => _selectedSubRole = v!),
@@ -673,7 +673,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         Text("BLOOD GROUP (OPTIONAL)", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.7), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: _selectedBloodGroup,
+          initialValue: _selectedBloodGroup,
           hint: Text("Select Group", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.3), fontSize: 14)),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(vertical: 12),

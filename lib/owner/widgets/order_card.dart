@@ -9,8 +9,9 @@ import '../order_details_page.dart';
 
 class OrderCardReactive extends ConsumerWidget {
   final Map<String, dynamic> data;
+  final ValueChanged<int>? onTabChanged;
 
-  const OrderCardReactive({super.key, required this.data});
+  const OrderCardReactive({super.key, required this.data, this.onTabChanged});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,6 +58,7 @@ class OrderCardReactive extends ConsumerWidget {
           deliveryTime: data['deliveryTime'],
           orderSubtitle: orderSubtitle,
           onWhatsAppPressed: () => OrderService.launchWhatsApp(data['customerPhone'] ?? '', "Hi ${data['customerName'] ?? ''}, your order from Sonna's is ready!"),
+          onTabChanged: onTabChanged,
         );
       },
       loading: () => const _OrderCardSkeleton(),
@@ -77,6 +79,9 @@ class _OrderCardBase extends StatelessWidget {
   final String? deliveryTime;
   final String orderSubtitle;
 
+  final VoidCallback? onWhatsAppPressed;
+  final ValueChanged<int>? onTabChanged;
+
   const _OrderCardBase({
     required this.id,
     required this.status,
@@ -89,9 +94,8 @@ class _OrderCardBase extends StatelessWidget {
     required this.orderSubtitle,
     this.deliveryTime,
     this.onWhatsAppPressed,
+    this.onTabChanged,
   });
-
-  final VoidCallback? onWhatsAppPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +103,12 @@ class _OrderCardBase extends StatelessWidget {
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: id.replaceAll('#', ''))),
+        MaterialPageRoute(
+          builder: (context) => OwnerOrderDetailsView(
+            orderId: id.replaceAll('#', ''),
+            onTabChanged: onTabChanged,
+          ),
+        ),
       ),
       borderRadius: BorderRadius.circular(20),
       child: Container(
