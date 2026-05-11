@@ -29,7 +29,7 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
       final Set<String> customers = {};
       
       for (var order in orders) {
-        final price = double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0;
+        final price = (double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0;
         if ((order['paymentStatus'] ?? 'PENDING') == 'PAID') {
           totalRevenue += price;
         }

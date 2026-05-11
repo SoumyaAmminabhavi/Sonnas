@@ -3,21 +3,27 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
-  static final String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-  static final String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  static final String supabaseUrl = (dotenv.env['SUPABASE_URL'] ?? '').trim();
+  static final String supabaseAnonKey = (dotenv.env['SUPABASE_ANON_KEY'] ?? '').trim();
   
-  static final String mySupabaseUrl = dotenv.env['MY_SUPABASE_URL'] ?? '';
-  static final String mySupabaseAnonKey = dotenv.env['MY_SUPABASE_ANON_KEY'] ?? '';
+  static final String mySupabaseUrl = (dotenv.env['MY_SUPABASE_URL'] ?? '').trim();
+  static final String mySupabaseAnonKey = (dotenv.env['MY_SUPABASE_ANON_KEY'] ?? '').trim();
 
   static late SupabaseClient _myClient;
 
   static Future<void> initialize() async {
+    // Initialize Primary (Friend's) Supabase
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
     
+    // Initialize Private (My) Supabase Client
     _myClient = SupabaseClient(mySupabaseUrl, mySupabaseAnonKey);
+
+    // Debug logs to verify correct project loading
+    print('Supabase (Primary) initialized with: $supabaseUrl');
+    print('Supabase (Private) initialized with: $mySupabaseUrl');
   }
 
   static SupabaseClient get client => Supabase.instance.client;

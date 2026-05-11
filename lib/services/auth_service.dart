@@ -66,17 +66,48 @@ class AuthService {
     }
   }
 
-  static Future<bool> verifyOwnerPin(String pin) async {
+  // Cache the hash to avoid redundant network calls and improve login speed
+  static String? _cachedOwnerPinHash;
+
+  /// Fetch the owner PIN hash early to make login instant
+  static Future<void> prewarmOwnerAuth() async {
     try {
-      final res = await _client
+      final res = await _myClient
           .from('WhatsAppSetting')
           .select('value')
-          .eq('key', 'ownerPin')
+          .eq('key', 'owner_pin_hash')
           .maybeSingle();
+      if (res != null) {
+        _cachedOwnerPinHash = res['value']?.toString();
+      }
+    } catch (_) {
+      // Fail silently, verifyOwnerPin will retry if needed
+    }
+  }
+
+  static Future<bool> verifyOwnerPin(String pin) async {
+    try {
+      String? hash = _cachedOwnerPinHash;
       
-      if (res == null) return false;
-      return res['value']?.toString() == pin;
+      // If not cached, fetch it now (fallback)
+      if (hash == null) {
+        final res = await _myClient
+            .from('WhatsAppSetting')
+            .select('value')
+            .eq('key', 'owner_pin_hash')
+            .maybeSingle();
+        
+        if (res == null) return false;
+        hash = res['value']?.toString();
+        _cachedOwnerPinHash = hash; // Cache it for next time
+      }
+      
+      if (hash == null) return false;
+
+      // Verify the hashed PIN using bcrypt
+      return DBCrypt().checkpw(pin, hash);
     } catch (e) {
+      print('Owner PIN Verification Error: $e');
       return false;
     }
   }

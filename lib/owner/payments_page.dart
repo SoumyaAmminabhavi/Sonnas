@@ -46,7 +46,7 @@ class _PaymentsPageState extends State<PaymentsPage>
 
         double totalPending = 0;
         for (var o in pendingOrders) {
-          totalPending += double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0;
+          totalPending += (double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0) / 100.0;
         }
 
         double weeklyGross = 0;
@@ -55,7 +55,7 @@ class _PaymentsPageState extends State<PaymentsPage>
           if ((o['paymentStatus'] ?? 'PENDING') == 'PAID') {
             final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
             if (date != null && date.isAfter(sevenDaysAgo)) {
-              weeklyGross += double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0;
+              weeklyGross += (double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0) / 100.0;
             }
           }
         }

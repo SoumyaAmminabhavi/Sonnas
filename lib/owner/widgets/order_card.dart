@@ -44,6 +44,16 @@ class OrderCardReactive extends ConsumerWidget {
           orderSubtitle = items.length > 1 ? "$firstName + ${items.length - 1} more" : firstName;
         }
 
+        // Calculate actual total if totalPrice is null
+        double calculatedTotal = 0.0;
+        if (items.isNotEmpty) {
+          calculatedTotal = items.fold(0.0, (sum, item) {
+            final p = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+            final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
+            return sum + (p * q);
+          });
+        }
+
         return _OrderCardBase(
           id: "#${data['orderNumber'] ?? '---'}",
           status: status,
@@ -52,7 +62,7 @@ class OrderCardReactive extends ConsumerWidget {
           customerName: data['customerName'] ?? 'Guest Customer',
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
-              : (items.isNotEmpty ? OrderService.formatPrice(items[0]['price']) : '---'),
+              : OrderService.formatPrice(calculatedTotal),
           imageUrl: SupabaseService.getPublicUrl(imageUrl, width: 200, height: 200),
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
           deliveryTime: data['deliveryTime'],

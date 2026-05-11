@@ -17,21 +17,31 @@ class OrderService {
     debugPrint("Launching maps for: $url");
   }
 
-  /// Format price with currency symbol
+  /// Format price with currency symbol (converts minor units to major)
   static String formatPrice(dynamic price) {
-    if (price == null) return "₹0.00";
+    if (price == null) return "₹0";
     try {
-      // Strip any existing currency symbols, commas, or suffixes like /-
-      String clean = price.toString()
-          .replaceAll('₹', '')
-          .replaceAll('INR', '')
-          .replaceAll('/-', '')
-          .replaceAll(',', '')
-          .trim();
-          
-      if (clean.isEmpty) return "₹0.00";
+      // Handle numeric types directly
+      double p;
+      if (price is num) {
+        p = price.toDouble() / 100.0;
+      } else {
+        // Strip any existing currency symbols, commas, or suffixes like /-
+        String clean = price.toString()
+            .replaceAll('₹', '')
+            .replaceAll('INR', '')
+            .replaceAll('/-', '')
+            .replaceAll(',', '')
+            .trim();
+            
+        if (clean.isEmpty) return "₹0";
+        p = double.parse(clean) / 100.0;
+      }
       
-      final double p = double.parse(clean);
+      // If it's a whole number, don't show .00
+      if (p == p.toInt().toDouble()) {
+        return "₹${p.toInt()}";
+      }
       return "₹${p.toStringAsFixed(2)}";
     } catch (e) {
       return "₹$price";
@@ -78,8 +88,21 @@ class OrderService {
   }
 
   static Future<List<Map<String, dynamic>>> fetchOrders() async {
-    final res = await _client.from('WhatsAppOrder').select().order('createdAt', ascending: false);
-    return List<Map<String, dynamic>>.from(res);
+    try {
+      // 1. Try Primary (Friend's) project
+      final res = await SupabaseService.client.from('WhatsAppOrder').select().order('createdAt', ascending: false);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      debugPrint('⚠️ Friend\'s Orders Fetch Failed: $e. Falling back to Private DB.');
+      try {
+        // 2. Fallback to Private (My) project
+        final res = await SupabaseService.myClient.from('WhatsAppOrder').select().order('createdAt', ascending: false);
+        return List<Map<String, dynamic>>.from(res);
+      } catch (e2) {
+        debugPrint('❌ All Order Fetch attempts failed: $e2');
+        return [];
+      }
+    }
   }
 
   static Future<List<Map<String, dynamic>>> fetchOrderItems(String orderId) async {
@@ -97,7 +120,7 @@ class OrderService {
         if (dateStr == null) continue;
         final date = DateTime.tryParse(dateStr);
         if (date == null) continue;
-        final amount = double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0;
+        final amount = (double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0;
 
         int key;
         if (range == 'today') {

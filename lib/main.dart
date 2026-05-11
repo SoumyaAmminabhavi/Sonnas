@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +9,7 @@ import 'services/supabase_service.dart';
 import 'widgets/landing_page.dart';
 import 'widgets/modern_drawer.dart';
 import 'widgets/glass_bottom_nav.dart';
+import 'services/auth_service.dart';
 
 
 void main() async {
@@ -19,6 +21,9 @@ void main() async {
     
     // Initialize Supabase
     await SupabaseService.initialize();
+    
+    // Pre-warm owner authentication (fetches PIN hash early for instant login)
+    unawaited(AuthService.prewarmOwnerAuth());
     
     runApp(
       const ProviderScope(
