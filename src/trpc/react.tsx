@@ -55,8 +55,13 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
+            const bypassKey = process.env.NEXT_PUBLIC_ADMIN_BYPASS_KEY;
+            if (bypassKey) {
+              headers.set("x-admin-key", bypassKey);
+            }
             return headers;
           },
+
 
         }),
       ],

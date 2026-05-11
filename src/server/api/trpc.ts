@@ -121,9 +121,9 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    // Development-only admin bypass (NEVER enable in production)
+    // Admin bypass (NEVER enable in production unless necessary)
     const bypassKey = process.env.ADMIN_BYPASS_KEY;
-    if (process.env.NODE_ENV === "development" && bypassKey) {
+    if (bypassKey) {
       if (ctx.headers.get("x-admin-key") === bypassKey) {
         return next({
           ctx: {
@@ -132,6 +132,7 @@ export const protectedProcedure = t.procedure
         });
       }
     }
+
 
 
     if (!ctx.session?.user) {

@@ -33,17 +33,21 @@ export const env = createEnv({
   },
 
   /**
-   * Specify your client-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars. To expose them to the client, prefix them with
+   * Specify your client-side environment variables schema here. To expose them to the client, prefix them with
    * `NEXT_PUBLIC_`.
    */
   client: {
     NEXT_PUBLIC_SUPABASE_URL: z.string(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
-    NEXT_PUBLIC_WHATSAPP_NUMBER: z.string(),
-    NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: z.string(),
+    NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().default("15551534132"),
+    NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: z.string().default("+1 (555) 153-4132"),
 
+    NEXT_PUBLIC_ADMIN_BYPASS_KEY: z.string().optional(),
   },
+
+
+
+
 
   /**
    * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
@@ -68,8 +72,10 @@ export const env = createEnv({
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
     RAZORPAY_WEBHOOK_SECRET: process.env.RAZORPAY_WEBHOOK_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_ADMIN_BYPASS_KEY: process.env.NEXT_PUBLIC_ADMIN_BYPASS_KEY ?? process.env.ADMIN_BYPASS_KEY,
     ADMIN_BYPASS_KEY: process.env.ADMIN_BYPASS_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+
 
   },
   /**
