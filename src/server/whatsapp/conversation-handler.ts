@@ -1633,8 +1633,12 @@ async function handleDeliveryDateInput(
 
   if (msg.interactiveId?.startsWith("date_")) {
     const datePart = msg.interactiveId.replace("date_", "");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const d = new Date(year!, month! - 1, day!);
+    const parts = datePart.split("-").map(Number);
+    const [year, month, day] = parts;
+    if (year === undefined || month === undefined || day === undefined) return;
+    const d = new Date(year, month - 1, day);
+
+
     deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
   } else if (msg.text?.trim()) {
