@@ -622,7 +622,7 @@ function WhatsAppAdminContent() {
                         <div style={styles.cardActions}>
                           <div style={styles.actionGrid}>
                             {(() => {
-                              const currentIndex = STATUS_FLOW.indexOf(order.status as any);
+                              const currentIndex = STATUS_FLOW.indexOf(o.status as (typeof STATUS_FLOW)[number]);
                               const nextStatuses = currentIndex !== -1 ? STATUS_FLOW.slice(currentIndex + 1, currentIndex + 4) : [];
                               return nextStatuses.map(s => {
                                 const sCfg = STATUS_CONFIG[s]!;

@@ -53,9 +53,10 @@ export async function POST(request: Request) {
           console.warn("[WhatsApp] Signature mismatch ❌");
           return new NextResponse("Unauthorized", { status: 401 });
         }
-      } catch (err) {
+      } catch {
         return new NextResponse("Unauthorized", { status: 401 });
       }
+
     }
 
     const body = JSON.parse(rawBody) as WebhookPayload;
