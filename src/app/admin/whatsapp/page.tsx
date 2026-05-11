@@ -612,7 +612,8 @@ function WhatsAppAdminContent() {
                               <span style={styles.addressText}>{o.address.split('\n')[0]}</span>
                               {(() => {
                                 const mapUrl = o.address.split('🔗').pop()?.trim();
-                                if (mapUrl && mapUrl.startsWith('https://')) {
+                                if (mapUrl?.startsWith('https://')) {
+
                                   try {
                                     const url = new URL(mapUrl);
                                     const trustedHosts = ["google.com", "maps.google.com", "maps.app.goo.gl", "bing.com", "maps.apple.com"];
