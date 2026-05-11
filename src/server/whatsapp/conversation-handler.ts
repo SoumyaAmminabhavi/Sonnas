@@ -12,7 +12,9 @@ import {
   sendImageMessage,
 } from "~/server/whatsapp";
 import { createPaymentLink } from "~/server/razorpay";
+import { formatPrice } from "~/lib/format";
 import natural from "natural";
+
 
 const { JaroWinklerDistance } = natural;
 
@@ -22,8 +24,9 @@ interface CakeOption {
   id?: string;
   size: string;
   serves: string;
-  price: string;
+  price: number;
 }
+
 
 interface Cake {
   id: string | number;
@@ -38,9 +41,10 @@ interface CartItem {
   id: string;
   cakeName: string;
   size: string;
-  price: string;
+  price: number;
   quantity: number;
 }
+
 
 // ─── DB Helpers with Caching ─────────────────────────────────────────────
 
@@ -210,7 +214,7 @@ interface Conversation {
   state: string;
   selectedCake?: string | null;
   selectedSize?: string | null;
-  selectedPrice?: string | null;
+  selectedPrice?: number | null;
   selectedAddress?: string | null;
   selectedNotes?: string | null;
   selectedQuantity?: number | null;
@@ -219,6 +223,7 @@ interface Conversation {
   customImageUrl?: string | null;
   cart?: CartItem[];
 }
+
 
 interface IncomingMessage {
   from: string;
@@ -349,7 +354,8 @@ async function updateState(
 
 // ─── Cart Helpers ─────────────────────────────────────────────────────────
 
-async function addToCart(phone: string, item: { cakeName: string; size: string; price: string; quantity: number }) {
+async function addToCart(phone: string, item: { cakeName: string; size: string; price: number; quantity: number }) {
+
   try {
     const existingItem = await db.whatsAppCartItem.findFirst({
       where: { phone, cakeName: item.cakeName, size: item.size },
@@ -415,24 +421,20 @@ async function removeLastItem(phone: string) {
   }
 }
 
-function getCartTotal(cart: CartItem[]): string {
+function getCartTotal(cart: CartItem[]): number {
   let total = 0;
   for (const item of cart) {
-    // Remove currency symbols, commas, and whitespace
-    const priceStr = item.price.replace(/[^\d]/g, "");
-    const price = parseInt(priceStr, 10);
-    if (!isNaN(price)) {
-      total += price * (item.quantity || 1);
-    }
+    total += item.price * (item.quantity || 1);
   }
-  return `₹${total}`;
+  return total;
 }
 
-function formatItemTotal(price: string, quantity: number): string {
-  const unitPrice = parseInt(price.replace(/[^\d]/g, ""), 10);
-  if (isNaN(unitPrice)) return price;
-  return `₹${unitPrice * quantity}`;
+
+function formatItemTotal(price: number, quantity: number): string {
+  if (price === 0) return "Pending Quote";
+  return formatPrice(price * quantity);
 }
+
 
 async function reverseGeocode(lat: number, lon: number): Promise<string | undefined> {
   try {
@@ -459,7 +461,8 @@ function getCartSummary(cart: CartItem[]): string {
     const displayPrice = formatItemTotal(item.price, item.quantity);
     summary += `${idx + 1}. *${item.cakeName}* (${item.size})${item.quantity > 1 ? ` x${item.quantity}` : ""} \u2014 ${displayPrice}\n`;
   });
-  summary += `\n*Total: ${getCartTotal(cart)}*`;
+  summary += `\n*Total: ${formatPrice(getCartTotal(cart))}*`;
+
   return summary;
 }
 
@@ -473,7 +476,8 @@ function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
       summary += `${idx + 1}. *${item.cakeName}* (${item.size})${item.quantity > 1 ? ` x${item.quantity}` : ""} — ${displayPrice}\n`;
     });
   }
-  summary += `\n*Total: ${getCartTotal(cart)}*\n`;
+  summary += `\n*Total: ${formatPrice(getCartTotal(cart))}*\n`;
+
   summary += `📍 Address: ${convo.selectedAddress ?? "_Not provided_"}\n`;
   summary += `📝 Notes: ${convo.selectedNotes ?? "_None_"}\n`;
   summary += `📅 Delivery: *${convo.selectedDeliveryDate ?? "Today"}*\n`;
@@ -498,7 +502,7 @@ async function createCustomOrder(
       orderNumber,
       phone: msg.from,
       customerName: convo.name ?? msg.name,
-      totalPrice: "Pending Quote",
+      totalPrice: null,
       notes,
       status: "PENDING",
       isCustom: true,
@@ -507,10 +511,11 @@ async function createCustomOrder(
         create: [{
           cakeName: "CUSTOM_CAKE",
           size: "Custom Design",
-          price: "Pending Quote",
+          price: 0,
           quantity: 1
         }]
       }
+
     }
   });
 
@@ -635,7 +640,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       const options = selectedProduct.options ?? [];
       const buttons = options.slice(0, 2).map((opt, idx) => ({
         id: `size_${idx}`,
-        title: `${opt.size} — ${opt.price}`,
+        title: `${opt.size} — ${formatPrice(opt.price)}`,
       }));
       buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
@@ -659,7 +664,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       updateState(msg.from, "UPLOADING_REFERENCE_IMAGE", {
         selectedCake: "CUSTOM_CAKE",
         selectedSize: "Custom Design",
-        selectedPrice: "Pending Quote",
+        selectedPrice: 0,
       }),
       sendTextMessage(
         msg.from,
@@ -686,7 +691,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       updateState(msg.from, "REQUESTING_CUSTOM", {
         selectedCake: "CUSTOM_CAKE",
         selectedSize: "Custom Design",
-        selectedPrice: "Pending Quote",
+        selectedPrice: 0,
       }),
       sendTextMessage(
         msg.from,
@@ -737,13 +742,15 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     let targetState: ConversationState = "IDLE";
 
     switch (state) {
-      case "SELECTING_SIZE":
+      case "SELECTING_SIZE": {
         targetState = "BROWSING_MENU";
         break;
-      case "SELECTING_QUANTITY":
+      }
+      case "SELECTING_QUANTITY": {
         targetState = "SELECTING_SIZE";
         break;
-      case "ASKING_ADDRESS":
+      }
+      case "ASKING_ADDRESS": {
         // Back from address selection goes to Cart View
         await updateState(msg.from, "IDLE");
         const updatedConvo = convoCache.get(msg.from) ?? convo;
@@ -754,7 +761,8 @@ async function _internalHandleMessage(msg: IncomingMessage) {
           { id: "btn_clear_cart", title: "\ud83d\udd04 Start Fresh" },
         ]);
         return;
-      case "ASKING_INSTRUCTIONS":
+      }
+      case "ASKING_INSTRUCTIONS": {
         // If pickup, go back to pickup/delivery choice. If delivery, go back to address.
         if (convo.selectedAddress === "🏪 Store Pickup") {
           await updateState(msg.from, "ASKING_ADDRESS");
@@ -770,18 +778,24 @@ async function _internalHandleMessage(msg: IncomingMessage) {
           targetState = "ASKING_ADDRESS";
         }
         break;
-      case "ASKING_DELIVERY_DATE":
+      }
+      case "ASKING_DELIVERY_DATE": {
         targetState = "ASKING_INSTRUCTIONS";
         break;
-      case "ASKING_DELIVERY_TIME":
+      }
+      case "ASKING_DELIVERY_TIME": {
         targetState = "ASKING_DELIVERY_DATE";
         break;
-      case "CONFIRMING":
+      }
+      case "CONFIRMING": {
         targetState = "ASKING_DELIVERY_TIME";
         break;
-      default:
+      }
+      default: {
         targetState = "IDLE";
+      }
     }
+
 
     if (targetState === "IDLE") {
       await sendWelcome(msg.from, msg.name);
@@ -1076,7 +1090,7 @@ async function sendMenu(to: string) {
 const cakeRow = (c: Cake) => ({
   id: `cake_${c.id}`,
   title: c.name.slice(0, 24),
-  description: `From ${c.options?.[0]?.price ?? "₹750"}`,
+  description: `From ${formatPrice(c.options?.[0]?.price ?? 75000)}`,
 });
 
 // ─── Handle category selection ─────────────────────────────────────────────
@@ -1191,7 +1205,7 @@ async function handleCakeSelection(msg: IncomingMessage) {
   // WhatsApp allows max 3 buttons — use up to 2 sizes + Back to Menu
   const buttons = options.slice(0, 2).map((opt, idx) => ({
     id: `size_${idx}`,
-    title: `${opt.size} — ${opt.price}`,
+    title: `${opt.size} — ${formatPrice(opt.price)}`,
   }));
   buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
@@ -1233,7 +1247,7 @@ async function handleSizeSelection(
     selectedOption = cake.options?.find(
       (opt) =>
         input.includes(opt.size.toLowerCase()) ||
-        input.includes(opt.price.toLowerCase())
+        input.includes(formatPrice(opt.price).toLowerCase())
     );
   }
 
@@ -1773,8 +1787,8 @@ async function handleConfirmation(
     }
 
     const orderNumber = generateOrderNumber();
-    const totalPriceStr = getCartTotal(cart);
-    const totalAmount = parseInt(totalPriceStr.replace(/[^\d]/g, ""), 10);
+    const totalAmount = getCartTotal(cart);
+
 
     console.log(`[WhatsApp] handleConfirmation: Creating order ${orderNumber} (₹${totalAmount})`);
 
@@ -1797,7 +1811,7 @@ async function handleConfirmation(
           orderNumber,
           phone: msg.from,
           customerName: freshConvo?.name ?? msg.name ?? "Customer",
-          totalPrice: totalPriceStr,
+          totalPrice: totalAmount,
           address: freshConvo.selectedAddress ?? null,
           notes: freshConvo.selectedNotes ?? null,
           deliveryDate: freshConvo.selectedDeliveryDate ?? null,
@@ -1846,10 +1860,11 @@ async function handleConfirmation(
     successMessage += `📍 ${freshConvo.selectedAddress ?? "Store Pickup"}\n\n`;
 
     if (paymentLink) {
-      successMessage += `💳 Pay *${totalPriceStr}* to confirm:\n${paymentLink}\n\n_You'll receive a confirmation receipt once payment is complete._ ✅`;
+      successMessage += `💳 Pay *${formatPrice(totalAmount)}* to confirm:\n${paymentLink}\n\n_You'll receive a confirmation receipt once payment is complete._ ✅`;
     } else {
-      successMessage += `💰 Total: *${totalPriceStr}*\n\nWe'll contact you shortly to confirm details. 💕`;
+      successMessage += `💰 Total: *${formatPrice(totalAmount)}*\n\nWe'll contact you shortly to confirm details. 💕`;
     }
+
 
     await sendTextMessage(msg.from, successMessage);
     console.log(`[WhatsApp] handleConfirmation: Success for ${msg.from}`);
@@ -1877,7 +1892,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
           const options = cake.options ?? [];
           const buttons = options.slice(0, 2).map((opt, idx) => ({
             id: `size_${idx}`,
-            title: `${opt.size} — ${opt.price}`,
+            title: `${opt.size} — ${formatPrice(opt.price)}`,
           }));
           buttons.push({ id: "btn_back", title: "⬅️ Back to Menu" });
           await sendInteractiveButtons(phone, `Choose your size for *${cake.name}*:`, buttons);
@@ -1931,7 +1946,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         { id: "btn_back", title: "⬅️ Back" },
       ]);
       break;
-    case "CONFIRMING":
+    case "CONFIRMING": {
       // Use cached cart
       const cart = convoCache.get(phone)?.cart ?? [];
       await sendInteractiveButtons(phone, buildOrderSummary(cart, convo), [
@@ -1940,6 +1955,8 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         { id: "btn_cancel", title: "❌ Cancel" },
       ]);
       break;
+    }
+
     case "REQUESTING_CUSTOM":
       await sendTextMessage(phone, "🎨 *Custom Cake Request*\n\nPlease describe the cake or send a **Reference Photo**. 📸");
       break;

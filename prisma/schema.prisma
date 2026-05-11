@@ -86,7 +86,8 @@ model CakeOption {
     id        String   @id @default(cuid())
     size      String
     serves    String
-    price     String
+    price     Int
+
     
     cakeId    String
     cake      Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
@@ -101,7 +102,8 @@ model WhatsAppConversation {
     state          String   @default("IDLE")
     selectedCake   String?
     selectedSize   String?
-    selectedPrice  String?
+    selectedPrice  Int?
+
     selectedAddress String?
     selectedNotes    String?
     selectedQuantity Int?     @default(1)
@@ -124,7 +126,8 @@ model WhatsAppCartItem {
     phone          String
     cakeName       String
     size           String
-    price          String
+    price          Int
+
     quantity       Int      @default(1)
     createdAt      DateTime @default(now())
     
@@ -139,7 +142,8 @@ model WhatsAppOrder {
     phone          String
     customerName   String?
     
-    totalPrice     String?
+    totalPrice     Int?
+
     address        String?
     notes        String?
     status       String   @default("PENDING")
@@ -153,10 +157,9 @@ model WhatsAppOrder {
     
     deliveryDate   String?
     deliveryTime   String?
-    paymentReminderSent Boolean @default(false)
-    followUpSent      Boolean @default(false)
     
     createdAt    DateTime @default(now())
+
     updatedAt      DateTime @updatedAt
 
     items          WhatsAppOrderItem[]
@@ -179,7 +182,8 @@ model WhatsAppOrderItem {
     orderId        String
     cakeName       String
     size           String
-    price          String
+    price          Int
+
     quantity       Int      @default(1)
     
     order          WhatsAppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)

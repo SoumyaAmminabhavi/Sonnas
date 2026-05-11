@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { env } from "~/env";
+
 
 export const Highlight = () => (
   <section id="highlight" className="py-2xl bg-blush/20 relative overflow-hidden">
@@ -21,9 +23,13 @@ export const Highlight = () => (
           >
             Design Your Cake
           </a>
-          <button className="bg-white text-text-primary font-body py-md px-2xl rounded-md border border-rose/20 hover:bg-cream transition-default w-full sm:w-auto">
+          <Link 
+            href="/custom-gallery"
+            className="bg-white text-text-primary font-body py-md px-2xl rounded-md border border-rose/20 hover:bg-cream transition-default w-full sm:w-auto text-center"
+          >
             View Custom Gallery
-          </button>
+          </Link>
+
         </div>
       </div>
     </div>

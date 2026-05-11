@@ -46,9 +46,10 @@ export async function POST(req: Request) {
 
       console.log(`[Razorpay Webhook] Processing payment for Order: ${orderNumber}`);
 
+      // 1. Update Order in DB (Include items for the bill)
+      let order;
       try {
-        // 1. Update Order in DB (Include items for the bill)
-        const order = await db.whatsAppOrder.update({
+        order = await db.whatsAppOrder.update({
           where: { orderNumber: orderNumber as string },
           data: {
             status: "CONFIRMED",
@@ -59,10 +60,15 @@ export async function POST(req: Request) {
             items: true,
           },
         });
-
         console.log(`[Razorpay Webhook] DB updated successfully for ${orderNumber}`);
+      } catch (dbError) {
+        console.error(`[Razorpay Webhook] Database update failed:`, dbError);
+        // Throw to the outer catch to return 500 so Razorpay retries
+        throw dbError;
+      }
 
-        // 2. Generate Premium Bill and Notify Customer via WhatsApp
+      // 2. Generate Premium Bill and Notify Customer via WhatsApp (Non-fatal)
+      try {
         if (order) {
           console.log(`[Razorpay Webhook] Sending Premium WhatsApp bill to ${order.phone}...`);
 
@@ -82,14 +88,16 @@ export async function POST(req: Request) {
           bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
           bill += `*Order Summary*\n\n`;
 
+          const { formatPrice } = await import("~/lib/format");
+
           order.items.forEach((item) => {
             const qtyStr = item.quantity > 1 ? ` (${item.quantity} units)` : "";
             bill += `*${item.cakeName}*${qtyStr}\n`;
-            bill += `${item.size} • ${item.price}\n\n`;
+            bill += `${item.size} • ${formatPrice(item.price)}\n\n`;
           });
 
           bill += `━━━━━━━━━━━━━━━━━━━━\n`;
-          bill += `*Total Paid: ${order.totalPrice}*\n`;
+          bill += `*Total Paid: ${formatPrice(order.totalPrice ?? 0)}*\n`;
           bill += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
           // Clean up address: remove coords, GPS labels, and raw URLs
@@ -116,8 +124,9 @@ export async function POST(req: Request) {
           await sendTextMessage(order.phone, bill);
           console.log(`[Razorpay Webhook] Premium WhatsApp bill sent!`);
         }
-      } catch (dbError) {
-        console.error(`[Razorpay Webhook] DB or WhatsApp error:`, dbError);
+      } catch (wsError) {
+        // WhatsApp failures are non-fatal for the webhook
+        console.error(`[Razorpay Webhook] WhatsApp notification failed (non-fatal):`, wsError);
       }
     }
 

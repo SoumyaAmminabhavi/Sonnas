@@ -225,11 +225,11 @@ export const whatsappRouter = createTRPCRouter({
       }),
     ]);
 
-    // Calculate revenue (parse ₹ prices)
+    // Calculate revenue (paise to rupees)
     const totalRevenue = allOrders.reduce((sum, o) => {
-      const amount = parseInt((o.totalPrice ?? "0").replace(/[^\d]/g, ""), 10);
-      return sum + (isNaN(amount) ? 0 : amount);
+      return sum + (o.totalPrice ?? 0);
     }, 0);
+
 
     // Calculate 7-day revenue trend
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -253,9 +253,9 @@ export const whatsappRouter = createTRPCRouter({
         });
 
         const dayRevenue = dayOrders.reduce((sum, o) => {
-          const amount = parseInt((o.totalPrice ?? "0").replace(/[^\d]/g, ""), 10);
-          return sum + (isNaN(amount) ? 0 : amount);
+          return sum + (o.totalPrice ?? 0);
         }, 0);
+
 
         return {
           date: date.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric' }),

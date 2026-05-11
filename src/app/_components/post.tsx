@@ -1,5 +1,5 @@
 "use client";
-
+// hi
 import { useState } from "react";
 
 import { api } from "~/trpc/react";
@@ -26,7 +26,9 @@ export function LatestPost() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          createPost.mutate({ name });
+          const trimmedName = name.trim();
+          if (!trimmedName) return;
+          createPost.mutate({ name: trimmedName });
         }}
         className="flex flex-col gap-2"
       >
@@ -35,8 +37,11 @@ export function LatestPost() {
           placeholder="Title"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          required
+          minLength={1}
           className="w-full rounded-full bg-white/10 px-4 py-2 text-white"
         />
+
         <button
           type="submit"
           className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20"

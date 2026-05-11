@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+
 
 export const AboutStory = () => (
   <section id="about" className="py-2xl bg-cream overflow-hidden">
@@ -34,9 +36,13 @@ export const AboutStory = () => (
             </p>
           </div>
           <div className="pt-md">
-            <button className="text-text-primary font-body border-b-2 border-rose pb-1 hover:text-rose transition-default">
+            <Link 
+              href="/about"
+              className="text-text-primary font-body border-b-2 border-rose pb-1 hover:text-rose transition-default"
+            >
               Discover Our Heritage
-            </button>
+            </Link>
+
           </div>
         </div>
       </div>

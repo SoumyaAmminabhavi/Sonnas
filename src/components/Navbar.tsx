@@ -26,12 +26,13 @@ export const Navbar = () => (
 
       {/* Placeholder for small mobile menu or cart */}
       <div className="md:hidden">
-        <button className="text-text-primary">
+        <button type="button" aria-label="Open navigation menu" className="text-text-primary">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
       </div>
+
     </div>
   </nav>
 );
