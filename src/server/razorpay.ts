@@ -15,7 +15,7 @@ export const razorpay =
 
 export async function createPaymentLink(options: {
   orderNumber: string;
-  amount: number; // in rupees
+  amount: number; // in paise
   phone: string;
   name: string;
 }) {
@@ -23,8 +23,8 @@ export async function createPaymentLink(options: {
     throw new Error("Razorpay is not configured. Please check your environment variables.");
   }
   try {
-    // Razorpay expects amount in paise (Rupees * 100)
-    const amountInPaise = Math.round(options.amount * 100);
+    // Note: options.amount is already in paise from our refactor
+    const amountInPaise = Math.round(options.amount);
 
     const paymentLink = await razorpay.paymentLink.create({
       amount: amountInPaise,
@@ -41,13 +41,15 @@ export async function createPaymentLink(options: {
         email: false,
         whatsapp: false, // We handle notification ourselves via our bot
       },
-      reminder_enable: true,
+      reminder_enable: false,
+
       notes: {
         orderNumber: options.orderNumber,
       },
-      callback_url: `https://sonnaspatisserie.com/order-confirmed?id=${options.orderNumber}`,
+      callback_url: `${env.NEXT_PUBLIC_APP_URL}/order-confirmed?id=${options.orderNumber}`,
       callback_method: "get",
     });
+
 
     return paymentLink;
   } catch (error) {

@@ -121,14 +121,18 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    // Master Key bypass for troubleshooting
-    if (ctx.headers.get("x-admin-key") === "israr123") {
-      return next({
-        ctx: {
-          session: { user: { id: "admin", name: "Master Admin" }, expires: "" },
-        },
-      });
+    // Development-only admin bypass (NEVER enable in production)
+    const bypassKey = process.env.ADMIN_BYPASS_KEY;
+    if (process.env.NODE_ENV === "development" && bypassKey) {
+      if (ctx.headers.get("x-admin-key") === bypassKey) {
+        return next({
+          ctx: {
+            session: { user: { id: "admin", name: "Dev Admin" }, expires: "" },
+          },
+        });
+      }
     }
+
 
     if (!ctx.session?.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });

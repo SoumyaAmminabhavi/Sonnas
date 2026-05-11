@@ -17,6 +17,24 @@ function getMessagesUrl() {
   return `${GRAPH_API}/${env.WHATSAPP_PHONE_ID}/messages`;
 }
 
+/**
+ * Helper to perform fetch with a timeout
+ */
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+
 // ─── Send plain text ────────────────────────────────────────────────────────
 
 export async function sendTextMessage(to: string, message: string) {
@@ -26,7 +44,7 @@ export async function sendTextMessage(to: string, message: string) {
   }
 
   try {
-    const res = await fetch(getMessagesUrl(), {
+    const res = await fetchWithTimeout(getMessagesUrl(), {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
@@ -37,14 +55,19 @@ export async function sendTextMessage(to: string, message: string) {
       }),
     });
 
+
     if (!res.ok) {
       const err = await res.text();
-      console.error("[WhatsApp] Failed to send text:", err);
+      const errorMsg = `[WhatsApp] Failed to send text: ${res.status} - ${err}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
   } catch (e) {
     console.error("[WhatsApp] sendTextMessage error:", e);
+    throw e;
   }
 }
+
 
 // ─── Send image ─────────────────────────────────────────────────────────────
 
@@ -52,7 +75,7 @@ export async function sendImageMessage(to: string, imageUrl: string, caption?: s
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
 
   try {
-    const res = await fetch(getMessagesUrl(), {
+    const res = await fetchWithTimeout(getMessagesUrl(), {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
@@ -66,14 +89,19 @@ export async function sendImageMessage(to: string, imageUrl: string, caption?: s
       }),
     });
 
+
     if (!res.ok) {
       const err = await res.text();
-      console.error("[WhatsApp] Failed to send image:", err);
+      const errorMsg = `[WhatsApp] Failed to send image: ${res.status} - ${err}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
   } catch (e) {
     console.error("[WhatsApp] sendImageMessage error:", e);
+    throw e;
   }
 }
+
 
 // ─── Send interactive list (for menu browsing) ─────────────────────────────
 
@@ -96,7 +124,7 @@ export async function sendInteractiveList(
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
 
   try {
-    const res = await fetch(getMessagesUrl(), {
+    const res = await fetchWithTimeout(getMessagesUrl(), {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
@@ -115,14 +143,19 @@ export async function sendInteractiveList(
       }),
     });
 
+
     if (!res.ok) {
       const err = await res.text();
-      console.error("[WhatsApp] Failed to send list:", err);
+      const errorMsg = `[WhatsApp] Failed to send list: ${res.status} - ${err}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
   } catch (e) {
     console.error("[WhatsApp] sendInteractiveList error:", e);
+    throw e;
   }
 }
+
 
 // ─── Send interactive buttons (for confirmations) ──────────────────────────
 
@@ -139,7 +172,7 @@ export async function sendInteractiveButtons(
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
 
   try {
-    const res = await fetch(getMessagesUrl(), {
+    const res = await fetchWithTimeout(getMessagesUrl(), {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
@@ -159,14 +192,19 @@ export async function sendInteractiveButtons(
       }),
     });
 
+
     if (!res.ok) {
       const err = await res.text();
-      console.error("[WhatsApp] Failed to send buttons:", err);
+      const errorMsg = `[WhatsApp] Failed to send buttons: ${res.status} - ${err}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
   } catch (e) {
     console.error("[WhatsApp] sendInteractiveButtons error:", e);
+    throw e;
   }
 }
+
 
 // ─── Mark as read ──────────────────────────────────────────────────────────
 
@@ -174,7 +212,7 @@ export async function markAsRead(messageId: string) {
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
 
   try {
-    await fetch(getMessagesUrl(), {
+    await fetchWithTimeout(getMessagesUrl(), {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
@@ -183,6 +221,7 @@ export async function markAsRead(messageId: string) {
         message_id: messageId,
       }),
     });
+
   } catch (e) {
     console.error("[WhatsApp] markAsRead error:", e);
   }

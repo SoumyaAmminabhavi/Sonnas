@@ -8,6 +8,8 @@ import { env } from "~/env";
 import { markAsRead } from "~/server/whatsapp";
 import { handleIncomingMessage } from "~/server/whatsapp/conversation-handler";
 
+import crypto from "crypto";
+
 // ─── Webhook verification (GET) ────────────────────────────────────────────
 
 export async function GET(request: Request) {
@@ -28,7 +30,36 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json() as WebhookPayload;
+    const signature = request.headers.get("X-Hub-Signature-256");
+    const rawBody = await request.text();
+
+    // 1. Verify Signature if Secret is Configured
+    if (env.WHATSAPP_APP_SECRET) {
+      if (!signature) {
+        console.warn("[WhatsApp] Missing X-Hub-Signature-256 header");
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+
+      const expectedSignature = "sha256=" + crypto
+        .createHmac("sha256", env.WHATSAPP_APP_SECRET)
+        .update(rawBody)
+        .digest("hex");
+
+      try {
+        const signatureBuffer = Buffer.from(signature);
+        const expectedBuffer = Buffer.from(expectedSignature);
+        
+        if (signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)) {
+          console.warn("[WhatsApp] Signature mismatch ❌");
+          return new NextResponse("Unauthorized", { status: 401 });
+        }
+      } catch (err) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+    }
+
+    const body = JSON.parse(rawBody) as WebhookPayload;
+
 
     if (body.object !== "whatsapp_business_account") {
       return new NextResponse("OK", { status: 200 });

@@ -1,8 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { supabase } from "~/lib/supabase";
+import { auth } from "~/server/auth";
+
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Auth check
+    const session = await auth();
+    const adminKey = request.headers.get("x-admin-key");
+    const bypassKey = process.env.ADMIN_BYPASS_KEY;
+    
+    const isAuthorized = 
+      !!session?.user || 
+      (process.env.NODE_ENV === "development" && bypassKey && adminKey === bypassKey);
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     
@@ -10,7 +28,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
+    // 2. Strict file validation
+    if (!ALLOWED_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: "Unsupported file type. Please upload JPEG, PNG, or WEBP." }, 
+        { status: 415 }
+      );
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "File too large. Maximum size allowed is 5MB." }, 
+        { status: 413 }
+      );
+    }
+
     const buffer = await file.arrayBuffer();
+
     
     // Create a unique filename 
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

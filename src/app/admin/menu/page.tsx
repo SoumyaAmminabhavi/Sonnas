@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
+import { formatPrice } from "~/lib/format";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -68,7 +69,7 @@ export default function AdminMenuPage() {
     description: string | null;
     category?: string | null;
     image: string;
-    options: CakeOptionInput[]
+    options: { id: string; size: string; serves: string; price: number; cakeId: string }[]
   }) => {
     if (cake) {
       setFormData({
@@ -81,8 +82,9 @@ export default function AdminMenuPage() {
           id: o.id,
           size: o.size,
           serves: o.serves,
-          price: o.price,
+          price: o.price.toString(),
         })),
+
       });
       setIsEditing(true);
     } else {
@@ -119,12 +121,22 @@ export default function AdminMenuPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const submissionData = {
+      ...formData,
+      options: formData.options.map(opt => ({
+        ...opt,
+        price: parseInt(opt.price.toString().replace(/[^\d]/g, ""), 10) || 0
+      }))
+    };
+
     if (isEditing && formData.id) {
-      updateMutation.mutate(formData as { id: string; name: string; image: string; options: CakeOptionInput[]; description?: string; category?: string });
+      updateMutation.mutate(submissionData as { id: string; name: string; image: string; options: { size: string; serves: string; price: number; id?: string }[]; description?: string; category?: string });
     } else {
-      createMutation.mutate(formData as { name: string; image: string; options: CakeOptionInput[]; description?: string; category?: string });
+      createMutation.mutate(submissionData as { name: string; image: string; options: { size: string; serves: string; price: number }[]; description?: string; category?: string });
     }
   };
+
 
   return (
     <div className="min-h-screen bg-[#FFF9F7] p-8">
@@ -189,7 +201,7 @@ export default function AdminMenuPage() {
                     {cake.options.map((opt) => (
                       <div key={opt.id} className="flex justify-between text-xs font-body border-t border-[#F7F3EF] pt-2">
                         <span className="text-[#6E6E6E]">{opt.size} ({opt.serves} pers)</span>
-                        <span className="text-[#F4C2C2] font-semibold">{opt.price}</span>
+                        <span className="text-[#F4C2C2] font-semibold">{formatPrice(opt.price)}</span>
                       </div>
                     ))}
                   </div>

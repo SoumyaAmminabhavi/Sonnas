@@ -105,7 +105,8 @@ interface AdminOrderItem {
   id: string;
   cakeName: string;
   size: string;
-  price: string;
+  price: number;
+
   quantity: number;
   image?: string | null;
 }
@@ -115,7 +116,8 @@ interface AdminOrder {
   orderNumber: string;
   phone: string;
   customerName?: string | null;
-  totalPrice?: string | null;
+  totalPrice?: number | null;
+
   status: OrderStatus;
   address?: string | null;
   notes?: string | null;
@@ -211,8 +213,13 @@ function WhatsAppAdminContent() {
     
     // ADMIN-04: Date filter (supports both order date and delivery date)
     if (dateFilter !== "ALL") {
-      const today = new Date();
-      const todayStr = today.toISOString().split('T')[0];
+      const getLocalDateKey = (d: Date | string) => {
+        const date = typeof d === 'string' ? new Date(d) : d;
+        // en-CA locale reliably returns YYYY-MM-DD
+        return date.toLocaleDateString('en-CA');
+      };
+
+      const todayStr = getLocalDateKey(new Date());
       
       // Normalize dateFilter to YYYY-MM-DD if it's in DD-MM-YYYY
       let normalizedFilter = dateFilter;
@@ -225,25 +232,25 @@ function WhatsAppAdminContent() {
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
           if (filterByDelivery && order.deliveryDate) {
-            return order.deliveryDate.includes(todayStr ?? "") || order.deliveryDate.toLowerCase().includes("today");
+            return order.deliveryDate.includes(todayStr) || order.deliveryDate.toLowerCase().includes("today");
           }
-          return new Date(o.createdAt).toISOString().split('T')[0] === todayStr;
+          return getLocalDateKey(o.createdAt) === todayStr;
         });
       } else if (dateFilter === "TOMORROW") {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        const tomorrowStr = getLocalDateKey(tomorrow);
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
           if (filterByDelivery && order.deliveryDate) {
-            return order.deliveryDate.includes(tomorrowStr ?? "") || order.deliveryDate.toLowerCase().includes("tomorrow");
+            return order.deliveryDate.includes(tomorrowStr) || order.deliveryDate.toLowerCase().includes("tomorrow");
           }
-          return new Date(o.createdAt).toISOString().split('T')[0] === tomorrowStr;
+          return getLocalDateKey(o.createdAt) === tomorrowStr;
         });
       } else {
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
-          const orderCreatedDate = new Date(o.createdAt).toISOString().split('T')[0];
+          const orderCreatedDate = getLocalDateKey(o.createdAt);
           
           if (filterByDelivery && order.deliveryDate) {
             return order.deliveryDate.includes(normalizedFilter) || order.deliveryDate.includes(dateFilter);
@@ -252,6 +259,7 @@ function WhatsAppAdminContent() {
         });
       }
     }
+
     
     return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [ordersData?.orders, dateFilter, searchQuery, filterByDelivery]);
@@ -391,7 +399,8 @@ function WhatsAppAdminContent() {
         <div style={styles.statsBar}>
           <StatCard label="Today's Orders" value={stats?.todaysOrders ?? 0} icon="🧁" />
           <StatCard label="Pending Confirmation" value={stats?.pendingOrders ?? 0} icon="⌛" highlight />
-          <StatCard label="Revenue" value={`₹${(stats?.totalRevenue ?? 0).toLocaleString("en-IN")}`} icon="✨" />
+          <StatCard label="Revenue" value={`₹${((stats?.totalRevenue ?? 0) / 100).toLocaleString("en-IN")}`} icon="✨" />
+
           
           {/* Revenue Trend Chart */}
           <div style={styles.trendCard}>
@@ -400,16 +409,17 @@ function WhatsAppAdminContent() {
                <span style={styles.trendIndicator}>GROWTH</span>
             </div>
             <div style={styles.trendChart}>
-               {stats?.revenueTrend?.map((day, i) => {
-                 const max = Math.max(...stats.revenueTrend.map(d => d.revenue), 100);
-                 const height = (day.revenue / max) * 100;
-                 return (
-                   <div key={i} style={styles.trendColumn} title={`${day.date}: ₹${day.revenue}`}>
-                      <div style={{ ...styles.trendBar, height: `${Math.max(height, 5)}%` }} />
-                      <span style={styles.trendDate}>{day.date.split(' ')[0]}</span>
-                   </div>
-                 );
-               })}
+                {stats?.revenueTrend?.map((day, i) => {
+                  const max = Math.max(...stats.revenueTrend.map(d => d.revenue), 100);
+                  const height = (day.revenue / max) * 100;
+                  return (
+                    <div key={i} style={styles.trendColumn} title={`${day.date}: ₹${(day.revenue / 100).toLocaleString("en-IN")}`}>
+                       <div style={{ ...styles.trendBar, height: `${Math.max(height, 5)}%` }} />
+                       <span style={styles.trendDate}>{day.date.split(' ')[0]}</span>
+                    </div>
+                  );
+                })}
+
             </div>
           </div>
 
@@ -564,7 +574,8 @@ function WhatsAppAdminContent() {
                               )}
                               <div style={styles.productMeta}>
                                 <p style={styles.productName}>{item.cakeName}</p>
-                                <p style={styles.productSpec}>{item.size} • {item.price}</p>
+                                <p style={styles.productSpec}>{item.size} • ₹{(item.price / 100).toLocaleString("en-IN")}</p>
+
                               </div>
                               <div style={styles.productQty}>×{item.quantity}</div>
                             </div>
@@ -610,23 +621,28 @@ function WhatsAppAdminContent() {
 
                         <div style={styles.cardActions}>
                           <div style={styles.actionGrid}>
-                            {STATUS_FLOW.filter(s => s !== order.status).slice(0, 3).map(s => {
-                              const sCfg = STATUS_CONFIG[s]!;
-                              return (
-                                <button
-                                  key={s}
-                                  style={{ ...styles.actionPill, backgroundColor: sCfg.bg, color: sCfg.color, borderColor: sCfg.border }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (confirm(`Update to "${sCfg.label}"? This will notify the customer via WhatsApp.`)) {
-                                      updateStatus.mutate({ id: order.id, status: s as OrderStatus, notifyCustomer: true });
-                                    }
-                                  }}
-                                >
-                                  {sCfg.label}
-                                </button>
-                              );
-                            })}
+                            {(() => {
+                              const currentIndex = STATUS_FLOW.indexOf(order.status as any);
+                              const nextStatuses = currentIndex !== -1 ? STATUS_FLOW.slice(currentIndex + 1, currentIndex + 4) : [];
+                              return nextStatuses.map(s => {
+                                const sCfg = STATUS_CONFIG[s]!;
+                                return (
+                                  <button
+                                    key={s}
+                                    style={{ ...styles.actionPill, backgroundColor: sCfg.bg, color: sCfg.color, borderColor: sCfg.border }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm(`Update to "${sCfg.label}"? This will notify the customer via WhatsApp.`)) {
+                                        updateStatus.mutate({ id: order.id, status: s as OrderStatus, notifyCustomer: true });
+                                      }
+                                    }}
+                                  >
+                                    {sCfg.label}
+                                  </button>
+                                );
+                              });
+                            })()}
+
                           </div>
                           <div style={styles.footerActions}>
                             <button style={styles.secondaryAction} onClick={(e) => { e.stopPropagation(); setReplyPhone(order.phone); }}>

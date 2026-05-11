@@ -4,6 +4,7 @@ import { clearMenuCache } from "~/server/whatsapp/conversation-handler";
 import {
   createTRPCRouter,
   publicProcedure,
+  protectedProcedure,
 } from "~/server/api/trpc";
 
 export const cakeRouter = createTRPCRouter({
@@ -25,7 +26,7 @@ export const cakeRouter = createTRPCRouter({
       return cake;
     }),
 
-  create: publicProcedure
+  create: protectedProcedure
     .input(
       z.object({
         name: z.string().min(1, "Cake name is required"),
@@ -36,7 +37,8 @@ export const cakeRouter = createTRPCRouter({
           z.object({
             size: z.string().min(1),
             serves: z.string().min(1),
-            price: z.string().min(1),
+            price: z.number().min(1),
+
           })
         ).min(1, "At least one size option is required"),
       })
@@ -61,7 +63,7 @@ export const cakeRouter = createTRPCRouter({
       return result;
     }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -74,34 +76,38 @@ export const cakeRouter = createTRPCRouter({
             id: z.string().optional(),
             size: z.string().min(1),
             serves: z.string().min(1),
-            price: z.string().min(1),
+            price: z.number().min(1),
+
           })
         ),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // For simplicity, we'll delete and recreate options to avoid complex nested updates
-      await ctx.db.cakeOption.deleteMany({
-        where: { cakeId: input.id },
+      const result = await ctx.db.$transaction(async (tx) => {
+        // For simplicity, we'll delete and recreate options to avoid complex nested updates
+        await tx.cakeOption.deleteMany({
+          where: { cakeId: input.id },
+        });
+
+        return tx.cake.update({
+          where: { id: input.id },
+          data: {
+            name: input.name,
+            description: input.description ?? "",
+            category: input.category,
+            image: input.image,
+            options: {
+              create: input.options.map(opt => ({
+                size: opt.size,
+                serves: opt.serves,
+                price: opt.price
+              })),
+            },
+          },
+          include: { options: true },
+        });
       });
 
-      const result = await ctx.db.cake.update({
-        where: { id: input.id },
-        data: {
-          name: input.name,
-          description: input.description ?? "",
-          category: input.category,
-          image: input.image,
-          options: {
-            create: input.options.map(opt => ({
-              size: opt.size,
-              serves: opt.serves,
-              price: opt.price
-            })),
-          },
-        },
-        include: { options: true },
-      });
 
       // Clear WhatsApp bot cache
       clearMenuCache();
@@ -109,7 +115,8 @@ export const cakeRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: publicProcedure
+  delete: protectedProcedure
+
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const result = await ctx.db.cake.delete({

@@ -33,7 +33,12 @@ export const Footer = () => (
           <h3 className="text-sm uppercase tracking-widest font-heading mb-md">Contact Us</h3>
           <ul className="space-y-sm text-sm font-body text-text-secondary">
             <li> 4TH Phase, Shop No. 5,6,7 Ground Floor, &quot;Aum Shree&quot; Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021</li>
-            <li>+1 555 643 1763</li>
+            <li>
+              <a href="tel:+919113231424" className="hover:text-rose transition-default">
+                +91 9113231424
+              </a>
+            </li>
+
           </ul>
         </div>
 
@@ -58,11 +63,32 @@ export const Footer = () => (
         <p className="text-xs font-body text-text-muted">
           © {new Date().getFullYear()} SONNA&apos;S PATISSERIE & CAFE. All rights reserved.
         </p>
-        <div className="flex space-x-lg text-text-muted hover:text-rose transition-default">
-          <span className="text-xs font-body cursor-pointer">Instagram</span>
-          <span className="text-xs font-body cursor-pointer">Pinterest</span>
-          <span className="text-xs font-body cursor-pointer">Facebook</span>
+        <div className="flex space-x-lg">
+          <a
+            href="https://www.instagram.com/sonnas___/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-body text-text-muted hover:text-rose transition-default"
+            aria-label="Follow us on Instagram"
+          >
+            Instagram
+          </a>
+          <a
+            href="#"
+            className="text-xs font-body text-text-muted hover:text-rose transition-default"
+            aria-label="Follow us on Pinterest"
+          >
+            Pinterest
+          </a>
+          <a
+            href="#"
+            className="text-xs font-body text-text-muted hover:text-rose transition-default"
+            aria-label="Follow us on Facebook"
+          >
+            Facebook
+          </a>
         </div>
+
       </div>
     </div>
   </footer>

@@ -1,5 +1,6 @@
 import { PrismaClient } from '../generated/prisma';
-import { products } from '../src/data/landing';
+import { products } from '../src/data/products';
+
 
 const prisma = new PrismaClient();
 
