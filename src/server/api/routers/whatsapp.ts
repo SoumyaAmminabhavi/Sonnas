@@ -41,7 +41,9 @@ export const whatsappRouter = createTRPCRouter({
         },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
+        skip: input.cursor ? 1 : 0,
       });
+
 
       // Fetch all cakes to map images (don't let this fail the whole query)
       let cakeImageMap = new Map<string, string>();
@@ -213,6 +215,7 @@ export const whatsappRouter = createTRPCRouter({
       ctx.db.whatsAppOrder.findMany({
         select: { 
           totalPrice: true, 
+          paymentStatus: true,
           items: {
             select: {
               id: true,
@@ -223,12 +226,15 @@ export const whatsappRouter = createTRPCRouter({
           } 
         },
       }),
+
     ]);
 
     // Calculate revenue (paise to rupees)
     const totalRevenue = allOrders.reduce((sum, o) => {
+      if (o.paymentStatus !== "PAID") return sum;
       return sum + (o.totalPrice ?? 0);
     }, 0);
+
 
 
     // Calculate 7-day revenue trend

@@ -2,18 +2,11 @@
 import { env } from "~/env";
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize Supabase Client with Service Role for backend uploads
-// Note: You must add SUPABASE_SERVICE_ROLE_KEY to your .env
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!serviceRoleKey) {
-  throw new Error("SUPABASE_SERVICE_ROLE_KEY is required for the backend media pipeline.");
-}
-
 const supabase = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,
-  serviceRoleKey
+  env.SUPABASE_SERVICE_ROLE_KEY
 );
+
 
 
 /**

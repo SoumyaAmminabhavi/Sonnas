@@ -638,20 +638,40 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       }
 
       const options = selectedProduct.options ?? [];
-      const buttons = options.slice(0, 2).map((opt, idx) => ({
-        id: `size_${idx}`,
-        title: `${opt.size} — ${formatPrice(opt.price)}`,
-      }));
-      buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
+      if (options.length > 2) {
+        // Use List Message for better UX when there are many sizes
+        tasks.push(sendInteractiveList(
+          msg.from,
+          "Size Selection",
+          `Hi ${msg.name ?? "there"}! 👋\n\nGreat choice! Choose your size for *${selectedProduct.name}*:`,
+          "Select Size",
+          [{
+            title: "Available Sizes",
+            rows: options.map((opt, idx) => ({
+              id: `size_${idx}`,
+              title: opt.size,
+              description: formatPrice(opt.price)
+            }))
+          }]
+        ));
+      } else {
+        // Use Buttons
+        const buttons = options.map((opt, idx) => ({
+          id: `size_${idx}`,
+          title: `${opt.size} — ${formatPrice(opt.price)}`,
+        }));
+        buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
-      tasks.push(sendInteractiveButtons(
-        msg.from,
-        `Hi ${msg.name ?? "there"}! 👋\n\nGreat choice! Choose your size for *${selectedProduct.name}*:`,
-        buttons
-      ));
+        tasks.push(sendInteractiveButtons(
+          msg.from,
+          `Hi ${msg.name ?? "there"}! 👋\n\nGreat choice! Choose your size for *${selectedProduct.name}*:`,
+          buttons
+        ));
+      }
 
       await Promise.all(tasks);
       return;
+
     }
     // If cake not found, fall through to welcome
     await sendWelcome(msg.from, msg.name);
@@ -1202,20 +1222,37 @@ async function handleCakeSelection(msg: IncomingMessage) {
   }
 
   const options = selectedProduct.options ?? [];
-  // WhatsApp allows max 3 buttons — use up to 2 sizes + Back to Menu
-  const buttons = options.slice(0, 2).map((opt, idx) => ({
-    id: `size_${idx}`,
-    title: `${opt.size} — ${formatPrice(opt.price)}`,
-  }));
-  buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
+  if (options.length > 2) {
+    tasks.push(sendInteractiveList(
+      msg.from,
+      "Size Selection",
+      `Choose your size for *${selectedProduct.name}*:`,
+      "Select Size",
+      [{
+        title: "Available Sizes",
+        rows: options.map((opt, idx) => ({
+          id: `size_${idx}`,
+          title: opt.size,
+          description: formatPrice(opt.price)
+        }))
+      }]
+    ));
+  } else {
+    const buttons = options.map((opt, idx) => ({
+      id: `size_${idx}`,
+      title: `${opt.size} — ${formatPrice(opt.price)}`,
+    }));
+    buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
-  tasks.push(sendInteractiveButtons(
-    msg.from,
-    `Choose your size for *${selectedProduct.name}*:`,
-    buttons
-  ));
+    tasks.push(sendInteractiveButtons(
+      msg.from,
+      `Choose your size for *${selectedProduct.name}*:`,
+      buttons
+    ));
+  }
 
   await Promise.all(tasks);
+
 }
 
 // ─── Handle size selection ─────────────────────────────────────────────────
@@ -1733,7 +1770,9 @@ async function sendOrderStatus(to: string) {
       statusText += `   🎂 ${item.cakeName} (${item.size})${qtyStr} — ${displayPrice}\n`;
     });
 
-    statusText += `   💰 Total: ${order.totalPrice}\n`;
+    statusText += `   💰 Total: ${formatPrice(order.totalPrice ?? 0)}\n`;
+
+
     statusText += `   Status: *${order.status}*\n`;
     statusText += `   Placed: ${order.createdAt.toLocaleDateString("en-IN")}\n\n`;
   }
@@ -1795,46 +1834,49 @@ async function handleConfirmation(
     // Fetch fresh convo to ensure address/notes are latest
     const freshConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
 
-    // Parallelize Razorpay and DB Order Creation
-    const [rzpLinkResult, dbOrder] = await Promise.all([
-      createPaymentLink({
+    // 1. Create DB Order first (Durable Storage)
+    const dbOrder = await db.whatsAppOrder.create({
+      data: {
+        orderNumber,
+        phone: msg.from,
+        customerName: freshConvo?.name ?? msg.name ?? "Customer",
+        totalPrice: totalAmount,
+        address: freshConvo.selectedAddress ?? null,
+        notes: freshConvo.selectedNotes ?? null,
+        deliveryDate: freshConvo.selectedDeliveryDate ?? null,
+        deliveryTime: freshConvo.selectedDeliveryTime ?? null,
+        status: "PENDING",
+        paymentStatus: "PENDING",
+        razorpayOrderId: "", 
+        paymentLink: "",
+        isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
+        customImageUrl: freshConvo.customImageUrl ?? null,
+        items: {
+          create: cart.map((item) => ({
+            cakeName: item.cakeName,
+            size: item.size,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        },
+      },
+    });
+
+    console.log(`[WhatsApp] handleConfirmation: DB Order created: ${dbOrder.id}`);
+
+    // 2. Create Payment Link sequentially
+    let rzpLinkResult = null;
+    try {
+      rzpLinkResult = await createPaymentLink({
         orderNumber,
         amount: totalAmount,
         phone: msg.from,
         name: freshConvo?.name ?? msg.name ?? "Customer",
-      }).catch(err => {
-        console.error("[WhatsApp] Razorpay Link Error:", err);
-        return null;
-      }),
-      db.whatsAppOrder.create({
-        data: {
-          orderNumber,
-          phone: msg.from,
-          customerName: freshConvo?.name ?? msg.name ?? "Customer",
-          totalPrice: totalAmount,
-          address: freshConvo.selectedAddress ?? null,
-          notes: freshConvo.selectedNotes ?? null,
-          deliveryDate: freshConvo.selectedDeliveryDate ?? null,
-          deliveryTime: freshConvo.selectedDeliveryTime ?? null,
-          status: "PENDING",
-          paymentStatus: "PENDING",
-          razorpayOrderId: "", 
-          paymentLink: "",
-          isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
-          customImageUrl: freshConvo.customImageUrl ?? null,
-          items: {
-            create: cart.map((item) => ({
-              cakeName: item.cakeName,
-              size: item.size,
-              price: item.price,
-              quantity: item.quantity,
-            })),
-          },
-        },
-      })
-    ]);
+      });
+    } catch (err) {
+      console.error("[WhatsApp] Razorpay Link Error:", err);
+    }
 
-    console.log(`[WhatsApp] handleConfirmation: DB Order created: ${dbOrder.id}`);
 
     let paymentLink = "";
     if (rzpLinkResult?.short_url) {

@@ -66,94 +66,86 @@ export async function POST(request: Request) {
       return new NextResponse("OK", { status: 200 });
     }
 
-    const entry = body.entry?.[0];
-    const changes = entry?.changes?.[0];
-    const value = changes?.value;
-    const message = value?.messages?.[0];
+    for (const entry of body.entry ?? []) {
+      for (const change of entry.changes ?? []) {
+        const value = change.value;
+        for (const message of value?.messages ?? []) {
+          const maskedFrom = message.from.slice(-4).padStart(message.from.length, "*");
+          console.log(`[WhatsApp] Webhook Received: type=${message.type}, from=${maskedFrom}`);
 
-    if (!message) {
-      // Status update or other non-message event
-      return new NextResponse("OK", { status: 200 });
+          // Get contact name
+          const contactName = value?.contacts?.[0]?.profile?.name;
+
+          // Mark as read immediately for good UX
+          if (message.id) {
+            void markAsRead(message.id);
+          }
+
+          // Build the message object
+          let incomingMsg: Parameters<typeof handleIncomingMessage>[0] | null = null;
+
+          if (message.type === "text") {
+            incomingMsg = {
+              from: message.from,
+              name: contactName,
+              type: "text",
+              text: message.text?.body,
+              messageId: message.id,
+            };
+          } else if (message.type === "interactive") {
+            const interactive = message.interactive;
+            const replyId = interactive?.button_reply?.id ?? interactive?.list_reply?.id;
+            const replyTitle = interactive?.button_reply?.title ?? interactive?.list_reply?.title;
+
+            incomingMsg = {
+              from: message.from,
+              name: contactName,
+              type: "interactive",
+              interactiveId: replyId,
+              interactiveTitle: replyTitle,
+              messageId: message.id,
+            };
+          } else if (message.type === "location" && message.location) {
+            incomingMsg = {
+              from: message.from,
+              name: contactName,
+              type: "location",
+              location: {
+                latitude: message.location.latitude,
+                longitude: message.location.longitude,
+                name: message.location.name,
+                address: message.location.address,
+              },
+              messageId: message.id,
+            };
+          } else if (message.type === "image" && message.image) {
+            incomingMsg = {
+              from: message.from,
+              name: contactName,
+              type: "image",
+              image: {
+                id: message.image.id,
+                caption: message.image.caption,
+                mimeType: message.image.mime_type,
+              },
+              messageId: message.id,
+            };
+          }
+
+          if (incomingMsg) {
+            await handleIncomingMessage(incomingMsg);
+          }
+        }
+      }
     }
 
-    console.log(`[WhatsApp] Webhook Received: type=${message.type}, from=${message.from}`);
-
-    // Get contact name
-    const contactName = value?.contacts?.[0]?.profile?.name;
-
-    // Mark as read immediately for good UX
-    if (message.id) {
-      void markAsRead(message.id);
-    }
-
-    // Build the message object synchronously, then process in background
-    let incomingMsg: Parameters<typeof handleIncomingMessage>[0] | null = null;
-
-    if (message.type === "text") {
-      incomingMsg = {
-        from: message.from,
-        name: contactName,
-        type: "text",
-        text: message.text?.body,
-        messageId: message.id,
-      };
-    } else if (message.type === "interactive") {
-      const interactive = message.interactive;
-      const replyId =
-        interactive?.button_reply?.id ?? interactive?.list_reply?.id;
-      const replyTitle =
-        interactive?.button_reply?.title ?? interactive?.list_reply?.title;
-
-      incomingMsg = {
-        from: message.from,
-        name: contactName,
-        type: "interactive",
-        interactiveId: replyId,
-        interactiveTitle: replyTitle,
-        messageId: message.id,
-      };
-    } else if (message.type === "location" && message.location) {
-      incomingMsg = {
-        from: message.from,
-        name: contactName,
-        type: "location",
-        location: {
-          latitude: message.location.latitude,
-          longitude: message.location.longitude,
-          name: message.location.name,
-          address: message.location.address,
-        },
-        messageId: message.id,
-      };
-    } else if (message.type === "image" && message.image) {
-      incomingMsg = {
-        from: message.from,
-        name: contactName,
-        type: "image",
-        image: {
-          id: message.image.id,
-          caption: message.image.caption,
-          mimeType: message.image.mime_type,
-        },
-        messageId: message.id,
-      };
-    }
-
-    // 🚀 Process message and wait for it to finish (needed for serverless reliability)
-    if (incomingMsg) {
-      await handleIncomingMessage(incomingMsg).catch((err) =>
-        console.error("[WhatsApp] Processing error:", err)
-      );
-    }
-
-    // Return 200 immediately — Meta requires response within ~15s
     return new NextResponse("OK", { status: 200 });
   } catch (err) {
     console.error("[WhatsApp] Webhook error:", err);
-    // Still return 200 to prevent Meta from retrying
-    return new NextResponse("OK", { status: 200 });
+    return new NextResponse("Error processing webhook", { status: 500 });
   }
 }
+
 
 // ─── Type definitions for webhook payload ──────────────────────────────────
 

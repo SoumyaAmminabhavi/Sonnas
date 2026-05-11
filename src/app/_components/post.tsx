@@ -26,10 +26,12 @@ export function LatestPost() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          if (createPost.isPending) return;
           const trimmedName = name.trim();
           if (!trimmedName) return;
           createPost.mutate({ name: trimmedName });
         }}
+
         className="flex flex-col gap-2"
       >
         <input

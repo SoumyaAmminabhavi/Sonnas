@@ -79,7 +79,8 @@ export const cakeRouter = createTRPCRouter({
             price: z.number().min(1),
 
           })
-        ),
+        ).min(1, "At least one size option is required"),
+
       })
     )
     .mutation(async ({ ctx, input }) => {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { navLinks } from "~/data/landing";
 
 export const Footer = () => (
@@ -20,13 +21,14 @@ export const Footer = () => (
           <ul className="space-y-sm text-sm font-body text-text-secondary">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <a href={link.href} className="hover:text-rose transition-default">
+                <Link href={link.href} className="hover:text-rose transition-default">
                   {link.name}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
         </div>
+
 
         {/* Contact */}
         <div className="col-span-1">

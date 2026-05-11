@@ -348,7 +348,20 @@ function WhatsAppAdminContent() {
           <h3 style={styles.convTitle}>Recent Inquiries</h3>
           <div style={styles.convList}>
             {conversations?.map((c) => (
-              <div key={c.id} style={styles.convItem} onClick={() => setReplyPhone(c.phone)}>
+              <div 
+                key={c.id} 
+                style={styles.convItem} 
+                onClick={() => setReplyPhone(c.phone)}
+                tabIndex={0}
+                role="button"
+                aria-label={`Reply to ${c.name ?? c.phone}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setReplyPhone(c.phone);
+                  }
+                }}
+              >
+
                 <div style={styles.convAvatar}>
                   {(c.name ?? c.phone).charAt(0).toUpperCase()}
                 </div>
@@ -508,7 +521,17 @@ function WhatsAppAdminContent() {
                     key={order.id}
                     style={{ ...styles.orderCard, ...(isSelected ? styles.orderCardSelected : {}) }}
                     onClick={() => setSelectedOrderId(isSelected ? null : order.id)}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={isSelected}
+                    aria-label={`Order #${o.orderNumber} from ${o.customerName ?? "Guest"}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setSelectedOrderId(isSelected ? null : order.id);
+                      }
+                    }}
                   >
+
                     <div style={styles.orderCardHeader}>
                       <div style={styles.orderIdentity}>
                         <span style={styles.orderNumber}>#{o.orderNumber}</span>
@@ -587,12 +610,25 @@ function WhatsAppAdminContent() {
                             <p style={styles.sectionLabel}>Boutique Destination</p>
                             <div style={styles.addressBox}>
                               <span style={styles.addressText}>{o.address.split('\n')[0]}</span>
-                              {o.address.includes('https://') && (
-                                <a href={o.address.split('🔗').pop()?.trim()} target="_blank" rel="noreferrer" style={styles.mapPill}>
-                                  View Map
-                                </a>
-                              )}
+                              {(() => {
+                                const mapUrl = o.address.split('🔗').pop()?.trim();
+                                if (mapUrl && mapUrl.startsWith('https://')) {
+                                  try {
+                                    const url = new URL(mapUrl);
+                                    const trustedHosts = ["google.com", "maps.google.com", "maps.app.goo.gl", "bing.com", "maps.apple.com"];
+                                    if (url.protocol === "https:" && trustedHosts.some(host => url.hostname.endsWith(host))) {
+                                      return (
+                                        <a href={mapUrl} target="_blank" rel="noopener noreferrer" style={styles.mapPill}>
+                                          View Map
+                                        </a>
+                                      );
+                                    }
+                                  } catch {}
+                                }
+                                return null;
+                              })()}
                             </div>
+
                           </div>
                         )}
 
@@ -622,8 +658,9 @@ function WhatsAppAdminContent() {
                         <div style={styles.cardActions}>
                           <div style={styles.actionGrid}>
                             {(() => {
-                              const currentIndex = STATUS_FLOW.indexOf(o.status as (typeof STATUS_FLOW)[number]);
+                              const currentIndex = STATUS_FLOW.findIndex(s => s === o.status);
                               const nextStatuses = currentIndex !== -1 ? STATUS_FLOW.slice(currentIndex + 1, currentIndex + 4) : [];
+
                               return nextStatuses.map(s => {
                                 const sCfg = STATUS_CONFIG[s]!;
                                 return (

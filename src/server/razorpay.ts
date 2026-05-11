@@ -39,8 +39,8 @@ export async function createPaymentLink(options: {
       notify: {
         sms: false,
         email: false,
-        whatsapp: false, // We handle notification ourselves via our bot
       },
+
       reminder_enable: false,
 
       notes: {

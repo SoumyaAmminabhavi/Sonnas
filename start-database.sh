@@ -15,10 +15,21 @@
 set -a
 source .env
 
-DB_PASSWORD=$(echo "$DATABASE_URL" | awk -F':' '{print $3}' | awk -F'@' '{print $1}')
-DB_PORT=$(echo "$DATABASE_URL" | awk -F':' '{print $4}' | awk -F'\/' '{print $1}')
-DB_NAME=$(echo "$DATABASE_URL" | awk -F'/' '{print $4}')
+# Robustly parse DATABASE_URL using Node.js
+DB_PASSWORD=$(node -e "try { console.log(new URL(process.argv[1]).password); } catch(e) { process.exit(1); }" "$DATABASE_URL")
+DB_PORT=$(node -e "try { console.log(new URL(process.argv[1]).port || '5432'); } catch(e) { process.exit(1); }" "$DATABASE_URL")
+DB_NAME=$(node -e "try { console.log(new URL(process.argv[1]).pathname.slice(1)); } catch(e) { process.exit(1); }" "$DATABASE_URL")
+
+# Validate parsed values
+if [ -z "$DB_PASSWORD" ] || [ -z "$DB_PORT" ] || [ -z "$DB_NAME" ]; then
+  echo -e "\033[31mError: Failed to parse DATABASE_URL.\033[0m"
+  echo "Please check your .env file. Expected format: postgresql://user:password@host:port/dbname"
+  echo "Current DATABASE_URL: $DATABASE_URL"
+  exit 1
+fi
+
 DB_CONTAINER_NAME="$DB_NAME-postgres"
+
 
 if ! [ -x "$(command -v docker)" ] && ! [ -x "$(command -v podman)" ]; then
   echo -e "Docker or Podman is not installed. Please install docker or podman and try again.\nDocker install guide: https://docs.docker.com/engine/install/\nPodman install guide: https://podman.io/getting-started/installation"

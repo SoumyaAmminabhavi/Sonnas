@@ -1,4 +1,27 @@
-export const products = [
+export interface ProductOption {
+  size: string;
+  serves: string;
+  price: number;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  options: ProductOption[];
+  image: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+}
+
+export const products: Product[] = [
+
   {
     id: 1,
     name: "Sonna’s Classic Chocolate",
@@ -144,7 +167,8 @@ export const products = [
   },
 ];
 
-export const categories = [
+export const categories: Category[] = [
+
   {
     id: "chocolate",
     name: "Chocolate Cakes",
