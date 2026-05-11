@@ -43,7 +43,9 @@ interface CartItem {
   size: string;
   price: number;
   quantity: number;
+  createdAt: Date | string;
 }
+
 
 
 // ─── DB Helpers with Caching ─────────────────────────────────────────────
@@ -304,20 +306,31 @@ async function getConversation(phone: string, name?: string, force = false): Pro
 
     const result = convo as unknown as Conversation;
 
-    // HIGH-05: Clear stale cart items (older than 24 hours)
+    // HIGH-05: Clear stale cart items selectively (older than 24 hours)
     if (result.cart && Array.isArray(result.cart) && result.cart.length > 0) {
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      const rawItems = result.cart as unknown as Array<{ createdAt?: Date | string }>;
-      const hasStaleItems = rawItems.some((item) => {
+      const hasStaleItems = result.cart.some((item) => {
         if (!item.createdAt) return false;
         return new Date(item.createdAt) < oneDayAgo;
       });
+
       if (hasStaleItems) {
-        console.log(`[WhatsApp] Clearing stale cart for ${phone} (items older than 24h)`);
-        void db.whatsAppCartItem.deleteMany({ where: { phone } }).catch(() => null);
-        result.cart = [] as unknown as CartItem[];
+        console.log(`[WhatsApp] Clearing stale items for ${phone} (older than 24h)`);
+        void db.whatsAppCartItem.deleteMany({ 
+          where: { 
+            phone, 
+            createdAt: { lt: oneDayAgo } 
+          } 
+        }).catch(() => null);
+
+        // Keep fresh items in memory
+        result.cart = result.cart.filter((item) => {
+          if (!item.createdAt) return true;
+          return new Date(item.createdAt) >= oneDayAgo;
+        });
       }
     }
+
 
     convoCache.set(phone, result);
     return result;
