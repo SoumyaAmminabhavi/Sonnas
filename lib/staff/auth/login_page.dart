@@ -1,0 +1,613 @@
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../shared/staff_roles.dart';
+import '../dashboard/dashboard_page.dart';
+import '../../services/auth_service.dart';
+import '../../services/biometric_service.dart';
+import '../../services/session_service.dart';
+
+class StaffLoginPage extends StatefulWidget {
+  const StaffLoginPage({super.key});
+
+  @override
+  State<StaffLoginPage> createState() => _StaffLoginPageState();
+}
+
+class _StaffLoginPageState extends State<StaffLoginPage> {
+  bool _isLoginTab = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  // Login controllers
+  final TextEditingController _loginPhoneController = TextEditingController();
+  final TextEditingController _loginPasswordController = TextEditingController();
+
+  // Registration controllers
+  final TextEditingController _regPhoneController = TextEditingController();
+  final List<TextEditingController> _pinControllers = List.generate(5, (_) => TextEditingController());
+  final List<FocusNode> _pinFocusNodes = List.generate(5, (_) => FocusNode());
+  final TextEditingController _regPasswordController = TextEditingController();
+  final TextEditingController _regConfirmPasswordController = TextEditingController();
+
+  // Registration state
+  Map<String, dynamic>? _verifiedStaff;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingSession();
+  }
+
+  Future<void> _checkExistingSession() async {
+    final savedStaff = await SessionService.getStaffSession();
+    if (savedStaff != null) {
+      if (savedStaff['biometricEnabled'] == true) {
+        final bool canCheck = await BiometricService.canCheckBiometrics();
+        if (canCheck) {
+          final bool authenticated = await BiometricService.authenticate();
+          if (authenticated && mounted) {
+            _routeToDashboard(savedStaff);
+            return;
+          }
+        }
+      }
+      if (mounted) {
+        setState(() {
+          _loginPhoneController.text = savedStaff['phone'] ?? '';
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _loginPhoneController.dispose();
+    _loginPasswordController.dispose();
+    _regPhoneController.dispose();
+    for (var controller in _pinControllers) {
+      controller.dispose();
+    }
+    for (var node in _pinFocusNodes) {
+      node.dispose();
+    }
+    _regPasswordController.dispose();
+    _regConfirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _showError(String message) {
+    setState(() => _errorMessage = message);
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _errorMessage = null);
+    });
+  }
+
+  Future<void> _handleLogin() async {
+    final phone = _loginPhoneController.text.replaceAll(RegExp(r'\D'), '');
+    final password = _loginPasswordController.text;
+
+    if (phone.isEmpty || password.isEmpty) {
+      _showError("Please enter mobile number and password.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final staff = await AuthService.loginStaff(phone, password);
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (staff != null) {
+      await SessionService.saveStaffSession(staff);
+      _routeToDashboard(staff);
+    } else {
+      _showError("Invalid credentials. Please check your number and password.");
+    }
+  }
+
+
+  Future<void> _handleVerifyCode() async {
+    final phone = _regPhoneController.text.replaceAll(RegExp(r'\D'), '');
+    final code = _pinControllers.map((c) => c.text).join().trim().toUpperCase();
+
+    if (phone.isEmpty || code.length < 5) {
+      _showError("Please enter mobile number and the full 5-character code.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final staff = await AuthService.verifyStaffCode(phone, code);
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (staff != null) {
+      setState(() {
+        _verifiedStaff = staff;
+        _errorMessage = null;
+      });
+    } else {
+      _showError("Invalid code or mobile number. Make sure the code hasn't been used yet.");
+    }
+  }
+
+  Future<void> _handleSetPassword() async {
+    if (_verifiedStaff == null) return;
+
+    final password = _regPasswordController.text;
+    final confirm = _regConfirmPasswordController.text;
+
+    if (password.length < 6) {
+      _showError("Password must be at least 6 characters.");
+      return;
+    }
+    if (password != confirm) {
+      _showError("Passwords do not match.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final success = await AuthService.registerStaff(_verifiedStaff!['id'], password);
+    
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      await SessionService.saveStaffSession(_verifiedStaff!);
+      _routeToDashboard(_verifiedStaff!);
+    } else {
+      _showError("Failed to set password. Please try again.");
+    }
+  }
+
+  void _routeToDashboard(Map<String, dynamic> staff) {
+    final roleStr = (staff['role'] as String? ?? 'SUPPORT').toUpperCase();
+    StaffRole mappedRole; 
+
+    if (roleStr.contains('MANAGER')) {
+      mappedRole = StaffRole.manager;
+    } else if (roleStr.contains('CHEF')) {
+      mappedRole = StaffRole.chef;
+    } else if (roleStr.contains('SUPPORT')) {
+      mappedRole = StaffRole.support;
+    } else if (roleStr.contains('CLEANING')) {
+      mappedRole = StaffRole.cleaning;
+    } else if (roleStr.contains('CASHIER')) {
+      mappedRole = StaffRole.cashier;
+    } else if (roleStr.contains('DELIVERY')) {
+      mappedRole = StaffRole.delivery;
+    } else {
+      mappedRole = StaffRole.support;
+    }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => StaffDashboard(role: mappedRole, staffData: staff),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: cs.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE',
+            fit: BoxFit.cover,
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.0, 0.85],
+                colors: [
+                  Color(0x882B1606), 
+                  Color(0xF2FFF8F5), 
+                ],
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 64 : 24,
+                  vertical: 32,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: cs.surface.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(
+                        color: cs.primary.withValues(alpha: 0.15),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: cs.primary.withValues(alpha: 0.08),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.badge_rounded, size: 48, color: cs.primary),
+                            const SizedBox(height: 24),
+                            Text(
+                              "Staff Portal",
+                              style: GoogleFonts.notoSerif(
+                                fontSize: 36,
+                                fontWeight: FontWeight.w800,
+                                color: cs.secondary,
+                                letterSpacing: -0.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 32),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: cs.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTabButton(
+                                      "Login", 
+                                      _isLoginTab, 
+                                      () => setState(() {
+                                        _isLoginTab = true;
+                                        _errorMessage = null;
+                                      }),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: _buildTabButton(
+                                      "First Time", 
+                                      !_isLoginTab, 
+                                      () => setState(() {
+                                        _isLoginTab = false;
+                                        _errorMessage = null;
+                                        _verifiedStaff = null;
+                                      }),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            if (_errorMessage != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                margin: const EdgeInsets.only(bottom: 24),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        _errorMessage!,
+                                        style: GoogleFonts.plusJakartaSans(color: Colors.red, fontSize: 13),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 300),
+                              child: _isLoginTab ? _buildLoginTab(cs) : _buildRegisterTab(cs),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String text, bool isSelected, VoidCallback onTap) {
+    final cs = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? cs.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.plusJakartaSans(
+            color: isSelected ? Colors.white : cs.secondary.withValues(alpha: 0.6),
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginTab(ColorScheme cs) {
+    return Column(
+      key: const ValueKey('login'),
+      children: [
+        _buildTextField(
+          controller: _loginPhoneController,
+          label: "Mobile Number",
+          icon: Icons.phone_outlined,
+          keyboardType: TextInputType.phone,
+          prefixText: "+91 ",
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _loginPasswordController,
+          label: "Password",
+          icon: Icons.lock_outline,
+          isPassword: true,
+        ),
+        const SizedBox(height: 24),
+        _buildPrimaryButton("Login securely", _handleLogin),
+      ],
+    );
+  }
+
+  Widget _buildRegisterTab(ColorScheme cs) {
+    if (_verifiedStaff != null) {
+      return Column(
+        key: const ValueKey('set_password'),
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green.shade600),
+              const SizedBox(width: 8),
+              Text(
+                "Verified as ${_verifiedStaff!['name']}",
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildTextField(
+            controller: _regPasswordController,
+            label: "Create new password",
+            icon: Icons.lock_outline,
+            isPassword: true,
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _regConfirmPasswordController,
+            label: "Confirm password",
+            icon: Icons.lock_outline,
+            isPassword: true,
+          ),
+          const SizedBox(height: 32),
+          _buildPrimaryButton("Set Password & Login", _handleSetPassword),
+        ],
+      );
+    }
+
+    return Column(
+      key: const ValueKey('verify_code'),
+      children: [
+        _buildTextField(
+          controller: _regPhoneController,
+          label: "Mobile Number",
+          icon: Icons.phone_outlined,
+          keyboardType: TextInputType.phone,
+          prefixText: "+91 ",
+        ),
+        const SizedBox(height: 32),
+        Text(
+          "ENTER JOINING CODE",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: cs.secondary.withValues(alpha: 0.5),
+            letterSpacing: 2.0,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildPinCodeFields(cs),
+        const SizedBox(height: 12),
+        Text(
+          "Ask the owner or manager for your one-time joining code.",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            color: cs.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+        _buildPrimaryButton("Verify Code", _handleVerifyCode),
+      ],
+    );
+  }
+
+  Widget _buildPinCodeFields(ColorScheme cs) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(5, (index) {
+        return KeyboardListener(
+          focusNode: _pinFocusNodes[index],
+          onKeyEvent: (event) {
+            if (event is KeyDownEvent && 
+                event.logicalKey == LogicalKeyboardKey.backspace && 
+                _pinControllers[index].text.isEmpty && 
+                index > 0) {
+              _pinFocusNodes[index - 1].requestFocus();
+            }
+          },
+          child: SizedBox(
+            width: 48,
+            height: 56,
+            child: TextField(
+              controller: _pinControllers[index],
+              focusNode: _pinFocusNodes[index],
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: cs.primary,
+              ),
+              keyboardType: TextInputType.text,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                TextInputFormatter.withFunction((oldValue, newValue) {
+                  return newValue.copyWith(text: newValue.text.toUpperCase());
+                }),
+              ],
+              maxLength: 1,
+              decoration: InputDecoration(
+                counterText: "",
+                contentPadding: EdgeInsets.zero,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: cs.primary, width: 2),
+                ),
+                filled: true,
+                fillColor: cs.surfaceContainerLow,
+              ),
+              onChanged: (value) {
+                if (value.isNotEmpty && index < 4) {
+                  _pinFocusNodes[index + 1].requestFocus();
+                }
+                if (index == 4 && value.isNotEmpty) {
+                  FocusScope.of(context).unfocus();
+                }
+              },
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    String? prefixText,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
+        prefixIcon: Icon(icon, color: cs.primary.withValues(alpha: 0.6)),
+        prefixText: prefixText,
+        prefixStyle: GoogleFonts.plusJakartaSans(
+          color: cs.secondary,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: cs.primary, width: 2),
+        ),
+        filled: true,
+        fillColor: cs.surfaceContainerLow,
+      ),
+    );
+  }
+
+  Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
+    final cs = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: cs.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              )
+            : Text(
+                text,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
+      ),
+    );
+  }
+}

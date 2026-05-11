@@ -1,0 +1,85 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configuration and tasks you configure in
+# VS Code which you may wish to be included in version control, so this line
+# is commented out by default.
+#.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio will place build artifacts here
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Private Keys & Environment Secrets
+.env
+.env*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.secret
+.env*.local
+
+# Vercel
+.vercel
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node/NPM
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Custom Project Files
+.jetro/
+scratch/
+issues.txt
+
+run_log.txt
+*.log
+# Ignore random images but keep app assets
+# *.png  <-- Removed global ignore
+!assets/**/*.png
+!ios/Runner/Assets.xcassets/**/*.png
+!macos/Runner/Assets.xcassets/**/*.png
+!android/app/src/main/res/**/*.png
+
