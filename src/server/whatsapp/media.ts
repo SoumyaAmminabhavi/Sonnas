@@ -4,8 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   env.NEXT_PUBLIC_SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY
+  env.SUPABASE_SERVICE_ROLE_KEY ?? ""
 );
+
 
 
 
@@ -32,7 +33,11 @@ async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 1
  */
 export async function downloadAndUploadImage(mediaId: string): Promise<string | null> {
   try {
-    if (!env.WHATSAPP_TOKEN) return null;
+    if (!env.WHATSAPP_TOKEN || !env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("[WhatsApp Media] Missing required credentials (TOKEN or SERVICE_KEY)");
+      return null;
+    }
+
 
     // 1. Get the media URL from Meta
     const metaResponse = await fetchWithTimeout(`https://graph.facebook.com/v18.0/${mediaId}`, {
