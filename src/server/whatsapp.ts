@@ -206,7 +206,53 @@ export async function sendInteractiveButtons(
 }
 
 
+// ─── Send interactive CTA URL button (for external links) ────────────────
+
+export async function sendCTAUrlButton(
+  to: string,
+  bodyText: string,
+  displayText: string,
+  url: string
+) {
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
+
+  try {
+    const res = await fetchWithTimeout(getMessagesUrl(), {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "interactive",
+        interactive: {
+          type: "cta_url",
+          body: { text: bodyText },
+          action: {
+            name: "cta_url",
+            parameters: {
+              display_text: displayText,
+              url,
+            },
+          },
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      const errorMsg = `[WhatsApp] Failed to send CTA URL button: ${res.status} - ${err}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+  } catch (e) {
+    console.error("[WhatsApp] sendCTAUrlButton error:", e);
+    throw e;
+  }
+}
+
+
 // ─── Mark as read ──────────────────────────────────────────────────────────
+
 
 export async function markAsRead(messageId: string) {
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;

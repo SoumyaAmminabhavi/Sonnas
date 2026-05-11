@@ -10,7 +10,9 @@ import {
   sendInteractiveList,
   sendInteractiveButtons,
   sendImageMessage,
+  sendCTAUrlButton,
 } from "~/server/whatsapp";
+
 import { createPaymentLink } from "~/server/razorpay";
 import { formatPrice } from "~/lib/format";
 import natural from "natural";
@@ -1980,14 +1982,14 @@ async function handleConfirmation(
     successMessage += `📍 ${freshConvo.selectedAddress ?? "Store Pickup"}\n\n`;
 
     if (paymentLink) {
-      successMessage += `💳 Pay *${formatPrice(totalAmount)}* to confirm:\n${paymentLink}\n\n_You'll receive a confirmation receipt once payment is complete._ ✅`;
+      const bodyText = successMessage + `💳 Pay *${formatPrice(totalAmount)}* to confirm your order. ✅`;
+      await sendCTAUrlButton(msg.from, bodyText, "💳 Pay Now", paymentLink);
     } else {
       successMessage += `💰 Total: *${formatPrice(totalAmount)}*\n\nWe'll contact you shortly to confirm details. 💕`;
+      await sendTextMessage(msg.from, successMessage);
     }
-
-
-    await sendTextMessage(msg.from, successMessage);
     console.log(`[WhatsApp] handleConfirmation: Success for ${msg.from}`);
+
 
   } catch (error) {
     console.error("[WhatsApp] handleConfirmation CRASH:", error);
