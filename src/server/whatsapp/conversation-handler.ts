@@ -76,16 +76,23 @@ const processingLocks = new Map<string, Promise<void>>();
 const processedMessages = new Set<string>();
 const MAX_PROCESSED_IDS = 2000;
 
-function markMessageProcessed(messageId: string): boolean {
-  if (processedMessages.has(messageId)) return false; // Already processed
+const inFlightMessages = new Set<string>();
+
+function beginMessageProcessing(messageId: string): boolean {
+  if (processedMessages.has(messageId) || inFlightMessages.has(messageId)) return false;
+  inFlightMessages.add(messageId);
+  return true;
+}
+
+function markMessageProcessed(messageId: string) {
   processedMessages.add(messageId);
   // Evict oldest entries when set grows too large
   if (processedMessages.size > MAX_PROCESSED_IDS) {
     const first = processedMessages.values().next().value;
     if (first) processedMessages.delete(first);
   }
-  return true; // First time seeing this message
 }
+
 
 const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
 
@@ -457,10 +464,14 @@ function formatItemTotal(price: number, quantity: number): string {
 
 
 async function reverseGeocode(lat: number, lon: number): Promise<string | undefined> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000); // Enforce 5s timeout
+
   try {
     const response = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`,
       {
+        signal: controller.signal,
         headers: {
           "User-Agent": "SonnasPatisserieBot/1.0",
         },
@@ -469,10 +480,17 @@ async function reverseGeocode(lat: number, lon: number): Promise<string | undefi
     const data = await response.json() as { display_name: string };
     return data.display_name ?? undefined;
   } catch (e) {
-    console.error("[WhatsApp] reverseGeocode failed:", e);
+    if (e instanceof Error && e.name === "AbortError") {
+      console.warn(`[WhatsApp] reverseGeocode timed out for ${lat},${lon}`);
+    } else {
+      console.error("[WhatsApp] reverseGeocode failed:", e);
+    }
     return undefined;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
+
 
 function getCartSummary(cart: CartItem[]): string {
   if (!cart || cart.length === 0) return "Your cart is empty.";
@@ -541,9 +559,9 @@ async function createCustomOrder(
 
   return updateState(msg.from, "IDLE", {
     ...RESET_STATE,
-    customImageUrl: imageUrl,
     selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
   });
+
 }
 
 async function isBotPaused(): Promise<boolean> {
@@ -563,8 +581,8 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   const phone = msg.from;
 
   // ── Message Deduplication (HIGH-07) ──────────────────────────────────────
-  if (!markMessageProcessed(msg.messageId)) {
-    console.log(`[WhatsApp] ⚡ Duplicate message ${msg.messageId} skipped.`);
+  if (!beginMessageProcessing(msg.messageId)) {
+    console.log(`[WhatsApp] ⚡ Duplicate or In-Flight message ${msg.messageId} skipped.`);
     return;
   }
 
@@ -573,19 +591,35 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
   const processPromise = existingLock.then(async () => {
     try {
-      // Check Maintenance Mode
-      if (await isBotPaused() && msg.text?.toLowerCase() !== "status") {
+      // Check Maintenance Mode (allow status requests)
+      const normalizedText = msg.text?.trim().toLowerCase();
+      const isStatusRequest =
+        normalizedText === "status" ||
+        normalizedText === "my order" ||
+        normalizedText === "order status" ||
+        msg.interactiveId === "btn_status";
+
+      if (await isBotPaused() && !isStatusRequest) {
         await sendTextMessage(
           msg.from, 
           "\ud83c\udf38 *Sonna's Patisserie is currently resting.*\n\nOur artisan kitchen is taking a short break to prepare for upcoming collections. We'll be back shortly to delight you! \u2728\n\n_If you have an existing order, don't worry \u2014 our team is still working on it!_"
         );
         return;
       }
+
       await _internalHandleMessage(msg);
+      
+      // Only mark as processed after successful handling
+      markMessageProcessed(msg.messageId);
     } catch (err) {
       console.error(`[WhatsApp] Processing error for ${phone}:`, err);
+      // We DON'T mark as processed here, so WhatsApp can retry
+    } finally {
+      // Always clear in-flight tracking
+      inFlightMessages.delete(msg.messageId);
     }
   });
+
 
   processingLocks.set(phone, processPromise);
 
@@ -1599,8 +1633,10 @@ async function handleDeliveryDateInput(
 
   if (msg.interactiveId?.startsWith("date_")) {
     const datePart = msg.interactiveId.replace("date_", "");
-    const d = new Date(datePart);
+    const [year, month, day] = datePart.split("-").map(Number);
+    const d = new Date(year!, month! - 1, day!);
     deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+
   } else if (msg.text?.trim()) {
     // User typed a custom date
     deliveryDate = msg.text.trim();
@@ -1709,17 +1745,34 @@ async function handleCustomRequest(
 
   // If user sends text (description)
   if (msg.type === "text" && msg.text) {
-    await Promise.all([
-      updateState(msg.from, "REQUESTING_CUSTOM", {
-        selectedNotes: msg.text
-      }),
-      sendTextMessage(
-        msg.from,
-        "✅ Description received! 📝\n\nSend a **Reference Photo** 📸 or reply with your **Delivery Address** to proceed."
-      )
-    ]);
+    const text = msg.text.trim();
+    // If text looks like an address (has numbers and multiple words), or we already have notes, move to address collection
+    const looksLikeAddress = /\d+/.test(text) && text.split(/\s+/).length > 3;
+    
+    if (looksLikeAddress || convo.selectedNotes) {
+      await Promise.all([
+        updateState(msg.from, "ASKING_ADDRESS", {
+          selectedAddress: text
+        }),
+        sendTextMessage(
+          msg.from,
+          "📍 *Address received!* \n\nPlease share a **Reference Photo** 📸 to help us understand your design better."
+        )
+      ]);
+    } else {
+      await Promise.all([
+        updateState(msg.from, "REQUESTING_CUSTOM", {
+          selectedNotes: text
+        }),
+        sendTextMessage(
+          msg.from,
+          "✅ Description received! 📝\n\nSend a **Reference Photo** 📸 or reply with your **Delivery Address** to proceed."
+        )
+      ]);
+    }
     return;
   }
+
 }
 
 // ─── Handle reference image upload (Design Your Cake Flow) ────────────────
@@ -1953,12 +2006,30 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         const cake = await findCake(convo.selectedCake);
         if (cake) {
           const options = cake.options ?? [];
-          const buttons = options.slice(0, 2).map((opt, idx) => ({
-            id: `size_${idx}`,
-            title: `${opt.size} — ${formatPrice(opt.price)}`,
-          }));
-          buttons.push({ id: "btn_back", title: "⬅️ Back to Menu" });
-          await sendInteractiveButtons(phone, `Choose your size for *${cake.name}*:`, buttons);
+          if (options.length > 2) {
+            await sendInteractiveList(
+              phone,
+              "Size Selection",
+              `Choose your size for *${cake.name}*:`,
+              "Select Size",
+              [{
+                title: "Available Sizes",
+                rows: options.map((opt, idx) => ({
+                  id: `size_${idx}`,
+                  title: opt.size,
+                  description: formatPrice(opt.price)
+                }))
+              }]
+            );
+          } else {
+            const buttons = options.map((opt, idx) => ({
+              id: `size_${idx}`,
+              title: `${opt.size} — ${formatPrice(opt.price)}`,
+            }));
+            buttons.push({ id: "btn_back", title: "⬅️ Back to Menu" });
+            await sendInteractiveButtons(phone, `Choose your size for *${cake.name}*:`, buttons);
+          }
+
         } else {
           await sendMenu(phone);
         }
