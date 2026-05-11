@@ -374,11 +374,18 @@ async function addToCart(phone: string, item: { cakeName: string; size: string; 
       where: { phone, cakeName: item.cakeName, size: item.size },
     });
 
-    const resultItem = await db.whatsAppCartItem.upsert({
-      where: { id: existingItem?.id ?? "new-item" },
-      create: { ...item, phone },
-      update: { quantity: { increment: item.quantity } },
-    });
+    let resultItem;
+    if (existingItem) {
+      resultItem = await db.whatsAppCartItem.update({
+        where: { id: existingItem.id },
+        data: { quantity: { increment: item.quantity } },
+      });
+    } else {
+      resultItem = await db.whatsAppCartItem.create({
+        data: { ...item, phone },
+      });
+    }
+
 
     console.log(`[WhatsApp] CART_UPDATE: ${phone} added ${item.cakeName} (${item.size}) - Abandoned tracking started.`);
 
@@ -1372,9 +1379,10 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         quantity: quantity
       });
 
-      // Force fresh fetch to ensure cart is populated correctly
-      const updatedConvo = await getConversation(msg.from, undefined, true);
+      // Use cache instead of forced refresh to avoid race conditions
+      const updatedConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
       const summary = getCartSummary(updatedConvo.cart ?? []);
+
 
       const cartButtons = [
         { id: "btn_checkout", title: "💳 Place My Order" },
