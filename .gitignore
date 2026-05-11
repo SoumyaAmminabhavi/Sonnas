@@ -70,8 +70,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # Custom Project Files
+.jetro/
 scratch/
 issues.txt
+
 run_log.txt
 *.log
 # Ignore random images but keep app assets

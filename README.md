@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+
 # Sonna's Patisserie & Cafe 🍰✨
 
 A premium, luxury Flutter application designed for high-end bakeries. This app features a charming "Sweet Pink & Gold" aesthetic, tailored for a sophisticated and girlish brand identity.
@@ -5,6 +7,7 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
 ## ✨ Features
 
 ### 👑 Owner Dashboard
+
 - **Sales Performance**: Integrated `fl_chart` for visualizing weekly revenue trends with smooth spline line charts.
 - **Recent Orders**: Real-time overview of the latest activity in the boutique.
 - **Order Management**: Comprehensive status tracking (In Preparation, Ready for Pickup, etc.) with detailed receipt views.
@@ -13,6 +16,7 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
 - **Staff Control**: Manage your team roles and permissions with a modern UI.
 
 ### 🎨 Design System
+
 - **Theme**: "Sweet Pink" brand identity using `#FF4D8D` (Primary) and `#FFF0F6` (Background).
 - **Luxury Accents**: Signature gold color (`#D9B87A`) for brand headlines.
 - **Typography**: Professional pairing of **Noto Serif** for elegant headings and **Plus Jakarta Sans** for modern readability.
@@ -21,7 +25,7 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
 ## 🛠️ Technical Stack
 
 - **Framework**: Flutter (Material 3)
-- **Backend**: 
+- **Backend**:
   - **Supabase**: Direct database integration and real-time updates (Skeleton ready).
   - **Vercel**: API communication layer.
 - **Charts**: `fl_chart`
@@ -30,10 +34,12 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Flutter SDK `^3.10.1` or higher
 - Dart SDK `^3.10.1`
 
 ### Installation
+
 1. Clone the repository.
 2. Run `flutter pub get` to install dependencies.
 3. Configure backend credentials in `lib/services/supabase_service.dart`:
@@ -47,9 +53,12 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
    ```
 
 ## 📂 Project Structure
+
 - `lib/owner/`: Core administrative features (Dashboard, Orders, Payments, Settings).
 - `lib/services/`: Backend integration services (Supabase/Vercel).
 - `lib/main.dart`: Global theme and application entry point.
 
 ---
+
 *Created with ❤️ for Sonna's Patisserie & Cafe*
+===============================================
