@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:shimmer/shimmer.dart';
+import 'dart:io' show File;
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/menu_service.dart';
@@ -602,6 +606,11 @@ class _AddMenuContentState extends State<_AddMenuContent> {
   late TextEditingController _weightController;
   late TextEditingController _servesController;
 
+  final _picker = ImagePicker();
+  XFile? _selectedImage;
+  String? _existingImageUrl;
+  bool _isUploading = false;
+
   @override
   void initState() {
     super.initState();
@@ -609,12 +618,23 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     final options = data?['CakeOption'] as List? ?? [];
     final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
 
+    final priceValue = firstOption?['price'];
+    double displayPrice = 0;
+    if (priceValue is num) {
+      displayPrice = priceValue.toDouble() / 100.0;
+    } else if (priceValue != null) {
+      displayPrice = (double.tryParse(priceValue.toString()) ?? 0) / 100.0;
+    }
+
     _nameController = TextEditingController(text: data?['name']?.toString());
     _selectedCategory = data?['category']?.toString();
-    _priceController = TextEditingController(text: firstOption?['price']?.toString() ?? '');
+    _priceController = TextEditingController(
+      text: displayPrice > 0 ? displayPrice.toStringAsFixed(0) : '',
+    );
     _descriptionController = TextEditingController(text: data?['description']?.toString());
     _weightController = TextEditingController(text: firstOption?['weight']?.toString() ?? '');
     _servesController = TextEditingController(text: firstOption?['serves']?.toString() ?? '');
+    _existingImageUrl = data?['image'];
   }
 
   @override
@@ -627,21 +647,56 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+      maxWidth: 1024,
+    );
+    if (image != null) {
+      setState(() => _selectedImage = image);
+    }
+  }
+
   Future<void> _saveItem() async {
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isUploading = true);
+
     try {
+      String? imagePath = _existingImageUrl;
+
+      // 1. Upload new image if selected
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        final extension = _selectedImage!.path.split('.').last;
+        final fileName = 'cake_${DateTime.now().millisecondsSinceEpoch}.$extension';
+        
+        final uploadedPath = await SupabaseService.uploadImage(
+          bucket: 'staff-images', // Using the existing bucket for now
+          path: fileName,
+          file: bytes,
+        );
+        
+        if (uploadedPath != null) {
+          imagePath = fileName;
+        }
+      }
+
+      // 2. Save cake details
       final cakeId = await MenuService.upsertCake({
         if (widget.initialData != null) 'id': widget.initialData!['id'],
         'name': _nameController.text,
         'category': _selectedCategory,
         'description': _descriptionController.text,
+        'image': imagePath,
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
+      // 3. Save cake options
       await MenuService.upsertCakeOption({
         'cakeId': cakeId,
-        'price': double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0,
+        'price': (double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0) * 100,
         'weight': _weightController.text,
         'serves': _servesController.text,
       });
@@ -658,6 +713,8 @@ class _AddMenuContentState extends State<_AddMenuContent> {
           SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -666,11 +723,17 @@ class _AddMenuContentState extends State<_AddMenuContent> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return ListView(
-      padding: EdgeInsets.symmetric(
-        horizontal: widget.isDesktop ? 48.0 : 16.0,
-        vertical: 24.0,
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final horizontalPadding = widget.isDesktop
+            ? (constraints.maxWidth > 850 ? (constraints.maxWidth - 850) / 2 : 48.0)
+            : 16.0;
+
+        return ListView(
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 24.0,
+          ),
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -713,6 +776,10 @@ class _AddMenuContentState extends State<_AddMenuContent> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const _SectionHeader("Creation Image"),
+                  const SizedBox(height: 16),
+                  _buildImagePicker(cs),
+                  const SizedBox(height: 32),
                   const _SectionHeader("Pâtisserie Details"),
                   const SizedBox(height: 16),
                   if (isTwoCol)
@@ -826,15 +893,26 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(
-                        widget.initialData != null
-                            ? "SAVE CHANGES"
-                            : "CATALOG CREATION",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
+                      child: _isUploading
+                          ? const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              widget.initialData != null
+                                  ? "SAVE CHANGES"
+                                  : "CATALOG CREATION",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 100),
@@ -845,7 +923,9 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         ),
       ],
     );
-  }
+   },
+  );
+ }
 
   Widget _buildCategoryDropdown(ColorScheme cs) {
     final categories = [
@@ -855,7 +935,8 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       'Cheesecakes',
       'Cookies & Macarons',
       'Savory Delights',
-      'Seasonal Specials',
+      'Seasonal Cakes',
+      'Slices',
     ];
 
     return Column(
@@ -926,6 +1007,62 @@ class _AddMenuContentState extends State<_AddMenuContent> {
           onChanged: (val) => setState(() => _selectedCategory = val),
         ),
       ],
+    );
+  }
+
+  Widget _buildImagePicker(ColorScheme cs) {
+    return Center(
+      child: GestureDetector(
+        onTap: _pickImage,
+        child: Container(
+          width: widget.isDesktop ? 600 : double.infinity,
+          height: widget.isDesktop ? 450 : 300,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainer,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: cs.secondary.withValues(alpha: 0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: cs.secondary.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: _selectedImage != null
+                ? kIsWeb
+                    ? Image.network(_selectedImage!.path, fit: BoxFit.cover)
+                    : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
+                : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
+                    ? Image.network(
+                        SupabaseService.getPublicUrl(_existingImageUrl),
+                        fit: BoxFit.cover,
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_photo_alternate_outlined,
+                            color: cs.primary.withValues(alpha: 0.4),
+                            size: 48,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "TAP TO SELECT IMAGE",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.5,
+                              color: cs.primary.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+          ),
+        ),
+      ),
     );
   }
 }

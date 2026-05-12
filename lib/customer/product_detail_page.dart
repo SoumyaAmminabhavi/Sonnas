@@ -6,8 +6,13 @@ import '../services/supabase_service.dart';
 
 class CustomerProductDetailPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> product;
+  final String? heroTag;
 
-  const CustomerProductDetailPage({super.key, required this.product});
+  const CustomerProductDetailPage({
+    super.key,
+    required this.product,
+    this.heroTag,
+  });
 
   @override
   ConsumerState<CustomerProductDetailPage> createState() => _CustomerProductDetailPageState();
@@ -64,7 +69,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
-          tag: 'product_${widget.product['id']}',
+          tag: widget.heroTag ?? 'product_${widget.product['id']}',
           child: Image.network(imageUrl, fit: BoxFit.cover),
         ),
       ),

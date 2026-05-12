@@ -124,7 +124,7 @@ class DashboardContent extends ConsumerWidget {
             crossAxisCount: isDesktop ? 2 : 1,
             crossAxisSpacing: 24,
             mainAxisSpacing: 16,
-            mainAxisExtent: isDesktop ? 140 : 130,
+            mainAxisExtent: isDesktop ? 140 : 136,
           ),
           itemCount: orders.length,
           itemBuilder: (context, index) => OrderCardReactive(data: orders[index]),
@@ -344,7 +344,16 @@ class _SalesLineChart extends StatelessWidget {
 
     final List<FlSpot> spots = [];
     final sortedKeys = data.keys.toList()..sort();
-    for (var key in sortedKeys) { spots.add(FlSpot(key.toDouble(), data[key] ?? 0.0)); }
+    
+    // Add a starting zero point if the first data point isn't at the start of the range
+    final minX = _getMinX();
+    if (!data.containsKey(minX.toInt())) {
+      spots.add(FlSpot(minX, 0));
+    }
+
+    for (var key in sortedKeys) {
+      spots.add(FlSpot(key.toDouble(), data[key] ?? 0.0));
+    }
 
     return LineChart(
       LineChartData(
@@ -360,27 +369,64 @@ class _SalesLineChart extends StatelessWidget {
               getTitlesWidget: (value, meta) {
                 String text = '';
                 if (selectedRange == SalesRange.today) { if (value % 4 == 0) text = "${value.toInt()}h"; }
-                else if (selectedRange == SalesRange.weekly) { text = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][value.toInt() % 7]; }
+                else if (selectedRange == SalesRange.weekly) { text = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][(value.toInt() - 1) % 7]; }
                 else if (selectedRange == SalesRange.monthly) { if (value % 5 == 0) text = "D${value.toInt()}"; }
-                else if (selectedRange == SalesRange.yearly) { text = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][value.toInt() % 12]; }
+                else if (selectedRange == SalesRange.yearly) { text = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][(value.toInt() - 1) % 12]; }
                 return text.isEmpty ? const SizedBox() : Padding(padding: const EdgeInsets.only(top: 10.0), child: Text(text, style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4), fontSize: 8, fontWeight: FontWeight.bold)));
               },
             ),
           ),
         ),
         borderData: FlBorderData(show: false),
-        minX: sortedKeys.isEmpty ? 0 : sortedKeys.first.toDouble(),
-        maxX: sortedKeys.isEmpty ? 6 : sortedKeys.last.toDouble(),
+        minX: _getMinX(),
+        maxX: _getMaxX(),
         minY: 0, maxY: maxRevenue,
         lineBarsData: [
           LineChartBarData(
-            spots: spots, isCurved: true, gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]), barWidth: 3, isStrokeCapRound: true,
-            dotData: FlDotData(show: selectedRange != SalesRange.monthly),
-            belowBarData: BarAreaData(show: true, gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [cs.primary.withValues(alpha: 0.15), cs.primary.withValues(alpha: 0.0)])),
+            spots: spots,
+            isCurved: true,
+            gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: true),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [cs.primary.withValues(alpha: 0.15), cs.primary.withValues(alpha: 0.0)],
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  double _getMinX() {
+    switch (selectedRange) {
+      case SalesRange.today:
+        return 0;
+      case SalesRange.weekly:
+        return 1;
+      case SalesRange.monthly:
+        return 1;
+      case SalesRange.yearly:
+        return 1;
+    }
+  }
+
+  double _getMaxX() {
+    switch (selectedRange) {
+      case SalesRange.today:
+        return 23;
+      case SalesRange.weekly:
+        return 7;
+      case SalesRange.monthly:
+        return 31;
+      case SalesRange.yearly:
+        return 12;
+    }
   }
 }
 

@@ -10,21 +10,22 @@ class ModernDrawer extends ConsumerWidget {
 
   void _showOwnerAuth(BuildContext context, WidgetRef ref) {
     final pinController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) {
         return Consumer(
           builder: (context, ref, child) {
             final authState = ref.watch(authProvider);
-            
+
             return AlertDialog(
-              title: Text("Owner Authentication", style: GoogleFonts.notoSerif()),
+              title:
+                  Text("Owner Authentication", style: GoogleFonts.notoSerif()),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Please enter your admin PIN to continue.", 
-                    style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+                  Text("Please enter your admin PIN to continue.",
+                      style: GoogleFonts.plusJakartaSans(fontSize: 12)),
                   const SizedBox(height: 16),
                   TextField(
                     controller: pinController,
@@ -52,23 +53,29 @@ class ModernDrawer extends ConsumerWidget {
                   child: const Text("CANCEL"),
                 ),
                 ElevatedButton(
-                  onPressed: authState.isLoading || authState.isLockedOut 
-                    ? null 
-                    : () async {
-                        final isValid = await ref.read(authProvider.notifier).verifyOwnerPin(pinController.text);
-                        if (isValid && context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              settings: const RouteSettings(name: 'OwnerDashboard'),
-                              builder: (context) => const OwnerDashboard(),
-                            ),
-                          );
-                        }
-                      },
-                  child: authState.isLoading 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text("VERIFY"),
+                  onPressed: authState.isLoading || authState.isLockedOut
+                      ? null
+                      : () async {
+                          final isValid = await ref
+                              .read(authProvider.notifier)
+                              .verifyOwnerPin(pinController.text);
+                          if (isValid && context.mounted) {
+                            Navigator.pop(context);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                settings:
+                                    const RouteSettings(name: 'OwnerDashboard'),
+                                builder: (context) => const OwnerDashboard(),
+                              ),
+                            );
+                          }
+                        },
+                  child: authState.isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text("VERIFY"),
                 ),
               ],
             );
@@ -92,12 +99,14 @@ class ModernDrawer extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "L'Atelier",
-                    style: GoogleFonts.notoSerif(
-                      color: cs.primary,
-                      fontSize: 20,
-                      fontStyle: FontStyle.italic,
+                  Expanded(
+                    child: Text(
+                      "Sonna's Patisserie & Cafe",
+                      style: GoogleFonts.notoSerif(
+                        color: cs.primary,
+                        fontSize: 18,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
                   IconButton(
@@ -107,19 +116,23 @@ class ModernDrawer extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 48),
-
               Consumer(
                 builder: (context, ref, child) {
-                  final isAuthenticated = ref.watch(authProvider).isAuthenticated;
+                  final isAuthenticated =
+                      ref.watch(authProvider).isAuthenticated;
                   return _DrawerItem(
-                    icon: isAuthenticated ? Icons.dashboard_outlined : Icons.admin_panel_settings_outlined,
-                    label: isAuthenticated ? "Go to Dashboard" : "Login as Owner",
+                    icon: isAuthenticated
+                        ? Icons.dashboard_outlined
+                        : Icons.admin_panel_settings_outlined,
+                    label:
+                        isAuthenticated ? "Go to Dashboard" : "Login as Owner",
                     onTap: () {
                       Navigator.of(context).pop();
                       if (isAuthenticated) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            settings: const RouteSettings(name: 'OwnerDashboard'),
+                            settings:
+                                const RouteSettings(name: 'OwnerDashboard'),
                             builder: (context) => const OwnerDashboard(),
                           ),
                         );
@@ -142,21 +155,19 @@ class ModernDrawer extends ConsumerWidget {
                   );
                 },
               ),
-
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Divider(
                   color: cs.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
-
               _DrawerItem(icon: Icons.info_outline, label: "Business Info"),
-
               Consumer(
                 builder: (context, ref, child) {
-                  final isAuthenticated = ref.watch(authProvider).isAuthenticated;
+                  final isAuthenticated =
+                      ref.watch(authProvider).isAuthenticated;
                   if (!isAuthenticated) return const SizedBox();
-                  
+
                   return _DrawerItem(
                     icon: Icons.logout,
                     label: "Sign Out",
@@ -167,9 +178,7 @@ class ModernDrawer extends ConsumerWidget {
                   );
                 },
               ),
-
               const Spacer(),
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
@@ -194,7 +203,7 @@ class ModernDrawer extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "4TH Phase, Shop No. 5,6,7 Ground Floor, hubballi",
+                      "4TH Phase, Shop No. 5,6,7 Ground Floor, Hubballi",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         color: cs.onSurface,

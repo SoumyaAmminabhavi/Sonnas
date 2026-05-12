@@ -76,7 +76,8 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
 
       paidOrdersCount++;
       final priceStr = order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
-      final total = double.tryParse(priceStr) ?? 0.0;
+      final rawValue = double.tryParse(priceStr) ?? 0.0;
+      final total = rawValue / 100.0;
       _totalRevenue += total;
     }
 
@@ -99,9 +100,9 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
 
       final category = matchingCake['category'] ?? 'Custom';
       final priceStr = item['price']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
-      final price = double.tryParse(priceStr) ?? 0.0;
+      final itemPrice = (double.tryParse(priceStr) ?? 0.0) / 100.0;
       final qty = (item['quantity'] as num?)?.toInt() ?? 1;
-      final subtotal = price * qty;
+      final subtotal = itemPrice * qty;
 
       _categorySales[category] = (_categorySales[category] ?? 0) + subtotal;
 
@@ -200,7 +201,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
     List<FlSpot> spots = [];
     for (int i = 0; i < recent.length; i++) {
       final priceStr = recent[i]['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
-      final amount = double.tryParse(priceStr) ?? 0.0;
+      final amount = (double.tryParse(priceStr) ?? 0.0) / 100.0;
       spots.add(FlSpot(i.toDouble(), amount));
     }
     if (spots.isEmpty) return [const FlSpot(0, 0)];
@@ -451,7 +452,7 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 52,
-                      interval: (_totalRevenue / 4).clamp(100, double.infinity),
+                      interval: (_totalRevenue > 100 ? _totalRevenue / 4 : 100),
                       getTitlesWidget: (value, meta) {
                         String text = '';
                         if (value >= 1000) {

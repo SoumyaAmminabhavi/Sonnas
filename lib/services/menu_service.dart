@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
 
 class MenuService {
@@ -9,13 +10,22 @@ class MenuService {
     return _client.from('Cake').stream(primaryKey: ['id']);
   }
 
-  /// Fetch all menu items
+  /// Fetch all menu items with fallback
   static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {
-      final res = await _client.from('Cake').select('*, CakeOption(*)').order('name');
+      // 1. Try Primary (Friend's) project
+      final res = await SupabaseService.client.from('Cake').select('*, CakeOption(*)').order('name');
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      rethrow;
+      debugPrint('⚠️ Friend\'s Menu Fetch Failed: $e. Falling back to Private DB.');
+      try {
+        // 2. Fallback to Private (My) project
+        final res = await SupabaseService.myClient.from('Cake').select('*, CakeOption(*)').order('name');
+        return List<Map<String, dynamic>>.from(res);
+      } catch (e2) {
+        debugPrint('❌ All Menu Fetch attempts failed: $e2');
+        return []; // Return empty list instead of crashing
+      }
     }
   }
 

@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class OrderService {
   static SupabaseClient get _client => SupabaseService.client;
 
@@ -14,24 +16,36 @@ class OrderService {
   static Future<void> launchMaps(String address) async {
     final query = Uri.encodeComponent(address);
     final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
-    debugPrint("Launching maps for: $url");
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint("Could not launch maps: $url");
+    }
   }
 
-  /// Format price with currency symbol
+  /// Format price with currency symbol (converts minor units to major)
   static String formatPrice(dynamic price) {
-    if (price == null) return "₹0.00";
+    if (price == null) return "₹0";
     try {
-      // Strip any existing currency symbols, commas, or suffixes like /-
-      String clean = price.toString()
-          .replaceAll('₹', '')
-          .replaceAll('INR', '')
-          .replaceAll('/-', '')
-          .replaceAll(',', '')
-          .trim();
-          
-      if (clean.isEmpty) return "₹0.00";
+      // Handle numeric types directly
+      double p;
+      if (price is num) {
+        p = price.toDouble() / 100.0;
+      } else {
+        // Strip any existing currency symbols, commas, or suffixes like /-
+        String clean = price.toString()
+            .replaceAll('₹', '')
+            .replaceAll('INR', '')
+            .replaceAll('/-', '')
+            .replaceAll(',', '')
+            .trim();
+            
+        if (clean.isEmpty) return "₹0";
+        p = double.parse(clean) / 100.0;
+      }
       
-      final double p = double.parse(clean);
+      // If it's a whole number, don't show .00
+      if (p == p.toInt().toDouble()) {
+        return "₹${p.toInt()}";
+      }
       return "₹${p.toStringAsFixed(2)}";
     } catch (e) {
       return "₹$price";
@@ -78,8 +92,21 @@ class OrderService {
   }
 
   static Future<List<Map<String, dynamic>>> fetchOrders() async {
-    final res = await _client.from('WhatsAppOrder').select().order('createdAt', ascending: false);
-    return List<Map<String, dynamic>>.from(res);
+    try {
+      // 1. Try Primary (Friend's) project
+      final res = await SupabaseService.client.from('WhatsAppOrder').select().order('createdAt', ascending: false);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      debugPrint('⚠️ Friend\'s Orders Fetch Failed: $e. Falling back to Private DB.');
+      try {
+        // 2. Fallback to Private (My) project
+        final res = await SupabaseService.myClient.from('WhatsAppOrder').select().order('createdAt', ascending: false);
+        return List<Map<String, dynamic>>.from(res);
+      } catch (e2) {
+        debugPrint('❌ All Order Fetch attempts failed: $e2');
+        return [];
+      }
+    }
   }
 
   static Future<List<Map<String, dynamic>>> fetchOrderItems(String orderId) async {
@@ -97,7 +124,7 @@ class OrderService {
         if (dateStr == null) continue;
         final date = DateTime.tryParse(dateStr);
         if (date == null) continue;
-        final amount = double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0;
+        final amount = (double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0;
 
         int key;
         if (range == 'today') {
@@ -167,11 +194,24 @@ class OrderService {
   }
 
   /// Launch WhatsApp with a message
-  static Future<void> launchWhatsApp(String phone, String message) async {
-    // Note: Use url_launcher in actual implementation
+  static Future<void> launchWhatsApp(String? phone, String message) async {
+    if (phone == null || phone.isEmpty) return;
+    
+    // Clean phone number: keep only digits
+    String cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    
+    // Ensure international format (add 91 if it's a 10-digit number)
+    if (cleanPhone.length == 10) {
+      cleanPhone = "91$cleanPhone";
+    }
+
     final query = Uri.encodeComponent(message);
-    final url = Uri.parse("whatsapp://send?phone=$phone&text=$query");
-    debugPrint("Launching WhatsApp: $url");
+    final url = Uri.parse("https://wa.me/$cleanPhone?text=$query");
+    
+    debugPrint("NEW WhatsApp Launcher: $url");
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint("Could not launch WhatsApp: $url");
+    }
   }
   /// Robust date parsing for various formats (ISO, DD/MM/YYYY, etc.)
   static DateTime? parseDate(String? dateStr) {

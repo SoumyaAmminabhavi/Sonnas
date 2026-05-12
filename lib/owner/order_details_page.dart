@@ -155,10 +155,10 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             ),
                                           ),
                                           const SizedBox(height: 8),
-                                          Text(
-                                            "Order $orderId",
-                                            style: GoogleFonts.notoSerif(
-                                              fontSize: 42,
+                                            Text(
+                                              "Order $orderId",
+                                              style: GoogleFonts.notoSerif(
+                                                fontSize: 24,
                                               fontWeight: FontWeight.bold,
                                               fontStyle: FontStyle.italic,
                                               color: cs.onSurface,
@@ -249,47 +249,81 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             );
                                           }
 
-                                          return Column(
-                                            children: items.map<Widget>((item) {
-                                              String displayImageUrl = '';
-                                              final String cakeName =
-                                                  item['cakeName'] ?? '';
-                                              final matchingCake = menu
-                                                  .firstWhere(
-                                                    (c) =>
-                                                        (c['name'] as String)
-                                                            .toLowerCase() ==
-                                                        cakeName.toLowerCase(),
-                                                    orElse: () =>
-                                                        <String, dynamic>{},
+                                            return Column(
+                                              children: [
+                                                ...items.map<Widget>((item) {
+                                                  String displayImageUrl = '';
+                                                  final String cakeName =
+                                                      item['cakeName'] ?? '';
+                                                  final matchingCake = menu
+                                                      .firstWhere(
+                                                        (c) =>
+                                                            (c['name'] as String)
+                                                                .toLowerCase() ==
+                                                            cakeName.toLowerCase(),
+                                                        orElse: () =>
+                                                            <String, dynamic>{},
+                                                      );
+                                                  displayImageUrl = matchingCake['image'] ?? '';
+
+                                                  // Fallback for custom cakes or missing menu images
+                                                  if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) && order['customImageUrl'] != null) {
+                                                    displayImageUrl = order['customImageUrl'];
+                                                  }
+
+                                                  return Padding(
+                                                    padding: const EdgeInsets.only(
+                                                      bottom: 12.0,
+                                                    ),
+                                                    child: _OrderItemCard(
+                                                      title: cakeName,
+                                                      subtitle:
+                                                          "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
+                                                      price: OrderService.formatPrice(item['price']),
+                                                      imageUrl:
+                                                          SupabaseService.getPublicUrl(
+                                                            displayImageUrl,
+                                                          ),
+                                                      cs: cs,
+                                                    ),
                                                   );
-                                              displayImageUrl = matchingCake['image'] ?? '';
-
-                                              // Fallback for custom cakes or missing menu images
-                                              if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) && order['customImageUrl'] != null) {
-                                                displayImageUrl = order['customImageUrl'];
-                                              }
-
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 12.0,
-                                                ),
-                                                child: _OrderItemCard(
-                                                  title: cakeName,
-                                                  subtitle:
-                                                      "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
-                                                  price: OrderService.formatPrice(item['price']),
-                                                  imageUrl:
-                                                      SupabaseService.getPublicUrl(
-                                                        displayImageUrl,
-                                                      ),
+                                                }).toList(),
+                                                const SizedBox(height: 24),
+                                                const Divider(height: 1, thickness: 0.5),
+                                                const SizedBox(height: 24),
+                                                _SummaryRow(
+                                                  label: "Subtotal",
+                                                  value: OrderService.formatPrice(items.fold(0.0, (sum, item) {
+                                                    final p = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+                                                    final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
+                                                    return sum + (p * q);
+                                                  })),
                                                   cs: cs,
                                                 ),
-                                              );
-                                            }).toList(),
-                                          );
-                                        },
-                                      ),
+                                                const SizedBox(height: 12),
+                                                _SummaryRow(
+                                                  label: "Delivery Fee",
+                                                  value: "FREE",
+                                                  cs: cs,
+                                                  isAccent: true,
+                                                ),
+                                                const SizedBox(height: 20),
+                                                _SummaryRow(
+                                                  label: "Total",
+                                                  value: order['totalPrice'] != null 
+                                                    ? OrderService.formatPrice(order['totalPrice'])
+                                                    : OrderService.formatPrice(items.fold(0.0, (sum, item) {
+                                                        final p = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+                                                        final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
+                                                        return sum + (p * q);
+                                                      })),
+                                                  cs: cs,
+                                                  isTotal: true,
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        ),
                                       if (order['notes'] != null &&
                                           order['notes']
                                               .toString()
@@ -402,7 +436,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             label: "CONTACT",
                                             cs: cs,
                                             isPrimary: false,
-                                            onPressed: () {
+                                            onPressed: () async {
                                               final phone =
                                                   order['phone'] ??
                                                   conversation?['phone'];
@@ -410,9 +444,16 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                                   order['customerName'] ??
                                                   conversation?['name'] ??
                                                   'there';
-                                              final cake =
-                                                  order['cakeName'] ??
-                                                  'your cake';
+                                              
+                                              // Fetch items to get the actual cake name
+                                              String cake = 'your selection';
+                                              try {
+                                                final items = await OrderService.fetchOrderItems(order['id']);
+                                                if (items.isNotEmpty) {
+                                                  cake = items.first['cakeName'] ?? 'your selection';
+                                                }
+                                              } catch (_) {}
+
                                               OrderService.launchWhatsApp(
                                                 phone,
                                                 "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).",
@@ -453,11 +494,16 @@ class _SlimProgressIndicator extends StatelessWidget {
     String poeticNote =
         "The atelier is awaiting your review to begin the creation.";
 
-    if (status == 'PREPARING') {
-      progress = 0.65;
+    final normalizedStatus = status.toUpperCase();
+
+    if (normalizedStatus == 'ACCEPTED' || normalizedStatus == 'CONFIRMED') {
+      progress = 0.50;
+      statusText = "ORDER CONFIRMED";
+      poeticNote = "The selection has been confirmed and is being queued for the chef.";
+    } else if (status == 'PREPARING') {
+      progress = 0.70;
       statusText = "IN PREPARATION";
-      poeticNote =
-          "Chef Sonna is currently finishing the chocolate calligraphy.";
+      poeticNote = "Chef Sonna is currently finishing the chocolate calligraphy.";
     } else if (status == 'OUT_FOR_DELIVERY') {
       progress = 0.85;
       statusText = "OUT FOR DELIVERY";
@@ -723,6 +769,47 @@ class _ImagePlaceholder extends StatelessWidget {
           size: 24,
         ),
       ),
+    );
+  }
+}
+
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final ColorScheme cs;
+  final bool isTotal;
+  final bool isAccent;
+
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    required this.cs,
+    this.isTotal = false,
+    this.isAccent = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: isTotal ? 16 : 13,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.w500,
+            color: cs.secondary.withValues(alpha: isTotal ? 1.0 : 0.5),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.notoSerif(
+            fontSize: isTotal ? 20 : 14,
+            fontWeight: FontWeight.bold,
+            color: isAccent ? Colors.teal : (isTotal ? cs.primary : cs.secondary),
+          ),
+        ),
+      ],
     );
   }
 }
