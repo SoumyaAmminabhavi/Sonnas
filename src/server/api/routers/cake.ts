@@ -11,7 +11,7 @@ export const cakeRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
     const cakes = await ctx.db.cake.findMany({
       include: { options: true },
-      orderBy: { createdAt: "asc" },
+      orderBy: { sortOrder: "asc" },
     });
     return cakes;
   }),
@@ -30,9 +30,12 @@ export const cakeRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1, "Cake name is required"),
+        slug: z.string().optional(),
         description: z.string().optional(),
         category: z.string().default("Chocolate Cakes"),
         image: z.string().min(1, "Image is required"),
+        isAvailable: z.boolean().default(true),
+        sortOrder: z.number().default(0),
         options: z.array(
           z.object({
             size: z.string().min(1),
@@ -44,12 +47,17 @@ export const cakeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const slug = input.slug || input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+      
       const result = await ctx.db.cake.create({
         data: {
           name: input.name,
+          slug,
           description: input.description ?? "",
           category: input.category,
           image: input.image,
+          isAvailable: input.isAvailable,
+          sortOrder: input.sortOrder,
           options: {
             create: input.options,
           },
@@ -68,9 +76,12 @@ export const cakeRouter = createTRPCRouter({
       z.object({
         id: z.string(),
         name: z.string().min(1),
+        slug: z.string().optional(),
         description: z.string().optional(),
         category: z.string().optional(),
         image: z.string().min(1),
+        isAvailable: z.boolean().optional(),
+        sortOrder: z.number().optional(),
         options: z.array(
           z.object({
             id: z.string().optional(),
@@ -90,13 +101,18 @@ export const cakeRouter = createTRPCRouter({
           where: { cakeId: input.id },
         });
 
+        const slug = input.slug || input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+
         return tx.cake.update({
           where: { id: input.id },
           data: {
             name: input.name,
+            slug,
             description: input.description ?? "",
             category: input.category,
             image: input.image,
+            isAvailable: input.isAvailable,
+            sortOrder: input.sortOrder,
             options: {
               create: input.options.map(opt => ({
                 size: opt.size,

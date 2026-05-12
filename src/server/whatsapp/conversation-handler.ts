@@ -33,9 +33,12 @@ interface CakeOption {
 interface Cake {
   id: string | number;
   name: string;
+  slug?: string;
   description?: string | null;
   image: string;
   category?: string;
+  isAvailable?: boolean;
+  sortOrder?: number;
   options: CakeOption[];
 }
 
@@ -129,7 +132,9 @@ async function safeGetCakes(): Promise<Cake[]> {
     );
 
     if (result) {
-      cakeCache = result as unknown as Cake[];
+      cakeCache = (result as unknown as Cake[])
+        .filter(c => c.isAvailable !== false)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       lastCacheUpdate = now;
       return cakeCache;
     }
@@ -1102,6 +1107,8 @@ async function sendMenu(to: string) {
     const vanillaCakes = cakes.filter((p) => p.category === "Vanilla Cakes" || p.category === "Vanilla");
     const teaCakes = cakes.filter((p) => p.category === "Tea Cakes" || p.category === "Tea");
     const seasonalCakes = cakes.filter((p) => p.category === "Seasonal Cakes" || p.category === "Seasonal");
+    const cheesecakes = cakes.filter((p) => p.category === "Mini Cheesecakes");
+    const slices = cakes.filter((p) => p.category === "Slices");
 
     const sections = [];
     if (chocolateCakes.length > 0) {
@@ -1114,6 +1121,18 @@ async function sendMenu(to: string) {
       sections.push({
         title: "🍦 Vanilla & Fruit Based",
         rows: vanillaCakes.map(cakeRow),
+      });
+    }
+    if (cheesecakes.length > 0) {
+      sections.push({
+        title: "🧁 Mini Cheesecakes",
+        rows: cheesecakes.map(cakeRow),
+      });
+    }
+    if (slices.length > 0) {
+      sections.push({
+        title: "🍰 Slices",
+        rows: slices.map(cakeRow),
       });
     }
     if (teaCakes.length > 0) {
@@ -1151,6 +1170,8 @@ async function sendMenu(to: string) {
           rows: [
             { id: "cat_chocolate", title: "🍫 Chocolate", description: "Rich & decadent cakes" },
             { id: "cat_vanilla", title: "🍦 Vanilla & Fruit", description: "Light & refreshing flavors" },
+            { id: "cat_cheesecakes", title: "🧁 Mini Cheesecakes", description: "Bite-sized delights" },
+            { id: "cat_slices", title: "🍰 Slices", description: "Perfect cake portions" },
             { id: "cat_tea", title: "☕ Tea Time", description: "Perfect with your afternoon tea" },
             { id: "cat_seasonal", title: "🍓 Seasonal", description: "Special treats for this month" },
           ],
@@ -1175,10 +1196,12 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const category = msg.interactiveId?.replace("cat_", "") as
     | "chocolate"
     | "vanilla"
+    | "cheesecakes"
+    | "slices"
     | "tea"
     | "seasonal";
 
-  if (!category || !["chocolate", "vanilla", "tea", "seasonal"].includes(category)) {
+  if (!category || !["chocolate", "vanilla", "cheesecakes", "slices", "tea", "seasonal"].includes(category)) {
     await sendMenu(msg.from);
     return;
   }
@@ -1186,6 +1209,8 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const categoryMap: Record<string, string> = {
     chocolate: "Chocolate Cakes",
     vanilla: "Vanilla Cakes",
+    cheesecakes: "Mini Cheesecakes",
+    slices: "Slices",
     tea: "Tea Cakes",
     seasonal: "Seasonal Cakes",
   };
@@ -1193,6 +1218,8 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const titles: Record<string, string> = {
     chocolate: "🍫 Chocolate Based",
     vanilla: "🍦 Vanilla & Fruit Based",
+    cheesecakes: "🧁 Mini Cheesecakes",
+    slices: "🍰 Slices",
     tea: "☕ Tea Time Specials",
     seasonal: "🍓 Seasonal Specials",
   };

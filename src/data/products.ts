@@ -11,6 +11,8 @@ export interface Product {
   category: string;
   options: ProductOption[];
   image: string;
+  isAvailable?: boolean;
+  sortOrder?: number;
 }
 
 export interface Category {
@@ -165,6 +167,88 @@ export const products: Product[] = [
     ],
     image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-vanilla.png",
   },
+  // Mini Cheesecakes
+  {
+    id: 14,
+    name: "Blueberry Mini Cheesecake",
+    description: "Creamy cheesecake with glossy blueberry compote",
+    category: "Mini Cheesecakes",
+    options: [{ size: "Single", serves: "1", price: 17000 }],
+    image: "/images/mini-cheesecake-blueberry.png",
+  },
+  {
+    id: 15,
+    name: "Nutella Mini Cheesecake",
+    description: "Nutella flavor with smooth hazelnut chocolate swirl",
+    category: "Mini Cheesecakes",
+    options: [{ size: "Single", serves: "1", price: 18000 }],
+    image: "/images/mini-cheesecake-nutella.png",
+  },
+  {
+    id: 16,
+    name: "Biscoff Mini Cheesecake",
+    description: "Lotus Biscoff flavor with speculoos cookie spread drip",
+    category: "Mini Cheesecakes",
+    options: [{ size: "Single", serves: "1", price: 19000 }],
+    image: "/images/mini-cheesecake-biscoff.png",
+  },
+  {
+    id: 17,
+    name: "Mango Mini Cheesecake",
+    description: "Fresh Mango flavor with vibrant yellow mango glaze",
+    category: "Mini Cheesecakes",
+    options: [{ size: "Single", serves: "1", price: 16000 }],
+    image: "/images/mini-cheesecake-mango.png",
+  },
+  // Slices
+  {
+    id: 18,
+    name: "Almond Brittle Caramel Slice",
+    description: "Almond Brittle with Salted Caramel Ganache slice",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 17500 }],
+    image: "/images/slice-almond-brittle.png",
+  },
+  {
+    id: 19,
+    name: "Chocolate Mousse Slice",
+    description: "Deep dark chocolate layers with airy mousse texture",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 14500 }],
+    image: "/images/slice-chocolate-mousse.png",
+  },
+  {
+    id: 20,
+    name: "Chocolate & Orange Slice",
+    description: "Layers of chocolate and bright orange mousse",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 12000 }],
+    image: "/images/slice-chocolate-orange.png",
+  },
+  {
+    id: 21,
+    name: "Lemon Mousse Slice",
+    description: "Bright yellow and white layers with tangy lemon curd",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 9500 }],
+    image: "/images/slice-lemon-mousse.png",
+  },
+  {
+    id: 22,
+    name: "Macaron Slice",
+    description: "Elegant macaron-themed cake slice",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 8000 }],
+    image: "/images/slice-macaron.png",
+  },
+  {
+    id: 23,
+    name: "Coconut & Mango Slice",
+    description: "Layers of tropical coconut sponge and fresh mango mousse",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 18000 }],
+    image: "/images/slice-coconut-mango.png",
+  },
 ];
 
 export const categories: Category[] = [
@@ -192,5 +276,17 @@ export const categories: Category[] = [
     name: "Seasonal Cakes",
     slug: "seasonal-cakes",
     image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-seasonal.png",
+  },
+  {
+    id: "cheesecakes",
+    name: "Mini Cheesecakes",
+    slug: "mini-cheesecakes",
+    image: "/images/cat-mini-cheesecakes.png",
+  },
+  {
+    id: "slices",
+    name: "Slices",
+    slug: "slices",
+    image: "/images/cat-slices.png",
   },
 ];

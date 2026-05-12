@@ -17,17 +17,23 @@ interface CakeOptionInput {
 interface CakeFormData {
   id?: string;
   name: string;
+  slug: string;
   description: string;
   category: string;
   image: string;
+  isAvailable: boolean;
+  sortOrder: number;
   options: CakeOptionInput[];
 }
 
 const INITIAL_FORM: CakeFormData = {
   name: "",
+  slug: "",
   description: "",
   category: "Chocolate Cakes",
   image: "",
+  isAvailable: true,
+  sortOrder: 0,
   options: [{ size: "", serves: "", price: "" }],
 };
 
@@ -40,6 +46,7 @@ export default function AdminMenuPage() {
 
   const utils = api.useUtils();
   const cakesQuery = api.cake.getAll.useQuery();
+  const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
   const createMutation = api.cake.create.useMutation({
     onSuccess: () => {
@@ -66,18 +73,24 @@ export default function AdminMenuPage() {
   const openModal = (cake?: {
     id: string;
     name: string;
+    slug: string;
     description: string | null;
     category?: string | null;
     image: string;
+    isAvailable: boolean;
+    sortOrder: number;
     options: { id: string; size: string; serves: string; price: number; cakeId: string }[]
   }) => {
     if (cake) {
       setFormData({
         id: cake.id,
         name: cake.name,
+        slug: cake.slug,
         description: cake.description ?? "",
         category: cake.category ?? "Chocolate Cakes",
         image: cake.image,
+        isAvailable: cake.isAvailable,
+        sortOrder: cake.sortOrder,
         options: cake.options.map((o) => ({
           id: o.id,
           size: o.size,
@@ -131,9 +144,28 @@ export default function AdminMenuPage() {
     };
 
     if (isEditing && formData.id) {
-      updateMutation.mutate(submissionData as { id: string; name: string; image: string; options: { size: string; serves: string; price: number; id?: string }[]; description?: string; category?: string });
+      updateMutation.mutate(submissionData as { 
+        id: string; 
+        name: string; 
+        slug?: string;
+        image: string; 
+        options: { size: string; serves: string; price: number; id?: string }[]; 
+        description?: string; 
+        category?: string;
+        isAvailable?: boolean;
+        sortOrder?: number;
+      });
     } else {
-      createMutation.mutate(submissionData as { name: string; image: string; options: { size: string; serves: string; price: number }[]; description?: string; category?: string });
+      createMutation.mutate(submissionData as { 
+        name: string; 
+        slug?: string;
+        image: string; 
+        options: { size: string; serves: string; price: number }[]; 
+        description?: string; 
+        category?: string;
+        isAvailable?: boolean;
+        sortOrder?: number;
+      });
     }
   };
 
@@ -147,12 +179,27 @@ export default function AdminMenuPage() {
             <h1 className="text-3xl font-heading text-[#2B2B2B] mb-1">Menu Management</h1>
             <p className="text-[#9A9A9A]">Add or edit cakes shown on the landing page</p>
           </div>
-          <button
-            onClick={() => openModal()}
-            className="bg-[#F4C2C2] text-[#2B2B2B] px-6 py-2 rounded-full font-medium hover:bg-[#E8DED4] transition-all shadow-soft"
-          >
-            + Add New Cake
-          </button>
+          <div className="flex gap-4 items-center">
+            <select
+              className="p-2 rounded-xl border border-[#E8DED4] bg-white text-sm outline-none"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="All">All Categories</option>
+              <option value="Chocolate Cakes">Chocolate Cakes</option>
+              <option value="Vanilla Cakes">Vanilla Cakes</option>
+              <option value="Mini Cheesecakes">Mini Cheesecakes</option>
+              <option value="Slices">Slices</option>
+              <option value="Tea Cakes">Tea Cakes</option>
+              <option value="Seasonal Cakes">Seasonal Cakes</option>
+            </select>
+            <button
+              onClick={() => openModal()}
+              className="bg-[#F4C2C2] text-[#2B2B2B] px-6 py-2 rounded-full font-medium hover:bg-[#E8DED4] transition-all shadow-soft"
+            >
+              + Add New
+            </button>
+          </div>
         </div>
 
         {/* Grid */}
@@ -160,8 +207,15 @@ export default function AdminMenuPage() {
           <div className="text-center py-20 text-[#9A9A9A]">Loading menu...</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cakesQuery.data?.map((cake) => (
-              <div key={cake.id} className="bg-white rounded-2xl overflow-hidden shadow-soft border border-[#E8DED4] group">
+            {cakesQuery.data
+              ?.filter((c) => categoryFilter === "All" || c.category === categoryFilter)
+              .map((cake) => (
+              <div key={cake.id} className={`bg-white rounded-2xl overflow-hidden shadow-soft border border-[#E8DED4] group relative ${!cake.isAvailable ? "grayscale-[0.5] opacity-80" : ""}`}>
+                {!cake.isAvailable && (
+                  <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                    Unavailable
+                  </div>
+                )}
                 <div className="relative h-48 w-full">
                   <Image
                     src={cake.image}
@@ -244,9 +298,44 @@ export default function AdminMenuPage() {
                     >
                       <option value="Chocolate Cakes">Chocolate Cakes</option>
                       <option value="Vanilla Cakes">Vanilla Cakes</option>
+                      <option value="Mini Cheesecakes">Mini Cheesecakes</option>
+                      <option value="Slices">Slices</option>
                       <option value="Tea Cakes">Tea Cakes</option>
                       <option value="Seasonal Cakes">Seasonal Cakes</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#6E6E6E]">Slug (Auto-generated if empty)</label>
+                    <input
+                      className="w-full p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none"
+                      value={formData.slug}
+                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                      placeholder="e.g. belgian-chocolate"
+                    />
+                  </div>
+                  <div className="flex gap-6 pt-8">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="isAvailable"
+                        className="w-5 h-5 rounded border-[#E8DED4] text-[#F4C2C2] focus:ring-[#F4C2C2]"
+                        checked={formData.isAvailable}
+                        onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
+                      />
+                      <label htmlFor="isAvailable" className="text-sm font-semibold text-[#6E6E6E]">Available</label>
+                    </div>
+                    <div className="flex items-center gap-2 flex-1">
+                      <label className="text-sm font-semibold text-[#6E6E6E] shrink-0">Sort Order</label>
+                      <input
+                        type="number"
+                        className="w-20 p-2 rounded-xl border border-[#E8DED4] outline-none text-sm"
+                        value={formData.sortOrder}
+                        onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value, 10) || 0 })}
+                      />
+                    </div>
                   </div>
                 </div>
 
