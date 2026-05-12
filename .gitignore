@@ -83,3 +83,15 @@ run_log.txt
 !macos/Runner/Assets.xcassets/**/*.png
 !android/app/src/main/res/**/*.png
 
+# Research & AI Tools
+.agents/
+.cursor/
+.mcp.json
+.windsurfrules
+AGENT.md
+CLAUDE.md
+artifacts/
+data/
+projects/
+
+
