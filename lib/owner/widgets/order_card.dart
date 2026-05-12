@@ -67,7 +67,22 @@ class OrderCardReactive extends ConsumerWidget {
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
           deliveryTime: data['deliveryTime'],
           orderSubtitle: orderSubtitle,
-          onWhatsAppPressed: () => OrderService.launchWhatsApp(data['customerPhone'] ?? '', "Hi ${data['customerName'] ?? ''}, your order from Sonna's is ready!"),
+          onWhatsAppPressed: () async {
+            final String orderId = data['orderNumber'] ?? '---';
+            final String phone = data['phone'] ?? data['customerPhone'] ?? '';
+            final String name = data['customerName'] ?? 'there';
+            
+            // Get first item name for the message
+            String cakeName = 'your order';
+            if (items.isNotEmpty) {
+              cakeName = items.first['cakeName'] ?? 'your order';
+            }
+
+            OrderService.launchWhatsApp(
+              phone, 
+              "Hi $name, this is Sonna's Patisserie. Your order #$orderId ($cakeName) is ready for you!"
+            );
+          },
           onTabChanged: onTabChanged,
         );
       },
@@ -137,14 +152,14 @@ class _OrderCardBase extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _CardHeader(id: id, paymentStatus: paymentStatus, status: status, statusColor: statusColor, cs: cs),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     customerName,
                     style: GoogleFonts.notoSerif(fontSize: 16, fontWeight: FontWeight.bold, color: cs.secondary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   _InfoRow(icon: Icons.cake_outlined, text: orderSubtitle, cs: cs),
                   _InfoRow(icon: Icons.payments_outlined, text: price, cs: cs),
                   _InfoRow(icon: Icons.schedule_outlined, text: deliveryTime != null ? "$deliveryDate at $deliveryTime" : deliveryDate, cs: cs),

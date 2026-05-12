@@ -155,10 +155,10 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             ),
                                           ),
                                           const SizedBox(height: 8),
-                                          Text(
-                                            "Order $orderId",
-                                            style: GoogleFonts.notoSerif(
-                                              fontSize: 42,
+                                            Text(
+                                              "Order $orderId",
+                                              style: GoogleFonts.notoSerif(
+                                                fontSize: 24,
                                               fontWeight: FontWeight.bold,
                                               fontStyle: FontStyle.italic,
                                               color: cs.onSurface,
@@ -436,7 +436,7 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                             label: "CONTACT",
                                             cs: cs,
                                             isPrimary: false,
-                                            onPressed: () {
+                                            onPressed: () async {
                                               final phone =
                                                   order['phone'] ??
                                                   conversation?['phone'];
@@ -444,9 +444,16 @@ class OwnerOrderDetailsView extends StatelessWidget {
                                                   order['customerName'] ??
                                                   conversation?['name'] ??
                                                   'there';
-                                              final cake =
-                                                  order['cakeName'] ??
-                                                  'your cake';
+                                              
+                                              // Fetch items to get the actual cake name
+                                              String cake = 'your selection';
+                                              try {
+                                                final items = await OrderService.fetchOrderItems(order['id']);
+                                                if (items.isNotEmpty) {
+                                                  cake = items.first['cakeName'] ?? 'your selection';
+                                                }
+                                              } catch (_) {}
+
                                               OrderService.launchWhatsApp(
                                                 phone,
                                                 "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).",
@@ -487,11 +494,16 @@ class _SlimProgressIndicator extends StatelessWidget {
     String poeticNote =
         "The atelier is awaiting your review to begin the creation.";
 
-    if (status == 'PREPARING') {
-      progress = 0.65;
+    final normalizedStatus = status.toUpperCase();
+
+    if (normalizedStatus == 'ACCEPTED' || normalizedStatus == 'CONFIRMED') {
+      progress = 0.50;
+      statusText = "ORDER CONFIRMED";
+      poeticNote = "The selection has been confirmed and is being queued for the chef.";
+    } else if (status == 'PREPARING') {
+      progress = 0.70;
       statusText = "IN PREPARATION";
-      poeticNote =
-          "Chef Sonna is currently finishing the chocolate calligraphy.";
+      poeticNote = "Chef Sonna is currently finishing the chocolate calligraphy.";
     } else if (status == 'OUT_FOR_DELIVERY') {
       progress = 0.85;
       statusText = "OUT FOR DELIVERY";

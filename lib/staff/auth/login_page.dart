@@ -294,7 +294,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
                                   ),
                                   Expanded(
                                     child: _buildTabButton(
-                                      "First Time", 
+                                      "Register", 
                                       !_isLoginTab, 
                                       () => setState(() {
                                         _isLoginTab = false;
@@ -476,19 +476,20 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
-        return KeyboardListener(
-          focusNode: _pinFocusNodes[index],
-          onKeyEvent: (event) {
-            if (event is KeyDownEvent && 
-                event.logicalKey == LogicalKeyboardKey.backspace && 
-                _pinControllers[index].text.isEmpty && 
-                index > 0) {
-              _pinFocusNodes[index - 1].requestFocus();
-            }
-          },
-          child: SizedBox(
-            width: 48,
-            height: 56,
+        return SizedBox(
+          width: 48,
+          height: 56,
+          child: Focus(
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent && 
+                  event.logicalKey == LogicalKeyboardKey.backspace && 
+                  _pinControllers[index].text.isEmpty && 
+                  index > 0) {
+                _pinFocusNodes[index - 1].requestFocus();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
             child: TextField(
               controller: _pinControllers[index],
               focusNode: _pinFocusNodes[index],

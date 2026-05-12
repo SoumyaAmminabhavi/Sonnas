@@ -142,7 +142,7 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final item = filteredItems[index];
-                return _ProductCard(item: item, cs: cs);
+                return _ProductCard(item: item, cs: cs, index: index);
               },
               childCount: filteredItems.length,
             ),
@@ -171,8 +171,13 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
 class _ProductCard extends ConsumerWidget {
   final Map<String, dynamic> item;
   final ColorScheme cs;
+  final int index;
 
-  const _ProductCard({required this.item, required this.cs});
+  const _ProductCard({
+    required this.item,
+    required this.cs,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -181,7 +186,7 @@ class _ProductCard extends ConsumerWidget {
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item)),
+        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item, heroTag: 'product_${item['id']}_$index')),
       ),
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -206,7 +211,7 @@ class _ProductCard extends ConsumerWidget {
                   children: [
                     Positioned.fill(
                       child: Hero(
-                        tag: 'product_${item['id']}',
+                        tag: 'product_${item['id']}_$index',
                         child: Image.network(
                           imageUrl,
                           fit: BoxFit.cover,

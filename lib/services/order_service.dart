@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 class OrderService {
   static SupabaseClient get _client => SupabaseService.client;
 
@@ -14,7 +16,9 @@ class OrderService {
   static Future<void> launchMaps(String address) async {
     final query = Uri.encodeComponent(address);
     final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
-    debugPrint("Launching maps for: $url");
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint("Could not launch maps: $url");
+    }
   }
 
   /// Format price with currency symbol (converts minor units to major)
@@ -190,11 +194,24 @@ class OrderService {
   }
 
   /// Launch WhatsApp with a message
-  static Future<void> launchWhatsApp(String phone, String message) async {
-    // Note: Use url_launcher in actual implementation
+  static Future<void> launchWhatsApp(String? phone, String message) async {
+    if (phone == null || phone.isEmpty) return;
+    
+    // Clean phone number: keep only digits
+    String cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    
+    // Ensure international format (add 91 if it's a 10-digit number)
+    if (cleanPhone.length == 10) {
+      cleanPhone = "91$cleanPhone";
+    }
+
     final query = Uri.encodeComponent(message);
-    final url = Uri.parse("whatsapp://send?phone=$phone&text=$query");
-    debugPrint("Launching WhatsApp: $url");
+    final url = Uri.parse("https://wa.me/$cleanPhone?text=$query");
+    
+    debugPrint("NEW WhatsApp Launcher: $url");
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      debugPrint("Could not launch WhatsApp: $url");
+    }
   }
   /// Robust date parsing for various formats (ISO, DD/MM/YYYY, etc.)
   static DateTime? parseDate(String? dateStr) {

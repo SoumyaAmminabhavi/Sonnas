@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Core Supabase Configuration & Shared Storage Utilities
@@ -48,5 +49,20 @@ class SupabaseService {
   static Future<String?> getSignedUrl(String bucket, String path) async {
     // Return public URL as fallback/prototype behavior or implement createSignedUrl
     return client.storage.from(bucket).getPublicUrl(path);
+  }
+
+  /// Upload an image to Supabase storage and return the path
+  static Future<String?> uploadImage({
+    required String bucket,
+    required String path,
+    required dynamic file, // Can be Uint8List or File path
+  }) async {
+    try {
+      await client.storage.from(bucket).upload(path, file, fileOptions: const FileOptions(upsert: true));
+      return path;
+    } catch (e) {
+      debugPrint('❌ Supabase Upload Error: $e');
+      return null;
+    }
   }
 }

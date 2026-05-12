@@ -175,10 +175,12 @@ class _AppNavigationState extends State<AppNavigation> {
           const Placeholder(), // Profile
         ],
       ),
-      bottomNavigationBar: GlassBottomNav(
-        currentIndex: _currentIndex,
-        onTap: _onTabSelected,
-      ),
+      bottomNavigationBar: _currentIndex == 0 
+          ? null 
+          : GlassBottomNav(
+              currentIndex: _currentIndex,
+              onTap: _onTabSelected,
+            ),
     );
   }
 }
