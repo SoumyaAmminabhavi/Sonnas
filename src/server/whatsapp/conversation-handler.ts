@@ -775,7 +775,8 @@ async function _internalHandleMessage(msg: IncomingMessage) {
         selectedSize: null,
         selectedPrice: null,
       }),
-      sendMenu(msg.from)
+      sendMenu(msg.from),
+      sendMenuPDF(msg.from)
     ]);
     return;
   }
