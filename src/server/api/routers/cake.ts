@@ -47,7 +47,7 @@ export const cakeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const slug = input.slug || input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+      const slug = (input.slug && input.slug.length > 0) ? input.slug : input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
       
       const result = await ctx.db.cake.create({
         data: {
@@ -101,7 +101,7 @@ export const cakeRouter = createTRPCRouter({
           where: { cakeId: input.id },
         });
 
-        const slug = input.slug || input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+        const slug = (input.slug && input.slug.length > 0) ? input.slug : input.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
         return tx.cake.update({
           where: { id: input.id },
