@@ -16,12 +16,21 @@ async function main() {
 
     console.log('  ✨ Seeding new menu...');
     for (const product of products) {
+      // Generate a simple slug from the name
+      const slug = product.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
       await tx.cake.create({
         data: {
           name: product.name,
+          slug: slug,
           description: product.description,
           image: product.image,
           category: product.category,
+          isAvailable: product.isAvailable ?? true,
+          sortOrder: product.sortOrder ?? 0,
           options: {
             create: product.options.map(opt => ({
               size: opt.size,
