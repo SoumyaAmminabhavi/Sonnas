@@ -1,11 +1,12 @@
-
 import { env } from "~/env";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  env.NEXT_PUBLIC_SUPABASE_URL,
-  env.SUPABASE_SERVICE_ROLE_KEY ?? ""
-);
+// Initialize client only if key is present to avoid crash
+const getSupabaseAdmin = () => {
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return null;
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, key);
+};
 
 
 
@@ -66,7 +67,12 @@ export async function downloadAndUploadImage(mediaId: string): Promise<string | 
     const fileName = `custom_${mediaId}_${Date.now()}.jpg`;
 
     // 3. Upload to Supabase Storage (bucket: "cakes")
-    // Note: Ensure the "cakes" bucket exists and has public access
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      console.error("[WhatsApp Media] Cannot upload: SUPABASE_SERVICE_ROLE_KEY is missing.");
+      return null;
+    }
+
     const { data, error } = await supabase.storage
       .from("cakes")
       .upload(`custom-requests/${fileName}`, blob, {
