@@ -4,7 +4,7 @@
  * Handles the full ordering flow: IDLE → BROWSING → SELECTING_SIZE → CONFIRMING → COMPLETE
  */
 import { db } from "~/server/db";
-import { products, categories } from "~/data/landing";
+import { products } from "~/data/landing";
 import {
   sendTextMessage,
   sendInteractiveList,
@@ -1236,8 +1236,6 @@ async function handleCategorySelection(msg: IncomingMessage) {
   });
   console.log(`[WhatsApp] Filtered cakes: ${filtered.length}`);
 
-  const categoryData = categories.find(c => c.id === category);
-
   if (filtered.length === 0) {
     // No cakes in this category — show full menu instead
     await Promise.all([
@@ -1248,14 +1246,6 @@ async function handleCategorySelection(msg: IncomingMessage) {
     return;
   }
 
-  if (categoryData?.image) {
-    try {
-      await sendImageMessage(msg.from, categoryData.image, `*${title}*`);
-    } catch (err) {
-      console.error(`[WhatsApp] Failed to send category image:`, err);
-    }
-  }
-  
   await updateState(msg.from, "BROWSING_MENU");
   await sendInteractiveList(
     msg.from,
