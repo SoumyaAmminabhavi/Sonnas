@@ -285,11 +285,21 @@ export async function sendDocumentMessage(
 
   // Resolve relative URLs
   let baseUrl = env.NEXT_PUBLIC_APP_URL;
+  
+  // If we're on Vercel and NEXT_PUBLIC_APP_URL is default/localhost, try to use VERCEL_URL
   if ((!baseUrl || baseUrl.includes("localhost")) && env.VERCEL_URL) {
     baseUrl = `https://${env.VERCEL_URL}`;
+    console.log(`[WhatsApp] Using VERCEL_URL as fallback: ${baseUrl}`);
   }
+  
+  // Ensure no trailing slash on baseUrl
   if (baseUrl?.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
   
+  // Final check: if still localhost, warn that WhatsApp won't be able to fetch media
+  if (!baseUrl || baseUrl.includes("localhost")) {
+    console.warn(`[WhatsApp] WARNING: Base URL is ${baseUrl}. WhatsApp Cloud API cannot fetch media from localhost. Set NEXT_PUBLIC_APP_URL for production.`);
+  }
+
   const finalDocumentUrl = documentUrl.startsWith("/")
     ? `${baseUrl}${documentUrl}`
     : documentUrl;

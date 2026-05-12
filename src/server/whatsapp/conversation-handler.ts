@@ -277,6 +277,9 @@ function generateOrderNumber(): string {
 
 async function sendMenuPDF(to: string) {
   try {
+    // Small delay to ensure the previous message (greeting/confirmation) is processed first
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     await sendDocumentMessage(
       to,
       "/menu.pdf",
