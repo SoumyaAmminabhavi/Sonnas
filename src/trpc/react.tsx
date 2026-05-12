@@ -9,6 +9,7 @@ import SuperJSON from "superjson";
 
 import { type AppRouter } from "~/server/api/root";
 import { createQueryClient } from "./query-client";
+import { env } from "~/env";
 
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
@@ -55,7 +56,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "nextjs-react");
-            const bypassKey = process.env.NEXT_PUBLIC_ADMIN_BYPASS_KEY;
+            const bypassKey = env.NEXT_PUBLIC_ADMIN_BYPASS_KEY;
             if (bypassKey) {
               headers.set("x-admin-key", bypassKey);
             }
