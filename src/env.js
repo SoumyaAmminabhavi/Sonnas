@@ -26,7 +26,7 @@ export const env = createEnv({
     RAZORPAY_KEY_SECRET: z.string().optional(),
     RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
     NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
-    ADMIN_BYPASS_KEY: z.string().optional(),
+    ADMIN_BYPASS_KEY: z.string().default("sonnas_admin_2026"),
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
     VERCEL_URL: z.string().optional(),
 
@@ -43,7 +43,7 @@ export const env = createEnv({
     NEXT_PUBLIC_WHATSAPP_NUMBER: z.string().default("15551534132"),
     NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED: z.string().default("+1 (555) 153-4132"),
 
-    NEXT_PUBLIC_ADMIN_BYPASS_KEY: z.string().optional(),
+    NEXT_PUBLIC_ADMIN_BYPASS_KEY: z.string().default("sonnas_admin_2026"),
   },
 
 

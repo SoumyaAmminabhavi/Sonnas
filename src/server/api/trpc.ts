@@ -13,6 +13,7 @@ import { ZodError } from "zod";
 
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { env } from "~/env";
 
 /**
  * 1. CONTEXT
@@ -122,7 +123,7 @@ export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     // Admin bypass (NEVER enable in production unless necessary)
-    const bypassKey = process.env.ADMIN_BYPASS_KEY;
+    const bypassKey = env.ADMIN_BYPASS_KEY;
     if (bypassKey) {
       if (ctx.headers.get("x-admin-key") === bypassKey) {
         return next({
