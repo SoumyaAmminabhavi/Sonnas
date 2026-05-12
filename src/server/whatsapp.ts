@@ -75,9 +75,19 @@ export async function sendImageMessage(to: string, imageUrl: string, caption?: s
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
 
   // Resolve relative URLs
+  let baseUrl = env.NEXT_PUBLIC_APP_URL;
+  if (baseUrl.includes("localhost") && process.env.VERCEL_URL) {
+    baseUrl = `https://${process.env.VERCEL_URL}`;
+  }
+  
+  // Ensure no trailing slash on baseUrl
+  if (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
+  
   const finalImageUrl = imageUrl.startsWith("/")
-    ? `${env.NEXT_PUBLIC_APP_URL}${imageUrl}`
+    ? `${baseUrl}${imageUrl}`
     : imageUrl;
+
+  console.log(`[WhatsApp] Sending image: to=${to}, url=${finalImageUrl}`);
 
   try {
     const res = await fetchWithTimeout(getMessagesUrl(), {

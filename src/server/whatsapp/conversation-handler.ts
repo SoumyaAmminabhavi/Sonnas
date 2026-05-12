@@ -1248,27 +1248,27 @@ async function handleCategorySelection(msg: IncomingMessage) {
     return;
   }
 
-  const tasks: Promise<unknown>[] = [
-    updateState(msg.from, "BROWSING_MENU"),
-    sendInteractiveList(
-      msg.from,
-      title,
-      `Here are our signature ${title.toLowerCase()} cakes:`,
-      "Select a Cake",
-      [
-        {
-          title: "Choose your favorite",
-          rows: filtered.map(cakeRow),
-        },
-      ]
-    )
-  ];
-
   if (categoryData?.image) {
-    tasks.push(sendImageMessage(msg.from, categoryData.image, `*${title}*`));
+    try {
+      await sendImageMessage(msg.from, categoryData.image, `*${title}*`);
+    } catch (err) {
+      console.error(`[WhatsApp] Failed to send category image:`, err);
+    }
   }
-
-  await Promise.all(tasks);
+  
+  await updateState(msg.from, "BROWSING_MENU");
+  await sendInteractiveList(
+    msg.from,
+    title,
+    `Here are our signature ${title.toLowerCase()} cakes:`,
+    "Select a Cake",
+    [
+      {
+        title: "Choose your favorite",
+        rows: filtered.map(cakeRow),
+      },
+    ]
+  );
 }
 
 // ─── Handle cake selection ─────────────────────────────────────────────────
