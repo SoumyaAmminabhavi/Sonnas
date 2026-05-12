@@ -273,6 +273,58 @@ export async function sendCTAUrlButton(
 }
 
 
+// ─── Send document (PDF, etc.) ──────────────────────────────────────────
+
+export async function sendDocumentMessage(
+  to: string,
+  documentUrl: string,
+  filename: string,
+  caption?: string
+) {
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
+
+  // Resolve relative URLs
+  let baseUrl = env.NEXT_PUBLIC_APP_URL;
+  if ((!baseUrl || baseUrl.includes("localhost")) && env.VERCEL_URL) {
+    baseUrl = `https://${env.VERCEL_URL}`;
+  }
+  if (baseUrl?.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
+  
+  const finalDocumentUrl = documentUrl.startsWith("/")
+    ? `${baseUrl}${documentUrl}`
+    : documentUrl;
+
+  console.log(`[WhatsApp] Sending document: to=${to}, url=${finalDocumentUrl}`);
+
+  try {
+    const res = await fetchWithTimeout(getMessagesUrl(), {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "document",
+        document: {
+          link: finalDocumentUrl,
+          filename: filename,
+          caption: caption,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      const errorMsg = `[WhatsApp] Failed to send document: ${res.status} - ${err}`;
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+  } catch (e) {
+    console.error("[WhatsApp] sendDocumentMessage error:", e);
+    throw e;
+  }
+}
+
+
 // ─── Mark as read ──────────────────────────────────────────────────────────
 
 

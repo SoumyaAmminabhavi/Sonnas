@@ -11,6 +11,7 @@ import {
   sendInteractiveButtons,
   sendImageMessage,
   sendCTAUrlButton,
+  sendDocumentMessage,
 } from "~/server/whatsapp";
 
 import { createPaymentLink } from "~/server/razorpay";
@@ -270,6 +271,21 @@ function generateOrderNumber(): string {
   const dateStr = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}`;
   const random = Math.random().toString(36).substring(2, 7).toUpperCase();
   return `${prefix}-${dateStr}-${random}`;
+}
+
+// ─── Send Menu PDF Helper ──────────────────────────────────────────────────
+
+async function sendMenuPDF(to: string) {
+  try {
+    await sendDocumentMessage(
+      to,
+      "/menu.pdf",
+      "Sonnas_Patisserie_Menu.pdf",
+      "Here is our official menu for your reference. 🧁"
+    );
+  } catch (e) {
+    console.error("[WhatsApp] Failed to send menu PDF:", e);
+  }
 }
 
 // ─── Get or create conversation ────────────────────────────────────────────
@@ -667,11 +683,13 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     ]);
     await sendTextMessage(msg.from, "No worries! Everything's been cleared. \u2728\n\nWhenever you're ready, I'm here to help you find the perfect cake. \ud83c\udf38");
     await sendWelcome(msg.from, msg.name);
+    await sendMenuPDF(msg.from);
     return;
   }
 
   if (input === "help") {
     await sendWelcome(msg.from, msg.name);
+    await sendMenuPDF(msg.from);
     return;
   }
 
@@ -689,14 +707,6 @@ async function _internalHandleMessage(msg: IncomingMessage) {
           selectedPrice: null,
         })
       ];
-
-      if (selectedProduct.image) {
-        tasks.push(sendImageMessage(
-          msg.from,
-          selectedProduct.image,
-          `*${selectedProduct.name}*\n\n${selectedProduct.description ?? ""}`
-        ));
-      }
 
       const options = selectedProduct.options ?? [];
       if (options.length > 2) {
@@ -800,9 +810,10 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   if (interactiveId === "btn_clear_cart") {
     await Promise.all([
       clearCart(msg.from),
-      sendTextMessage(msg.from, "\u2728 *Selection cleared!*\n\nLet's start fresh \u2014 here's our menu:"),
-      sendMenu(msg.from)
+      sendTextMessage(msg.from, "✨ *Selection cleared!*"),
     ]);
+    await sendMenu(msg.from);
+    await sendMenuPDF(msg.from);
     return;
   }
 
@@ -812,6 +823,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       updateState(msg.from, "IDLE", RESET_STATE),
     ]);
     await sendTextMessage(msg.from, "No worries at all! Your order has been cleared. \ud83c\udf38\n\nWhenever you're ready, we're here to craft something special for you. Just say *hi* to start again! \u2728");
+    await sendMenuPDF(msg.from);
     return;
   }
 
@@ -1076,6 +1088,7 @@ async function sendWelcome(to: string, name?: string) {
           { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
         ]
       );
+      await sendMenuPDF(to);
       return;
     }
   } catch {
@@ -1092,6 +1105,7 @@ async function sendWelcome(to: string, name?: string) {
       { id: "btn_status", title: "\ud83d\udce6 Track My Order" },
     ]
   );
+  await sendMenuPDF(to);
 }
 
 // ─── Send interactive menu ─────────────────────────────────────────────────
