@@ -583,11 +583,12 @@ async function createCustomOrder(
     }
   });
 
-  return updateState(msg.from, "IDLE", {
+  await updateState(msg.from, "IDLE", {
     ...RESET_STATE,
     selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
   });
 
+  return orderNumber;
 }
 
 async function isBotPaused(): Promise<boolean> {
@@ -775,8 +776,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
         selectedSize: null,
         selectedPrice: null,
       }),
-      sendMenu(msg.from),
-      sendMenuPDF(msg.from)
+      sendMenu(msg.from)
     ]);
     return;
   }
@@ -1783,11 +1783,15 @@ async function handleCustomRequest(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(msg.image.id);
 
-    await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
+    const orderNumber = await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
 
-    await sendTextMessage(
+    await sendInteractiveButtons(
       msg.from,
-      "📸 Photo received! 🍰\n\nWe'll call you shortly to confirm details and provide a quote. 📞"
+      `📸 *Reference Photo Received!* 🍰\n\nYour request has been logged as *#${orderNumber}*.\n\nOur team will review your design and call you shortly to provide a quote and confirm details. 📞\n\nWould you like to explore our signature cakes while you wait?`,
+      [
+        { id: "btn_menu", title: "📋 View Menu" },
+        { id: "btn_status", title: "📦 My Orders" },
+      ]
     );
     return;
   }
@@ -1835,11 +1839,15 @@ async function handleReferenceImageUpload(
     const { downloadAndUploadImage } = await import("./media");
     const publicUrl = await downloadAndUploadImage(msg.image.id);
 
-    await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
+    const orderNumber = await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
 
-    await sendTextMessage(
+    await sendInteractiveButtons(
       msg.from,
-      "📸 Photo received! 🍰\n\nWe'll call you shortly to confirm details and provide a quote. 📞"
+      `📸 *Reference Photo Received!* 🍰\n\nYour request has been logged as *#${orderNumber}*.\n\nOur team will review your design and call you shortly to provide a quote and confirm details. 📞\n\nWould you like to explore our signature cakes while you wait?`,
+      [
+        { id: "btn_menu", title: "📋 View Menu" },
+        { id: "btn_status", title: "📦 My Orders" },
+      ]
     );
   } else {
     await sendTextMessage(
