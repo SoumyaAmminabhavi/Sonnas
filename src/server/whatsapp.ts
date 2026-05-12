@@ -74,6 +74,11 @@ export async function sendTextMessage(to: string, message: string) {
 export async function sendImageMessage(to: string, imageUrl: string, caption?: string) {
   if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
 
+  // Resolve relative URLs
+  const finalImageUrl = imageUrl.startsWith("/")
+    ? `${env.NEXT_PUBLIC_APP_URL}${imageUrl}`
+    : imageUrl;
+
   try {
     const res = await fetchWithTimeout(getMessagesUrl(), {
       method: "POST",
@@ -83,7 +88,7 @@ export async function sendImageMessage(to: string, imageUrl: string, caption?: s
         to,
         type: "image",
         image: {
-          link: imageUrl,
+          link: finalImageUrl,
           caption: caption,
         },
       }),
