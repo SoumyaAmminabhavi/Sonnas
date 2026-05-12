@@ -1081,14 +1081,14 @@ async function sendWelcome(to: string, name?: string) {
 
     if (lastOrder?.items[0]) {
       const cakeName = lastOrder.items[0].cakeName;
-      const greeting = name ? `Welcome back, ${name}! \u2728` : "Welcome back! \u2728";
+      const greeting = name ? `Welcome back, ${name}! ✨` : "Welcome back! ✨";
       await sendInteractiveButtons(
         to,
-        `${greeting}\n\nSo lovely to see you again at *Sonna's Patisserie*! \ud83c\udf38\n\nWould you like to reorder your *${cakeName}*, or explore something new?`,
+        `${greeting}\n\nSo lovely to see you again at *Sonna's Patisserie*! 🌸\n\nWould you like to reorder your *${cakeName}*, or explore something new?\n\n💡 *Quick Tips:*\n• Reply *Menu* to browse all cakes\n• Reply *Status* to see order history\n• Reply *Cancel* to start over`,
         [
-          { id: `cake_${cakeName}`, title: "\ud83d\udd04 Reorder Last" },
-          { id: "btn_menu", title: "\ud83d\udccb Browse Cakes" },
-          { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
+          { id: `cake_${cakeName}`, title: "🔄 Reorder Last" },
+          { id: "btn_menu", title: "📋 Browse Cakes" },
+          { id: "btn_custom", title: "🎨 Custom Creation" },
         ]
       );
       await sendMenuPDF(to);
@@ -1098,14 +1098,14 @@ async function sendWelcome(to: string, name?: string) {
     // Fall through to default welcome if DB query fails
   }
 
-  const greeting = name ? `Hi ${name}! \u2728` : "Welcome! \u2728";
+  const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
   await sendInteractiveButtons(
     to,
-    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today?`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today?\n\n💡 *Quick Tips:*\n• Reply *Menu* to browse all cakes\n• Reply *Status* to track your orders\n• Reply *Cancel* to clear your selection`,
     [
-      { id: "btn_menu", title: "\ud83d\udccb Browse Our Cakes" },
-      { id: "btn_custom", title: "\ud83c\udfa8 Custom Creation" },
-      { id: "btn_status", title: "\ud83d\udce6 Track My Order" },
+      { id: "btn_menu", title: "📋 Browse Our Cakes" },
+      { id: "btn_custom", title: "🎨 Custom Creation" },
+      { id: "btn_status", title: "📦 Track My Order" },
     ]
   );
   await sendMenuPDF(to);
