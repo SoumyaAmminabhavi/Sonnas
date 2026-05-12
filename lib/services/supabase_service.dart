@@ -20,10 +20,6 @@ class SupabaseService {
     
     // Initialize Private (My) Supabase Client
     _myClient = SupabaseClient(mySupabaseUrl, mySupabaseAnonKey);
-
-    // Debug logs to verify correct project loading
-    print('Supabase (Primary) initialized with: $supabaseUrl');
-    print('Supabase (Private) initialized with: $mySupabaseUrl');
   }
 
   static SupabaseClient get client => Supabase.instance.client;

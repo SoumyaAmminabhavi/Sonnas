@@ -3,7 +3,6 @@ import 'package:dbcrypt/dbcrypt.dart';
 import 'supabase_service.dart';
 
 class AuthService {
-  static SupabaseClient get _client => SupabaseService.client; // Primary instance
   static SupabaseClient get _myClient => SupabaseService.myClient; // Private instance
 
   static Future<Map<String, dynamic>?> loginStaff(String phone, String password) async {
@@ -107,7 +106,7 @@ class AuthService {
       // Verify the hashed PIN using bcrypt
       return DBCrypt().checkpw(pin, hash);
     } catch (e) {
-      print('Owner PIN Verification Error: $e');
+      // Silently fail in production or use a logger
       return false;
     }
   }
