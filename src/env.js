@@ -28,6 +28,7 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
     ADMIN_BYPASS_KEY: z.string().optional(),
     SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+    VERCEL_URL: z.string().optional(),
 
 
   },
@@ -75,6 +76,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ADMIN_BYPASS_KEY: process.env.NEXT_PUBLIC_ADMIN_BYPASS_KEY ?? process.env.ADMIN_BYPASS_KEY,
     ADMIN_BYPASS_KEY: process.env.ADMIN_BYPASS_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    VERCEL_URL: process.env.VERCEL_URL,
 
 
   },

@@ -76,10 +76,17 @@ export async function sendImageMessage(to: string, imageUrl: string, caption?: s
 
   // Resolve relative URLs
   let baseUrl = env.NEXT_PUBLIC_APP_URL;
-  if (baseUrl.includes("localhost") && process.env.VERCEL_URL) {
-    baseUrl = `https://${process.env.VERCEL_URL}`;
+  
+  // If we're on Vercel and NEXT_PUBLIC_APP_URL is default/localhost, use VERCEL_URL
+  if ((!baseUrl || baseUrl.includes("localhost")) && env.VERCEL_URL) {
+    baseUrl = `https://${env.VERCEL_URL}`;
   }
   
+  // Final fallback: if still localhost, images won't work in WhatsApp
+  if (!baseUrl || baseUrl.includes("localhost")) {
+    console.warn("[WhatsApp] Warning: Using localhost for image URLs. Images will not display in WhatsApp.");
+  }
+
   // Ensure no trailing slash on baseUrl
   if (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
   
