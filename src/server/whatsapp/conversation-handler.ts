@@ -1735,7 +1735,9 @@ async function handleInstructionsInput(
 
 function getAvailableSlots() {
   const slots: Array<{ id: string; title: string; description: string }> = [];
-  const today = new Date();
+  // Convert current UTC time to IST (UTC + 5.5 hours)
+  const now = new Date();
+  const today = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
   
   // Define standard time windows
   const windows = [
