@@ -1020,6 +1020,11 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
+  if (interactiveId.startsWith("cat_")) {
+    await handleCategorySelection(msg);
+    return;
+  }
+
   if (interactiveId.startsWith("cake_")) {
     await handleCakeSelection(msg);
     return;
