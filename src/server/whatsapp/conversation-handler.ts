@@ -1451,22 +1451,21 @@ async function handleSizeSelection(
     return;
   }
 
-  // Move to quantity selection
-  await Promise.all([
-    updateState(msg.from, "SELECTING_QUANTITY", {
-      selectedSize: selectedOption.size,
-      selectedPrice: selectedOption.price,
-    }),
-    sendInteractiveButtons(
-      msg.from,
-      `*${convo.selectedCake}* (${selectedOption.size})\n\nHow many would you like to order? \ud83e\udde1`,
-      [
-        { id: "qty_1", title: "1" },
-        { id: "qty_2", title: "2" },
-        { id: "btn_back", title: "⬅️ Back" },
-      ]
-    )
-  ]);
+  // Skip quantity selection and default to 1 for speed
+  const updatedConvo = {
+    ...convo,
+    selectedSize: selectedOption.size,
+    selectedPrice: selectedOption.price,
+    selectedQuantity: 1,
+  };
+
+  await updateState(msg.from, "SELECTING_QUANTITY", {
+    selectedSize: selectedOption.size,
+    selectedPrice: selectedOption.price,
+    selectedQuantity: 1,
+  });
+
+  await handleCartActions(msg, updatedConvo as Conversation);
 }
 
 // ─── Handle quantity selection ─────────────────────────────────────────────
