@@ -1477,7 +1477,7 @@ async function handleQuantitySelection(
       await sendTextMessage(msg.from, `⚠️ ${validation.error}. Please enter a number between 1 and 20.`);
       return;
     }
-    quantity = validation.data;
+    quantity = validation.data as number;
   }
 
   await updateState(msg.from, "SELECTING_QUANTITY", { selectedQuantity: quantity });
@@ -1636,7 +1636,7 @@ async function handleAddressInput(
     await sendTextMessage(msg.from, `⚠️ ${validation.error}`);
     return;
   }
-  address = validation.data;
+  address = validation.data as string;
 
   // Move to asking instructions
   await Promise.all([
@@ -1678,7 +1678,7 @@ async function handleInstructionsInput(
       await sendTextMessage(msg.from, `⚠️ ${validation.error}`);
       return;
     }
-    notes = validation.data ?? null;
+    notes = (validation.data as string) ?? null;
   }
 
   // Move to asking delivery date
@@ -1868,7 +1868,7 @@ async function handleCustomRequest(
       await sendTextMessage(msg.from, `⚠️ ${validation.error}`);
       return;
     }
-    const sanitizedText = validation.data ?? "";
+    const sanitizedText = (validation.data as string) ?? "";
 
     // If text looks like an address (has numbers and multiple words), or we already have notes, move to address collection
     const looksLikeAddress = /\d+/.test(sanitizedText) && sanitizedText.split(/\s+/).length > 3;
