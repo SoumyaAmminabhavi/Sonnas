@@ -1025,12 +1025,8 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     await handleSizeSelection(msg, convo);
     return;
   }
-  if (interactiveId.startsWith("date_")) {
-    await handleDeliveryDateInput(msg, convo);
-    return;
-  }
-  if (interactiveId.startsWith("time_")) {
-    await handleDeliveryTimeInput(msg, convo);
+  if (interactiveId.startsWith("slot_")) {
+    await handleDeliverySlotSelection(msg, convo);
     return;
   }
 
@@ -1098,11 +1094,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       break;
 
     case "ASKING_DELIVERY_DATE":
-      await handleDeliveryDateInput(msg, convo);
-      break;
-
-    case "ASKING_DELIVERY_TIME":
-      await handleDeliveryTimeInput(msg, convo);
+      await handleDeliverySlotSelection(msg, convo);
       break;
 
     case "REQUESTING_CUSTOM":
@@ -1689,12 +1681,12 @@ async function handleInstructionsInput(
     notes = (validation.data as string) ?? null;
   }
 
-  // Move to asking delivery date
+  // Move to asking delivery slot
   await Promise.all([
     updateState(msg.from, "ASKING_DELIVERY_DATE", {
       selectedNotes: notes,
     }),
-    sendDeliveryDateOptions(msg.from)
+    sendDeliverySlotOptions(msg.from)
   ]);
   
   // Send a separate Back button since the list doesn't have one
@@ -1705,129 +1697,107 @@ async function handleInstructionsInput(
 
 // ─── Send delivery date options ────────────────────────────────────────────
 
-async function sendDeliveryDateOptions(to: string) {
-  const rows = [];
+function getAvailableSlots() {
+  const slots: Array<{ id: string; title: string; description: string }> = [];
   const today = new Date();
+  
+  // Define standard time windows
+  const windows = [
+    { id: "morning", title: "Morning", time: "10 AM - 1 PM", startHour: 10 },
+    { id: "afternoon", title: "Afternoon", time: "2 PM - 5 PM", startHour: 14 },
+    { id: "evening", title: "Evening", time: "6 PM - 9 PM", startHour: 18 },
+  ];
 
-  for (let i = 0; i < 10; i++) {
+  // Look ahead 4 days
+  for (let i = 0; i < 4; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
+    const dayLabel = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric" });
+    const dateKey = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
 
-    const id = `date_${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
-    const label = i === 0 ? "Today" : i === 1 ? "Tomorrow" : d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
-    const dateStr = d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    for (const win of windows) {
+      // If it's today, only show future slots (with a 2-hour buffer for baking)
+      if (i === 0 && today.getHours() + 2 >= win.startHour) continue;
 
-    rows.push({
-      id,
-      title: label,
-      description: i <= 1 ? dateStr : undefined
-    });
+      slots.push({
+        id: `slot_${dateKey}_${win.id}`,
+        title: `${dayLabel} (${win.title})`,
+        description: win.time
+      });
+    }
   }
 
+  return slots.slice(0, 10); // Max 10 rows for WhatsApp List
+}
+
+async function sendDeliverySlotOptions(to: string) {
+  const slots = getAvailableSlots();
+  
   await sendInteractiveList(
     to,
-    "📅 Select Delivery Date",
-    "Please choose when you'd like your cake delivered:",
-    "View Dates",
-    [
-      {
-        title: "Available Dates",
-        rows
-      }
-    ]
+    "🕒 Delivery Timing",
+    "When should we bring your treats? 🧁\n\nPlease select a convenient delivery slot:",
+    "View Slots",
+    [{
+      title: "Available Slots",
+      rows: slots
+    }]
   );
 }
 
-// ─── Handle delivery date input ────────────────────────────────────────────
+// ─── Handle combined delivery slot selection ────────────────────────────────
 
-async function handleDeliveryDateInput(
+async function handleDeliverySlotSelection(
   msg: IncomingMessage,
-  _convo: Conversation
+  convo: Conversation
 ) {
   let deliveryDate = "";
-
-  if (msg.interactiveId?.startsWith("date_")) {
-    const datePart = msg.interactiveId.replace("date_", "");
-    const parts = datePart.split("-").map(Number);
-    const [year, month, day] = parts;
-    if (year === undefined || month === undefined || day === undefined) return;
-    const d = new Date(year, month - 1, day);
-
-
-    deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
-
-  } else if (msg.text?.trim()) {
-    // User typed a custom date
-    deliveryDate = msg.text.trim();
-  } else {
-    await sendTextMessage(msg.from, "Please select a delivery date or type your preferred date.");
-    return;
-  }
-
-  try {
-    // Move to asking delivery time
-    await Promise.all([
-      updateState(msg.from, "ASKING_DELIVERY_TIME", {
-        selectedDeliveryDate: deliveryDate,
-      }),
-      sendDeliveryTimeOptions(msg.from)
-    ]);
-
-    // Send a separate Back button since the list doesn't have one
-    await sendInteractiveButtons(msg.from, "_Need to change the date?_", [
-      { id: "btn_back", title: "⬅️ Back" },
-    ]);
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error("[WhatsApp] Error in handleDeliveryDateInput:", errorMsg);
-    await sendTextMessage(msg.from, `⚠️ Sorry, I encountered an error: *${errorMsg}*\n\nPlease try again by replying *Menu*.`);
-  }
-}
-
-// ─── Send delivery time options ───────────────────────────────────────────
-
-async function sendDeliveryTimeOptions(to: string) {
-  await sendInteractiveButtons(
-    to,
-    "🕒 Choose a delivery time slot:",
-    [
-      { id: "time_12pm_3pm", title: "12 pm - 3 pm" },
-      { id: "time_3pm_6pm", title: "3 pm - 6 pm" },
-      { id: "time_6pm_9pm", title: "6 pm - 9 pm" },
-    ]
-  );
-}
-
-// ─── Handle delivery time input ───────────────────────────────────────────
-
-async function handleDeliveryTimeInput(
-  msg: IncomingMessage,
-  _convo: Conversation
-) {
   let deliveryTime = "";
 
-  if (msg.interactiveId?.startsWith("time_")) {
-    const timeId = msg.interactiveId.replace("time_", "");
-    // Format nicely: "12pm_3pm" -> "12 PM to 3 PM" (HIGH-08: replaceAll for both occurrences)
-    deliveryTime = timeId.replaceAll("_", " to ").replaceAll("pm", " PM");
+  if (msg.interactiveId?.startsWith("slot_")) {
+    const parts = msg.interactiveId.split("_"); // slot, 2024-05-13, morning
+    const datePart = parts[1];
+    const timePart = parts[2];
+
+    if (!datePart || !timePart) return;
+
+    const [year, month, day] = datePart.split("-").map(Number);
+    const d = new Date(year!, month! - 1, day!);
+    
+    deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    deliveryTime = timePart.charAt(0).toUpperCase() + timePart.slice(1); // "Morning", etc.
   } else if (msg.text?.trim()) {
+    deliveryDate = "As specified";
     deliveryTime = msg.text.trim();
   } else {
-    await sendTextMessage(msg.from, "Please select a delivery time slot.");
+    await sendTextMessage(msg.from, "Please select a delivery slot from the list.");
     return;
   }
 
   try {
     // Move to confirmation
     await updateState(msg.from, "CONFIRMING", {
+      selectedDeliveryDate: deliveryDate,
       selectedDeliveryTime: deliveryTime,
     });
 
-    // Use cached cart and convo
     const cart = convoCache.get(msg.from)?.cart ?? [];
-    const currentConvo = convoCache.get(msg.from) ?? _convo;
+    const currentConvo = convoCache.get(msg.from) ?? convo;
 
     await sendInteractiveButtons(
+      msg.from,
+      buildOrderSummary(cart, currentConvo),
+      [
+        { id: "btn_confirm", title: "✅ Confirm Order" },
+        { id: "btn_back", title: "⬅️ Back" },
+        { id: "btn_cancel", title: "❌ Cancel" },
+      ]
+    );
+  } catch (err) {
+    console.error("[WhatsApp] Error in handleDeliverySlotSelection:", err);
+    await sendTextMessage(msg.from, "⚠️ Sorry, I encountered an error. Please try again.");
+  }
+}
       msg.from,
       buildOrderSummary(cart, currentConvo),
       [
@@ -2205,14 +2175,8 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       );
       break;
     case "ASKING_DELIVERY_DATE":
-      await sendDeliveryDateOptions(phone);
+      await sendDeliverySlotOptions(phone);
       await sendInteractiveButtons(phone, "_Need to change something?_", [
-        { id: "btn_back", title: "⬅️ Back" },
-      ]);
-      break;
-    case "ASKING_DELIVERY_TIME":
-      await sendDeliveryTimeOptions(phone);
-      await sendInteractiveButtons(phone, "_Need to change the date?_", [
         { id: "btn_back", title: "⬅️ Back" },
       ]);
       break;
