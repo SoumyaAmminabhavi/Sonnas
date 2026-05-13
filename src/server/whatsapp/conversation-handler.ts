@@ -17,6 +17,7 @@ import {
 import { createPaymentLink } from "~/server/razorpay";
 import { formatPrice } from "~/lib/format";
 import natural from "natural";
+import { validateAndSanitize } from "~/lib/validators";
 
 
 const { JaroWinklerDistance } = natural;
@@ -1470,15 +1471,13 @@ async function handleQuantitySelection(
   if (msg.interactiveId?.startsWith("qty_")) {
     quantity = parseInt(msg.interactiveId.replace("qty_", ""), 10);
   } else if (msg.text) {
-    const num = parseInt(msg.text.replace(/[^\d]/g, ""), 10);
-    if (!isNaN(num) && num > 0 && num <= 50) {
-      quantity = num;
-    } else if (GREETINGS.includes(msg.text.toLowerCase())) {
-      return; // Ignore greeting, will be caught by global re-prompt if needed
-    } else {
-      await sendTextMessage(msg.from, "Please enter a valid quantity (e.g., 1, 2, 5). \ud83d\udcac");
+    const validation = validateAndSanitize("quantity", msg.text);
+    if (!validation.success) {
+      if (GREETINGS.includes(msg.text.toLowerCase())) return;
+      await sendTextMessage(msg.from, `⚠️ ${validation.error}. Please enter a number between 1 and 20.`);
       return;
     }
+    quantity = validation.data;
   }
 
   await updateState(msg.from, "SELECTING_QUANTITY", { selectedQuantity: quantity });
@@ -1631,6 +1630,14 @@ async function handleAddressInput(
     return;
   }
 
+  // Validate and Sanitize address
+  const validation = validateAndSanitize("address", address);
+  if (!validation.success) {
+    await sendTextMessage(msg.from, `⚠️ ${validation.error}`);
+    return;
+  }
+  address = validation.data;
+
   // Move to asking instructions
   await Promise.all([
     updateState(msg.from, "ASKING_INSTRUCTIONS", {
@@ -1658,11 +1665,20 @@ async function handleInstructionsInput(
     input.toLowerCase() === "skip" ||
     input.toLowerCase() === "no";
 
-  const notes = isSkip ? null : input;
-
   if (!isSkip && (input.length < 2 || GREETINGS.includes(input.toLowerCase()))) {
     await sendTextMessage(msg.from, "What message would you like on your cake? \u270d\ufe0f\n\n_(e.g., \"Happy Birthday Priya!\")_\n\nReply *Skip* if none.");
     return;
+  }
+
+  // Validate and Sanitize notes
+  let notes = isSkip ? null : input;
+  if (notes) {
+    const validation = validateAndSanitize("notes", notes);
+    if (!validation.success) {
+      await sendTextMessage(msg.from, `⚠️ ${validation.error}`);
+      return;
+    }
+    notes = validation.data ?? null;
   }
 
   // Move to asking delivery date
@@ -1845,13 +1861,22 @@ async function handleCustomRequest(
   // If user sends text (description)
   if (msg.type === "text" && msg.text) {
     const text = msg.text.trim();
+
+    // Sanitize and validate
+    const validation = validateAndSanitize("notes", text);
+    if (!validation.success) {
+      await sendTextMessage(msg.from, `⚠️ ${validation.error}`);
+      return;
+    }
+    const sanitizedText = validation.data ?? "";
+
     // If text looks like an address (has numbers and multiple words), or we already have notes, move to address collection
-    const looksLikeAddress = /\d+/.test(text) && text.split(/\s+/).length > 3;
+    const looksLikeAddress = /\d+/.test(sanitizedText) && sanitizedText.split(/\s+/).length > 3;
     
     if (looksLikeAddress || convo.selectedNotes) {
       await Promise.all([
         updateState(msg.from, "ASKING_ADDRESS", {
-          selectedAddress: text
+          selectedAddress: sanitizedText
         }),
         sendTextMessage(
           msg.from,
@@ -1861,7 +1886,7 @@ async function handleCustomRequest(
     } else {
       await Promise.all([
         updateState(msg.from, "REQUESTING_CUSTOM", {
-          selectedNotes: text
+          selectedNotes: sanitizedText
         }),
         sendTextMessage(
           msg.from,
