@@ -1125,36 +1125,6 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 // ─── Welcome message ───────────────────────────────────────────────────────
 
 async function sendWelcome(to: string, name?: string) {
-  // CVR-04: Check for returning customers
-  try {
-    const lastOrder = await db.whatsAppOrder.findFirst({
-      where: { phone: to, status: { not: "CANCELLED" } },
-      orderBy: { createdAt: "desc" },
-      select: {
-        items: { select: { cakeName: true }, take: 1 },
-        createdAt: true,
-      },
-    });
-
-    if (lastOrder?.items[0]) {
-      const cakeName = lastOrder.items[0].cakeName;
-      const greeting = name ? `Welcome back, ${name}! ✨` : "Welcome back! ✨";
-      await sendInteractiveButtons(
-        to,
-        `${greeting}\n\nSo lovely to see you again at *Sonna's Patisserie*! 🌸\n\nWould you like to reorder your *${cakeName}*, or explore something new?\n\n💡 *Quick Tips:*\n• Reply *Menu* to browse all cakes\n• Reply *Status* to see order history\n• Reply *Cancel* to start over`,
-        [
-          { id: `cake_${cakeName}`, title: "🔄 Reorder Last" },
-          { id: "btn_menu", title: "📋 Browse Cakes" },
-          { id: "btn_custom", title: "🎨 Custom Creation" },
-        ]
-      );
-      await sendMenuPDF(to);
-      return;
-    }
-  } catch {
-    // Fall through to default welcome if DB query fails
-  }
-
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
   const cakes = await safeGetCakes();
   const topCakes = cakes.slice(0, 2);
