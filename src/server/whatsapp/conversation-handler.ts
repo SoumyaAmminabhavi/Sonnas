@@ -284,7 +284,7 @@ async function sendMenuPDF(to: string) {
     
     await sendDocumentMessage(
       to,
-      "/menu.pdf",
+      "/menu_compressed.pdf",
       "Sonnas_Patisserie_Menu.pdf",
       "Here is our official menu for your reference. 🧁"
     );
