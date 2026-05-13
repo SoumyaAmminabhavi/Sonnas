@@ -886,7 +886,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
     ]);
-    await sendTextMessage(msg.from, "No worries at all! Your order has been cleared. \ud83c\udf38\n\nWhenever you're ready, we're here to craft something special for you. Just say *hi* to start again! \u2728");
+    await sendTextMessage(msg.from, "Got it! Your order has been cleared. ✅\n\nWhenever you're craving something special, just say *HI* or *Menu* to see what's baking today! 🍰");
     await sendMenuPDF(msg.from);
     return;
   }
@@ -2202,7 +2202,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         "\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n\nReply *Skip* if none.",
         [
           { id: "btn_back", title: "⬅️ Back" },
-        ]
+         ]
       );
       break;
     case "ASKING_DELIVERY_DATE":
