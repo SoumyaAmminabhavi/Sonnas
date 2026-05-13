@@ -49,7 +49,7 @@ export const WhatsAppValidators = {
  */
 export function validateAndSanitize<T extends keyof typeof WhatsAppValidators>(
   key: T,
-  input: any
+  input: unknown
 ) {
   try {
     const schema = WhatsAppValidators[key];
