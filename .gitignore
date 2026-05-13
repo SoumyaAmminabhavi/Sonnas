@@ -1,29 +1,8 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
+# ─────────────────────────────────────────────
+#  Sonna Patisserie & Cafe — .gitignore
+# ─────────────────────────────────────────────
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
+# ── Flutter / Dart / Pub ──────────────────────
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
@@ -34,58 +13,73 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Symbolication related
+# Symbolication & obfuscation
 app.*.symbols
-
-# Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# ── Android Studio build artifacts ───────────
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
 
-# Private Keys & Environment Secrets
+# ── Environment & Secrets ─────────────────────
+# Keep .env.example (template); ignore all real env files
 .env
-.env*
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 *.secret
-.env*.local
+*.pem
+*.p12
+*.keystore
+key.properties
+android/key.properties
 
-# Vercel
+# ── Vercel ────────────────────────────────────
 .vercel
 
-# Windows
+# ── IDE & Editor ──────────────────────────────
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (uncomment if you don't share launch configs)
+# .vscode/
+
+# ── OS noise ──────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+$RECYCLE.BIN/
 
-# Node/NPM
+# ── Miscellaneous ─────────────────────────────
+*.class
+*.pyc
+*.swp
+*.log
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+run_log.txt
+
+# ── Node / NPM (web tooling) ──────────────────
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Custom Project Files
-.jetro/
-scratch/
-issues.txt
-
-run_log.txt
-*.log
-# Ignore random images but keep app assets
-# *.png  <-- Removed global ignore
-!assets/**/*.png
-!ios/Runner/Assets.xcassets/**/*.png
-!macos/Runner/Assets.xcassets/**/*.png
-!android/app/src/main/res/**/*.png
-
-# Research & AI Tools
+# ── AI / Research Tooling ─────────────────────
 .agents/
 .cursor/
+.jetro/
 .mcp.json
 .windsurfrules
 AGENT.md
@@ -93,5 +87,5 @@ CLAUDE.md
 artifacts/
 data/
 projects/
-
-
+scratch/
+issues.txt
