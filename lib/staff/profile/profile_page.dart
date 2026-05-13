@@ -394,20 +394,24 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                         trailing: Switch(
                           value: _isDarkMode,
                           activeThumbColor: widget.cs.primary,
-                          onChanged: (val) {
+                          onChanged: (val) async {
+                            final prevIsDark = _isDarkMode;
+                            final prevTheme = themeController.value;
                             final mode = val ? ThemeMode.dark : ThemeMode.light;
                             setState(() {
                               _isDarkMode = val;
                               themeController.value = mode;
                             });
-                            ThemeService.saveThemeMode(mode).catchError((e) {
+                            try {
+                              await ThemeService.saveThemeMode(mode);
+                            } catch (e) {
                               debugPrint("Theme Persistence Error: $e");
-                              // Rollback UI on failure
+                              if (!mounted) return;
                               setState(() {
-                                _isDarkMode = !val;
-                                themeController.value = val ? ThemeMode.light : ThemeMode.dark;
+                                _isDarkMode = prevIsDark;
+                                themeController.value = prevTheme;
                               });
-                            });
+                            }
                           },
                         ),
                       ),

@@ -9,7 +9,9 @@ class ThemeService {
     final prefs = await SharedPreferences.getInstance();
     final success = await prefs.setString(_themeKey, mode.name);
     if (!success) {
-      debugPrint('Theme Persistence Warning: Failed to save mode "${mode.name}" to key "$_themeKey".');
+      throw StateError(
+        'Theme persistence failed: could not save mode "${mode.name}" to key "$_themeKey".',
+      );
     }
   }
 
