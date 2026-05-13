@@ -1167,7 +1167,7 @@ async function sendWelcome(to: string, name?: string) {
         title: "⭐ Top Favorites",
         rows: topCakes.map(c => ({
           id: `cake_${c.name}`,
-          title: c.name,
+          title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
           description: `Signature Selection`
         }))
       },
@@ -1175,7 +1175,7 @@ async function sendWelcome(to: string, name?: string) {
         title: "📋 Browse by Category",
         rows: categories.slice(0, 5).map(cat => ({
           id: `cat_${cat}`,
-          title: cat
+          title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat
         }))
       },
       {
@@ -1415,10 +1415,13 @@ async function handleCakeSelection(msg: IncomingMessage) {
       }]
     ));
   } else {
-    const buttons = options.map((opt, idx) => ({
-      id: `size_${idx}`,
-      title: `${opt.size} — ${formatPrice(opt.price)}`,
-    }));
+    const buttons = options.map((opt, idx) => {
+      const title = `${opt.size} — ${formatPrice(opt.price)}`;
+      return {
+        id: `size_${idx}`,
+        title: title.length > 20 ? title.substring(0, 17) + "..." : title,
+      };
+    });
     buttons.push({ id: "btn_menu", title: "📋 Back to Menu" });
 
     tasks.push(sendInteractiveButtons(
