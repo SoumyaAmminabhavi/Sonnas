@@ -1788,7 +1788,13 @@ async function handleDeliverySlotSelection(
 
     if (!datePart || !timePart) return;
 
-    const [year, month, day] = datePart.split("-").map(Number);
+    const dateNumbers = datePart.split("-").map(Number);
+    const [year, month, day] = dateNumbers;
+
+    if (year === undefined || month === undefined || day === undefined || isNaN(year) || isNaN(month) || isNaN(day)) {
+      return;
+    }
+
     const d = new Date(year, month - 1, day);
     
     deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
