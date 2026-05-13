@@ -77,7 +77,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       // 2. Insert Order (The primary goal)
       final totalWithExtras = cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05);
-      final totalInRupees = (totalWithExtras / 100).round();
+      final totalInPaise = totalWithExtras.round();
 
       await supabase.from('WhatsAppOrder').insert({
         'id': orderId,
@@ -88,7 +88,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'deliveryDate': widget.deliveryDate,
         'deliveryTime': widget.deliveryTime,
         'notes': widget.notes,
-        'totalPrice': totalInRupees,
+        'totalPrice': totalInPaise,
         'status': 'PENDING',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
@@ -111,7 +111,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'orderId': orderId,
         'cakeName': entry.value.name,
         'size': 'Standard',
-        'price': (entry.value.price / 100).round(),
+        'price': entry.value.price,
         'quantity': entry.value.quantity,
       }).toList();
       

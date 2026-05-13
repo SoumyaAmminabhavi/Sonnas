@@ -42,11 +42,12 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       if (targetOrderId == null) {
         final currentUser = supabase.auth.currentUser;
         if (currentUser == null) {
+          if (!mounted) return;
           setState(() => isLoading = false);
           return;
         }
 
-        final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
+        final userPhone = currentUser.userMetadata?['phone']?.toString() ?? '';
         final recentOrder = await supabase
             .from('WhatsAppOrder')
             .select('id')
@@ -69,16 +70,19 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             .select('*')
             .eq('orderId', targetOrderId);
 
+        if (!mounted) return;
         setState(() {
           orderData = orderResponse;
           orderItems = itemsResponse;
           isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() => isLoading = false);
       }
     } catch (e) {
       debugPrint("Error fetching order: $e");
+      if (!mounted) return;
       setState(() => isLoading = false);
     }
   }

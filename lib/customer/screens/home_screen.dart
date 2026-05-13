@@ -270,6 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Image.network(
                                   cake['image']!,
                                   fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: primaryColor.withValues(alpha: 0.1),
+                                    child: const Icon(Icons.cake, color: primaryColor),
+                                  ),
                                 ),
                               ),
                             ),

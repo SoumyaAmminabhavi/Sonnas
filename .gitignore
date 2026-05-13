@@ -47,5 +47,7 @@ app.*.map.json
 # Environment variables (Secrets)
 .env
 .env.*
+!.env.example
 .gemini/
 .gradle/
+android/.gradle/

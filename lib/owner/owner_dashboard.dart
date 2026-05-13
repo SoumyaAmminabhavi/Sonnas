@@ -344,6 +344,10 @@ class _MainContent extends StatelessWidget {
               }
 
               final List<_OrderCard> orders = orderData.map((o) {
+                final rawOrderId = o['id']?.toString() ?? '';
+                final safeOrderId = rawOrderId.trim();
+                final hasValidId = safeOrderId.isNotEmpty;
+                
                 final status = (o['status'] ?? 'PENDING').toString().toUpperCase();
                 
                 Color statusColor = _primaryColor;
@@ -366,13 +370,14 @@ class _MainContent extends StatelessWidget {
 
                 return _OrderCard(
                   id: "#${o['orderNumber']?.toString().split('-').last ?? 'ORD-0000'}",
-                  orderId: o['id'] ?? '',
+                  orderId: hasValidId ? safeOrderId : 'unknown',
                   status: statusText,
                   statusColor: statusColor,
                   statusBg: statusBg,
                   title: o['customerName'] ?? "Boutique Order",
                   customer: "Phone: ${o['phone'] ?? 'Unknown'}",
                   imageUrl: o['customImageUrl'] ?? _imgOrder1,
+                  isEnabled: hasValidId,
                 );
 
               }).toList();
@@ -609,6 +614,7 @@ class _OrderCard extends StatelessWidget {
   final String title;
   final String customer;
   final String imageUrl;
+  final bool isEnabled;
 
   const _OrderCard({
     required this.id,
@@ -619,22 +625,25 @@ class _OrderCard extends StatelessWidget {
     required this.title,
     required this.customer,
     required this.imageUrl,
+    this.isEnabled = true,
   });
 
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
+      onTap: isEnabled ? () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => OrderDetailsPage(orderId: orderId),
           ),
         );
-      },
+      } : null,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.6,
+        child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -721,6 +730,7 @@ class _OrderCard extends StatelessWidget {
         ],
       ),
     ),
-   );
+   ),
+  );
   }
 }

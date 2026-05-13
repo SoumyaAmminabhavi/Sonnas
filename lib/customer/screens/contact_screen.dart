@@ -97,22 +97,29 @@ class _ContactScreenState extends State<ContactScreen> {
       final double price = item['price'] ?? 0.0;
       final String image = item['image'] ?? '';
       
-      // Use the stable ID system: reorder_{name}
-      cart.addItem("reorder_$name", name, price, image);
+      cart.addItem(
+        "reorder_$name", 
+        name, 
+        price, 
+        image,
+        quantity: 1, // Past items are added one by one from this list
+      );
     }
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Re-added ${_realCakes.length} items to your bag!"),
-        backgroundColor: secondaryColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Re-added ${_realCakes.length} items to your bag!"),
+          backgroundColor: secondaryColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
-    Navigator.push(
-      context, 
-      MaterialPageRoute(builder: (context) => const CartScreen())
-    );
+      Navigator.push(
+        context, 
+        MaterialPageRoute(builder: (context) => const CartScreen())
+      );
+    }
   }
 
   Future<void> _submitReport() async {
@@ -154,7 +161,7 @@ class _ContactScreenState extends State<ContactScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Failed to submit report. Please try again later."),
+            content: Text("Problem submitting report. Please try again later."),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),

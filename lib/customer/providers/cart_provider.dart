@@ -19,11 +19,11 @@ class CartProvider with ChangeNotifier {
     return _items.values.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
-  void addItem(String id, String name, double price, String imageUrl) {
+  void addItem(String id, String name, double price, String imageUrl, {int quantity = 1}) {
     if (_items.containsKey(id)) {
-      _items[id]!.quantity++;
+      _items[id]!.quantity += quantity;
     } else {
-      _items[id] = CartItem(id: id, name: name, price: price, imageUrl: imageUrl);
+      _items[id] = CartItem(id: id, name: name, price: price, imageUrl: imageUrl, quantity: quantity);
     }
     notifyListeners();
   }

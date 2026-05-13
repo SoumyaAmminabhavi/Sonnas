@@ -137,6 +137,8 @@ class _OrdersList extends StatelessWidget {
 
         var data = snapshot.data ?? [];
         if (status == 'SHIPPED_OR_DELIVERED') {
+          // Note: supabase_flutter stream doesn't support .inFilter yet, so we filter locally
+          // for the combined view but keep it optimized by only streaming relevant columns if needed.
           data = data.where((o) => o['status'] == 'SHIPPED' || o['status'] == 'DELIVERED').toList();
         }
 

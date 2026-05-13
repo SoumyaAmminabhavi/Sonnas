@@ -51,17 +51,18 @@ std::string Utf8FromUtf16(const wchar_t* utf16_string) {
   if (required_length <= 0) {
     return std::string();
   }
-  size_t target_length = static_cast<size_t>(required_length - 1);  // strip NUL
   std::string utf8_string;
-  if (target_length == 0 || target_length > utf8_string.max_size()) {
+  if (required_length <= 1 ||
+      static_cast<size_t>(required_length) > utf8_string.max_size()) {
     return utf8_string;
   }
-  utf8_string.resize(target_length);
+  utf8_string.resize(static_cast<size_t>(required_length));
   int converted_length = ::WideCharToMultiByte(
       CP_UTF8, WC_ERR_INVALID_CHARS, utf16_string,
-      -1, utf8_string.data(), static_cast<int>(required_length), nullptr, nullptr);
+      -1, utf8_string.data(), static_cast<int>(utf8_string.size()), nullptr, nullptr);
   if (converted_length == 0) {
     return std::string();
   }
+  utf8_string.resize(converted_length - 1); // strip NUL
   return utf8_string;
 }

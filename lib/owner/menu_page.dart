@@ -79,7 +79,22 @@ class _AddMenuContentState extends State<_AddMenuContent> {
 
       // 2. Insert the CakeOption (Price/Size)
       // Standardize: Convert INR to Paise for backend storage
-      final priceInRupees = double.tryParse(_priceController.text.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+      final rawPrice = _priceController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final priceInRupees = double.tryParse(rawPrice) ?? 0.0;
+      
+      if (priceInRupees <= 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Please enter a valid price greater than zero."),
+              backgroundColor: _secondaryColor,
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final priceInPaise = (priceInRupees * 100).toInt();
 
       await supabase.from('CakeOption').insert({

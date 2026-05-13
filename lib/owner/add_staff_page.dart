@@ -29,13 +29,13 @@ class _AddStaffPageState extends State<AddStaffPage> {
   final List<String> _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
   final List<String> _allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   final Map<String, String> _dayLabels = {
-    'Sun': 'S',
+    'Sun': 'Su',
     'Mon': 'M',
-    'Tue': 'T',
+    'Tue': 'Tu',
     'Wed': 'W',
-    'Thu': 'T',
+    'Thu': 'Th',
     'Fri': 'F',
-    'Sat': 'S',
+    'Sat': 'Sa',
   };
 
   @override
@@ -216,7 +216,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         if (isMobile) ...[
           _buildGhostInput(
             label: "PHONE NUMBER",
-            placeholder: "+1 (555) 000-0000",
+            placeholder: "9876543210",
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
           ),
@@ -232,7 +232,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               Expanded(
                 child: _buildGhostInput(
                   label: "PHONE NUMBER",
-                  placeholder: "+1 (555) 000-0000",
+                  placeholder: "9876543210",
                   keyboardType: TextInputType.phone,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
                 ),
@@ -614,7 +614,15 @@ class _AddStaffPageState extends State<AddStaffPage> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () {},
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Staff creation restricted. Please contact system administrator."),
+                    backgroundColor: _secondaryColor,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
               borderRadius: BorderRadius.circular(100),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 18),

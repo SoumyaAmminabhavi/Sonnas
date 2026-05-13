@@ -234,7 +234,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        "₹${orderData!['totalPrice']}",
+                                        "₹${(orderData!['totalPrice'] / 100).toStringAsFixed(2)}",
                                         style: GoogleFonts.notoSerif(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -275,7 +275,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                   child: _SelectionTile(
                                     title: item['cakeName'] ?? "Exquisite Creation",
                                     subtitle: "Quantity: ${item['quantity']}",
-                                    price: "₹${item['price']}",
+                                    price: "₹${(item['price'] / 100).toStringAsFixed(2)}",
                                     imageUrl: orderData!['customImageUrl'] ??
                                         "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=60",
                                     cs: cs,

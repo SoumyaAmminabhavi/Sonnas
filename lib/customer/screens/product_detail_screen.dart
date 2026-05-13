@@ -325,9 +325,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: InkWell(
                             onTap: () {
                               final String id = "${widget.title}_${selectedSize}_${_messageController.text}";
-                              for (int i = 0; i < quantity; i++) {
-                                context.read<CartProvider>().addItem(id, "${widget.title} ($selectedSize)", currentPriceValue * 100, widget.imageUrl);
-                              }
+                              context.read<CartProvider>().addItem(
+                                id, 
+                                "${widget.title} ($selectedSize)", 
+                                currentPriceValue * 100, 
+                                widget.imageUrl,
+                                quantity: quantity,
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${widget.title} added to bag"), backgroundColor: accentRed, behavior: SnackBarBehavior.floating));
                               Navigator.pop(context);
                             },
