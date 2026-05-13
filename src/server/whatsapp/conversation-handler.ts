@@ -1762,7 +1762,7 @@ async function handleDeliverySlotSelection(
     if (!datePart || !timePart) return;
 
     const [year, month, day] = datePart.split("-").map(Number);
-    const d = new Date(year!, month! - 1, day!);
+    const d = new Date(year, month - 1, day);
     
     deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
     deliveryTime = timePart.charAt(0).toUpperCase() + timePart.slice(1); // "Morning", etc.
