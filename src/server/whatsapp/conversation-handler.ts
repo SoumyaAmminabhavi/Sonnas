@@ -1524,10 +1524,10 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
 
     // Case 1: Transitioning from Quantity selection, Size selection (Shortcut), OR "Add to Order" clicked
     const isAdding = !!(
-      msg.interactiveId?.startsWith("qty_") || 
-      msg.interactiveId?.startsWith("size_") || 
-      msg.text || 
-      msg.interactiveId === "btn_add_to_cart"
+      (msg.interactiveId?.startsWith("qty_") ?? false) || 
+      (msg.interactiveId?.startsWith("size_") ?? false) || 
+      (msg.text ?? false) || 
+      (msg.interactiveId === "btn_add_to_cart")
     );
 
     if (isAdding && hasActiveSelection) {
