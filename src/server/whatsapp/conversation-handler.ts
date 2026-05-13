@@ -886,7 +886,10 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
     ]);
-    await sendTextMessage(msg.from, "Got it! Your order has been cleared. ✅\n\nWhenever you're craving something special, just say *Hi* or *Menu* to see what's baking today! 🍰");
+    await sendTextMessage(
+      msg.from,
+      "Your order has been cleared successfully. ✅\n\nWhenever you're ready for your next treat, just send *Hi* or *Menu* to explore today’s fresh creations and signature desserts. 🍰✨"
+    );
     return;
   }
 
