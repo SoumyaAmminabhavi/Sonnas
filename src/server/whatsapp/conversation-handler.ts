@@ -1522,8 +1522,13 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
     const isCheckout = msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now";
     const hasActiveSelection = !!(convo.selectedCake && convo.selectedSize && convo.selectedPrice);
 
-    // Case 1: Transitioning from Quantity selection OR "Add to Order" clicked
-    const isAdding = !!(msg.interactiveId?.startsWith("qty_") ?? msg.text ?? (msg.interactiveId === "btn_add_to_cart"));
+    // Case 1: Transitioning from Quantity selection, Size selection (Shortcut), OR "Add to Order" clicked
+    const isAdding = !!(
+      msg.interactiveId?.startsWith("qty_") || 
+      msg.interactiveId?.startsWith("size_") || 
+      msg.text || 
+      msg.interactiveId === "btn_add_to_cart"
+    );
 
     if (isAdding && hasActiveSelection) {
       const quantity = convo.selectedQuantity ?? 1;
