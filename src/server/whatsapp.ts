@@ -353,6 +353,10 @@ export async function markAsRead(messageId: string) {
     });
 
   } catch (e) {
-    console.error("[WhatsApp] markAsRead error:", e);
+    if (e instanceof Error && e.name === "AbortError") {
+      console.warn(`[WhatsApp] markAsRead timed out for message ${messageId} (Non-critical)`);
+    } else {
+      console.error("[WhatsApp] markAsRead error:", e);
+    }
   }
 }
