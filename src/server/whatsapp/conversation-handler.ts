@@ -711,6 +711,15 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     }
   }
 
+  // ── Integrity Check: Catch "Zombie" States ──────────────────────────────
+  const statesRequiringCake: ConversationState[] = ["SELECTING_SIZE", "SELECTING_QUANTITY"];
+  if (statesRequiringCake.includes(state) && !convo.selectedCake) {
+    console.warn(`[WhatsApp] Integrity Check Failed: ${msg.from} is in ${state} but no cake is selected. Healing...`);
+    await updateState(msg.from, "IDLE", RESET_STATE);
+    state = "IDLE";
+    convo = await getConversation(msg.from, msg.name, true);
+  }
+
   const input = msg.text?.trim().toLowerCase() ?? "";
   const interactiveId = msg.interactiveId ?? "";
 
@@ -1411,7 +1420,7 @@ async function handleSizeSelection(
   if (!cake) {
     console.warn(`[WhatsApp] handleSizeSelection: Cake not found for selection "${convo.selectedCake}"`);
     await updateState(msg.from, "IDLE", RESET_STATE);
-    await sendTextMessage(msg.from, "Session expired or cake not found. Please select a cake from the menu again. 🎂");
+    await sendTextMessage(msg.from, "Oops! I seem to have lost track of which cake you were looking at. 🧁\n\nStarting fresh for you! Please select a cake from the menu below.");
     await sendMenu(msg.from);
     return;
   }
