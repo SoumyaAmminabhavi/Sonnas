@@ -1157,7 +1157,7 @@ async function sendWelcome(to: string, name?: string) {
 
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
   const cakes = await safeGetCakes();
-  const topCakes = cakes.slice(0, 3);
+  const topCakes = cakes.slice(0, 2);
   
   // Get unique categories for the browse section
   const categories = Array.from(new Set(cakes.map(c => c.category).filter(Boolean))) as string[];
@@ -1178,7 +1178,7 @@ async function sendWelcome(to: string, name?: string) {
       },
       {
         title: "📋 Browse by Category",
-        rows: categories.slice(0, 5).map(cat => ({
+        rows: categories.slice(0, 6).map(cat => ({
           id: `cat_${cat}`,
           title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat
         }))
