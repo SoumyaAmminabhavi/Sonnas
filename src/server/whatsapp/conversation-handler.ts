@@ -390,13 +390,17 @@ async function updateState(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { cart, lastActivityAt: _, ...otherExtra } = extra;
 
-  void withTimeout(
+  // Return the promise so it can be awaited by the caller
+  return withTimeout(
     db.whatsAppConversation.update({
       where: { phone },
       data: { state, lastMessageAt: new Date(), lastActivityAt: new Date(), ...otherExtra },
     }),
     DB_TIMEOUT
-  ).catch((e) => console.error("[WhatsApp] updateState DB write failed:", e));
+  ).catch((e) => {
+    console.error(`[WhatsApp] updateState DB write failed for ${phone}:`, e);
+    // Don't throw here to avoid crashing the whole flow, but log clearly
+  });
 }
 
 
