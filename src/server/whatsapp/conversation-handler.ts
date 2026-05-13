@@ -198,7 +198,7 @@ async function findCake(query: string | number | null | undefined): Promise<Cake
 
 // ─── DB Resilience ─────────────────────────────────────────────────────────
 
-const DB_TIMEOUT = 5000; // 5 seconds
+const DB_TIMEOUT = 15000; // 15 seconds
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
