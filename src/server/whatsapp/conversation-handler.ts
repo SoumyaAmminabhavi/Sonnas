@@ -281,7 +281,7 @@ async function sendMenuPDF(to: string) {
   try {
     // Small delay to ensure the previous message (greeting/confirmation) is processed first
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     await sendDocumentMessage(
       to,
       "/menu_compressed.pdf",
@@ -351,11 +351,11 @@ async function getConversation(phone: string, name?: string, force = false): Pro
 
       if (hasStaleItems) {
         console.log(`[WhatsApp] Clearing stale items for ${phone} (older than 24h)`);
-        void db.whatsAppCartItem.deleteMany({ 
-          where: { 
-            phone, 
-            createdAt: { lt: oneDayAgo } 
-          } 
+        void db.whatsAppCartItem.deleteMany({
+          where: {
+            phone,
+            createdAt: { lt: oneDayAgo }
+          }
         }).catch(() => null);
 
         // Keep fresh items in memory
@@ -468,7 +468,7 @@ async function removeLastItem(phone: string) {
     if (!lastItem) return;
 
     await db.whatsAppCartItem.delete({ where: { id: lastItem.id } });
-    
+
     if (cached) {
       cached.cart = cart.slice(0, -1);
       convoCache.set(phone, cached);
@@ -634,7 +634,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
       if (await isBotPaused() && !isStatusRequest) {
         await sendTextMessage(
-          msg.from, 
+          msg.from,
           "\ud83c\udf38 *Sonna's Patisserie is currently resting.*\n\nOur artisan kitchen is taking a short break to prepare for upcoming collections. We'll be back shortly to delight you! \u2728\n\n_If you have an existing order, don't worry \u2014 our team is still working on it!_"
         );
         return;
@@ -642,7 +642,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
 
       await refreshActivity(phone);
       await _internalHandleMessage(msg);
-      
+
       // Only mark as processed after successful handling
       markMessageProcessed(msg.messageId);
     } catch (err) {
@@ -673,7 +673,7 @@ async function refreshActivity(phone: string) {
     where: { phone },
     data: { lastActivityAt: new Date() }
   }).catch(() => null);
-  
+
   const cached = convoCache.get(phone);
   if (cached) {
     cached.lastActivityAt = new Date();
@@ -700,7 +700,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   if (state !== "IDLE" && convo.lastActivityAt) {
     const lastActivity = new Date(convo.lastActivityAt).getTime();
     const timeoutMins = await getSessionTimeoutMins();
-    
+
     if (Date.now() - lastActivity > timeoutMins * 60 * 1000) {
       console.log(`[WhatsApp] Session timeout for ${msg.from} (${timeoutMins}m). Resetting.`);
       await Promise.all([
@@ -708,7 +708,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
         updateState(msg.from, "IDLE", RESET_STATE),
       ]);
       await sendTextMessage(msg.from, "Your previous session timed out due to inactivity. Starting fresh for you! ✨");
-      
+
       // Reload conversation with fresh state
       convo = await getConversation(msg.from, msg.name, true);
       state = convo.state as ConversationState;
@@ -886,7 +886,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       clearCart(msg.from),
       updateState(msg.from, "IDLE", RESET_STATE),
     ]);
-    await sendTextMessage(msg.from, "Got it! Your order has been cleared. ✅\n\nWhenever you're craving something special, just say *HI* or *Menu* to see what's baking today! 🍰");
+    await sendTextMessage(msg.from, "Got it! Your order has been cleared. ✅\n\nWhenever you're craving something special, just say *Hi* or *Menu* to see what's baking today! 🍰");
     return;
   }
 
@@ -1128,7 +1128,7 @@ async function sendWelcome(to: string, name?: string) {
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
   const cakes = await safeGetCakes();
   const topCakes = cakes.slice(0, 2);
-  
+
   // Get unique categories for the browse section
   const categories = Array.from(new Set(cakes.map(c => c.category).filter(Boolean))) as string[];
 
@@ -1489,7 +1489,7 @@ async function handleQuantitySelection(
   }
 
   await updateState(msg.from, "SELECTING_QUANTITY", { selectedQuantity: quantity });
-  
+
   // Transition to Cart Actions
   await handleCartActions(msg, { ...convo, selectedQuantity: quantity } as Conversation);
 }
@@ -1501,9 +1501,9 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
 
     // Case 1: Transitioning from Quantity selection, Size selection (Shortcut), OR "Add to Order" clicked
     const isAdding = !!(
-      (msg.interactiveId?.startsWith("qty_") ?? false) || 
-      (msg.interactiveId?.startsWith("size_") ?? false) || 
-      (msg.text ?? false) || 
+      (msg.interactiveId?.startsWith("qty_") ?? false) ||
+      (msg.interactiveId?.startsWith("size_") ?? false) ||
+      (msg.text ?? false) ||
       (msg.interactiveId === "btn_add_to_cart")
     );
 
@@ -1525,7 +1525,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
         { id: "btn_checkout", title: "💳 Place My Order" },
         { id: "btn_menu", title: "➕ Add More" },
       ];
-      
+
       if (updatedConvo.cart && updatedConvo.cart.length > 1) {
         cartButtons.push({ id: "btn_remove_last", title: "❌ Remove Last" });
       } else {
@@ -1535,11 +1535,11 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
       await Promise.all([
         sendTextMessage(msg.from, `✨ *${convo.selectedCake}* added to your order!`),
         sendInteractiveButtons(msg.from, summary, cartButtons),
-        updateState(msg.from, "IDLE", { 
-          selectedCake: null, 
-          selectedSize: null, 
-          selectedPrice: null, 
-          selectedQuantity: null 
+        updateState(msg.from, "IDLE", {
+          selectedCake: null,
+          selectedSize: null,
+          selectedPrice: null,
+          selectedQuantity: null
         })
       ]);
       return;
@@ -1701,7 +1701,7 @@ async function handleInstructionsInput(
     }),
     sendDeliverySlotOptions(msg.from)
   ]);
-  
+
   // Send a separate Back button since the list doesn't have one
   await sendInteractiveButtons(msg.from, "_Need to change something?_", [
     { id: "btn_back", title: "⬅️ Back" },
@@ -1715,7 +1715,7 @@ function getAvailableSlots() {
   // Convert current UTC time to IST (UTC + 5.5 hours)
   const now = new Date();
   const today = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-  
+
   // Define standard time windows
   const windows = [
     { id: "morning", title: "Morning", time: "10 AM - 1 PM", startHour: 10 },
@@ -1747,7 +1747,7 @@ function getAvailableSlots() {
 
 async function sendDeliverySlotOptions(to: string) {
   const slots = getAvailableSlots();
-  
+
   await sendInteractiveList(
     to,
     "🕒 Delivery Timing",
@@ -1784,7 +1784,7 @@ async function handleDeliverySlotSelection(
     }
 
     const d = new Date(year, month - 1, day);
-    
+
     deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
     deliveryTime = timePart.charAt(0).toUpperCase() + timePart.slice(1); // "Morning", etc.
   } else if (msg.text?.trim()) {
@@ -1858,7 +1858,7 @@ async function handleCustomRequest(
 
     // If text looks like an address (has numbers and multiple words), or we already have notes, move to address collection
     const looksLikeAddress = /\d+/.test(sanitizedText) && sanitizedText.split(/\s+/).length > 3;
-    
+
     if (looksLikeAddress || convo.selectedNotes) {
       await Promise.all([
         updateState(msg.from, "ASKING_ADDRESS", {
@@ -2035,7 +2035,7 @@ async function handleConfirmation(
         deliveryTime: freshConvo.selectedDeliveryTime ?? null,
         status: "PENDING",
         paymentStatus: "PENDING",
-        razorpayOrderId: "", 
+        razorpayOrderId: "",
         paymentLink: "",
         isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
         customImageUrl: freshConvo.customImageUrl ?? null,
@@ -2179,7 +2179,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         "\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n\nReply *Skip* if none.",
         [
           { id: "btn_back", title: "⬅️ Back" },
-         ]
+        ]
       );
       break;
     case "ASKING_DELIVERY_DATE":
