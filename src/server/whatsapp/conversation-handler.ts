@@ -888,7 +888,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     ]);
     await sendTextMessage(
       msg.from,
-      "Your order has been cleared successfully. ✅\n\nWhenever you're ready for your next treat, just send *Hi* or *Menu* to explore today’s fresh creations and signature desserts. 🍰✨"
+      "Your cart has been cleared successfully. ✅\n\nWhenever you're ready for your next treat, just send *Hi* or *Menu* to explore today’s fresh creations and signature desserts. 🍰✨"
     );
     return;
   }
@@ -1138,7 +1138,7 @@ async function sendWelcome(to: string, name?: string) {
   await sendInteractiveList(
     to,
     "Sonna's Patisserie",
-    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? \ud83c\udf38`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all cakes\n• Send *Status* to see order history\n• Send *Cancel* to clear your cart`,
     "View Menu",
     [
       {
