@@ -239,7 +239,7 @@ interface Conversation {
   selectedDeliveryTime?: string | null;
   customImageUrl?: string | null;
   cart?: CartItem[];
-  lastActivityAt?: Date | string | null;
+  lastActivityAt?: Date | string;
 }
 
 
@@ -387,7 +387,7 @@ async function updateState(
   updateConvoCache(phone, { state, ...extra });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { cart, ...otherExtra } = extra;
+  const { cart, lastActivityAt: _, ...otherExtra } = extra;
 
   void withTimeout(
     db.whatsAppConversation.update({
