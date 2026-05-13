@@ -9,6 +9,7 @@ import 'expense_reports_page.dart';
 import '../services/staff_service.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
+import '../services/theme_service.dart';
 
 
 
@@ -204,7 +205,9 @@ class _SettingsContentState extends State<_SettingsContent> {
             (val) {
               setState(() {
                 _isDarkMode = val;
-                themeController.value = val ? ThemeMode.dark : ThemeMode.light;
+                final mode = val ? ThemeMode.dark : ThemeMode.light;
+                themeController.value = mode;
+                ThemeService.saveThemeMode(mode);
               });
             },
           ),

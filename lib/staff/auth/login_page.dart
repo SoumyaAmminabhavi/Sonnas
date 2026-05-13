@@ -215,14 +215,14 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
             fit: BoxFit.cover,
           ),
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 stops: [0.0, 0.85],
                 colors: [
-                  Color(0x882B1606), 
-                  Color(0xF2FFF8F5), 
+                  const Color(0x882B1606), 
+                  cs.surface.withValues(alpha: 0.95), 
                 ],
               ),
             ),

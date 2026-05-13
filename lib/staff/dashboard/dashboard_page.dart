@@ -379,7 +379,7 @@ class _MetricCard extends StatelessWidget {
       width: fullWidth ? double.infinity : null,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: cs.primary.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 4))],
       ),
@@ -483,7 +483,7 @@ class _TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.08)),
       ),
@@ -536,7 +536,7 @@ class _TaskCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cs.surfaceContainer,
                   border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.05))),
                 ),
                 child: SizedBox(
@@ -737,7 +737,7 @@ class _TaskItemState extends State<_TaskItem> {
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: widget.cs.primary.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 10))], border: isDone ? Border.all(color: Colors.green.withValues(alpha: 0.3)) : null),
+      decoration: BoxDecoration(color: widget.cs.surfaceContainerLow, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: widget.cs.primary.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 10))], border: isDone ? Border.all(color: Colors.green.withValues(alpha: 0.3)) : null),
       child: Row(
         children: [
           Checkbox(value: isDone, onChanged: (v) => setState(() => isDone = v ?? false), activeColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4))),

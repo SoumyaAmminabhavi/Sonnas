@@ -1,8 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
-import 'biometric_options_stub.dart'
-    if (dart.library.io) 'biometric_options_mobile.dart'
-    if (dart.library.js_util) 'biometric_options_web.dart';
 
 class BiometricService {
   static final LocalAuthentication _auth = LocalAuthentication();
@@ -24,10 +21,11 @@ class BiometricService {
   static Future<bool> authenticate() async {
     if (kIsWeb) return false;
     try {
-      final dynamic auth = _auth;
-      return await auth.authenticate(
+      // In version 3.0.1, authenticate takes parameters directly
+      return await _auth.authenticate(
         localizedReason: 'Scan your fingerprint or face to log in',
-        options: getAuthOptions(),
+        biometricOnly: false,
+        persistAcrossBackgrounding: true, // This is 'stickyAuth'
       );
     } catch (e) {
       debugPrint("Biometric auth failed: $e");
