@@ -392,8 +392,8 @@ class _MenuItemCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: cs.surfaceContainer,
-          borderRadius: BorderRadius.circular(16),
+          color: cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
           boxShadow: [
             BoxShadow(
@@ -407,7 +407,7 @@ class _MenuItemCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(16),
+                left: Radius.circular(20),
               ),
               child: SizedBox(
                 width: 110,
@@ -936,6 +936,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       'Cookies & Macarons',
       'Savory Delights',
       'Seasonal Cakes',
+      'Mini Cheesecakes',
       'Slices',
     ];
 

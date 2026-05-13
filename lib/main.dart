@@ -10,6 +10,7 @@ import 'widgets/landing_page.dart';
 import 'widgets/modern_drawer.dart';
 import 'widgets/glass_bottom_nav.dart';
 import 'services/auth_service.dart';
+import 'services/theme_service.dart';
 
 
 void main() async {
@@ -24,6 +25,15 @@ void main() async {
     
     // Pre-warm owner authentication (fetches PIN hash early for instant login)
     unawaited(AuthService.prewarmOwnerAuth());
+    
+    // Load saved theme
+    try {
+      final savedTheme = await ThemeService.getThemeMode();
+      themeController.value = savedTheme;
+    } catch (e) {
+      debugPrint('Theme Loading Error: $e');
+      themeController.value = ThemeMode.light;
+    }
     
     runApp(
       const ProviderScope(
@@ -88,6 +98,17 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
           surfaceContainerLow: Color(0xFFFFF5F9),
           outlineVariant: Color(0xFFFFB6D3),
         ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF701235),
+          contentTextStyle: GoogleFonts.plusJakartaSans(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 8,
+        ),
         textTheme: _textTheme(const Color(0xFF701235)),
       ),
       darkTheme: ThemeData(
@@ -103,6 +124,17 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
           surfaceContainer: Color(0xFF2D1B22),
           surfaceContainerLow: Color(0xFF25161C),
           outlineVariant: Color(0xFF701235),
+        ),
+        snackBarTheme: SnackBarThemeData(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFFFF4D8D),
+          contentTextStyle: GoogleFonts.plusJakartaSans(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 8,
         ),
         textTheme: _textTheme(const Color(0xFFFFF0F6)),
       ),

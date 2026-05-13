@@ -173,7 +173,7 @@ class _StaffCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(

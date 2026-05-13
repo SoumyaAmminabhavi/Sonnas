@@ -346,11 +346,12 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                 ),
                                 child: Center(
                                   child: Container(
-                                    constraints: const BoxConstraints(maxWidth: 850),
+                                    constraints: const BoxConstraints(maxWidth: 850, maxHeight: 56),
                                     child: Row(
                                       children: [
-                                        Expanded(
-                                          child: () {
+                                          Expanded(
+                                            flex: 3,
+                                            child: () {
                                             final status = (order['status'] ?? 'PENDING').toString().toUpperCase();
                                             String label = "CONFIRM";
                                             String next = "CONFIRMED";
@@ -386,7 +387,17 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                 try {
                                                   await OrderService.updateOrderStatus(order['id'], next);
                                                   if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Order updated to $next")));
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Row(
+                                                          children: [
+                                                            const Icon(Icons.check_circle_outline, color: Colors.white),
+                                                            const SizedBox(width: 12),
+                                                            Expanded(child: Text("Order updated to $next")),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
                                                   }
                                                 } catch (e) {
                                                   if (context.mounted) {
@@ -397,9 +408,10 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                             );
                                           }(),
                                         ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: _ElegantAction(
+                                         const SizedBox(width: 12),
+                                         Expanded(
+                                           flex: 2,
+                                           child: _ElegantAction(
                                             icon: Icons.chat_bubble_outline,
                                             label: "CONTACT",
                                             cs: cs,
@@ -408,7 +420,18 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                               final phone = order['phone'] ?? conversation?['phone'];
                                               if (phone == null || phone.toString().isEmpty) {
                                                 if (context.mounted) {
-                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No contact number available.")));
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                      content: Row(
+                                                        children: [
+                                                          const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                                          const SizedBox(width: 12),
+                                                          Expanded(child: Text("No contact number available.")),
+                                                        ],
+                                                      ),
+                                                      backgroundColor: Colors.orange,
+                                                    ),
+                                                  );
                                                 }
                                                 return;
                                               }
@@ -657,18 +680,64 @@ class _ElegantAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDisabled = onPressed == null;
+    final Color disabledColor = cs.onSurface.withValues(alpha: 0.3);
+
     return Container(
-      height: 54,
+      height: 56,
       decoration: BoxDecoration(
-        color: isPrimary ? cs.primary : cs.surface,
+        gradient: (isPrimary && !isDisabled) ? LinearGradient(
+          colors: [cs.primary, cs.primary.withValues(alpha: 0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ) : null,
+        color: isDisabled 
+            ? (isPrimary ? cs.primary.withValues(alpha: 0.1) : cs.surface)
+            : (!isPrimary ? cs.surface : null),
         borderRadius: BorderRadius.circular(16),
-        border: !isPrimary ? Border.all(color: cs.primary.withValues(alpha: 0.1)) : null,
-        boxShadow: isPrimary ? [BoxShadow(color: cs.primary.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8))] : null,
+        border: !isPrimary || isDisabled ? Border.all(
+          color: isDisabled 
+              ? cs.onSurface.withValues(alpha: 0.05) 
+              : cs.primary.withValues(alpha: 0.15), 
+          width: 1.5
+        ) : null,
+        boxShadow: isDisabled ? null : [
+          BoxShadow(
+            color: isPrimary ? cs.primary.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          )
+        ],
       ),
-      child: TextButton.icon(
-        onPressed: onPressed,
-        icon: Icon(icon, size: 20, color: isPrimary ? Colors.white : cs.primary),
-        label: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: isPrimary ? Colors.white : cs.primary)),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: isDisabled ? disabledColor : (isPrimary ? Colors.white : cs.primary)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                      color: isDisabled ? disabledColor : (isPrimary ? Colors.white : cs.primary),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

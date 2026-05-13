@@ -9,6 +9,7 @@ import 'expense_reports_page.dart';
 import '../services/staff_service.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
+import '../services/theme_service.dart';
 
 
 
@@ -201,11 +202,24 @@ class _SettingsContentState extends State<_SettingsContent> {
             "Dark Mode",
             "Toggle between light and dark aesthetics",
             _isDarkMode,
-            (val) {
+            (val) async {
+              final prevIsDark = _isDarkMode;
+              final prevTheme = themeController.value;
+              final mode = val ? ThemeMode.dark : ThemeMode.light;
               setState(() {
                 _isDarkMode = val;
-                themeController.value = val ? ThemeMode.dark : ThemeMode.light;
+                themeController.value = mode;
               });
+              try {
+                await ThemeService.saveThemeMode(mode);
+              } catch (e) {
+                debugPrint("Theme Persistence Error: $e");
+                if (!mounted) return;
+                setState(() {
+                  _isDarkMode = prevIsDark;
+                  themeController.value = prevTheme;
+                });
+              }
             },
           ),
         ],

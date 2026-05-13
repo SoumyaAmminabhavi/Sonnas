@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/biometric_service.dart';
 import '../../services/staff_service.dart';
 import '../../services/session_service.dart';
+import '../../services/theme_service.dart';
+import '../../main.dart';
 import '../shared/staff_roles.dart';
 
 class StaffProfilePage extends StatefulWidget {
@@ -29,11 +31,13 @@ class StaffProfilePage extends StatefulWidget {
 
 class _StaffProfilePageState extends State<StaffProfilePage> {
   late bool _biometricEnabled;
+  late bool _isDarkMode;
 
   @override
   void initState() {
     super.initState();
     _biometricEnabled = widget.currentBiometricStatus;
+    _isDarkMode = themeController.value == ThemeMode.dark;
   }
 
   String get _displayName {
@@ -190,7 +194,7 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF4E5),
+                    color: widget.cs.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
@@ -245,7 +249,7 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: widget.cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -303,36 +307,110 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                                 if (!mounted) return;
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("No biometric hardware detected on this device."),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          const Icon(Icons.error_outline, color: Colors.white),
+                                          const SizedBox(width: 12),
+                                          Expanded(child: Text("No biometric hardware detected.", overflow: TextOverflow.ellipsis)),
+                                        ],
+                                      ),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                  );
                                 }
                                 return;
                               }
                               final bool success = await BiometricService.authenticate();
                               if (success) {
                                 final bool dbUpdated = await StaffService.updateBiometricStatus(widget.staffId, val);
-                                if (dbUpdated && mounted) {
+                                if (!context.mounted) return;
+                                
+                                if (dbUpdated) {
                                   setState(() => _biometricEnabled = val);
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Biometric Login Enabled! ✅")),
-                                    );
-                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          const Icon(Icons.check_circle_outline, color: Colors.white),
+                                          const SizedBox(width: 12),
+                                          Expanded(child: Text("Biometric Login Enabled", overflow: TextOverflow.ellipsis)),
+                                        ],
+                                      ),
+                                    ),
+                                  );
                                 }
                               }
                             } else {
                               final bool dbUpdated = await StaffService.updateBiometricStatus(widget.staffId, false);
-                              if (dbUpdated && mounted) {
+                              if (!context.mounted) return;
+
+                              if (dbUpdated) {
                                 setState(() => _biometricEnabled = false);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Biometric Login Disabled")),
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.info_outline, color: Colors.white),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: Text("Biometric Login Disabled", overflow: TextOverflow.ellipsis)),
+                                      ],
+                                    ),
+                                  ),
                                 );
-                                }
                               }
+                            }
+                          },
+                        ),
+                      ),
+                      const Divider(height: 32),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: widget.cs.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                            color: widget.cs.primary,
+                          ),
+                        ),
+                        title: Text(
+                          "Dark Mode",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.bold,
+                            color: widget.cs.secondary,
+                          ),
+                        ),
+                        subtitle: Text(
+                          "Adjust app appearance",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: widget.cs.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: _isDarkMode,
+                          activeThumbColor: widget.cs.primary,
+                          onChanged: (val) async {
+                            final prevIsDark = _isDarkMode;
+                            final prevTheme = themeController.value;
+                            final mode = val ? ThemeMode.dark : ThemeMode.light;
+                            setState(() {
+                              _isDarkMode = val;
+                              themeController.value = mode;
+                            });
+                            try {
+                              await ThemeService.saveThemeMode(mode);
+                            } catch (e) {
+                              debugPrint("Theme Persistence Error: $e");
+                              if (!mounted) return;
+                              setState(() {
+                                _isDarkMode = prevIsDark;
+                                themeController.value = prevTheme;
+                              });
                             }
                           },
                         ),
@@ -536,7 +614,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

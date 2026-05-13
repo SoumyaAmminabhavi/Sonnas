@@ -115,8 +115,8 @@ class StaffInventoryPage extends StatelessWidget {
                   "Low Stock", 
                   items.where((i) => (i['currentStock'] ?? 0) <= (i['minStock'] ?? 0)).length.toString(), 
                   Icons.warning_amber_rounded,
-                  const Color(0xFFFFF4E5),
-                  iconColor: const Color(0xFFB45309),
+                  cs.primary.withValues(alpha: 0.05),
+                  iconColor: cs.error,
                 ),
               ],
             ),
@@ -153,7 +153,7 @@ class StaffInventoryPage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: bgColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -340,7 +340,7 @@ class _InventoryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

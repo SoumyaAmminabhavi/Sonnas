@@ -87,7 +87,7 @@ class KitchenOrderCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(28),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
             color: isPreparing ? cs.primary.withValues(alpha: 0.2) : cs.secondary.withValues(alpha: 0.08),
