@@ -8,6 +8,11 @@ final menuProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return await MenuService.fetchMenu();
 });
 
+/// Provider for specific order items, cached by orderId.
+final orderItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, orderId) async {
+  return await OrderService.fetchOrderItems(orderId);
+});
+
 /// Real-time stream of all orders.
 final ordersStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
   return OrderService.getAllOrdersStream();

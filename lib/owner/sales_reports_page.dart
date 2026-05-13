@@ -8,15 +8,17 @@ import '../services/order_service.dart';
 import '../services/menu_service.dart';
 import '../services/report_service.dart';
 import '../widgets/owner_sidebar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class SalesReportsPage extends StatefulWidget {
+class SalesReportsPage extends ConsumerStatefulWidget {
   const SalesReportsPage({super.key});
 
   @override
-  State<SalesReportsPage> createState() => _SalesReportsPageState();
+  ConsumerState<SalesReportsPage> createState() => _SalesReportsPageState();
 }
 
-class _SalesReportsPageState extends State<SalesReportsPage> {
+class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _orders = [];
   double _totalRevenue = 0;
@@ -566,12 +568,18 @@ class _SalesReportsPageState extends State<SalesReportsPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    item['image'] ?? '',
+                  child: CachedNetworkImage(
+                    imageUrl: item['image'] ?? '',
                     width: 48,
                     height: 48,
                     fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => Container(
+                    placeholder: (context, url) => Container(
+                      width: 48,
+                      height: 48,
+                      color: cs.primary.withValues(alpha: 0.05),
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    errorWidget: (c, e, s) => Container(
                       width: 48,
                       height: 48,
                       color: cs.primary.withValues(alpha: 0.1),

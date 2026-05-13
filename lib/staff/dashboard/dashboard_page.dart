@@ -176,17 +176,21 @@ class _DashboardContent extends StatelessWidget {
 
   String? _getActionLabel(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return 'Start Prep';
-      case 'accepted': return 'Mark Ready';
-      case 'ready': return 'Deliver';
+      case 'pending': return 'Accept Order';
+      case 'confirmed':
+      case 'accepted': return 'Start Prep';
+      case 'preparing': return 'Mark Ready';
+      case 'ready': return 'Complete';
       default: return null;
     }
   }
 
   String? _getNextStatus(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return 'accepted';
-      case 'accepted': return 'ready';
+      case 'pending': return 'confirmed';
+      case 'confirmed':
+      case 'accepted': return 'preparing';
+      case 'preparing': return 'ready';
       case 'ready': return 'delivered';
       default: return null;
     }
@@ -214,10 +218,12 @@ class _DashboardContent extends StatelessWidget {
         // --- ROLE BASED FILTERING ---
         final bool isCleaning = role == StaffRole.cleaning;
         
-        // Only show production orders to Chefs, Managers, and All-rounders
-        final activeOrders = isCleaning ? [] : allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').toList();
+        final activeOrders = isCleaning ? [] : allOrders.where((o) => 
+          (o['status'] ?? '').toLowerCase() != 'delivered' && 
+          (o['status'] ?? '').toLowerCase() != 'completed'
+        ).toList();
         
-        final completedOrdersCount = allOrders.length - allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').length;
+        final completedOrdersCount = allOrders.length - activeOrders.length;
 
         return ListView(
           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 24, vertical: 32),
@@ -328,6 +334,7 @@ class _DashboardContent extends StatelessWidget {
                           if (next != null) OrderService.updateOrderStatus(o['id'], next);
                         },
                         actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
+                        isGrid: true,
                         cs: cs,
                       );
                     },
@@ -437,6 +444,7 @@ class _TaskCard extends StatelessWidget {
   final String status;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final bool isGrid;
   final ColorScheme cs;
 
   const _TaskCard({
@@ -445,8 +453,31 @@ class _TaskCard extends StatelessWidget {
     required this.status, 
     this.actionLabel, 
     this.onAction,
+    this.isGrid = false,
     required this.cs,
   });
+
+  Widget _buildContent(ColorScheme cs) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.notoSerif(
+              fontSize: 18,
+              color: cs.secondary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -460,6 +491,7 @@ class _TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: isGrid ? MainAxisSize.max : MainAxisSize.min,
           children: [
             // Ticket Header
             Container(
@@ -494,27 +526,10 @@ class _TaskCard extends StatelessWidget {
             ),
             
             // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 18,
-                        color: cs.secondary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            if (isGrid)
+              Expanded(child: _buildContent(cs))
+            else
+              _buildContent(cs),
 
             // Standardized Footer
             if (actionLabel != null)

@@ -5,24 +5,27 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:shimmer/shimmer.dart';
 import 'dart:io' show File;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/menu_service.dart';
+import '../services/dashboard_provider.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
 
 // ─────────────────────────────────────────────
 //  MenuPage — the landing page (shows all items)
 // ─────────────────────────────────────────────
-class MenuPage extends StatefulWidget {
+class MenuPage extends ConsumerStatefulWidget {
   final ValueChanged<int>? onTabChanged;
   const MenuPage({super.key, this.onTabChanged});
 
   @override
-  State<MenuPage> createState() => _MenuPageState();
+  ConsumerState<MenuPage> createState() => _MenuPageState();
 }
 
-class _MenuPageState extends State<MenuPage> {
+class _MenuPageState extends ConsumerState<MenuPage> {
   Set<String> _selectedCategories = {'All'};
 
   @override
@@ -53,53 +56,42 @@ class _MenuPageState extends State<MenuPage> {
                       AddMenuPage(onTabChanged: widget.onTabChanged),
                 ),
               );
+              ref.invalidate(menuProvider);
             },
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
-          body: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: MenuService.getMenuStream(),
-            builder: (context, snapshot) {
-              return FutureBuilder<List<Map<String, dynamic>>>(
-                future: MenuService.fetchMenu(),
-                builder: (context, menuSnapshot) {
-                  if (!menuSnapshot.hasData && snapshot.connectionState == ConnectionState.waiting) {
-                    final cs2 = Theme.of(context).colorScheme;
-                    return Shimmer.fromColors(
-                      baseColor: cs2.surfaceContainer,
-                      highlightColor: cs2.surface,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
-                        child: GridView.builder(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 0.75,
-                          ),
-                          itemCount: crossAxisCount * 2,
-                          itemBuilder: (_, __) => Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
+          body: ref.watch(menuProvider).when(
+            loading: () {
+              final cs2 = Theme.of(context).colorScheme;
+              return Shimmer.fromColors(
+                baseColor: cs2.surfaceContainer,
+                highlightColor: cs2.surface,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.75,
+                    ),
+                    itemCount: crossAxisCount * 2,
+                    itemBuilder: (_, __) => Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    );
-                  }
-
-                  if (menuSnapshot.hasError || snapshot.hasError) {
-                    final error = (menuSnapshot.error ?? snapshot.error).toString();
-                    return _MenuErrorView(
-                      cs: cs,
-                      error: error,
-                      onRetry: () {
-                        setState(() {});
-                      },
-                    );
-                  }
-
-                  final List<Map<String, dynamic>> rawCakes = menuSnapshot.data ?? snapshot.data ?? [];
+                    ),
+                  ),
+                ),
+              );
+            },
+            error: (error, _) => _MenuErrorView(
+              cs: cs,
+              error: error.toString(),
+              onRetry: () => ref.invalidate(menuProvider),
+            ),
+            data: (rawCakes) {
               final List<_MenuItem> allItems = rawCakes.map((data) {
                 final options = data['CakeOption'] as List? ?? [];
                 final basePrice = options.isNotEmpty
@@ -284,13 +276,11 @@ class _MenuPageState extends State<MenuPage> {
                 ],
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
-  },
-);
-}
+  }
 }
 
 class _MenuItem {
@@ -422,10 +412,20 @@ class _MenuItemCard extends StatelessWidget {
               child: SizedBox(
                 width: 110,
                 height: double.infinity,
-                child: Image.network(
-                  item.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: item.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                  placeholder: (context, url) => Container(
+                    color: cs.surface,
+                    child: Center(
+                      child: Shimmer.fromColors(
+                        baseColor: cs.surfaceContainer,
+                        highlightColor: cs.surface,
+                        child: Container(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
                     color: cs.surface,
                     child: Icon(
                       Icons.cake,

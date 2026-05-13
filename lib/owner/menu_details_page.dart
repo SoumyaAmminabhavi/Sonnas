@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
@@ -43,16 +44,12 @@ class MenuDetailsPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 56),
-                        // Hero image
                         Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
                         const SizedBox(height: 24),
-                        // Name
                         Container(width: 220, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
                         const SizedBox(height: 12),
-                        // Category chip
                         Container(width: 100, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
                         const SizedBox(height: 32),
-                        // Options
                         Container(width: 120, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
                         const SizedBox(height: 16),
                         ...List.generate(3, (i) => Padding(
@@ -121,7 +118,7 @@ class MenuDetailsPage extends StatelessWidget {
                 children: [
                   if (isDesktop)
                     OwnerSidebar(
-                      currentIndex: 3, // Active under Menu
+                      currentIndex: 3,
                       onTap: (index) {
                         if (!context.mounted) return;
                         Navigator.of(context).popUntil((route) => route.settings.name == 'OwnerDashboard' || route.isFirst);
@@ -138,130 +135,66 @@ class MenuDetailsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 24),
-
-                              // Poetic Header
                               Text(
                                 "ATELIER SPECIFICATION",
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.0,
-                                  color: cs.primary,
-                                ),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.primary),
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 cake['name'] ?? 'Untitled Creation',
-                                style: GoogleFonts.notoSerif(
-                                  fontSize: isDesktop ? 42 : 32,
-                                  height: 1.1,
-                                  color: cs.secondary,
-                                ),
+                                style: GoogleFonts.notoSerif(fontSize: isDesktop ? 42 : 32, height: 1.1, color: cs.secondary),
                               ),
                               const SizedBox(height: 32),
-
-                              // Image Showcase
                               Container(
                                 width: double.infinity,
                                 height: isDesktop ? 450 : 300,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(24),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: cs.secondary.withValues(
-                                        alpha: 0.1,
-                                      ),
-                                      blurRadius: 30,
-                                      offset: const Offset(0, 15),
-                                    ),
-                                  ],
+                                  boxShadow: [BoxShadow(color: cs.secondary.withValues(alpha: 0.1), blurRadius: 30, offset: const Offset(0, 15))],
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(24),
-                                  child: Image.network(
-                                    imageUrl,
+                                  child: CachedNetworkImage(
+                                    imageUrl: imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Container(
-                                              color: cs.surfaceContainer,
-                                              child: Icon(
-                                                Icons.restaurant,
-                                                color: cs.primary,
-                                                size: 48,
-                                              ),
-                                            ),
+                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: cs.surfaceContainer,
+                                      child: Icon(Icons.restaurant, color: cs.primary, size: 48),
+                                    ),
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 48),
-
-                              // Description Section
                               Text(
                                 "ARTISAN DESCRIPTION",
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.0,
-                                  color: cs.secondary.withValues(alpha: 0.4),
-                                ),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.secondary.withValues(alpha: 0.4)),
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                cake['description'] ??
-                                    'No description provided.',
-                                style: GoogleFonts.notoSerif(
-                                  fontSize: 16,
-                                  height: 1.6,
-                                  color: cs.onSurface.withValues(alpha: 0.8),
-                                ),
+                                cake['description'] ?? 'No description provided.',
+                                style: GoogleFonts.notoSerif(fontSize: 16, height: 1.6, color: cs.onSurface.withValues(alpha: 0.8)),
                               ),
                               const SizedBox(height: 48),
-
-                              // Collection Info
                               Row(
                                 children: [
-                                  _InfoBadge(
-                                    icon: Icons.category_outlined,
-                                    label: "COLLECTION",
-                                    value: cake['category'] ?? 'General',
-                                    cs: cs,
-                                  ),
+                                  _InfoBadge(icon: Icons.category_outlined, label: "COLLECTION", value: cake['category'] ?? 'General', cs: cs),
                                   const SizedBox(width: 24),
-                                  _InfoBadge(
-                                    icon: Icons.timer_outlined,
-                                    label: "EST. WEIGHT",
-                                    value: "600-800g",
-                                    cs: cs,
-                                  ),
+                                  _InfoBadge(icon: Icons.timer_outlined, label: "EST. WEIGHT", value: "600-800g", cs: cs),
                                 ],
                               ),
                               const SizedBox(height: 48),
-
-                              // Pricing Options
                               Text(
                                 "AVAILABLE CONFIGURATIONS",
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.0,
-                                  color: cs.secondary.withValues(alpha: 0.4),
-                                ),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.secondary.withValues(alpha: 0.4)),
                               ),
                               const SizedBox(height: 16),
-                              ...options.map(
-                                (opt) => _OptionCard(opt: opt, cs: cs),
-                              ),
-
+                              ...options.map((opt) => _OptionCard(opt: opt, cs: cs)),
                               if (options.isEmpty)
                                 Text(
                                   "No size configurations found for this item.",
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontStyle: FontStyle.italic,
-                                    color: cs.onSurface.withValues(alpha: 0.5),
-                                  ),
+                                  style: GoogleFonts.plusJakartaSans(fontStyle: FontStyle.italic, color: cs.onSurface.withValues(alpha: 0.5)),
                                 ),
-
                               const SizedBox(height: 64),
                             ],
                           ),
@@ -273,26 +206,11 @@ class MenuDetailsPage extends StatelessWidget {
               ),
               floatingActionButton: FloatingActionButton.extended(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AddMenuPage(
-                        cakeData: cake,
-                        onTabChanged: onTabChanged,
-                      ),
-                    ),
-                  );
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => AddMenuPage(cakeData: cake, onTabChanged: onTabChanged)));
                 },
                 backgroundColor: cs.primary,
                 icon: const Icon(Icons.edit_outlined, color: Colors.white),
-                label: Text(
-                  "EDIT",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                    color: Colors.white,
-                  ),
-                ),
+                label: Text("EDIT", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.0, color: Colors.white)),
               ),
             );
           },
@@ -304,54 +222,22 @@ class MenuDetailsPage extends StatelessWidget {
 
 class _InfoBadge extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String value;
+  final String label, value;
   final ColorScheme cs;
-
-  const _InfoBadge({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.cs,
-  });
+  const _InfoBadge({required this.icon, required this.label, required this.value, required this.cs});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
-        ),
+        decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(20), border: Border.all(color: cs.secondary.withValues(alpha: 0.05))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 14, color: cs.primary),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: cs.primary,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ],
-            ),
+            Row(children: [Icon(icon, size: 14, color: cs.primary), const SizedBox(width: 8), Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: cs.primary, letterSpacing: 1.0))]),
             const SizedBox(height: 8),
-            Text(
-              value.toUpperCase(),
-              style: GoogleFonts.notoSerif(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: cs.secondary,
-              ),
-            ),
+            Text(value.toUpperCase(), style: GoogleFonts.notoSerif(fontSize: 16, fontWeight: FontWeight.bold, color: cs.secondary)),
           ],
         ),
       ),
@@ -362,7 +248,6 @@ class _InfoBadge extends StatelessWidget {
 class _OptionCard extends StatelessWidget {
   final Map<String, dynamic> opt;
   final ColorScheme cs;
-
   const _OptionCard({required this.opt, required this.cs});
 
   @override
@@ -370,45 +255,19 @@ class _OptionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.1)),
-      ),
+      decoration: BoxDecoration(color: cs.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.secondary.withValues(alpha: 0.1))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                "SIZE / SERVINGS",
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: cs.secondary.withValues(alpha: 0.4),
-                  letterSpacing: 1.0,
-                ),
-              ),
+              Text("SIZE / SERVINGS", style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: cs.secondary.withValues(alpha: 0.4), letterSpacing: 1.0)),
               const SizedBox(height: 4),
-              Text(
-                "Serves ${opt['serves']?.toString() ?? 'N/A'}",
-                style: GoogleFonts.notoSerif(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: cs.secondary,
-                ),
-              ),
+              Text("Serves ${opt['serves']?.toString() ?? 'N/A'}", style: GoogleFonts.notoSerif(fontSize: 15, fontWeight: FontWeight.bold, color: cs.secondary)),
             ],
           ),
-          Text(
-            OrderService.formatPrice(opt['price']),
-            style: GoogleFonts.notoSerif(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: cs.primary,
-            ),
-          ),
+          Text(OrderService.formatPrice(opt['price']), style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.bold, color: cs.primary)),
         ],
       ),
     );

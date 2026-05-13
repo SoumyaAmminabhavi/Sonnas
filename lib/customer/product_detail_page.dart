@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/cart_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/supabase_service.dart';
 
 class CustomerProductDetailPage extends ConsumerStatefulWidget {
@@ -70,7 +71,12 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
           tag: widget.heroTag ?? 'product_${widget.product['id']}',
-          child: Image.network(imageUrl, fit: BoxFit.cover),
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+            errorWidget: (context, url, error) => const Icon(Icons.error),
+          ),
         ),
       ),
     );

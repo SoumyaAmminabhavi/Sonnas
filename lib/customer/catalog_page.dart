@@ -6,6 +6,7 @@ import '../services/cart_provider.dart';
 import '../services/supabase_service.dart';
 import 'checkout_page.dart';
 import 'product_detail_page.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CustomerCatalogPage extends ConsumerStatefulWidget {
   const CustomerCatalogPage({super.key});
@@ -212,12 +213,17 @@ class _ProductCard extends ConsumerWidget {
                     Positioned.fill(
                       child: Hero(
                         tag: 'product_${item['id']}_$index',
-                        child: Image.network(
-                          imageUrl,
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, e, s) => Container(
+                          placeholder: (context, url) => Container(
                             color: cs.primary.withValues(alpha: 0.05),
-                            child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: cs.primary.withValues(alpha: 0.05),
+                            child: Icon(Icons.cake_outlined,
+                                color: cs.primary.withValues(alpha: 0.2)),
                           ),
                         ),
                       ),

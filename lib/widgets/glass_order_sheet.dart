@@ -2,9 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/order.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../services/supabase_service.dart';
 import '../services/order_service.dart';
-
+import '../services/dashboard_provider.dart';
 
 class GlassOrderSheet extends StatelessWidget {
   final WhatsAppOrder order;
@@ -79,14 +82,23 @@ class GlassOrderSheet extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("ORDER NUMBER", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2.0, color: cs.primary)),
-                Text("#${order.orderNumber}", style: GoogleFonts.notoSerif(fontSize: 28, fontWeight: FontWeight.bold)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("ORDER NUMBER", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2.0, color: cs.primary)),
+                  Text(
+                    "#${order.orderNumber}", 
+                    style: GoogleFonts.notoSerif(fontSize: 28, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 12),
             _StatusChip(status: order.status, cs: cs),
           ],
         ),
@@ -131,30 +143,103 @@ class GlassOrderSheet extends StatelessWidget {
       children: [
         Text("SELECTION ITEMS", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2.0, color: cs.primary)),
         const SizedBox(height: 16),
-        ...order.items.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+        Consumer(
+          builder: (context, ref, child) {
+            final itemsAsync = ref.watch(orderItemsProvider(order.id));
+            final menuAsync = ref.watch(menuProvider);
+            return itemsAsync.when(
+              data: (items) {
+                if (items.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text("No items found.", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5))),
+                  );
+                }
+                final menu = menuAsync.value ?? [];
+                
+                return Column(
+                  children: items.map((itemMap) {
+                    final item = OrderItem.fromMap(itemMap);
+                    
+                    String displayImageUrl = '';
+                    final matchingCake = menu.firstWhere(
+                      (c) => (c['name'] as String).toLowerCase() == item.cakeName.toLowerCase(),
+                      orElse: () => <String, dynamic>{},
+                    );
+                    displayImageUrl = matchingCake['image'] ?? '';
+
+                    bool isCustomUrl = false;
+                    if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && order.customImageUrl != null) {
+                      displayImageUrl = order.customImageUrl!;
+                      isCustomUrl = true;
+                    }
+
+                    Widget imageWidget;
+                    if (displayImageUrl.isNotEmpty) {
+                      imageWidget = ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: isCustomUrl && (displayImageUrl.startsWith('http') || Uri.tryParse(displayImageUrl)?.isAbsolute == true) 
+                              ? displayImageUrl 
+                              : SupabaseService.getPublicUrl(displayImageUrl),
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: cs.primary.withValues(alpha: 0.05),
+                            child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary))),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                            child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+                          ),
+                        ),
+                      );
+                    } else {
+                      imageWidget = Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                        child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+                      );
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Row(
+                        children: [
+                          imageWidget,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(item.cakeName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                                if (item.options != null && item.options!.isNotEmpty) 
+                                  Text(item.options!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
+                              ],
+                            ),
+                          ),
+                          Text("x${item.quantity}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.cakeName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
-                    if (item.options != null) Text(item.options!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
-                  ],
-                ),
+              error: (_, __) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text("Error loading items.", style: GoogleFonts.plusJakartaSans(color: cs.error)),
               ),
-              Text("x${item.quantity}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
-            ],
-          ),
-        )),
+            );
+          },
+        ),
         const Divider(height: 32),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -189,45 +274,58 @@ class GlassOrderSheet extends StatelessWidget {
   }
 
   Widget _buildActionArea(BuildContext context, ColorScheme cs) {
+    final statusStr = order.status.name.toUpperCase();
+    
+    bool showButton = false;
+    String buttonText = "";
+    String nextStatus = "";
+    Color buttonColor = cs.primary;
+    
+    if (statusStr == 'PENDING') {
+      showButton = true;
+      buttonText = "CONFIRM ORDER";
+      nextStatus = "CONFIRMED";
+      buttonColor = Colors.blue;
+    } else if (statusStr == 'CONFIRMED' || statusStr == 'ACCEPTED') {
+      showButton = true;
+      buttonText = "START PREPARATION";
+      nextStatus = "PREPARING";
+      buttonColor = Colors.teal;
+    } else if (statusStr == 'PREPARING') {
+      showButton = true;
+      buttonText = "MARK AS READY";
+      nextStatus = "READY";
+      buttonColor = Colors.green.shade700;
+    } else if (statusStr == 'READY') {
+      showButton = true;
+      buttonText = "DELIVER ORDER";
+      nextStatus = "DELIVERED";
+      buttonColor = cs.secondary;
+    }
+
+    if (!showButton) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
       decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: cs.secondary.withValues(alpha: 0.05)))),
       child: Row(
         children: [
-          if (order.status == OrderStatus.pending)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () async {
-                  await OrderService.updateOrderStatus(order.id, 'ACCEPTED');
-                  if (context.mounted) Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: Text("ACCEPT ORDER", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () async {
+                await OrderService.updateOrderStatus(order.id, nextStatus);
+                if (context.mounted) Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: buttonColor,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                elevation: 0,
               ),
+              child: Text(buttonText, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
-          if (order.status == OrderStatus.accepted)
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () async {
-                  await OrderService.updateOrderStatus(order.id, 'READY');
-                  if (context.mounted) Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade700,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: Text("MARK AS READY", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
-              ),
-            ),
+          ),
         ],
       ),
     );
@@ -243,8 +341,17 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color = cs.primary;
-    if (status == OrderStatus.ready) color = Colors.green.shade700;
-    if (status == OrderStatus.completed) color = cs.secondary;
+    if (status == OrderStatus.pending) {
+      color = Colors.orange;
+    } else if (status == OrderStatus.confirmed || status == OrderStatus.accepted) {
+      color = Colors.blue;
+    } else if (status == OrderStatus.preparing) {
+      color = Colors.teal;
+    } else if (status == OrderStatus.ready) {
+      color = Colors.green.shade700;
+    } else if (status == OrderStatus.delivered || status == OrderStatus.completed) {
+      color = cs.secondary;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
