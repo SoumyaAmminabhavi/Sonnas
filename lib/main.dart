@@ -27,8 +27,13 @@ void main() async {
     unawaited(AuthService.prewarmOwnerAuth());
     
     // Load saved theme
-    final savedTheme = await ThemeService.getThemeMode();
-    themeController.value = savedTheme;
+    try {
+      final savedTheme = await ThemeService.getThemeMode();
+      themeController.value = savedTheme;
+    } catch (e) {
+      debugPrint('Theme Loading Error: $e');
+      themeController.value = ThemeMode.light;
+    }
     
     runApp(
       const ProviderScope(

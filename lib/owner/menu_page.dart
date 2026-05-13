@@ -407,7 +407,7 @@ class _MenuItemCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(16),
+                left: Radius.circular(20),
               ),
               child: SizedBox(
                 width: 110,

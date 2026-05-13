@@ -393,7 +393,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                           children: [
                                                             const Icon(Icons.check_circle_outline, color: Colors.white),
                                                             const SizedBox(width: 12),
-                                                            Text("Order updated to $next"),
+                                                            Expanded(child: Text("Order updated to $next")),
                                                           ],
                                                         ),
                                                       ),
@@ -421,12 +421,12 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                               if (phone == null || phone.toString().isEmpty) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
-                                                    const SnackBar(
+                                                  SnackBar(
                                                       content: Row(
                                                         children: [
-                                                          Icon(Icons.warning_amber_rounded, color: Colors.white),
-                                                          SizedBox(width: 12),
-                                                          Text("No contact number available."),
+                                                          const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                                          const SizedBox(width: 12),
+                                                          Expanded(child: Text("No contact number available.")),
                                                         ],
                                                       ),
                                                       backgroundColor: Colors.orange,
@@ -688,7 +688,7 @@ class _ElegantAction extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ) : null,
-        color: !isPrimary ? Colors.white : null,
+        color: !isPrimary ? cs.surface : null,
         borderRadius: BorderRadius.circular(16),
         border: !isPrimary ? Border.all(color: cs.primary.withValues(alpha: 0.15), width: 1.5) : null,
         boxShadow: [

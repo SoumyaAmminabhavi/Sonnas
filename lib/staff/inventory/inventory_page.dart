@@ -153,7 +153,7 @@ class StaffInventoryPage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
+          color: bgColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(

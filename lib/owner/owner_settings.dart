@@ -203,11 +203,13 @@ class _SettingsContentState extends State<_SettingsContent> {
             "Toggle between light and dark aesthetics",
             _isDarkMode,
             (val) {
+              final mode = val ? ThemeMode.dark : ThemeMode.light;
               setState(() {
                 _isDarkMode = val;
-                final mode = val ? ThemeMode.dark : ThemeMode.light;
                 themeController.value = mode;
-                ThemeService.saveThemeMode(mode);
+              });
+              ThemeService.saveThemeMode(mode).catchError((e) {
+                debugPrint("Theme Persistence Error: $e");
               });
             },
           ),
