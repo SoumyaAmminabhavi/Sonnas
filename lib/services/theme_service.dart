@@ -9,7 +9,7 @@ class ThemeService {
     final prefs = await SharedPreferences.getInstance();
     final success = await prefs.setString(_themeKey, mode.name);
     if (!success) {
-      throw Exception('Failed to persist theme preference to storage.');
+      debugPrint('Theme Persistence Warning: Failed to save mode "${mode.name}" to key "$_themeKey".');
     }
   }
 
