@@ -195,99 +195,69 @@ export const whatsappRouter = createTRPCRouter({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    // 1. Basic counts and Revenue aggregation
     const [
       totalOrders,
       pendingOrders,
       todaysOrders,
       totalConversations,
-      allOrders,
+      revenueData,
     ] = await Promise.all([
       ctx.db.whatsAppOrder.count(),
       ctx.db.whatsAppOrder.count({ where: { status: "PENDING" } }),
-      ctx.db.whatsAppOrder.count({
-        where: { 
-          createdAt: { 
-            gte: new Date(new Date().setHours(0, 0, 0, 0)) 
-          } 
-        },
-      }),
+      ctx.db.whatsAppOrder.count({ where: { createdAt: { gte: today } } }),
       ctx.db.whatsAppConversation.count(),
-      ctx.db.whatsAppOrder.findMany({
-        select: { 
-          totalPrice: true, 
-          paymentStatus: true,
-          items: {
-            select: {
-              id: true,
-              cakeName: true,
-              size: true,
-              quantity: true,
-            }
-          } 
-        },
+      ctx.db.whatsAppOrder.aggregate({
+        where: { paymentStatus: "PAID" },
+        _sum: { totalPrice: true },
       }),
-
     ]);
 
-    // Calculate revenue (paise to rupees)
-    const totalRevenue = allOrders.reduce((sum, o) => {
-      if (o.paymentStatus !== "PAID") return sum;
-      return sum + (o.totalPrice ?? 0);
-    }, 0);
+    // 2. Revenue Trend (Last 7 days) - Efficient GroupBy
+    const dailyRevenue = await ctx.db.whatsAppOrder.groupBy({
+      by: ['createdAt'],
+      where: {
+        createdAt: { gte: sevenDaysAgo },
+        paymentStatus: "PAID"
+      },
+      _sum: { totalPrice: true },
+    });
 
-
-
-    // Calculate 7-day revenue trend
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
+    // Post-process the groupBy results to fill missing days and format for the chart
+    const revenueTrend = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       d.setHours(0, 0, 0, 0);
-      return d;
+      
+      const dayTotal = dailyRevenue
+        .filter(r => new Date(r.createdAt).toDateString() === d.toDateString())
+        .reduce((sum, r) => sum + (r._sum.totalPrice ?? 0), 0);
+
+      return {
+        date: d.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric' }),
+        revenue: dayTotal,
+      };
     });
 
-    const revenueTrend = await Promise.all(
-      last7Days.map(async (date) => {
-        const nextDay = new Date(date);
-        nextDay.setDate(date.getDate() + 1);
-
-        const dayOrders = await ctx.db.whatsAppOrder.findMany({
-          where: {
-            createdAt: { gte: date, lt: nextDay },
-            paymentStatus: "PAID",
-          },
-          select: { totalPrice: true },
-        });
-
-        const dayRevenue = dayOrders.reduce((sum, o) => {
-          return sum + (o.totalPrice ?? 0);
-        }, 0);
-
-
-        return {
-          date: date.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric' }),
-          revenue: dayRevenue,
-        };
-      })
-    );
-
-    // Find most popular cake
-    const cakeCounts: Record<string, number> = {};
-    allOrders.forEach((o) => {
-      o.items.forEach(item => {
-        cakeCounts[item.cakeName] = (cakeCounts[item.cakeName] ?? 0) + 1;
-      });
+    // 3. Find Most Popular Cake using GroupBy on items
+    const popularCakeData = await ctx.db.whatsAppOrderItem.groupBy({
+      by: ['cakeName'],
+      _count: { cakeName: true },
+      orderBy: { _count: { cakeName: 'desc' } },
+      take: 1,
     });
-    const popularCake =
-      Object.entries(cakeCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ??
-      "N/A";
 
     return {
       totalOrders,
       pendingOrders,
       todaysOrders,
       totalConversations,
-      totalRevenue,
-      popularCake,
+      totalRevenue: revenueData._sum.totalPrice ?? 0,
+      popularCake: popularCakeData[0]?.cakeName ?? "N/A",
       revenueTrend,
     };
   }),
