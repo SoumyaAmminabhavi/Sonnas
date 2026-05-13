@@ -15,6 +15,61 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   String? selectedFlavor = "Valrhona Dark Chocolate";
   final _narrativeController = TextEditingController();
 
+  bool _isSubmitting = false;
+
+  void _submitQuoteRequest() {
+    if (selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select a pick-up date for your creation"),
+          backgroundColor: Color(0xFFFF4D8D),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (_narrativeController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please share some details about your vision"),
+          backgroundColor: Color(0xFFFF4D8D),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    // Simulate/Implement submission logic
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text("Quote Requested", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+            content: Text(
+              "Your vision has been shared with our master artisans. We will review your request and provide a curated quote within 24 hours.",
+              style: GoogleFonts.plusJakartaSans(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context); // Go back to home/menu
+                },
+                child: const Text("EXQUISITE", style: TextStyle(color: Color(0xFFFF4D8D))),
+              ),
+            ],
+          ),
+        );
+      }
+    });
+  }
+
   @override
   void dispose() {
     _narrativeController.dispose();
@@ -284,34 +339,44 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 32),
-                      Container(
-                        width: double.infinity,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [primaryColor, primaryContainerColor],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      GestureDetector(
+                        onTap: _isSubmitting ? null : _submitQuoteRequest,
+                        child: Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: _isSubmitting 
+                                ? [Colors.grey, Colors.grey.shade400]
+                                : [primaryColor, primaryContainerColor],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primaryColor.withValues(alpha: 0.2),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withValues(alpha: 0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            "REQUEST QUOTE",
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 2,
-                              color: Colors.white,
-                            ),
+                          child: Center(
+                            child: _isSubmitting 
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                )
+                              : Text(
+                                  "REQUEST QUOTE",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
                           ),
                         ),
                       ),

@@ -26,8 +26,17 @@ class _AddStaffPageState extends State<AddStaffPage> {
     'View Reports': false,
     'Handle Payments': false,
   };
-  final List<String> _workingDays = ['M', 'T', 'W', 'T', 'F'];
-  final List<String> _allDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  final List<String> _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  final List<String> _allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  final Map<String, String> _dayLabels = {
+    'Sun': 'S',
+    'Mon': 'M',
+    'Tue': 'T',
+    'Wed': 'W',
+    'Thu': 'T',
+    'Fri': 'F',
+    'Sat': 'S',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -506,7 +515,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  day,
+                  _dayLabels[day]!,
                   style: GoogleFonts.plusJakartaSans(
                     color: isSelected
                         ? Colors.white

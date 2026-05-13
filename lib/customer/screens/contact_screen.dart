@@ -45,23 +45,36 @@ class _ContactScreenState extends State<ContactScreen> {
   Future<void> _fetchRealCakes() async {
     try {
       final supabase = Supabase.instance.client;
-      final data = await supabase.from('Cake').select('*, options:CakeOption(*)').limit(2);
-      if (mounted) {
+      final currentUser = supabase.auth.currentUser;
+      
+      if (currentUser == null) {
+        setState(() => _isFetchingCakes = false);
+        return;
+      }
+
+      // Fetch actual past items from user's most recent order
+      final orderResponse = await supabase
+          .from('WhatsAppOrder')
+          .select('items:WhatsAppOrderItem(*)')
+          .eq('phone', currentUser.phone ?? '')
+          .order('createdAt', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (mounted && orderResponse != null) {
+        final items = orderResponse['items'] as List? ?? [];
         setState(() {
-          _realCakes = List<Map<String, dynamic>>.from(data).map((cake) {
-            final options = cake['options'] as List?;
-            double price = 0.0;
-            if (options != null && options.isNotEmpty) {
-              price = double.tryParse(options[0]['price'].toString()) ?? 0.0;
-            }
+          _realCakes = items.take(2).map((item) {
             return {
-              'name': cake['name'],
-              'price': price,
-              'image': cake['image'],
+              'name': (item['cakeName'] as String?) ?? 'Exquisite Creation',
+              'price': double.tryParse(item['price'].toString()) ?? 0.0,
+              'image': '', // Historical items don't have images in the schema
             };
           }).toList();
           _isFetchingCakes = false;
         });
+      } else if (mounted) {
+        setState(() => _isFetchingCakes = false);
       }
     } catch (e) {
       debugPrint("Error fetching cakes for support: $e");
@@ -79,7 +92,12 @@ class _ContactScreenState extends State<ContactScreen> {
     
     final cart = Provider.of<CartProvider>(context, listen: false);
     for (var item in _realCakes) {
-      cart.addItem(item['name'], item['price'], item['image']);
+      final String name = item['name'] ?? 'Exquisite Creation';
+      final double price = item['price'] ?? 0.0;
+      final String image = item['image'] ?? '';
+      
+      // Use the stable ID system: reorder_{name}
+      cart.addItem("reorder_$name", name, price, image);
     }
     
     ScaffoldMessenger.of(context).showSnackBar(
@@ -96,58 +114,104 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
-  void _submitReport() {
+  Future<void> _submitReport() async {
     if (_formKey.currentState!.validate()) {
+      try {
+        final supabase = Supabase.instance.client;
+        final currentUser = supabase.auth.currentUser;
+        
+        await supabase.from('SupportReport').insert({
+          'orderId': _orderIdController.text,
+          'message': _messageController.text,
+          'userPhone': currentUser?.phone,
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+        });
+
+        if (!mounted) return;
+        
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text("Report Submitted", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+            content: Text("We've received your report for Order ${_orderIdController.text}. Our support team will review it and get back to you within 24 hours.", 
+              style: GoogleFonts.plusJakartaSans()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _orderIdController.clear();
+                  _messageController.clear();
+                },
+                child: Text("OK", style: TextStyle(color: primaryColor)),
+              ),
+            ],
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Failed to submit report: $e"),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleFeedback(double rating) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final currentUser = supabase.auth.currentUser;
+      
+      // Persist feedback to Supabase
+      await supabase.from('Feedback').insert({
+        'rating': rating,
+        'userId': currentUser?.id,
+        'userPhone': currentUser?.phone,
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      });
+
+      if (!mounted) return;
+      setState(() => _userRating = rating);
+      
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text("Report Submitted", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
-          content: Text("We've received your report for Order ${_orderIdController.text}. Our support team will review it and get back to you within 24 hours.", 
-            style: GoogleFonts.plusJakartaSans()),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text("Thank You!", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, color: secondaryColor)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.favorite, color: primaryColor, size: 48),
+              const SizedBox(height: 16),
+              Text("We appreciate your $rating-star rating! Your feedback helps us bake better moments for you.", 
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans()),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                _orderIdController.clear();
-                _messageController.clear();
+                setState(() => _userRating = 0);
               },
-              child: Text("OK", style: TextStyle(color: primaryColor)),
+              child: Text("CLOSE", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       );
-    }
-  }
-
-  void _handleFeedback(double rating) {
-    setState(() => _userRating = rating);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text("Thank You!", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, color: secondaryColor)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.favorite, color: primaryColor, size: 48),
-            const SizedBox(height: 16),
-            Text("We appreciate your $rating-star rating! Your feedback helps us bake better moments for you.", 
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans()),
-          ],
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to submit feedback: $e"),
+          backgroundColor: Colors.red,
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() => _userRating = 0);
-            },
-            child: Text("CLOSE", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+      );
+    }
   }
 
   @override
@@ -387,8 +451,6 @@ class _ContactScreenState extends State<ContactScreen> {
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildSocialIcon(Icons.language, "https://www.sonnas.in"),
-              const SizedBox(width: 16),
               _buildSocialIcon(Icons.camera_alt_outlined, "https://instagram.com/sonnas__"),
               const SizedBox(width: 16),
               _buildSocialIcon(Icons.map_outlined, "https://maps.google.com/?q=Sonna's+Patisserie+and+Cafe+Akshay+Colony"),

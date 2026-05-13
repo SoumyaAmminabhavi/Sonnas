@@ -100,7 +100,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
                 children: [
                   _OrdersList(cs: cs, status: 'PENDING'),
                   _OrdersList(cs: cs, status: 'PREPARING'),
-                  _OrdersList(cs: cs, status: 'SHIPPED'),
+                  _OrdersList(cs: cs, status: 'SHIPPED_OR_DELIVERED'),
                 ],
               ),
             ),
@@ -120,12 +120,12 @@ class _OrdersList extends StatelessWidget {
   Widget build(BuildContext context) {
     final supabase = Supabase.instance.client;
 
+    final stream = status == 'SHIPPED_OR_DELIVERED'
+        ? supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).order('createdAt', ascending: false)
+        : supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).eq('status', status).order('createdAt', ascending: false);
+
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: supabase
-          .from('WhatsAppOrder')
-          .stream(primaryKey: ['id'])
-          .eq('status', status)
-          .order('createdAt', ascending: false),
+      stream: stream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -135,11 +135,15 @@ class _OrdersList extends StatelessWidget {
           return Center(child: Text("Error: ${snapshot.error}"));
         }
 
-        final data = snapshot.data ?? [];
+        var data = snapshot.data ?? [];
+        if (status == 'SHIPPED_OR_DELIVERED') {
+          data = data.where((o) => o['status'] == 'SHIPPED' || o['status'] == 'DELIVERED').toList();
+        }
+
         if (data.isEmpty) {
           return Center(
             child: Text(
-              "No $status orders",
+              "No ${status == 'SHIPPED_OR_DELIVERED' ? 'SHIPPED/DONE' : status} orders",
               style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4)),
             ),
           );

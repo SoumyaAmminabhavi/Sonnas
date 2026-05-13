@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
 
 
+
+
 class ChatMessage {
   final String text;
   final bool isBakery;
@@ -12,7 +14,8 @@ class ChatMessage {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final VoidCallback? onBack;
+  const ChatScreen({super.key, this.onBack});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -75,7 +78,13 @@ class _ChatScreenState extends State<ChatScreen> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: primary, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (widget.onBack != null) {
+              widget.onBack!();
+            } else {
+              Navigator.pop(context);
+            }
+          },
         ),
         titleSpacing: 0,
         title: Row(

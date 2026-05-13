@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../providers/cart_provider.dart';
 
 class CustomerOrderHistoryScreen extends StatelessWidget {
   const CustomerOrderHistoryScreen({super.key});
@@ -115,8 +117,16 @@ class CustomerOrderHistoryScreen extends StatelessWidget {
                 Expanded(
                   child: TextButton(
                     onPressed: () {
+                      final cart = context.read<CartProvider>();
+                      // Add placeholder items from this order to the cart.
+                      cart.addItem('reorder_Belgian_Chocolate', 'Belgian Chocolate', 260.0, '');
+                      cart.addItem('reorder_Wildberry_Sensation', 'Wildberry Sensation', 260.0, '');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Order items added to bag"), backgroundColor: primary, behavior: SnackBarBehavior.floating),
+                        const SnackBar(
+                          content: Text('2 items added to bag'),
+                          backgroundColor: primary,
+                          behavior: SnackBarBehavior.floating,
+                        ),
                       );
                     },
                     child: Text("REORDER", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: primary)),

@@ -13,21 +13,44 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isSignUp = false;
+  bool _obscurePassword = true;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   static const Color primary = Color(0xFFFF4D8D);
   static const Color accent = Color(0xFFFFB6D3);
   static const Color background = Color(0xFFFFF0F6);
+  static const Color berry = Color(0xFF701235);
   static const String _emailKey = 'saved_email';
 
   @override
   void initState() {
     super.initState();
     _loadSavedEmail();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSavedEmail() async {
@@ -44,30 +67,39 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _handleAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isLoading = true);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
     try {
       final supabase = Supabase.instance.client;
       if (_isSignUp) {
         await supabase.auth.signUp(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
+          email: email,
+          password: password,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Account created! Please check your email for verification.")),
+            SnackBar(
+              content: const Text("Account created! Please check your email for verification."),
+              backgroundColor: berry,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
           );
           setState(() => _isSignUp = false);
         }
       } else {
-          await supabase.auth.signInWithPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
-          
-          // Save email for next time
-          await _saveEmail(_emailController.text.trim());
+        await supabase.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+        
+        await _saveEmail(email);
 
-          if (mounted) {
+        if (mounted) {
           if (widget.isOwner) {
             Navigator.pushReplacement(
               context,
@@ -81,10 +113,32 @@ class _AuthScreenState extends State<AuthScreen> {
           }
         }
       }
+    } on AuthException catch (e) {
+      if (mounted) {
+        String message = e.message;
+        if (e.code == 'email_address_invalid') {
+          message = "This email format isn't accepted. Please check for typos.";
+        } else if (e.code == 'invalid_credentials') {
+          message = "Incorrect email or password.";
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            backgroundColor: primary,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: primary),
+          SnackBar(
+            content: Text("Authentication error: ${e.toString()}"),
+            backgroundColor: primary,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -98,122 +152,164 @@ class _AuthScreenState extends State<AuthScreen> {
       backgroundColor: background,
       body: Stack(
         children: [
-          // Background Design
+          // Elegant Background Elements
           Positioned(
-            top: -100,
+            top: -150,
             right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
+            child: _buildCircle(400, accent.withValues(alpha: 0.15)),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -50,
+            child: _buildCircle(300, primary.withValues(alpha: 0.05)),
           ),
           
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios_new, color: primary),
-                  ),
-                  const SizedBox(height: 40),
-                  Text(
-                    widget.isOwner ? "OWNER PORTAL" : "GUEST ACCESS",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                      color: primary.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _isSignUp ? "Create Your\nAccount" : "Welcome back to\nSonna's",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF701235),
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  
-                  AutofillGroup(
-                    child: Column(
-                      children: [
-                        // Email Field
-                        _buildTextField(
-                          controller: _emailController,
-                          label: "Email Address",
-                          hint: "yourname@email.com",
-                          icon: Icons.email_outlined,
-                          autofillHints: [AutofillHints.email],
-                          keyboardType: TextInputType.emailAddress,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_ios_new, color: berry),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.all(12),
                         ),
-                        const SizedBox(height: 24),
-                        
-                        // Password Field
-                        _buildTextField(
-                          controller: _passwordController,
-                          label: "Password",
-                          hint: "••••••••",
-                          icon: Icons.lock_outline,
-                          isPassword: true,
-                          autofillHints: [AutofillHints.password],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  
-                  // Action Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _handleAuth,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            _isSignUp ? "SIGN UP" : "SIGN IN",
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 2,
+                      const SizedBox(height: 40),
+                      
+                      Text(
+                        widget.isOwner ? "OWNER PORTAL" : "GUEST ACCESS",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 3,
+                          color: primary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _isSignUp ? "Create Your\nAccount" : "Welcome back\nto Sonna's",
+                        style: GoogleFonts.notoSerif(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w400,
+                          color: berry,
+                          height: 1.1,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      
+                      // Email Field
+                      _buildLabel("Email Address"),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
+                        decoration: _buildInputDecoration("yourname@email.com", Icons.email_outlined),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return "Email is required";
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                            return "Enter a valid email address";
+                          }
+                          return null;
+                        },
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Password Field
+                      _buildLabel("Password"),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        autofillHints: const [AutofillHints.password],
+                        style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
+                        decoration: _buildInputDecoration(
+                          "••••••••", 
+                          Icons.lock_outline,
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            color: berry.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return "Password is required";
+                          if (value.length < 6) return "Password must be at least 6 characters";
+                          return null;
+                        },
+                      ),
+                      
+                      const SizedBox(height: 48),
+                      
+                      // Primary Action Button
+                      Hero(
+                        tag: 'auth_button',
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 64,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _handleAuth,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 8,
+                              shadowColor: primary.withValues(alpha: 0.4),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                            child: _isLoading 
+                              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              : Text(
+                                  _isSignUp ? "CREATE ACCOUNT" : "SIGN IN",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 16,
+                                    letterSpacing: 2,
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 32),
+                      
+                      // Toggle Link
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _isSignUp = !_isSignUp;
+                            if (_isSignUp) {
+                              _animationController.reset();
+                              _animationController.forward();
+                            }
+                          }),
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.plusJakartaSans(color: berry.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
+                              children: [
+                                TextSpan(text: _isSignUp ? "Already have an account? " : "New to Sonna's? "),
+                                TextSpan(
+                                  text: _isSignUp ? "Sign In" : "Create one",
+                                  style: const TextStyle(color: primary, fontWeight: FontWeight.w800),
+                                ),
+                              ],
                             ),
                           ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  // Toggle Login/SignUp
-                  Center(
-                    child: TextButton(
-                      onPressed: () => setState(() => _isSignUp = !_isSignUp),
-                      child: Text(
-                        _isSignUp 
-                          ? "Already have an account? Sign In" 
-                          : "New here? Create an account",
-                        style: GoogleFonts.plusJakartaSans(
-                          color: const Color(0xFF701235),
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -222,54 +318,55 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    required IconData icon,
-    bool isPassword = false,
-    Iterable<String>? autofillHints,
-    TextInputType? keyboardType,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF701235).withValues(alpha: 0.6),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: isPassword,
-          autofillHints: autofillHints,
-          keyboardType: keyboardType,
-          style: GoogleFonts.plusJakartaSans(fontSize: 16, color: const Color(0xFF701235)),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: GoogleFonts.plusJakartaSans(color: Colors.black12),
-            prefixIcon: Icon(icon, color: primary, size: 20),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: accent, width: 2),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildCircle(double size, Color color) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.plusJakartaSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 1.2,
+        color: berry.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String hint, IconData icon, {Widget? suffixIcon}) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.plusJakartaSans(color: berry.withValues(alpha: 0.2)),
+      prefixIcon: Icon(icon, color: primary, size: 22),
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: primary, width: 1.5),
+      ),
+      errorStyle: GoogleFonts.plusJakartaSans(color: primary, fontWeight: FontWeight.w600),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: primary, width: 1),
+      ),
     );
   }
 }

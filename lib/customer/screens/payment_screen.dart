@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+import '../../owner/owner_dashboard.dart';
+import '../main.dart';
 import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
+
 
 class PaymentScreen extends StatefulWidget {
   final String? customerName;
@@ -34,6 +38,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _showSuccess = false;
   bool _isLoading = false;
   String? _placedOrderId;
+  double? _placedOrderTotal;
 
   Future<void> _placeOrder(CartProvider cart) async {
     if (cart.items.isEmpty) return;
@@ -43,27 +48,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final supabase = Supabase.instance.client;
       final String orderId = "ORD-${DateTime.now().millisecondsSinceEpoch}";
       _placedOrderId = orderId;
+      // 15000 paise = 150 Rupees
+      _placedOrderTotal = cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05);
       final String orderNumber = "SN-${DateTime.now().millisecondsSinceEpoch}";
       final String customerPhone = widget.phone ?? '0000000000';
       
-      // 1. Ensure Conversation exists for THIS phone number to satisfy Foreign Key constraint
-      final existingConv = await supabase
-          .from('WhatsAppConversation')
-          .select('id')
-          .eq('phone', customerPhone)
-          .maybeSingle();
-      
-      final String conversationId = existingConv?['id'] ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
-      
-      await supabase.from('WhatsAppConversation').upsert({
-        'id': conversationId,
-        'phone': customerPhone,
-        'name': widget.customerName ?? 'Guest Customer',
-        'state': 'IDLE',
-        'updatedAt': DateTime.now().toUtc().toIso8601String(),
-      });
+      // 1. (Optional) Try to ensure Conversation exists, but don't let it block the order
+      String? conversationId;
+      try {
+        final existingConv = await supabase
+            .from('WhatsAppConversation')
+            .select('id')
+            .eq('phone', customerPhone)
+            .maybeSingle();
+        
+        conversationId = existingConv?['id'] ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
+        
+        await supabase.from('WhatsAppConversation').upsert({
+          'id': conversationId,
+          'phone': customerPhone,
+          'name': widget.customerName ?? 'Guest Customer',
+          'state': 'IDLE',
+          'updatedAt': DateTime.now().toUtc().toIso8601String(),
+        });
+      } catch (e) {
+        debugPrint("Note: Skipping conversation log due to permissions, but proceeding with order. Error: $e");
+      }
 
-      // 2. Insert Order
+      // 2. Insert Order (The primary goal)
+      final totalWithExtras = cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05);
+      final totalInRupees = (totalWithExtras / 100).round();
+
       await supabase.from('WhatsAppOrder').insert({
         'id': orderId,
         'orderNumber': orderNumber,
@@ -73,26 +88,36 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'deliveryDate': widget.deliveryDate,
         'deliveryTime': widget.deliveryTime,
         'notes': widget.notes,
-        'totalPrice': (cart.total + (widget.isSelfCheckout ? 0 : 150) + (cart.total * 0.05)).toString(),
+        'totalPrice': totalInRupees,
         'status': 'PENDING',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'customImageUrl': cart.items.isNotEmpty ? cart.items.first.imageUrl : null,
       });
+
+      // Update user metadata with phone if logged in
+      try {
+        if (supabase.auth.currentUser != null) {
+          await supabase.auth.updateUser(UserAttributes(data: {'phone': customerPhone}));
+        }
+      } catch (e) {
+        debugPrint("Note: Could not update user metadata: $e");
+      }
+
       
       // 3. Insert Items
       final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
         'id': "ITEM-$orderId-${entry.key}",
         'orderId': orderId,
         'cakeName': entry.value.name,
-        'size': 'Standard', // Default size from schema requirement
-        'price': entry.value.price.toString(),
+        'size': 'Standard',
+        'price': (entry.value.price / 100).round(),
         'quantity': entry.value.quantity,
       }).toList();
       
       await supabase.from('WhatsAppOrderItem').insert(itemsToInsert);
       
-      // 3. Clear Cart
+      // 4. Clear Cart
       cart.clear();
       
       if (mounted) {
@@ -102,14 +127,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
         });
       }
     } catch (e) {
-      debugPrint("Error placing order: $e");
+      debugPrint("CRITICAL ERROR placing order: $e");
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error: ${e.toString()}"),
+            content: Text("Payment failed: ${e.toString()}"),
             backgroundColor: const Color(0xFFFF4D8D),
-            duration: const Duration(seconds: 5),
+            duration: const Duration(seconds: 8),
           ),
         );
       }
@@ -382,7 +407,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                               ),
                               Text(
-                                "₹${(item.price * item.quantity).toInt()}",
+                                "₹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurfaceColor),
                               ),
                             ],
@@ -407,7 +432,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "₹${(cart.total + (widget.isSelfCheckout ? 0 : 150) + (cart.total * 0.05)).toInt()}",
+                                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format((cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05)) / 100),
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
@@ -675,7 +700,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
                     ),
-                    _buildInfoRow("Total Paid", "₹${(context.read<CartProvider>().total + (widget.isSelfCheckout ? 0 : 150) + (context.read<CartProvider>().total * 0.05)).toInt()}"),
+                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
@@ -723,7 +748,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
               // Secondary Action
               TextButton(
-                onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+                onPressed: () {
+                  final user = Supabase.instance.client.auth.currentUser;
+                  // Redirect to Owner Dashboard if it's the owner email, otherwise Customer Dashboard
+                  if (user?.email == 'soonas@gmail.com') {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const OwnerDashboard()),
+                      (route) => false,
+                    );
+                  } else {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
                 child: Text(
                   "Back to Home",
                   style: GoogleFonts.plusJakartaSans(
@@ -733,6 +772,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                 ),
               ),
+
             ],
           ),
         ),

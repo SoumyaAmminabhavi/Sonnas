@@ -6,12 +6,28 @@ import 'customer/screens/welcome_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Warning: .env file not found or failed to load. Falling back to dart-define.");
+  }
+
+  final String supabaseUrl = dotenv.get('SUPABASE_URL', fallback: const String.fromEnvironment('SUPABASE_URL'));
+  final String supabaseAnonKey = dotenv.get('SUPABASE_ANON_KEY', fallback: const String.fromEnvironment('SUPABASE_ANON_KEY'));
+
+  if (supabaseUrl.isEmpty || supabaseUrl == 'your_url_here') {
+    debugPrint("CRITICAL ERROR: Supabase URL is missing. Authentication will fail with 404.");
+  }
+
   await Supabase.initialize(
-    url: 'https://qwqsarpzcwwpgyimhxzn.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3cXNhcnB6Y3d3cGd5aW1oeHpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MzQ3ODEsImV4cCI6MjA5MjUxMDc4MX0.pQy9z9RxR99C7qJEEzGUjArsolY9Z2LSZPEb-Cj23mI',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
   );
 
   runApp(

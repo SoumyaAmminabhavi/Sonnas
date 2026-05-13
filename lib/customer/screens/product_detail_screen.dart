@@ -41,11 +41,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   double _parsePrice(dynamic price) {
     if (price == null) return 0.0;
     String priceStr = price.toString().replaceAll('₹', '').replaceAll('INR', '').replaceAll(',', '').trim();
-    return double.tryParse(priceStr) ?? 0.0;
+    return (double.tryParse(priceStr) ?? 0.0) / 100.0;
   }
 
   void _updatePriceDisplay() {
-    currentPriceDisplay = "₹${(currentPriceValue * quantity).toStringAsFixed(0)}";
+    currentPriceDisplay = "₹${(currentPriceValue * quantity).toStringAsFixed(2)}";
   }
 
   @override
@@ -214,7 +214,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ),
                                     ),
                                     Text(
-                                      "₹$price",
+                                      "₹${((double.tryParse(price.toString()) ?? 0.0) / 100.0).toStringAsFixed(2)}",
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 14,
                                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
@@ -318,7 +318,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              context.read<CartProvider>().addItem("${widget.title} ($selectedSize)", currentPriceValue, widget.imageUrl);
+                              final String id = "${widget.title}_${selectedSize}_${_messageController.text}";
+                              for (int i = 0; i < quantity; i++) {
+                                context.read<CartProvider>().addItem(id, "${widget.title} ($selectedSize)", currentPriceValue * 100, widget.imageUrl);
+                              }
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${widget.title} added to bag"), backgroundColor: accentRed, behavior: SnackBarBehavior.floating));
                               Navigator.pop(context);
                             },

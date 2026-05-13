@@ -33,9 +33,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   window.SetQuitOnClose(true);
 
   ::MSG msg;
-  while (::GetMessage(&msg, nullptr, 0, 0)) {
-    ::TranslateMessage(&msg);
-    ::DispatchMessage(&msg);
+  int message_result = 0;
+  while ((message_result = ::GetMessage(&msg, nullptr, 0, 0)) > 0) {
+      ::TranslateMessage(&msg);
+      ::DispatchMessage(&msg);
+  }
+  if (message_result == -1) {
+      ::CoUninitialize();
+      return EXIT_FAILURE;
   }
 
   ::CoUninitialize();

@@ -30,7 +30,7 @@ A premium, luxury Flutter application designed for high-end bakeries. This app f
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter SDK `^3.10.1` or higher
+- Flutter SDK `^3.27.0` or higher
 - Dart SDK `^3.10.1`
 
 ### Installation

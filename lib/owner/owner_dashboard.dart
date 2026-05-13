@@ -4,8 +4,11 @@ import 'menu_page.dart';
 import 'owner_settings.dart';
 import 'orders_page.dart';
 import 'payments_page.dart';
+import 'order_details_page.dart';
 import '../widgets/owner_sidebar.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 // Brand Colors - Sweet Pink Bakery Theme
 const Color _bgColor = Color(0xFFFFF0F6); // Ultra pale pink
@@ -299,84 +302,123 @@ class _MainContent extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Orders List
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
-              final isTwoCols = crossAxisCount == 2;
-
-              final orders = [
-                _OrderCard(
-                  id: "#ORD-8821",
-                  status: "IN PREPARATION",
-                  statusColor: _primaryColor,
-                  statusBg: _surfaceLow,
-                  title: "Belgian Dark Chocolate Cake",
-                  customer: "Customer: Mrs. Deshpande",
-                  imageUrl: _imgOrder1,
-                ),
-                _OrderCard(
-                  id: "#ORD-8822",
-                  status: "PENDING PICKUP",
-                  statusColor: _secondaryColor,
-                  statusBg: const Color(0xFFFDBF97).withValues(alpha: 0.2),
-                  title: "Wild Strawberry Cake",
-                  customer: "Customer: Mr. Kulkarni",
-                  imageUrl: _imgOrder2,
-                ),
-                _OrderCard(
-                  id: "#ORD-8823",
-                  status: "IN PREPARATION",
-                  statusColor: _primaryColor,
-                  statusBg: _surfaceLow,
-                  title: "Signature Macaron Box (24)",
-                  customer: "Customer: Ms. Patil",
-                  imageUrl: _imgOrder3,
-                ),
-                _OrderCard(
-                  id: "#ORD-8824",
-                  status: "CONFIRMED",
-                  statusColor: _primaryColor,
-                  statusBg: _primaryColor.withValues(alpha: 0.1),
-                  title: "Madagascar Vanilla Bean Mousse",
-                  customer: "Customer: Marc Antoine",
-                  imageUrl: _imgOrder4,
-                ),
-              ];
-
-              if (isTwoCols) {
-                return Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: orders[0]),
-                        const SizedBox(width: 24),
-                        Expanded(child: orders[1]),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(child: orders[2]),
-                        const SizedBox(width: 24),
-                        Expanded(child: orders[3]),
-                      ],
-                    ),
-                  ],
-                );
-              } else {
-                return Column(
-                  children: orders
-                      .map(
-                        (o) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: o,
-                        ),
-                      )
-                      .toList(),
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: Supabase.instance.client
+                .from('WhatsAppOrder')
+                .stream(primaryKey: ['id'])
+                .order('createdAt', ascending: false)
+                .limit(4),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(color: _primaryColor),
+                  ),
                 );
               }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    "Error loading activity",
+                    style: GoogleFonts.plusJakartaSans(color: Colors.red),
+                  ),
+                );
+              }
+
+              final orderData = snapshot.data ?? [];
+
+              if (orderData.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(48.0),
+                    child: Text(
+                      "No recent activity yet.",
+                      style: GoogleFonts.plusJakartaSans(
+                        color: _secondaryColor.withValues(alpha: 0.4),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              final List<_OrderCard> orders = orderData.map((o) {
+                final status = (o['status'] ?? 'PENDING').toString().toUpperCase();
+                
+                Color statusColor = _primaryColor;
+                Color statusBg = _primaryColor.withValues(alpha: 0.1);
+                String statusText = status;
+
+                if (status == 'PREPARING') {
+                  statusText = "IN PREPARATION";
+                  statusColor = _primaryColor;
+                  statusBg = _surfaceLow;
+                } else if (status == 'PENDING') {
+                  statusText = "NEW ORDER";
+                  statusColor = const Color(0xFFFDBF97);
+                  statusBg = const Color(0xFFFDBF97).withValues(alpha: 0.1);
+                } else if (status == 'DELIVERED' || status == 'SHIPPED') {
+                  statusText = "COMPLETED";
+                  statusColor = Colors.green;
+                  statusBg = Colors.green.withValues(alpha: 0.1);
+                }
+
+                return _OrderCard(
+                  id: "#${o['orderNumber']?.toString().split('-').last ?? 'ORD-0000'}",
+                  orderId: o['id'] ?? '',
+                  status: statusText,
+                  statusColor: statusColor,
+                  statusBg: statusBg,
+                  title: o['customerName'] ?? "Boutique Order",
+                  customer: "Phone: ${o['phone'] ?? 'Unknown'}",
+                  imageUrl: o['customImageUrl'] ?? _imgOrder1,
+                );
+
+              }).toList();
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
+                  final isTwoCols = crossAxisCount == 2;
+
+                  if (isTwoCols) {
+                    List<Widget> rows = [];
+                    for (int i = 0; i < orders.length; i += 2) {
+                      rows.add(
+                        Row(
+                          children: [
+                            Expanded(child: orders[i]),
+                            const SizedBox(width: 24),
+                            if (i + 1 < orders.length)
+                              Expanded(child: orders[i + 1])
+                            else
+                              const Expanded(child: SizedBox()),
+                          ],
+                        ),
+                      );
+                      if (i + 2 < orders.length) {
+                        rows.add(const SizedBox(height: 24));
+                      }
+                    }
+                    return Column(children: rows);
+                  } else {
+                    return Column(
+                      children: orders
+                          .map(
+                            (o) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: o,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  }
+                },
+              );
             },
           ),
+
         ],
       ),
     );
@@ -560,6 +602,7 @@ class _MainContent extends StatelessWidget {
 
 class _OrderCard extends StatelessWidget {
   final String id;
+  final String orderId;
   final String status;
   final Color statusColor;
   final Color statusBg;
@@ -569,6 +612,7 @@ class _OrderCard extends StatelessWidget {
 
   const _OrderCard({
     required this.id,
+    required this.orderId,
     required this.status,
     required this.statusColor,
     required this.statusBg,
@@ -577,14 +621,26 @@ class _OrderCard extends StatelessWidget {
     required this.imageUrl,
   });
 
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderDetailsPage(orderId: orderId),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+
       child: Row(
         children: [
           ClipRRect(
@@ -664,6 +720,7 @@ class _OrderCard extends StatelessWidget {
           Icon(Icons.chevron_right, color: _secondaryColor.withValues(alpha: 0.3)),
         ],
       ),
-    );
+    ),
+   );
   }
 }

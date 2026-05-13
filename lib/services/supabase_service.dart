@@ -2,17 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
-  // These will be filled when your friend sends the credentials
-  static const String _supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String _supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
-
-  static Future<void> initialize() async {
-    await Supabase.initialize(
-      url: _supabaseUrl,
-      anonKey: _supabaseAnonKey,
-    );
-  }
-
   static SupabaseClient get client => Supabase.instance.client;
 
   // Example: Fetching Orders
@@ -29,10 +18,12 @@ class SupabaseService {
     }
   }
 
-  // Example: Fetching Menu Items
+  // Fetching Menu Items (Cakes) as per Prisma Schema
   static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {
-      final data = await client.from('menu_items').select();
+      final data = await client
+          .from('Cake')
+          .select('*, options:CakeOption(*)');
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
       debugPrint('Error fetching menu: $e');

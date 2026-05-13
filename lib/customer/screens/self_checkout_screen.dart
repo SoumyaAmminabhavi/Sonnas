@@ -90,16 +90,16 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                           style: GoogleFonts.plusJakartaSans(fontSize: 14, color: berryText.withValues(alpha: 0.7)),
                         ),
                         Text(
-                          "₹${(item.price * item.quantity).toInt()}",
+                          "₹${((item.price * item.quantity) / 100).toStringAsFixed(2)}",
                           style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   )),
                   const Divider(height: 32),
-                  _summaryRow("Subtotal", "₹${cart.total.toInt()}"),
+                  _summaryRow("Subtotal", "₹${(cart.total / 100).toStringAsFixed(2)}"),
                   _summaryRow("In-Store Service", "FREE"),
-                  _summaryRow("Tax (5%)", "₹${(cart.total * 0.05).toInt()}"),
+                  _summaryRow("Tax (5%)", "₹${((cart.total * 0.05) / 100).toStringAsFixed(2)}"),
                   const Divider(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -109,7 +109,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                         style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        "₹${(cart.total + (cart.total * 0.05)).toInt()}",
+                        "₹${((cart.total + (cart.total * 0.05)) / 100).toStringAsFixed(2)}",
                         style: GoogleFonts.notoSerif(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,

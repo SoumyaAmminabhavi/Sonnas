@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
+import '../../services/supabase_service.dart';
 import 'product_detail_screen.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -16,6 +17,9 @@ class _MenuScreenState extends State<MenuScreen> {
   bool _isLoading = true;
   bool _isGridView = true;
 
+  String _selectedCategory = "All";
+  List<String> categories = ["All", "General", "Cakes", "Pastries", "Savories", "Macarons"];
+
   @override
   void initState() {
     super.initState();
@@ -24,40 +28,95 @@ class _MenuScreenState extends State<MenuScreen> {
 
   Future<void> _fetchCakes() async {
     try {
-      final supabase = Supabase.instance.client;
-      final data = await supabase
-          .from('Cake')
-          .select('*, options:CakeOption(*)');
+      setState(() => _isLoading = true);
+      
+      // Using the centralized service we just updated
+      final data = await SupabaseService.fetchMenu();
       
       if (mounted) {
         setState(() {
-          menuItems = List<Map<String, dynamic>>.from(data).map((cake) {
+          menuItems = data.map((cake) {
             final options = cake['options'] as List?;
             double numericPrice = 0.0;
             String priceDisplay = "₹ 0.00";
+            
             if (options != null && options.isNotEmpty) {
+              // Prisma stores price as Int (likely paise/cents), so we divide by 100
               final rawPrice = options[0]['price']?.toString() ?? "0";
-              final cleanPrice = rawPrice.replaceAll('₹', '').replaceAll('INR', '').replaceAll(',', '').trim();
-              numericPrice = double.tryParse(cleanPrice) ?? 0.0;
-              priceDisplay = "₹ $cleanPrice";
+              numericPrice = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
+              priceDisplay = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(numericPrice);
             }
+
             return {
-              'title': cake['name'],
+              'title': (cake['name'] as String?) ?? 'Unnamed',
               'price': priceDisplay,
               'numericPrice': numericPrice,
-              'image': cake['image'],
-              'description': cake['description'],
-              'options': options,
+              'image': (cake['image'] as String?) ?? 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop',
+              'description': (cake['description'] as String?) ?? '',
+              'category': (cake['category'] as String?) ?? 'General',
+              'options': options ?? const [],
             };
           }).toList();
+          
           filteredItems = List.from(menuItems);
+          _filterByCategory();
           _isLoading = false;
         });
       }
     } catch (e) {
-      debugPrint("Error fetching featured cakes: $e");
+      debugPrint("Error fetching cakes: $e");
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          // Fallback to sample data for visual feedback
+          menuItems = [
+            {
+              'title': "Classic Chocolate",
+              'price': "₹ 650",
+              'numericPrice': 650.0,
+              'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
+              'description': 'Rich Belgian chocolate ganache.',
+              'category': 'Cakes',
+              'options': [],
+            },
+            {
+              'title': "Strawberry Bliss",
+              'price': "₹ 720",
+              'numericPrice': 720.0,
+              'image': 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
+              'description': 'Fresh strawberries with cream.',
+              'category': 'Cakes',
+              'options': [],
+            },
+            {
+              'title': "Butter Croissant",
+              'price': "₹ 150",
+              'numericPrice': 150.0,
+              'image': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=1000&auto=format&fit=crop',
+              'description': 'Flaky, buttery French pastry.',
+              'category': 'Pastries',
+              'options': [],
+            },
+            {
+              'title': "Cheese Quiche",
+              'price': "₹ 220",
+              'numericPrice': 220.0,
+              'image': 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1000&auto=format&fit=crop',
+              'description': 'Savory tart with aged cheddar.',
+              'category': 'Savories',
+              'options': [],
+            },
+          ];
+          filteredItems = List.from(menuItems);
+          _filterByCategory();
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Backend Restricted: Please check Supabase RLS Policies"),
+            backgroundColor: Color(0xFF701235),
+            duration: Duration(seconds: 5),
+          ),
+        );
       }
     }
   }
@@ -71,7 +130,20 @@ class _MenuScreenState extends State<MenuScreen> {
       } else if (criteria == "Name: A-Z") {
         filteredItems.sort((a, b) => a['title'].toString().compareTo(b['title'].toString()));
       } else {
-        filteredItems = List.from(menuItems); // Reset to default
+        _filterByCategory(); // Apply category filter again to reset sorting to category default
+      }
+    });
+  }
+
+  void _filterByCategory() {
+    setState(() {
+      if (_selectedCategory == "All") {
+        filteredItems = List.from(menuItems);
+      } else {
+        filteredItems = menuItems.where((item) {
+          final category = (item['category'] as String?) ?? 'Cakes';
+          return category.toLowerCase().contains(_selectedCategory.toLowerCase());
+        }).toList();
       }
     });
   }
@@ -94,7 +166,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "SUMMER MENU",
+                    "OUR MENU",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -102,7 +174,44 @@ class _MenuScreenState extends State<MenuScreen> {
                       color: primaryColor,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
+                  // Categories
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: categories.map((cat) {
+                        final isSelected = _selectedCategory == cat;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: ChoiceChip(
+                            label: Text(cat.toUpperCase()),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _selectedCategory = cat;
+                                  _filterByCategory();
+                                });
+                              }
+                            },
+                            labelStyle: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? Colors.white : onSurface,
+                            ),
+                            selectedColor: primaryColor,
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.1)),
+                            ),
+                            showCheckmark: false,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [

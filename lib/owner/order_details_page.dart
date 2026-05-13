@@ -363,16 +363,26 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             return ListTile(
               title: Text(status),
               onTap: () async {
-                await Supabase.instance.client
-                    .from('WhatsAppOrder')
-                    .update({
-                      'status': status,
-                      'updatedAt': DateTime.now().toUtc().toIso8601String(),
-                    })
-                    .eq('id', widget.orderId);
-                if (context.mounted) {
+                try {
+                  await Supabase.instance.client
+                      .from('WhatsAppOrder')
+                      .update({
+                        'status': status,
+                        'updatedAt': DateTime.now().toUtc().toIso8601String(),
+                      })
+                      .eq('id', widget.orderId);
+
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                   _fetchOrderDetails();
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update status: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
             );

@@ -29,10 +29,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Future<void> _fetchOrders() async {
     try {
       final supabase = Supabase.instance.client;
-      // Fetch orders with their items
+      final currentUser = supabase.auth.currentUser;
+      if (currentUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Fetch orders with their items for the specific user
       final data = await supabase
           .from('WhatsAppOrder')
           .select('*, items:WhatsAppOrderItem(*)')
+          .eq('phone', currentUser.phone ?? '')
           .order('createdAt', ascending: false);
       
       if (mounted) {

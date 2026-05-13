@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'screens/menu_screen.dart';
 import 'screens/cart_screen.dart';
@@ -18,6 +19,7 @@ class CustomerMainScreen extends StatefulWidget {
 class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _currentIndex = 0;
   late final List<Widget> _screens;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -25,7 +27,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     _screens = [
       HomeScreen(onViewMenu: () => setState(() => _currentIndex = 1)),
       const MenuScreen(),
-      const ChatScreen(),
+      ChatScreen(onBack: () => setState(() => _currentIndex = 0)),
       const CartScreen(),
       const OrdersScreen(),
       const ProfileScreen(),
@@ -42,14 +44,16 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         final bool isDesktop = constraints.maxWidth > 900;
         
         return Scaffold(
+          key: _scaffoldKey,
           backgroundColor: surfaceColor,
+          drawer: _buildDrawer(),
           appBar: isDesktop ? null : AppBar(
             backgroundColor: surfaceColor.withValues(alpha: 0.95),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.menu, color: primaryColor),
-              onPressed: () {},
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             centerTitle: true,
             title: Text(
@@ -319,6 +323,91 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color surfaceColor = Color(0xFFFFF0F6);
+    const Color secondaryColor = Color(0xFF701235);
+
+    return Drawer(
+      backgroundColor: surfaceColor,
+      child: Column(
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Colors.white),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Sonna's",
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.italic,
+                      color: primaryColor,
+                    ),
+                  ),
+                  Text(
+                    "PATISSERIE",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 4,
+                      color: secondaryColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.storefront, color: primaryColor),
+            title: Text("BOUTIQUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _currentIndex = 0);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.restaurant_menu, color: primaryColor),
+            title: Text("MENU", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _currentIndex = 1);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.chat_bubble_outline, color: primaryColor),
+            title: Text("ASSISTANCE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _currentIndex = 2);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.person_outline, color: primaryColor),
+            title: Text("MY PROFILE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            onTap: () {
+              Navigator.pop(context);
+              setState(() => _currentIndex = 5);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.grey),
+            title: Text("LOGOUT", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600, color: Colors.grey)),
+            onTap: () async {
+              await Supabase.instance.client.auth.signOut();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/welcome');
+              }
+            },
+          ),
+        ],
       ),
     );
   }

@@ -181,15 +181,15 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: primary.withValues(alpha: 0.05))),
               child: Column(
                 children: [
-                  _summaryRow("Subtotal", "₹${cart.total.toInt()}"),
-                  _summaryRow("Packaging & Delivery", "₹150"),
-                  _summaryRow("Tax (5%)", "₹${(cart.total * 0.05).toInt()}"),
+                  _summaryRow("Subtotal", "₹${(cart.total / 100).toStringAsFixed(2)}"),
+                  _summaryRow("Packaging & Delivery", "₹${(15000 / 100).toStringAsFixed(2)}"),
+                  _summaryRow("Tax (5%)", "₹${((cart.total * 0.05) / 100).toStringAsFixed(2)}"),
                   const Divider(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Grand Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("₹${(cart.total + 150 + (cart.total * 0.05)).toInt()}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: primary)),
+                      Text("₹${((cart.total + 15000 + (cart.total * 0.05)) / 100).toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: primary)),
                     ],
                   ),
                 ],

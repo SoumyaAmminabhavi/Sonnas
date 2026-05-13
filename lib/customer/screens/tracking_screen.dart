@@ -40,9 +40,16 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       String? targetOrderId = widget.orderId;
       
       if (targetOrderId == null) {
+        final currentUser = supabase.auth.currentUser;
+        if (currentUser == null) {
+          setState(() => isLoading = false);
+          return;
+        }
+
         final recentOrder = await supabase
             .from('WhatsAppOrder')
             .select('id')
+            .eq('phone', currentUser.phone ?? '') // Filter by user's phone
             .order('createdAt', ascending: false)
             .limit(1)
             .maybeSingle();

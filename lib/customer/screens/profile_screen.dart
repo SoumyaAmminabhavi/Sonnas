@@ -28,17 +28,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchUserData() async {
     try {
-      // Data is now set via default controllers for boutique brand consistency
-      await Future.delayed(const Duration(milliseconds: 500));
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        // Check metadata first (where we save phone after payment)
+        final metadata = user.userMetadata ?? {};
+        final userPhone = metadata['phone']?.toString() ?? user.phone ?? "";
+        final userEmail = user.email ?? "";
+        final userName = metadata['full_name']?.toString() ?? "Boutique Guest";
+        
+        if (mounted) {
+          setState(() {
+            if (userPhone.isNotEmpty) _phoneController.text = userPhone;
+            if (userEmail.isNotEmpty) _emailController.text = userEmail;
+            if (userName != "Boutique Guest") _nameController.text = userName;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+
 
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
@@ -226,14 +240,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildActivityItem(
-                    "The Signature Box (12pcs)",
-                    "₹3,450",
-                    "ORDER #8921",
-                    "DELIVERED",
-                    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
-                    primary, outline, onSurface, surfaceContainerHigh
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: Supabase.instance.client
+                        .from('WhatsAppOrder')
+                        .stream(primaryKey: ['id'])
+                        .eq('phone', _phoneController.text)
+                        .order('createdAt', ascending: false)
+                        .limit(1),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      
+                      final data = snapshot.data ?? [];
+                      if (data.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              "No recent activity found",
+                              style: GoogleFonts.plusJakartaSans(
+                                color: outline.withValues(alpha: 0.5),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final latestOrder = data.first;
+                      final String status = latestOrder['status'] ?? 'PENDING';
+                      final String totalPrice = latestOrder['totalPrice']?.toString() ?? '0';
+                      
+                      return _buildActivityItem(
+                        "${latestOrder['customerName']?.toString().split(' ').first}'s Selection",
+                        "₹$totalPrice",
+                        "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
+                        status.toUpperCase(),
+                        latestOrder['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
+                        primary, outline, onSurface, surfaceContainerHigh
+                      );
+                    },
                   ),
+
+
                   const SizedBox(height: 48),
                   
                   // Account Settings

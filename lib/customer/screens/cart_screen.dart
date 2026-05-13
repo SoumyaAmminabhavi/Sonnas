@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../providers/cart_provider.dart';
 import 'checkout_screen.dart';
 import 'self_checkout_screen.dart';
@@ -195,7 +196,7 @@ class CartScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "₹${item.price.toInt()}",
+                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(item.price / 100),
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -207,7 +208,7 @@ class CartScreen extends StatelessWidget {
           ),
           Row(
             children: [
-              _buildQtyIcon(Icons.remove, () => cart.decrementItem(item.name)),
+              _buildQtyIcon(Icons.remove, () => cart.decrementItem(item.id)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -215,7 +216,7 @@ class CartScreen extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                 ),
               ),
-              _buildQtyIcon(Icons.add, () => cart.addItem(item.name, item.price, item.imageUrl)),
+              _buildQtyIcon(Icons.add, () => cart.addItem(item.id, item.name, item.price, item.imageUrl)),
             ],
           ),
         ],
@@ -242,7 +243,8 @@ class CartScreen extends StatelessWidget {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
 
-    final double delivery = 150.0;
+    final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
+    final double delivery = 15000.0; // 150.00 Rupees in paise
     final double tax = cart.total * 0.05;
     final double total = cart.total + delivery + tax;
 
@@ -256,15 +258,15 @@ class CartScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSummaryRow("Subtotal", "₹${cart.total.toInt()}"),
-          _buildSummaryRow("Delivery", "₹${delivery.toInt()}"),
-          _buildSummaryRow("Tax (5%)", "₹${tax.toInt()}"),
+          _buildSummaryRow("Subtotal", currencyFormatter.format(cart.total / 100)),
+          _buildSummaryRow("Delivery", currencyFormatter.format(delivery / 100)),
+          _buildSummaryRow("Tax (5%)", currencyFormatter.format(tax / 100)),
           const Divider(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total", style: GoogleFonts.notoSerif(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text("₹${total.toInt()}", style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor)),
+              Text(currencyFormatter.format(total / 100), style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor)),
             ],
           ),
           const SizedBox(height: 24),
