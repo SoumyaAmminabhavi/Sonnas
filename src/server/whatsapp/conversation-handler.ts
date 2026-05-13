@@ -239,6 +239,7 @@ interface Conversation {
   selectedDeliveryTime?: string | null;
   customImageUrl?: string | null;
   cart?: CartItem[];
+  lastActivityAt?: Date | string | null;
 }
 
 
@@ -391,7 +392,7 @@ async function updateState(
   void withTimeout(
     db.whatsAppConversation.update({
       where: { phone },
-      data: { state, lastMessageAt: new Date(), ...otherExtra },
+      data: { state, lastMessageAt: new Date(), lastActivityAt: new Date(), ...otherExtra },
     }),
     DB_TIMEOUT
   ).catch((e) => console.error("[WhatsApp] updateState DB write failed:", e));
@@ -634,6 +635,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
         return;
       }
 
+      await refreshActivity(phone);
       await _internalHandleMessage(msg);
       
       // Only mark as processed after successful handling
@@ -661,9 +663,53 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
   return processPromise;
 }
 
+async function refreshActivity(phone: string) {
+  void db.whatsAppConversation.update({
+    where: { phone },
+    data: { lastActivityAt: new Date() }
+  }).catch(() => null);
+  
+  const cached = convoCache.get(phone);
+  if (cached) {
+    cached.lastActivityAt = new Date();
+    convoCache.set(phone, cached);
+  }
+}
+
+async function getSessionTimeoutMins(): Promise<number> {
+  try {
+    const setting = await db.whatsAppSetting.findUnique({
+      where: { key: "SESSION_TIMEOUT_MINS" }
+    });
+    return setting ? parseInt(setting.value) : 60;
+  } catch {
+    return 60;
+  }
+}
+
 async function _internalHandleMessage(msg: IncomingMessage) {
-  const convo = await getConversation(msg.from, msg.name);
-  const state = convo.state as ConversationState;
+  let convo = await getConversation(msg.from, msg.name);
+  let state = convo.state as ConversationState;
+
+  // ── Session Timeout Check ────────────────────────────────────────────────
+  if (state !== "IDLE" && convo.lastActivityAt) {
+    const lastActivity = new Date(convo.lastActivityAt).getTime();
+    const timeoutMins = await getSessionTimeoutMins();
+    
+    if (Date.now() - lastActivity > timeoutMins * 60 * 1000) {
+      console.log(`[WhatsApp] Session timeout for ${msg.from} (${timeoutMins}m). Resetting.`);
+      await Promise.all([
+        clearCart(msg.from),
+        updateState(msg.from, "IDLE", RESET_STATE),
+      ]);
+      await sendTextMessage(msg.from, "Your previous session timed out due to inactivity. Starting fresh for you! ✨");
+      
+      // Reload conversation with fresh state
+      convo = await getConversation(msg.from, msg.name, true);
+      state = convo.state as ConversationState;
+    }
+  }
+
   const input = msg.text?.trim().toLowerCase() ?? "";
   const interactiveId = msg.interactiveId ?? "";
 

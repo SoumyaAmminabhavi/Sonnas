@@ -104,6 +104,7 @@ model WhatsAppConversation {
   selectedDeliveryTime String?
   messages             Json?              @default("[]")
   lastMessageAt        DateTime           @default(now())
+  lastActivityAt       DateTime           @default(now())
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   cart                 WhatsAppCartItem[]
