@@ -53,10 +53,11 @@ class _ContactScreenState extends State<ContactScreen> {
       }
 
       // Fetch actual past items from user's most recent order
+      final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
       final orderResponse = await supabase
           .from('WhatsAppOrder')
           .select('items:WhatsAppOrderItem(*)')
-          .eq('phone', currentUser.phone ?? '')
+          .eq('phone', userPhone)
           .order('createdAt', ascending: false)
           .limit(1)
           .maybeSingle();
@@ -149,10 +150,11 @@ class _ContactScreenState extends State<ContactScreen> {
           ),
         );
       } catch (e) {
+        debugPrint("Report submission error: $e");
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to submit report: $e"),
+          const SnackBar(
+            content: Text("Failed to submit report. Please try again later."),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -204,10 +206,11 @@ class _ContactScreenState extends State<ContactScreen> {
         ),
       );
     } catch (e) {
+      debugPrint("Feedback submission error: $e");
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Failed to submit feedback: $e"),
+        const SnackBar(
+          content: Text("Failed to submit feedback. Please try again later."),
           backgroundColor: Colors.red,
         ),
       );

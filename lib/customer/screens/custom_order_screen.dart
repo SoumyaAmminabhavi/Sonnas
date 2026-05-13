@@ -40,10 +40,20 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    try {
+      final supabase = Supabase.instance.client;
+      final currentUser = supabase.auth.currentUser;
+      
+      await supabase.from('CustomOrderRequest').insert({
+        'narrative': _narrativeController.text.trim(),
+        'occasion': _selectedOccasion,
+        'expectedDate': _selectedDate?.toIso8601String(),
+        'userId': currentUser?.id,
+        'userPhone': currentUser?.userMetadata?['phone']?.toString() ?? currentUser?.phone,
+        'status': 'PENDING',
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+      });
 
-    // Simulate/Implement submission logic
-    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() => _isSubmitting = false);
         showDialog(
@@ -67,7 +77,19 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
           ),
         );
       }
-    });
+    } catch (e) {
+      debugPrint("Custom Order Error: $e");
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to submit quote request. Please try again later."),
+            backgroundColor: Color(0xFFFF4D8D),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   @override

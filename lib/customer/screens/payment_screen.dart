@@ -131,10 +131,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Payment failed: ${e.toString()}"),
-            backgroundColor: const Color(0xFFFF4D8D),
-            duration: const Duration(seconds: 8),
+          const SnackBar(
+            content: Text("Payment failed. Please try again later."),
+            backgroundColor: Color(0xFFFF4D8D),
+            duration: Duration(seconds: 8),
           ),
         );
       }

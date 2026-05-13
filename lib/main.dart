@@ -21,14 +21,43 @@ void main() async {
   final String supabaseUrl = dotenv.get('SUPABASE_URL', fallback: const String.fromEnvironment('SUPABASE_URL'));
   final String supabaseAnonKey = dotenv.get('SUPABASE_ANON_KEY', fallback: const String.fromEnvironment('SUPABASE_ANON_KEY'));
 
-  if (supabaseUrl.isEmpty || supabaseUrl == 'your_url_here') {
-    debugPrint("CRITICAL ERROR: Supabase URL is missing. Authentication will fail with 404.");
-  }
+  try {
+    if (supabaseUrl.isEmpty || supabaseUrl == 'your_url_here' || supabaseAnonKey.isEmpty) {
+      throw Exception("Supabase configuration is missing or invalid.");
+    }
 
-  await Supabase.initialize(
-    url: supabaseUrl,
-    anonKey: supabaseAnonKey,
-  );
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+    );
+  } catch (e) {
+    debugPrint("CRITICAL ERROR: Failed to initialize Supabase: $e");
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text("Configuration Error", style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text("The application could not be initialized due to missing configuration. Please check your .env file or environment variables.", 
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    return;
+  }
 
   runApp(
     MultiProvider(

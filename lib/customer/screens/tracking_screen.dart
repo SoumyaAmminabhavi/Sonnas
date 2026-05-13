@@ -46,10 +46,11 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           return;
         }
 
+        final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
         final recentOrder = await supabase
             .from('WhatsAppOrder')
             .select('id')
-            .eq('phone', currentUser.phone ?? '') // Filter by user's phone
+            .eq('phone', userPhone) // Filter by user's phone
             .order('createdAt', ascending: false)
             .limit(1)
             .maybeSingle();
@@ -218,15 +219,38 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Thank you for your lovely review! 💖"),
-                        backgroundColor: primary,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
+                  onPressed: () async {
+                    try {
+                      final supabase = Supabase.instance.client;
+                      final currentUser = supabase.auth.currentUser;
+                      
+                      await supabase.from('Feedback').insert({
+                        'rating': rating,
+                        'orderId': orderData?['id'],
+                        'message': commentController.text,
+                        'userId': currentUser?.id,
+                        'userPhone': currentUser?.userMetadata?['phone']?.toString() ?? currentUser?.phone,
+                        'createdAt': DateTime.now().toUtc().toIso8601String(),
+                      });
+
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Thank you for your lovely review! 💖"),
+                            backgroundColor: primary,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Feedback Error: $e");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Failed to submit review. Please try again.")),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
@@ -340,11 +364,13 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
     final stages = isSelfCheckout ? selfCheckoutStages : deliveryStages;
     
     // Find current index based on status
-    int currentIndex = 0;
-    for (int i = stages.length - 1; i >= 0; i--) {
-      if ((stages[i]['match'] as List).contains(status)) {
-        currentIndex = i;
-        break;
+    int currentIndex = -1;
+    if (status != 'CANCELLED') {
+      for (int i = stages.length - 1; i >= 0; i--) {
+        if ((stages[i]['match'] as List).contains(status)) {
+          currentIndex = i;
+          break;
+        }
       }
     }
 

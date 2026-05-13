@@ -127,9 +127,17 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (_nameController.text.isEmpty || _phoneController.text.isEmpty) {
+                  final phone = _phoneController.text.trim();
+                  if (_nameController.text.isEmpty || phone.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Please provide your name and contact number")),
+                    );
+                    return;
+                  }
+                  
+                  if (phone.length != 10) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please enter a valid 10-digit contact number")),
                     );
                     return;
                   }

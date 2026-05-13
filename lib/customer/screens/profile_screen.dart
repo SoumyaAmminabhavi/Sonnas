@@ -21,6 +21,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _addressController = TextEditingController(text: "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021");
 
   @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _fetchUserData();
@@ -57,8 +66,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     try {
-      // Simulate/Implement profile update
-      await Future.delayed(const Duration(seconds: 1)); // UX feedback delay
+      final supabase = Supabase.instance.client;
+      await supabase.auth.updateUser(
+        UserAttributes(
+          data: {
+            'full_name': _nameController.text.trim(),
+            'phone': _phoneController.text.trim(),
+          },
+        ),
+      );
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,9 +90,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
+      debugPrint("Profile update error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error updating profile")),
+          const SnackBar(
+            content: Text("Error updating profile. Please try again later."),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
         setState(() => _isLoading = false);
       }

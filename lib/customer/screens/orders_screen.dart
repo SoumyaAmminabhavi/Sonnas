@@ -36,10 +36,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
       }
 
       // Fetch orders with their items for the specific user
+      final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
       final data = await supabase
           .from('WhatsAppOrder')
           .select('*, items:WhatsAppOrderItem(*)')
-          .eq('phone', currentUser.phone ?? '')
+          .eq('phone', userPhone)
           .order('createdAt', ascending: false);
       
       if (mounted) {

@@ -29,6 +29,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
 
   @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     if (widget.options.isNotEmpty) {

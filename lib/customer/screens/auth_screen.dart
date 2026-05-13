@@ -132,10 +132,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         );
       }
     } catch (e) {
+      debugPrint("Authentication error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Authentication error: ${e.toString()}"),
+          const SnackBar(
+            content: Text("Authentication failed. Please try again later."),
             backgroundColor: primary,
             behavior: SnackBarBehavior.floating,
           ),

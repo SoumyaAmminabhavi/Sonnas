@@ -201,9 +201,17 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  if (_nameController.text.isEmpty || _phoneController.text.isEmpty || _addressController.text.isEmpty) {
+                  final phone = _phoneController.text.trim();
+                  if (_nameController.text.isEmpty || phone.isEmpty || _addressController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Please fill in all delivery details")),
+                    );
+                    return;
+                  }
+
+                  if (phone.length != 10) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please enter a valid 10-digit contact number")),
                     );
                     return;
                   }

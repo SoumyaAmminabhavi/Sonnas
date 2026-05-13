@@ -78,11 +78,15 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       final cakeId = cakeResponse['id'];
 
       // 2. Insert the CakeOption (Price/Size)
+      // Standardize: Convert INR to Paise for backend storage
+      final priceInRupees = double.tryParse(_priceController.text.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+      final priceInPaise = (priceInRupees * 100).toInt();
+
       await supabase.from('CakeOption').insert({
         'cakeId': cakeId,
         'size': _weightController.text,
         'serves': _servesController.text,
-        'price': int.tryParse(_priceController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+        'price': priceInPaise,
       });
 
       if (mounted) {
@@ -106,8 +110,8 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       debugPrint("Error adding cake: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error adding cake: $e"),
+          const SnackBar(
+            content: Text("Error adding product to menu. Please try again later."),
             backgroundColor: Colors.red,
           ),
         );
