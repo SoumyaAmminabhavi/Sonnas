@@ -680,18 +680,28 @@ class _ElegantAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDisabled = onPressed == null;
+    final Color disabledColor = cs.onSurface.withValues(alpha: 0.3);
+
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        gradient: isPrimary ? LinearGradient(
+        gradient: (isPrimary && !isDisabled) ? LinearGradient(
           colors: [cs.primary, cs.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ) : null,
-        color: !isPrimary ? cs.surface : null,
+        color: isDisabled 
+            ? (isPrimary ? cs.primary.withValues(alpha: 0.1) : cs.surface)
+            : (!isPrimary ? cs.surface : null),
         borderRadius: BorderRadius.circular(16),
-        border: !isPrimary ? Border.all(color: cs.primary.withValues(alpha: 0.15), width: 1.5) : null,
-        boxShadow: [
+        border: !isPrimary || isDisabled ? Border.all(
+          color: isDisabled 
+              ? cs.onSurface.withValues(alpha: 0.05) 
+              : cs.primary.withValues(alpha: 0.15), 
+          width: 1.5
+        ) : null,
+        boxShadow: isDisabled ? null : [
           BoxShadow(
             color: isPrimary ? cs.primary.withValues(alpha: 0.25) : Colors.black.withValues(alpha: 0.03),
             blurRadius: 15,
@@ -709,7 +719,7 @@ class _ElegantAction extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 20, color: isPrimary ? Colors.white : cs.primary),
+                Icon(icon, size: 20, color: isDisabled ? disabledColor : (isPrimary ? Colors.white : cs.primary)),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
@@ -718,7 +728,7 @@ class _ElegantAction extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
-                      color: isPrimary ? Colors.white : cs.primary,
+                      color: isDisabled ? disabledColor : (isPrimary ? Colors.white : cs.primary),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

@@ -7,7 +7,10 @@ class ThemeService {
   /// Save the theme preference to local storage
   static Future<void> saveThemeMode(ThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeKey, mode.name);
+    final success = await prefs.setString(_themeKey, mode.name);
+    if (!success) {
+      throw Exception('Failed to persist theme preference to storage.');
+    }
   }
 
   /// Retrieve the theme preference from local storage
