@@ -1148,13 +1148,40 @@ async function sendWelcome(to: string, name?: string) {
   }
 
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
-  await sendInteractiveButtons(
+  const cakes = await safeGetCakes();
+  const topCakes = cakes.slice(0, 3);
+  
+  // Get unique categories for the browse section
+  const categories = Array.from(new Set(cakes.map(c => c.category).filter(Boolean))) as string[];
+
+  await sendInteractiveList(
     to,
-    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today?\n\n💡 *Quick Tips:*\n• Reply *Menu* to browse all cakes\n• Reply *Status* to track your orders\n• Reply *Cancel* to clear your selection`,
+    "Sonna's Patisserie",
+    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? \ud83c\udf38`,
+    "View Menu",
     [
-      { id: "btn_menu", title: "📋 Browse Our Cakes" },
-      { id: "btn_custom", title: "🎨 Custom Creation" },
-      { id: "btn_status", title: "📦 Track My Order" },
+      {
+        title: "⭐ Top Favorites",
+        rows: topCakes.map(c => ({
+          id: `cake_${c.name}`,
+          title: c.name,
+          description: `Signature Selection`
+        }))
+      },
+      {
+        title: "📋 Browse by Category",
+        rows: categories.slice(0, 5).map(cat => ({
+          id: `cat_${cat}`,
+          title: cat
+        }))
+      },
+      {
+        title: "✨ Other Services",
+        rows: [
+          { id: "btn_custom", title: "🎨 Custom Creation", description: "Design your own cake" },
+          { id: "btn_status", title: "📦 Track My Order", description: "Check your history" }
+        ]
+      }
     ]
   );
   await sendMenuPDF(to);
