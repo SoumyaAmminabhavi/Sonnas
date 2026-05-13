@@ -1798,19 +1798,6 @@ async function handleDeliverySlotSelection(
     await sendTextMessage(msg.from, "⚠️ Sorry, I encountered an error. Please try again.");
   }
 }
-      msg.from,
-      buildOrderSummary(cart, currentConvo),
-      [
-        { id: "btn_confirm", title: "✅ Confirm Order" },
-        { id: "btn_back", title: "⬅️ Back" },
-        { id: "btn_cancel", title: "❌ Cancel" },
-      ]
-    );
-  } catch (err) {
-    console.error("[WhatsApp] Error in handleDeliveryTimeInput:", err);
-    await sendTextMessage(msg.from, "⚠️ Something went wrong. Please try again or reply *Menu*.");
-  }
-}
 
 // ─── Handle custom cake request ───────────────────────────────────────────
 
