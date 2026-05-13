@@ -402,6 +402,11 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                             });
                             ThemeService.saveThemeMode(mode).catchError((e) {
                               debugPrint("Theme Persistence Error: $e");
+                              // Rollback UI on failure
+                              setState(() {
+                                _isDarkMode = !val;
+                                themeController.value = val ? ThemeMode.light : ThemeMode.dark;
+                              });
                             });
                           },
                         ),

@@ -210,6 +210,11 @@ class _SettingsContentState extends State<_SettingsContent> {
               });
               ThemeService.saveThemeMode(mode).catchError((e) {
                 debugPrint("Theme Persistence Error: $e");
+                // Rollback UI on failure
+                setState(() {
+                  _isDarkMode = !val;
+                  themeController.value = val ? ThemeMode.light : ThemeMode.dark;
+                });
               });
             },
           ),
