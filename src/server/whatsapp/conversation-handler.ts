@@ -887,7 +887,6 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       updateState(msg.from, "IDLE", RESET_STATE),
     ]);
     await sendTextMessage(msg.from, "Got it! Your order has been cleared. ✅\n\nWhenever you're craving something special, just say *HI* or *Menu* to see what's baking today! 🍰");
-    await sendMenuPDF(msg.from);
     return;
   }
 
