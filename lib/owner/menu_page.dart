@@ -56,6 +56,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                       AddMenuPage(onTabChanged: widget.onTabChanged),
                 ),
               );
+              ref.invalidate(menuProvider);
             },
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),

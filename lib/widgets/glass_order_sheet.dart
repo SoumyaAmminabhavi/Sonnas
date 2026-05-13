@@ -168,8 +168,10 @@ class GlassOrderSheet extends StatelessWidget {
                     );
                     displayImageUrl = matchingCake['image'] ?? '';
 
+                    bool isCustomUrl = false;
                     if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && order.customImageUrl != null) {
                       displayImageUrl = order.customImageUrl!;
+                      isCustomUrl = true;
                     }
 
                     Widget imageWidget;
@@ -177,7 +179,9 @@ class GlassOrderSheet extends StatelessWidget {
                       imageWidget = ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: CachedNetworkImage(
-                          imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
+                          imageUrl: isCustomUrl && (displayImageUrl.startsWith('http') || Uri.tryParse(displayImageUrl)?.isAbsolute == true) 
+                              ? displayImageUrl 
+                              : SupabaseService.getPublicUrl(displayImageUrl),
                           width: 48,
                           height: 48,
                           fit: BoxFit.cover,

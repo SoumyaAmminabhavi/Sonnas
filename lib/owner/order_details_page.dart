@@ -237,8 +237,10 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                       );
                                                       displayImageUrl = matchingCake['image'] ?? '';
 
+                                                      bool isCustomUrl = false;
                                                       if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) && order['customImageUrl'] != null) {
                                                         displayImageUrl = order['customImageUrl'];
+                                                        isCustomUrl = true;
                                                       }
 
                                                       return Padding(
@@ -247,7 +249,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                           title: cakeName,
                                                           subtitle: "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
                                                           price: OrderService.formatPrice(item['price']),
-                                                          imageUrl: SupabaseService.getPublicUrl(displayImageUrl),
+                                                          imageUrl: isCustomUrl ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl),
                                                           cs: cs,
                                                         ),
                                                       );
@@ -404,6 +406,12 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                             isPrimary: false,
                                             onPressed: () async {
                                               final phone = order['phone'] ?? conversation?['phone'];
+                                              if (phone == null || phone.toString().isEmpty) {
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No contact number available.")));
+                                                }
+                                                return;
+                                              }
                                               final name = order['customerName'] ?? conversation?['name'] ?? 'there';
                                               String cake = 'your selection';
                                               try {
@@ -658,7 +666,7 @@ class _ElegantAction extends StatelessWidget {
         boxShadow: isPrimary ? [BoxShadow(color: cs.primary.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8))] : null,
       ),
       child: TextButton.icon(
-        onPressed: onPressed ?? () {},
+        onPressed: onPressed,
         icon: Icon(icon, size: 20, color: isPrimary ? Colors.white : cs.primary),
         label: Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: isPrimary ? Colors.white : cs.primary)),
       ),

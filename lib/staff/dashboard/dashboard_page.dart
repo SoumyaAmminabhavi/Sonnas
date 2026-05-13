@@ -218,10 +218,12 @@ class _DashboardContent extends StatelessWidget {
         // --- ROLE BASED FILTERING ---
         final bool isCleaning = role == StaffRole.cleaning;
         
-        // Only show production orders to Chefs, Managers, and All-rounders
-        final activeOrders = isCleaning ? [] : allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').toList();
+        final activeOrders = isCleaning ? [] : allOrders.where((o) => 
+          (o['status'] ?? '').toLowerCase() != 'delivered' && 
+          (o['status'] ?? '').toLowerCase() != 'completed'
+        ).toList();
         
-        final completedOrdersCount = allOrders.length - allOrders.where((o) => (o['status'] ?? '').toLowerCase() != 'delivered').length;
+        final completedOrdersCount = allOrders.length - activeOrders.length;
 
         return ListView(
           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 24, vertical: 32),
