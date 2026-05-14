@@ -40,11 +40,36 @@ interface Cake {
   image: string;
   category?: string;
   categoryId?: string | null;
-  categoryRelation?: { id: string; name: string } | null;
   categoryName?: string | null;
   isAvailable?: boolean;
   sortOrder?: number;
   options: CakeOption[];
+}
+
+interface DBCategory {
+  id: string;
+  name: string;
+  slug: string | null;
+  image: string | null;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface DBCake {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  isAvailable: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+  options: CakeOption[];
+  category: DBCategory | null;
 }
 
 interface CartItem {
@@ -119,9 +144,9 @@ const RESET_STATE = {
 };
 
 // ─── Category Helpers ─────────────────────────────────────────────────────
-let categoryCache: any[] | null = null;
+let categoryCache: DBCategory[] | null = null;
 
-async function safeGetCategories() {
+async function safeGetCategories(): Promise<DBCategory[]> {
   const now = Date.now();
   if (categoryCache && (now - lastCacheUpdate < CACHE_TTL)) {
     return categoryCache;
@@ -131,8 +156,8 @@ async function safeGetCategories() {
     const result = await db.category.findMany({
       orderBy: { sortOrder: "asc" }
     });
-    categoryCache = result;
-    return result;
+    categoryCache = result as DBCategory[];
+    return categoryCache;
   } catch (e) {
     console.error("[WhatsApp] Failed to fetch categories:", e);
     return [];
@@ -160,7 +185,7 @@ async function safeGetCakes(): Promise<Cake[]> {
     );
 
     if (result) {
-      const dbCakes = result as any[];
+      const dbCakes = result as unknown as DBCake[];
       const fallbackCakes = products as unknown as Cake[];
 
       // Merge DB data with Fallbacks (Prefer DB image/price, but use code if DB is empty)
