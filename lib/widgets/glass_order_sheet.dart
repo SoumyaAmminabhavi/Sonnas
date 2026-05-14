@@ -276,7 +276,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(widget.order.notes!, style: GoogleFonts.notoSerif(fontSize: 13, fontStyle: FontStyle.italic, color: cs.error.withValues(alpha: 0.8))),
+           Text(widget.order.notes!.trim(), style: GoogleFonts.notoSerif(fontSize: 13, fontStyle: FontStyle.italic, color: cs.error.withValues(alpha: 0.8))),
         ],
       ),
     );

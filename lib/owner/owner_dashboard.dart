@@ -78,10 +78,18 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
           child: _NotificationWidget(
             customerName: customerName,
             orderNumber: orderNumber,
-            onView: () {
-              overlayEntry.remove();
-              Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: order['id'])));
-            },
+             onView: () {
+               final String? orderId = order['id'];
+               if (orderId == null || orderId.isEmpty) {
+                 if (!mounted) return;
+                 ScaffoldMessenger.of(context).showSnackBar(
+                   const SnackBar(content: Text('Invalid order ID')),
+                 );
+                 return;
+               }
+               overlayEntry.remove();
+               Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
+             },
             onClose: () => overlayEntry.remove(),
           ),
         ),

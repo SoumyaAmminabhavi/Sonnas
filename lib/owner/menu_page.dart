@@ -797,18 +797,17 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
         
         // Check if selected value is an ID or a Name (for backward compatibility)
-        final existingCat = _categories.firstWhere(
-          (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
-          orElse: () => <String, dynamic>{},
-        );
+         final existingCat = _categories.firstWhere(
+           (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
+           orElse: () => <String, dynamic>{},
+         );
 
-        if (existingCat.isNotEmpty) {
-          categoryId = existingCat['id'];
-        } else {
-          // If no matching category found, pass the existing ID as-is so legacy
-          // associations are preserved. The DB will reject it if truly invalid.
-          categoryId = _selectedCategoryId!.isNotEmpty ? _selectedCategoryId : null;
-        }
+         if (existingCat.isNotEmpty) {
+           categoryId = existingCat['id'];
+         } else {
+           // If no matching category found, set to null to avoid invalid FK.
+           categoryId = null;
+         }
       }
 
       final cakeId = await MenuService.upsertCake({
@@ -1189,15 +1188,15 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           ),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          initialValue: _selectedCategoryId,
-          hint: Text(
-            "Select Collection",
-            style: GoogleFonts.plusJakartaSans(
-              color: cs.secondary.withValues(alpha: 0.3),
-              fontSize: 14,
-            ),
-          ),
+         DropdownButtonFormField<String>(
+           value: _selectedCategoryId,
+           hint: Text(
+             "Select Collection",
+             style: GoogleFonts.plusJakartaSans(
+               color: cs.secondary.withValues(alpha: 0.3),
+               fontSize: 14,
+             ),
+           ),
           decoration: InputDecoration(
             prefixIcon: Icon(
               Icons.category,
