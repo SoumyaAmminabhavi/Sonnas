@@ -85,7 +85,6 @@ model Category {
   id        String   @id @default(cuid())
   name      String   @unique
   slug      String?  @unique
-  emoji     String?  @default("✨")
   image     String?
   sortOrder Int      @default(0)
   cakes     Cake[]

@@ -1257,7 +1257,7 @@ async function sendWelcome(to: string, name?: string) {
         title: "📋 Browse by Category",
         rows: dbCategories.slice(0, 6).map(cat => ({
           id: `cat_${cat.id}`,
-          title: `${cat.emoji ?? "✨"} ${cat.name}`.slice(0, 24)
+          title: cat.name.slice(0, 24)
         }))
       },
       {
@@ -1349,7 +1349,7 @@ async function sendMenu(to: string) {
           title: "Filter by Type",
           rows: dbCategories.slice(0, 10).map((cat) => ({
             id: `cat_${cat.id}`,
-            title: `${cat.emoji ?? "✨"} ${cat.name}`.slice(0, 24),
+            title: cat.name.slice(0, 24),
           })),
         },
       ]
@@ -1387,7 +1387,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const dbCategories = await safeGetCategories();
   const category = dbCategories.find(c => c.id === categoryId);
   const catName = category?.name ?? categoryId;
-  const title = category ? `${category.emoji ?? "✨"} ${category.name}` : `✨ ${categoryId}`;
+  const title = category ? category.name : categoryId;
 
   const allCakes = await safeGetCakes();
   const filtered = allCakes.filter((p) => {
