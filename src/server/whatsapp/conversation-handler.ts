@@ -1416,7 +1416,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
 
   if (hasMore) {
     rows.push({
-      id: `more_${categoryKey}_${offset + (PAGE_SIZE - 1)}`,
+      id: `more_${categoryId}_${offset + (PAGE_SIZE - 1)}`,
       title: "➡️ See More...",
       description: `Showing ${offset + 1}-${offset + (PAGE_SIZE - 1)} of ${filtered.length}`,
     });
