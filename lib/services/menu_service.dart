@@ -13,9 +13,16 @@ class MenuService {
   /// Fetch all menu items with fallback
   static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {
-      // 1. Try Primary (Friend's) project
-      final res = await SupabaseService.client.from('Cake').select('*, CakeOption(*)').order('name');
-      return List<Map<String, dynamic>>.from(res);
+      // 1. Try Primary (Friend's) project with join
+      try {
+        final res = await SupabaseService.client.from('Cake').select('*, CakeOption(*)').order('name');
+        return List<Map<String, dynamic>>.from(res);
+      } catch (e) {
+        debugPrint('⚠️ Join fetch failed, trying simple fetch: $e');
+        // Fallback to simple select if join fails (relationship name might be different)
+        final res = await SupabaseService.client.from('Cake').select('*').order('name');
+        return List<Map<String, dynamic>>.from(res);
+      }
     } catch (e) {
       debugPrint('⚠️ Friend\'s Menu Fetch Failed: $e. Falling back to Private DB.');
       try {
@@ -24,7 +31,7 @@ class MenuService {
         return List<Map<String, dynamic>>.from(res);
       } catch (e2) {
         debugPrint('❌ All Menu Fetch attempts failed: $e2');
-        return []; // Return empty list instead of crashing
+        return []; 
       }
     }
   }

@@ -605,6 +605,8 @@ class _AddMenuContentState extends State<_AddMenuContent> {
   late TextEditingController _descriptionController;
   late TextEditingController _weightController;
   late TextEditingController _servesController;
+  late TextEditingController _newCategoryController;
+  bool _showNewCategoryField = false;
 
   final _picker = ImagePicker();
   XFile? _selectedImage;
@@ -634,6 +636,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     _descriptionController = TextEditingController(text: data?['description']?.toString());
     _weightController = TextEditingController(text: firstOption?['weight']?.toString() ?? '');
     _servesController = TextEditingController(text: firstOption?['serves']?.toString() ?? '');
+    _newCategoryController = TextEditingController();
     _existingImageUrl = data?['image'];
   }
 
@@ -644,6 +647,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     _descriptionController.dispose();
     _weightController.dispose();
     _servesController.dispose();
+    _newCategoryController.dispose();
     super.dispose();
   }
 
@@ -669,11 +673,14 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       // 1. Upload new image if selected
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
-        final extension = _selectedImage!.path.split('.').last;
+        // Standardize extension for web/mobile compatibility
+        String extension = _selectedImage!.name.split('.').last.toLowerCase();
+        if (extension == 'blob' || extension.length > 4) extension = 'jpg';
+        
         final fileName = 'cake_${DateTime.now().millisecondsSinceEpoch}.$extension';
         
         final uploadedPath = await SupabaseService.uploadImage(
-          bucket: 'staff-images', // Using the existing bucket for now
+          bucket: 'cakes', // Using the correct bucket in friend's DB
           path: fileName,
           file: bytes,
         );
@@ -684,10 +691,15 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       }
 
       // 2. Save cake details
+      final name = _nameController.text;
+      final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+      final newId = 'c${DateTime.now().millisecondsSinceEpoch}'; // Simple unique ID generator
+
       final cakeId = await MenuService.upsertCake({
-        if (widget.initialData != null) 'id': widget.initialData!['id'],
-        'name': _nameController.text,
-        'category': _selectedCategory,
+        'id': widget.initialData?['id'] ?? newId,
+        'name': name,
+        'slug': slug,
+        'category': _showNewCategoryField ? _newCategoryController.text : _selectedCategory,
         'description': _descriptionController.text,
         'image': imagePath,
         'updatedAt': DateTime.now().toIso8601String(),
@@ -695,24 +707,32 @@ class _AddMenuContentState extends State<_AddMenuContent> {
 
       // 3. Save cake options
       await MenuService.upsertCakeOption({
+        'id': 'co${DateTime.now().millisecondsSinceEpoch}', // Unique ID for option
         'cakeId': cakeId,
         'price': (double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0) * 100,
-        'weight': _weightController.text,
+        'size': _weightController.text, // Mapping weight input to 'size' column
         'serves': _servesController.text,
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Catalog updated successfully")),
-        );
-        Navigator.pop(context);
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Catalog updated successfully"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
-        );
-      }
+      if (!mounted) return;
+      final cs = Theme.of(context).colorScheme;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+          backgroundColor: cs.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
@@ -784,14 +804,35 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                   const SizedBox(height: 16),
                   if (isTwoCol)
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(child: _buildCategoryDropdown(cs)),
                         const SizedBox(width: 24),
-                        const Spacer(),
+                        if (_showNewCategoryField)
+                          Expanded(
+                            child: _InputField(
+                              label: "New Category Name",
+                              hint: "e.g. Special Editions",
+                              icon: Icons.add_circle_outline,
+                              controller: _newCategoryController,
+                            ),
+                          )
+                        else
+                          const Spacer(),
                       ],
                     )
-                  else
+                  else ...[
                     _buildCategoryDropdown(cs),
+                    if (_showNewCategoryField) ...[
+                      const SizedBox(height: 24),
+                      _InputField(
+                        label: "New Category Name",
+                        hint: "e.g. Special Editions",
+                        icon: Icons.add_circle_outline,
+                        controller: _newCategoryController,
+                      ),
+                    ],
+                  ],
                   const SizedBox(height: 24),
                   if (isTwoCol)
                     Row(
@@ -928,7 +969,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
  }
 
   Widget _buildCategoryDropdown(ColorScheme cs) {
-    final categories = [
+    final baseCategories = [
       'Chocolate Cakes',
       'Fruit & Floral Cakes',
       'Artisan Pastries',
@@ -939,6 +980,13 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       'Mini Cheesecakes',
       'Slices',
     ];
+
+    // Ensure current category is in the list if it's not "Add New..."
+    final List<String> categories = List.from(baseCategories);
+    if (_selectedCategory != null && !categories.contains(_selectedCategory)) {
+      categories.add(_selectedCategory!);
+    }
+    categories.add('Add New...');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1005,7 +1053,17 @@ class _AddMenuContentState extends State<_AddMenuContent> {
               ),
             );
           }).toList(),
-          onChanged: (val) => setState(() => _selectedCategory = val),
+          onChanged: (val) {
+            setState(() {
+              if (val == 'Add New...') {
+                _showNewCategoryField = true;
+                _selectedCategory = null;
+              } else {
+                _showNewCategoryField = false;
+                _selectedCategory = val;
+              }
+            });
+          },
         ),
       ],
     );

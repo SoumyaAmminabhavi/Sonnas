@@ -27,22 +27,16 @@ class SupabaseService {
   static SupabaseClient get myClient => _myClient;
 
   /// Unified helper to get public URL for a file in Supabase storage
-  static String getPublicUrl(String? path, {String bucket = 'staff-images', int? width, int? height}) {
+  static String getPublicUrl(String? path, {String bucket = 'cakes', int? width, int? height}) {
+    // Determine which client to use (Friend's vs Mine)
+    final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
+    
     if (path == null || path.isEmpty) return '';
     if (path.startsWith('http')) return path;
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
     
-    if (width != null || height != null) {
-      return client.storage.from(bucket).getPublicUrl(
-        path,
-        transform: TransformOptions(
-          width: width,
-          height: height,
-          resize: ResizeMode.cover,
-        ),
-      );
-    }
-    return client.storage.from(bucket).getPublicUrl(path);
+    // Use direct public URL (Transformation is a paid feature)
+    return storageClient.from(bucket).getPublicUrl(path);
   }
 
   /// Helper to get a signed URL for private storage items
@@ -58,7 +52,13 @@ class SupabaseService {
     required dynamic file, // Can be Uint8List or File path
   }) async {
     try {
-      await client.storage.from(bucket).upload(path, file, fileOptions: const FileOptions(upsert: true));
+      final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
+      
+      if (file is Uint8List) {
+        await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
+      } else {
+        await storageClient.from(bucket).upload(path, file, fileOptions: const FileOptions(upsert: true));
+      }
       return path;
     } catch (e) {
       debugPrint('❌ Supabase Upload Error: $e');
