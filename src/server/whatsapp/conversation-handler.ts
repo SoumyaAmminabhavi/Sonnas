@@ -663,7 +663,6 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
         return;
       }
 
-      await refreshActivity(phone);
       const convo = await getConversation(phone);
 
       // ── Anti-Flood Rate Limit (15 msgs / 60s) ──────────────────────────────
@@ -700,6 +699,8 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
         rateLimitCount: convo.rateLimitCount,
         rateLimitWindowStart: convo.rateLimitWindowStart
       });
+
+      await refreshActivity(phone);
 
       await _internalHandleMessage(msg);
 
