@@ -64,7 +64,9 @@ class OrderCardReactive extends ConsumerWidget {
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
               : OrderService.formatPrice(calculatedTotal),
-          imageUrl: SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
+          imageUrl: (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
+              ? imageUrl
+              : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
           deliveryTime: data['deliveryTime'],
           orderSubtitle: orderSubtitle,

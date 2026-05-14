@@ -23,7 +23,7 @@ class KitchenPage extends StatelessWidget {
         final allOrders = snapshot.data ?? [];
         final activeOrders = allOrders.where((o) {
           final s = o['status']?.toString().toUpperCase() ?? 'PENDING';
-          return s == 'PENDING' || s == 'CONFIRMED' || s == 'ACCEPTED' || s == 'PREPARING';
+          return s == 'PENDING' || s == 'CONFIRMED';
         }).toList();
 
         if (activeOrders.isEmpty) {
@@ -75,8 +75,8 @@ class KitchenOrderCard extends StatelessWidget {
     final order = SonnaOrder.fromMap(orderMap);
     final String status = order.status.name.toUpperCase();
     
-    // Status Logic
-    bool isPreparing = status == 'PREPARING';
+    // Highlight confirmed (ready-to-dispatch) orders
+    bool isConfirmed = status == 'CONFIRMED';
     
     final elapsed = DateTime.now().difference(order.createdAt);
     final String timeLabel = elapsed.inMinutes < 60 
@@ -90,12 +90,12 @@ class KitchenOrderCard extends StatelessWidget {
           color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: isPreparing ? cs.primary.withValues(alpha: 0.2) : cs.secondary.withValues(alpha: 0.08),
-            width: isPreparing ? 2 : 1,
+            color: isConfirmed ? cs.primary.withValues(alpha: 0.2) : cs.secondary.withValues(alpha: 0.08),
+            width: isConfirmed ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: isPreparing ? cs.primary.withValues(alpha: 0.08) : cs.primary.withValues(alpha: 0.03),
+              color: isConfirmed ? cs.primary.withValues(alpha: 0.08) : cs.primary.withValues(alpha: 0.03),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -108,7 +108,7 @@ class KitchenOrderCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
-                color: isPreparing ? cs.primary.withValues(alpha: 0.05) : cs.primary.withValues(alpha: 0.02),
+                color: isConfirmed ? cs.primary.withValues(alpha: 0.05) : cs.primary.withValues(alpha: 0.02),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
               ),
               child: Row(
@@ -245,16 +245,14 @@ class KitchenOrderCard extends StatelessWidget {
                     String nextStatus = 'CONFIRMED';
                     if (status == 'PENDING') {
                       nextStatus = 'CONFIRMED';
-                    } else if (status == 'CONFIRMED' || status == 'ACCEPTED') {
-                      nextStatus = 'PREPARING';
-                    } else if (status == 'PREPARING') {
-                      nextStatus = 'READY';
+                    } else if (status == 'CONFIRMED') {
+                      nextStatus = 'OUT_FOR_DELIVERY';
                     }
                     
                     await OrderService.updateOrderStatus(order.id, nextStatus);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isPreparing ? Colors.teal : cs.primary,
+                    backgroundColor: isConfirmed ? Colors.teal : cs.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -280,10 +278,8 @@ class KitchenOrderCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'PENDING': return Colors.orange;
-      case 'CONFIRMED':
-      case 'ACCEPTED': return Colors.blue;
-      case 'PREPARING': return Colors.teal;
-      case 'READY': return Colors.green;
+      case 'CONFIRMED': return Colors.blue;
+      case 'OUT_FOR_DELIVERY': return Colors.teal;
       default: return cs.secondary;
     }
   }
@@ -291,9 +287,7 @@ class KitchenOrderCard extends StatelessWidget {
   String _getButtonLabel(String status) {
     switch (status) {
       case 'PENDING': return "CONFIRM ORDER";
-      case 'CONFIRMED':
-      case 'ACCEPTED': return "START PREPARATION";
-      case 'PREPARING': return "MARK AS READY";
+      case 'CONFIRMED': return "DISPATCH ORDER";
       default: return "VIEW DETAILS";
     }
   }

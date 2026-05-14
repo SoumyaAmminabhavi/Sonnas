@@ -361,18 +361,18 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                             if (status == 'PENDING') {
                                               label = "CONFIRM ORDER";
                                               next = "CONFIRMED";
-                                            } else if (status == 'CONFIRMED' || status == 'ACCEPTED') {
-                                              label = "START PREPARATION";
-                                              next = "PREPARING";
-                                              icon = Icons.restaurant_menu;
-                                            } else if (status == 'PREPARING') {
-                                              label = "MARK AS READY";
-                                              next = "READY";
-                                              icon = Icons.shopping_bag_outlined;
-                                            } else if (status == 'READY') {
+                                            } else if (status == 'CONFIRMED') {
+                                              label = "DISPATCH ORDER";
+                                              next = "OUT_FOR_DELIVERY";
+                                              icon = Icons.local_shipping_outlined;
+                                            } else if (status == 'OUT_FOR_DELIVERY') {
                                               label = "MARK DELIVERED";
                                               next = "DELIVERED";
-                                              icon = Icons.local_shipping_outlined;
+                                              icon = Icons.check_circle_outline;
+                                            } else if (status == 'DELIVERED') {
+                                              label = "COMPLETE ORDER";
+                                              next = "COMPLETED";
+                                              icon = Icons.done_all;
                                             } else {
                                               label = status;
                                               active = false;

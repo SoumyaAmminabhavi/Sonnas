@@ -181,14 +181,16 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                       isCustomUrl = true;
                     }
 
-                    Widget imageWidget;
+                     Widget imageWidget;
                     if (displayImageUrl.isNotEmpty) {
+                      // Use raw URL for absolute paths, Supabase public URL for storage paths
+                      final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://') || displayImageUrl.startsWith('data:'))
+                          ? displayImageUrl
+                          : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
                       imageWidget = ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: CachedNetworkImage(
-                          imageUrl: isCustomUrl && (displayImageUrl.startsWith('http') || Uri.tryParse(displayImageUrl)?.isAbsolute == true) 
-                              ? displayImageUrl 
-                              : SupabaseService.getPublicUrl(displayImageUrl),
+                          imageUrl: resolvedUrl,
                           width: 48,
                           height: 48,
                           fit: BoxFit.cover,
@@ -281,29 +283,29 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
   }
 
   Widget _buildActionArea(BuildContext context, ColorScheme cs) {
-    final statusStr = widget.order.status.name.toUpperCase();
+    final status = widget.order.status;
     
     bool showButton = false;
     String buttonText = "";
     String nextStatus = "";
     Color buttonColor = cs.primary;
     
-    if (statusStr == 'PENDING') {
+    if (status == OrderStatus.pending) {
       showButton = true;
       buttonText = "CONFIRM ORDER";
       nextStatus = "CONFIRMED";
       buttonColor = Colors.blue;
-    } else if (statusStr == 'CONFIRMED') {
+    } else if (status == OrderStatus.confirmed) {
       showButton = true;
       buttonText = "OUT FOR DELIVERY";
       nextStatus = "OUT_FOR_DELIVERY";
       buttonColor = Colors.teal;
-    } else if (statusStr == 'OUT_FOR_DELIVERY') {
+    } else if (status == OrderStatus.outForDelivery) {
       showButton = true;
       buttonText = "MARK AS DELIVERED";
       nextStatus = "DELIVERED";
       buttonColor = cs.secondary;
-    } else if (statusStr == 'DELIVERED') {
+    } else if (status == OrderStatus.delivered) {
       showButton = true;
       buttonText = "COMPLETE ORDER";
       nextStatus = "COMPLETED";

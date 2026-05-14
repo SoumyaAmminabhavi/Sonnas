@@ -39,7 +39,7 @@ class MenuService {
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       debugPrint('⚠️ Fetch Categories Failed: $e');
-      return [];
+      rethrow;
     }
   }
 

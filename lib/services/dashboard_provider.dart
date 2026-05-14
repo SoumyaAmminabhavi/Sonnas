@@ -39,7 +39,11 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
         if (pStatus == 'PAID') {
           totalRevenue += price;
         }
-        if (order['customerPhone'] != null) customers.add(order['customerPhone']);
+        final rawPhone = order['customerPhone'];
+        if (rawPhone != null) {
+          final phone = rawPhone.toString().trim();
+          if (phone.isNotEmpty) customers.add(phone);
+        }
       }
       
       final paidOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase() == 'PAID').toList();
