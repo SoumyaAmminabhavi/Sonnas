@@ -154,14 +154,14 @@ function WhatsAppAdminContent() {
   const statsQuery = api.whatsapp.getStats.useQuery(undefined, {
     refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
   });
-  const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading, error: ordersError } = 
-    api.whatsapp.getOrders.useQuery({ 
-      status: statusFilter === "ALL" ? undefined : statusFilter,
+  const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading, error: ordersError } =
+    api.whatsapp.getOrders.useQuery({
+      status: statusFilter === "ALL" ? undefined : (statusFilter as any),
       customOnly: customFilter || undefined
     }, {
       refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
     });
-  
+
   // ── Audio Alert Logic ───────────────────────────────────────────────────
   const lastOrderCount = React.useRef(0);
   React.useEffect(() => {
@@ -175,8 +175,8 @@ function WhatsAppAdminContent() {
       lastOrderCount.current = ordersData.orders.length;
     }
   }, [ordersData?.orders]);
-  
-  const { data: conversations, refetch: refetchConvos } = 
+
+  const { data: conversations, refetch: refetchConvos } =
     api.whatsapp.getConversations.useQuery({ limit: 50 }, {
       refetchInterval: 30_000,
     });
@@ -198,7 +198,7 @@ function WhatsAppAdminContent() {
   const filteredOrders = useMemo(() => {
     if (!ordersData?.orders) return [];
     let filtered = ordersData.orders;
-    
+
     // ADMIN-03: Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -211,7 +211,7 @@ function WhatsAppAdminContent() {
         );
       });
     }
-    
+
     // ADMIN-04: Date filter (supports both order date and delivery date)
     if (dateFilter !== "ALL") {
       const getLocalDateKey = (d: Date | string) => {
@@ -221,7 +221,7 @@ function WhatsAppAdminContent() {
       };
 
       const todayStr = getLocalDateKey(new Date());
-      
+
       // Normalize dateFilter to YYYY-MM-DD if it's in DD-MM-YYYY
       let normalizedFilter = dateFilter;
       if (dateFilter.includes('-') && dateFilter.split('-')[0]?.length === 2) {
@@ -252,7 +252,7 @@ function WhatsAppAdminContent() {
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
           const orderCreatedDate = getLocalDateKey(o.createdAt);
-          
+
           if (filterByDelivery && order.deliveryDate) {
             return order.deliveryDate.includes(normalizedFilter) || order.deliveryDate.includes(dateFilter);
           }
@@ -261,7 +261,7 @@ function WhatsAppAdminContent() {
       }
     }
 
-    
+
     return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [ordersData?.orders, dateFilter, searchQuery, filterByDelivery]);
 
@@ -277,8 +277,8 @@ function WhatsAppAdminContent() {
         }}
       >
         <div style={styles.sidebarHeader}>
-           <h2 style={styles.sidebarTitle}>Order Studio</h2>
-           <p style={styles.sidebarSubtitle}>Managing Sonna&apos;s Boutique</p>
+          <h2 style={styles.sidebarTitle}>Order Studio</h2>
+          <p style={styles.sidebarSubtitle}>Managing Sonna&apos;s Boutique</p>
         </div>
 
         <nav style={styles.filterNav}>
@@ -308,7 +308,7 @@ function WhatsAppAdminContent() {
             <span style={styles.filterIcon}>🎨</span>
             <span style={styles.filterLabel}>Custom Requests</span>
           </button>
-          
+
           <div style={styles.filterSeparator}>Statuses</div>
 
           {STATUS_FLOW.map((s) => {
@@ -349,9 +349,9 @@ function WhatsAppAdminContent() {
           <h3 style={styles.convTitle}>Recent Inquiries</h3>
           <div style={styles.convList}>
             {conversations?.map((c) => (
-              <div 
-                key={c.id} 
-                style={styles.convItem} 
+              <div
+                key={c.id}
+                style={styles.convItem}
                 onClick={() => setReplyPhone(c.phone)}
                 tabIndex={0}
                 role="button"
@@ -371,7 +371,7 @@ function WhatsAppAdminContent() {
                   <span style={styles.convPhone}>{c.phone}</span>
                 </div>
                 <div style={styles.convAction}>
-                   <span className="text-gold text-[10px]">REPLY</span>
+                  <span className="text-gold text-[10px]">REPLY</span>
                 </div>
               </div>
             ))}
@@ -382,29 +382,29 @@ function WhatsAppAdminContent() {
         </div>
 
         <div style={styles.sidebarFooter}>
-           <div style={styles.maintenanceRow}>
-              <div style={styles.maintenanceInfo}>
-                 <span style={styles.maintenanceLabel}>Maintenance Mode</span>
-                 <span style={styles.maintenanceStatus}>
-                    {settings?.MAINTENANCE_MODE === "true" ? "Bot Paused" : "Bot Active"}
-                 </span>
-              </div>
-              <button
-                onClick={() => updateSetting.mutate({ 
-                  key: "MAINTENANCE_MODE", 
-                  value: settings?.MAINTENANCE_MODE === "true" ? "false" : "true" 
-                })}
-                style={{
-                  ...styles.toggleBtn,
-                  backgroundColor: settings?.MAINTENANCE_MODE === "true" ? "#D88C8C" : "#E8DED4",
-                }}
-              >
-                <div style={{
-                  ...styles.toggleCircle,
-                  transform: settings?.MAINTENANCE_MODE === "true" ? "translateX(20px)" : "translateX(0)",
-                }} />
-              </button>
-           </div>
+          <div style={styles.maintenanceRow}>
+            <div style={styles.maintenanceInfo}>
+              <span style={styles.maintenanceLabel}>Maintenance Mode</span>
+              <span style={styles.maintenanceStatus}>
+                {settings?.MAINTENANCE_MODE === "true" ? "Bot Paused" : "Bot Active"}
+              </span>
+            </div>
+            <button
+              onClick={() => updateSetting.mutate({
+                key: "MAINTENANCE_MODE",
+                value: settings?.MAINTENANCE_MODE === "true" ? "false" : "true"
+              })}
+              style={{
+                ...styles.toggleBtn,
+                backgroundColor: settings?.MAINTENANCE_MODE === "true" ? "#D88C8C" : "#E8DED4",
+              }}
+            >
+              <div style={{
+                ...styles.toggleCircle,
+                transform: settings?.MAINTENANCE_MODE === "true" ? "translateX(20px)" : "translateX(0)",
+              }} />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -415,24 +415,24 @@ function WhatsAppAdminContent() {
           <StatCard label="Pending Confirmation" value={stats?.pendingOrders ?? 0} icon="⌛" highlight />
           <StatCard label="Revenue" value={`₹${((stats?.totalRevenue ?? 0) / 100).toLocaleString("en-IN")}`} icon="✨" />
 
-          
+
           {/* Revenue Trend Chart */}
           <div style={styles.trendCard}>
             <div style={styles.trendHeader}>
-               <span style={styles.statLabel}>7-Day Trend</span>
-               <span style={styles.trendIndicator}>GROWTH</span>
+              <span style={styles.statLabel}>7-Day Trend</span>
+              <span style={styles.trendIndicator}>GROWTH</span>
             </div>
             <div style={styles.trendChart}>
-                {stats?.revenueTrend?.map((day, i) => {
-                  const max = Math.max(...stats.revenueTrend.map(d => d.revenue), 100);
-                  const height = (day.revenue / max) * 100;
-                  return (
-                    <div key={i} style={styles.trendColumn} title={`${day.date}: ₹${(day.revenue / 100).toLocaleString("en-IN")}`}>
-                       <div style={{ ...styles.trendBar, height: `${Math.max(height, 5)}%` }} />
-                       <span style={styles.trendDate}>{day.date.split(' ')[0]}</span>
-                    </div>
-                  );
-                })}
+              {stats?.revenueTrend?.map((day, i) => {
+                const max = Math.max(...stats.revenueTrend.map(d => d.revenue), 100);
+                const height = (day.revenue / max) * 100;
+                return (
+                  <div key={i} style={styles.trendColumn} title={`${day.date}: ₹${(day.revenue / 100).toLocaleString("en-IN")}`}>
+                    <div style={{ ...styles.trendBar, height: `${Math.max(height, 5)}%` }} />
+                    <span style={styles.trendDate}>{day.date.split(' ')[0]}</span>
+                  </div>
+                );
+              })}
 
             </div>
           </div>
@@ -464,8 +464,8 @@ function WhatsAppAdminContent() {
                 >
                   {filterByDelivery ? '📅 Delivery' : '📋 Ordered'}
                 </button>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   value={dateFilter === "ALL" || dateFilter === "TODAY" || dateFilter === "TOMORROW" ? "" : dateFilter}
                   onChange={(e) => setDateFilter(e.target.value || "ALL")}
                   style={styles.datePicker}
@@ -541,9 +541,9 @@ function WhatsAppAdminContent() {
                         </span>
                       </div>
                       <div style={styles.badges}>
-                        <span style={{ 
-                          ...styles.paymentBadge, 
-                          color: o.source === "WHATSAPP" ? "#25D366" : "#4A90D9", 
+                        <span style={{
+                          ...styles.paymentBadge,
+                          color: o.source === "WHATSAPP" ? "#25D366" : "#4A90D9",
                           backgroundColor: o.source === "WHATSAPP" ? "rgba(37, 211, 102, 0.1)" : "rgba(74, 144, 217, 0.1)",
                           marginRight: 4,
                           fontSize: 9,
@@ -567,7 +567,7 @@ function WhatsAppAdminContent() {
 
                     <div style={styles.productInfo}>
                       <h3 style={styles.cakeNameMain}>
-                        {o.items && o.items.length > 0 
+                        {o.items && o.items.length > 0
                           ? (o.items.length > 1 ? `${o.items[0]?.cakeName} & More` : o.items[0]?.cakeName)
                           : "Artisanal Selection"}
                       </h3>
@@ -635,7 +635,7 @@ function WhatsAppAdminContent() {
                                         </a>
                                       );
                                     }
-                                  } catch {}
+                                  } catch { }
                                 }
                                 return null;
                               })()}
@@ -697,11 +697,11 @@ function WhatsAppAdminContent() {
                             <button style={styles.secondaryAction} onClick={(e) => { e.stopPropagation(); setReplyPhone(o.phone); }}>
                               Contact Client
                             </button>
-                            <button 
-                              style={styles.cancelAction} 
+                            <button
+                              style={styles.cancelAction}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if(confirm("Cancel this artisanal order?")) {
+                                if (confirm("Cancel this artisanal order?")) {
                                   updateStatus.mutate({ id: order.id, status: "CANCELLED", notifyCustomer: true });
                                 }
                               }}
@@ -876,7 +876,7 @@ const styles: Record<string, React.CSSProperties> = {
   maintenanceStatus: { fontSize: "10px", color: "#9A9A9A", marginTop: "2px" },
   toggleBtn: { width: "42px", height: "22px", borderRadius: "20px", border: "none", position: "relative", cursor: "pointer", transition: "all 0.3s ease", padding: "3px" },
   toggleCircle: { width: "16px", height: "16px", borderRadius: "50%", backgroundColor: "#FFF", transition: "all 0.3s ease", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" },
-  
+
   trendCard: { backgroundColor: "#FFF", borderRadius: "20px", padding: "18px 20px", border: "1px solid #F0EBE4", display: "flex", flexDirection: "column", gap: "10px", flex: 1, minWidth: "180px" },
   trendHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   trendIndicator: { fontSize: "8px", fontWeight: "800", color: "#5A8F5A", backgroundColor: "#F4F9F4", padding: "2px 6px", borderRadius: "4px" },
