@@ -7,57 +7,61 @@ class MenuService {
 
   /// Real-time menu updates
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
-    return _client.from('Cake').stream(primaryKey: ['id']);
+    return _client.from('Cake').stream(primaryKey: ['id']).order('name');
   }
 
-  /// Fetch all menu items with fallback
+  /// Fetch all menu items with full category and option data
   static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {
-      // 1. Try Primary (Friend's) project with join
-      try {
-        final res = await SupabaseService.client.from('Cake').select('*, CakeOption(*)').order('name');
-        return List<Map<String, dynamic>>.from(res);
-      } catch (e) {
-        debugPrint('⚠️ Join fetch failed, trying simple fetch + merge: $e');
-        // Fallback to simple select if join fails (relationship name might be different)
-        final cakes = await SupabaseService.client.from('Cake').select('*').order('name');
-        final List<Map<String, dynamic>> cakesList = List<Map<String, dynamic>>.from(cakes);
-        
-        if (cakesList.isEmpty) return [];
-
-        // Manual join/merge for CakeOption
-        final cakeIds = cakesList.map((c) => c['id'].toString()).toList();
-        final options = await SupabaseService.client.from('CakeOption').select('*').inFilter('cakeId', cakeIds);
-        final List<Map<String, dynamic>> optionsList = List<Map<String, dynamic>>.from(options);
-
-        // Merge options back into cakes
-        for (var cake in cakesList) {
-          cake['CakeOption'] = optionsList.where((o) => o['cakeId'] == cake['id']).toList();
-        }
-        
-        return cakesList;
-      }
+      // Fetch active cakes with their categories and options
+      // Note: Join syntax '*, Category(*), CakeOption(*)'
+      final res = await _client
+          .from('Cake')
+          .select('*, Category(*), CakeOption(*)')
+          .isFilter('deletedAt', null)
+          .order('name');
+      
+      return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      debugPrint('⚠️ Friend\'s Menu Fetch Failed: $e. Falling back to Private DB.');
-      try {
-        // 2. Fallback to Private (My) project
-        final res = await SupabaseService.myClient.from('Cake').select('*, CakeOption(*)').order('name');
-        return List<Map<String, dynamic>>.from(res);
-      } catch (e2) {
-        debugPrint('❌ All Menu Fetch attempts failed: $e2');
-        rethrow; // Rethrow to allow UI to handle error state
-      }
+      debugPrint('⚠️ Menu Fetch Failed: $e');
+      rethrow;
     }
   }
 
-  /// Upsert a cake item and return its ID
-  static Future<String> upsertCake(Map<String, dynamic> cake) async {
-    final res = await _client.from('Cake').upsert(cake).select().single();
+  /// Fetch all categories from the official Category table
+  static Future<List<Map<String, dynamic>>> fetchCategories() async {
+    try {
+      final res = await _client.from('Category').select('*').order('sortOrder');
+      return List<Map<String, dynamic>>.from(res);
+    } catch (e) {
+      debugPrint('⚠️ Fetch Categories Failed: $e');
+      return [];
+    }
+  }
+
+  /// Create or update a category
+  static Future<String> upsertCategory(Map<String, dynamic> category) async {
+    final res = await _client.from('Category').upsert(category).select().single();
     return res['id'].toString();
   }
 
-  /// Upsert cake options (pricing, weight, serves)
+  /// Create or update a menu item (Cake)
+  static Future<String> upsertCake(Map<String, dynamic> cake) async {
+    // Remove the legacy 'category' string field if it exists in the payload
+    final data = Map<String, dynamic>.from(cake);
+    data.remove('category');
+    
+    final res = await _client.from('Cake').upsert(data).select().single();
+    return res['id'].toString();
+  }
+
+  /// Create or update a cake option
   static Future<void> upsertCakeOption(Map<String, dynamic> option) async {
     await _client.from('CakeOption').upsert(option);
+  }
+
+  /// Soft delete a cake
+  static Future<void> deleteCake(String id) async {
+    await _client.from('Cake').update({'deletedAt': DateTime.now().toIso8601String()}).eq('id', id);
   }
 }

@@ -35,13 +35,14 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
       
       for (var order in orders) {
         final price = (double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0;
-        if ((order['paymentStatus'] ?? 'PENDING') == 'PAID') {
+        final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+        if (pStatus == 'PAID') {
           totalRevenue += price;
         }
         if (order['phone'] != null) customers.add(order['phone']);
       }
       
-      final paidOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING') == 'PAID').toList();
+      final paidOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase() == 'PAID').toList();
       
       return {
         'totalOrders': orders.length,

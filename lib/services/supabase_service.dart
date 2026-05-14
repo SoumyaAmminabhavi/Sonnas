@@ -8,28 +8,19 @@ class SupabaseService {
   static final String supabaseUrl = (dotenv.env['SUPABASE_URL'] ?? '').trim();
   static final String supabaseAnonKey = (dotenv.env['SUPABASE_ANON_KEY'] ?? '').trim();
   
-  static final String mySupabaseUrl = (dotenv.env['MY_SUPABASE_URL'] ?? '').trim();
-  static final String mySupabaseAnonKey = (dotenv.env['MY_SUPABASE_ANON_KEY'] ?? '').trim();
-
-  static late SupabaseClient _myClient;
-
   static Future<void> initialize() async {
-    // Initialize Primary (Friend's) Supabase
+    // Initialize Primary Supabase
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
-    
-    // Initialize Private (My) Supabase Client
-    _myClient = SupabaseClient(mySupabaseUrl, mySupabaseAnonKey);
   }
 
   static SupabaseClient get client => Supabase.instance.client;
-  static SupabaseClient get myClient => _myClient;
 
   /// Unified helper to get public URL for a file in Supabase storage
   /// Note: Resize parameters (width/height) are not supported on Supabase Free Tier.
-  static String getPublicUrl(String? path, {String bucket = 'staff_photos', int? width, int? height}) {
+  static String getPublicUrl(String? path, {String bucket = 'cakes', int? width, int? height}) {
     if (width != null || height != null) {
       throw ArgumentError('Resize parameters not supported for public URLs (Supabase Free Tier)');
     }
@@ -38,8 +29,8 @@ class SupabaseService {
     if (path.startsWith('http')) return path;
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
 
-    // Determine which client to use (Friend's vs Mine)
-    final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
+    // Use the unified primary client for all storage buckets
+    final storageClient = client.storage;
     
     // Use direct public URL (Transformation is a paid feature)
     return storageClient.from(bucket).getPublicUrl(path);
@@ -58,8 +49,8 @@ class SupabaseService {
     required String path,
     required dynamic file,
   }) async {
-    // Determine which client to use
-    final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
+    // Use the unified primary client for all storage buckets
+    final storageClient = client.storage;
 
     try {
       if (file is Uint8List) {

@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 class InventoryService {
-  static SupabaseClient get _client => SupabaseService.myClient;
+  static SupabaseClient get _client => SupabaseService.client;
 
   /// Real-time stream for all inventory items
   static Stream<List<Map<String, dynamic>>> getInventoryStream() {

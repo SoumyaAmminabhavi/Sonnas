@@ -1,16 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dbcrypt/dbcrypt.dart';
+import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
 
 class AuthService {
-  static SupabaseClient get _myClient => SupabaseService.myClient; // Private instance
+  static SupabaseClient get _client => SupabaseService.client; // Use unified client
 
   static Future<Map<String, dynamic>?> loginStaff(String phone, String password) async {
     // Normalize phone to last 10 digits
     final normalizedPhone = phone.length > 10 ? phone.substring(phone.length - 10) : phone;
 
     // 1. Fetch staff member by phone (must be activated)
-    final staff = await _myClient
+    final staff = await _client
         .from('Staff')
         .select()
         .eq('phone', normalizedPhone)
@@ -42,7 +43,7 @@ class AuthService {
     // Normalize phone to last 10 digits
     final normalizedPhone = phone.length > 10 ? phone.substring(phone.length - 10) : phone;
 
-    final res = await _myClient
+    final res = await _client
         .from('Staff')
         .select()
         .eq('phone', normalizedPhone)
@@ -55,7 +56,7 @@ class AuthService {
   static Future<bool> registerStaff(String id, String password) async {
     try {
       final hashedSub = DBCrypt().hashpw(password, DBCrypt().gensalt());
-      await _myClient.from('Staff').update({
+      await _client.from('Staff').update({
         'password': hashedSub,
         'isActivated': true,
       }).eq('id', id);
@@ -71,16 +72,16 @@ class AuthService {
   /// Fetch the owner PIN hash early to make login instant
   static Future<void> prewarmOwnerAuth() async {
     try {
-      final res = await _myClient
-          .from('WhatsAppSetting')
+      final res = await _client
+          .from('SystemSetting')
           .select('value')
           .eq('key', 'owner_pin_hash')
           .maybeSingle();
       if (res != null) {
         _cachedOwnerPinHash = res['value']?.toString();
       }
-    } catch (_) {
-      // Fail silently, verifyOwnerPin will retry if needed
+    } catch (e) {
+      debugPrint('⚠️ Prewarm Auth Failed: $e');
     }
   }
 
@@ -90,23 +91,25 @@ class AuthService {
       
       // If not cached, fetch it now (fallback)
       if (hash == null) {
-        final res = await _myClient
-            .from('WhatsAppSetting')
+        final res = await _client
+            .from('SystemSetting')
             .select('value')
             .eq('key', 'owner_pin_hash')
             .maybeSingle();
         
-        if (res == null) return false;
+        if (res == null) {
+           debugPrint('❌ Owner PIN hash not found in DB');
+           return false;
+        }
         hash = res['value']?.toString();
-        _cachedOwnerPinHash = hash; // Cache it for next time
+        _cachedOwnerPinHash = hash; 
       }
       
       if (hash == null) return false;
 
-      // Verify the hashed PIN using bcrypt
       return DBCrypt().checkpw(pin, hash);
     } catch (e) {
-      // Silently fail in production or use a logger
+      debugPrint('⚠️ PIN Verification Error: $e');
       return false;
     }
   }

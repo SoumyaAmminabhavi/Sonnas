@@ -55,6 +55,7 @@ class OrderCardReactive extends ConsumerWidget {
         }
 
         return _OrderCardBase(
+          orderId: data['id'] ?? '',
           id: "#${data['orderNumber'] ?? '---'}",
           status: status,
           statusColor: statusColor,
@@ -63,7 +64,7 @@ class OrderCardReactive extends ConsumerWidget {
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
               : OrderService.formatPrice(calculatedTotal),
-          imageUrl: SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes', width: 200, height: 200),
+          imageUrl: SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
           deliveryTime: data['deliveryTime'],
           orderSubtitle: orderSubtitle,
@@ -93,6 +94,7 @@ class OrderCardReactive extends ConsumerWidget {
 }
 
 class _OrderCardBase extends StatelessWidget {
+  final String orderId;
   final String id;
   final String status;
   final String paymentStatus;
@@ -108,6 +110,7 @@ class _OrderCardBase extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
 
   const _OrderCardBase({
+    required this.orderId,
     required this.id,
     required this.status,
     required this.paymentStatus,
@@ -130,7 +133,7 @@ class _OrderCardBase extends StatelessWidget {
         context,
         MaterialPageRoute(
           builder: (context) => OwnerOrderDetailsView(
-            orderId: id.replaceAll('#', ''),
+            orderId: orderId,
             onTabChanged: onTabChanged,
           ),
         ),

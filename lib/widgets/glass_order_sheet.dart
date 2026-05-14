@@ -10,12 +10,12 @@ import '../services/order_service.dart';
 import '../services/dashboard_provider.dart';
 
 class GlassOrderSheet extends StatelessWidget {
-  final WhatsAppOrder order;
+  final SonnaOrder order;
   final bool showActions;
 
   const GlassOrderSheet({super.key, required this.order, this.showActions = true});
 
-  static void show(BuildContext context, WhatsAppOrder order, {bool showActions = true}) {
+  static void show(BuildContext context, SonnaOrder order, {bool showActions = true}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

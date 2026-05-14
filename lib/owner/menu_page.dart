@@ -106,12 +106,12 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 return _MenuItem(
                   id: data['id'],
                   name: data['name'] ?? 'Untitled Cake',
-                  category: data['category'] ?? 'General',
+                  category: data['Category']?['name'] ?? 'General',
                   price: basePrice,
                   description: data['description'] ?? '',
                   serves: baseServes,
                   weight: "Standard",
-                  imageUrl: SupabaseService.getPublicUrl(data['image'], bucket: 'cakes', width: 250, height: 250),
+                  imageUrl: SupabaseService.getPublicUrl(data['image'], bucket: 'cakes'),
                 );
               }).toList();
 
@@ -600,13 +600,14 @@ class _AddMenuContent extends StatefulWidget {
 class _AddMenuContentState extends State<_AddMenuContent> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  String? _selectedCategory;
   late TextEditingController _priceController;
   late TextEditingController _descriptionController;
   late TextEditingController _weightController;
   late TextEditingController _servesController;
   late TextEditingController _newCategoryController;
   bool _showNewCategoryField = false;
+  List<Map<String, dynamic>> _categories = [];
+  String? _selectedCategoryId;
 
   final _picker = ImagePicker();
   XFile? _selectedImage;
@@ -629,7 +630,12 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     }
 
     _nameController = TextEditingController(text: data?['name']?.toString());
-    _selectedCategory = data?['category']?.toString();
+    _selectedCategoryId = data?['categoryId']?.toString();
+    // Fallback for old data: if categoryId is null but category string exists
+    if (_selectedCategoryId == null && data?['category'] != null) {
+      _selectedCategoryId = data?['category']?.toString();
+    }
+
     _priceController = TextEditingController(
       text: displayPrice > 0 ? displayPrice.toStringAsFixed(0) : '',
     );
@@ -638,6 +644,17 @@ class _AddMenuContentState extends State<_AddMenuContent> {
     _servesController = TextEditingController(text: firstOption?['serves']?.toString() ?? '');
     _newCategoryController = TextEditingController();
     _existingImageUrl = data?['image'];
+
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final cats = await MenuService.fetchCategories();
+    if (mounted) {
+      setState(() {
+        _categories = cats;
+      });
+    }
   }
 
   @override
@@ -695,33 +712,54 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
       final newId = 'c${DateTime.now().millisecondsSinceEpoch}';
       
-      String? category;
+      String? categoryId;
+
       if (_showNewCategoryField) {
         final trimmed = _newCategoryController.text.trim();
         if (trimmed.isEmpty) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Please enter a category name')),
           );
           setState(() => _isUploading = false);
           return;
         }
-        category = trimmed;
+        
+        // Create new Category record
+        final catSlug = trimmed.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+        categoryId = await MenuService.upsertCategory({
+          'id': 'cat_${DateTime.now().millisecondsSinceEpoch}',
+          'name': trimmed,
+          'slug': catSlug,
+        });
       } else {
-        if (_selectedCategory == null || _selectedCategory!.isEmpty) {
+        if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Please select a category')),
           );
           setState(() => _isUploading = false);
           return;
         }
-        category = _selectedCategory;
+        
+        // Check if selected value is an ID or a Name (for backward compatibility)
+        final existingCat = _categories.firstWhere(
+          (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (existingCat.isNotEmpty) {
+          categoryId = existingCat['id'];
+        } else {
+          // It might be an old category string not in the Category table yet
+        }
       }
 
       final cakeId = await MenuService.upsertCake({
         'id': widget.initialData?['id'] ?? newId,
         'name': name,
         'slug': slug,
-        'category': category,
+        'categoryId': categoryId,
         'description': _descriptionController.text,
         'image': imagePath,
         'updatedAt': DateTime.now().toIso8601String(),
@@ -994,7 +1032,8 @@ class _AddMenuContentState extends State<_AddMenuContent> {
  }
 
   Widget _buildCategoryDropdown(ColorScheme cs) {
-    final baseCategories = [
+    // Standard fallback categories if table is empty
+    final List<String> fallbackNames = [
       'Chocolate Cakes',
       'Fruit & Floral Cakes',
       'Artisan Pastries',
@@ -1006,12 +1045,29 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       'Slices',
     ];
 
-    // Ensure current category is in the list if it's not "Add New..."
-    final List<String> categories = List.from(baseCategories);
-    if (_selectedCategory != null && !categories.contains(_selectedCategory)) {
-      categories.add(_selectedCategory!);
+    final List<DropdownMenuItem<String>> items = [];
+    
+    // 1. Add categories from DB
+    for (var cat in _categories) {
+      items.add(DropdownMenuItem(
+        value: cat['id'],
+        child: Text(cat['name'] ?? 'Untitled'),
+      ));
     }
-    categories.add('Add New...');
+
+    // 2. Add fallback categories if DB is empty or current selection is old string
+    if (_categories.isEmpty) {
+      for (var name in fallbackNames) {
+        items.add(DropdownMenuItem(value: name, child: Text(name)));
+      }
+    }
+
+    // 3. Ensure current selection is visible (even if it's an old string)
+    if (_selectedCategoryId != null && !items.any((item) => item.value == _selectedCategoryId)) {
+      items.add(DropdownMenuItem(value: _selectedCategoryId, child: Text(_selectedCategoryId!)));
+    }
+
+    items.add(const DropdownMenuItem(value: 'Add New...', child: Text('Add New...')));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1027,7 +1083,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          initialValue: _selectedCategory,
+          initialValue: _selectedCategoryId,
           hint: Text(
             "Select Collection",
             style: GoogleFonts.plusJakartaSans(
@@ -1065,27 +1121,15 @@ class _AddMenuContentState extends State<_AddMenuContent> {
           ),
           icon: Icon(Icons.keyboard_arrow_down, color: cs.secondary, size: 20),
           dropdownColor: cs.surface,
-          items: categories.map((c) {
-            return DropdownMenuItem(
-              value: c,
-              child: Text(
-                c,
-                style: GoogleFonts.plusJakartaSans(
-                  color: cs.secondary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-            );
-          }).toList(),
+          items: items,
           onChanged: (val) {
             setState(() {
               if (val == 'Add New...') {
                 _showNewCategoryField = true;
-                _selectedCategory = null;
+                _selectedCategoryId = null;
               } else {
                 _showNewCategoryField = false;
-                _selectedCategory = val;
+                _selectedCategoryId = val;
               }
             });
           },

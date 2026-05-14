@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 class StaffService {
-  static SupabaseClient get _client => SupabaseService.myClient;
+  static SupabaseClient get _client => SupabaseService.client;
 
   static Stream<List<Map<String, dynamic>>> getStaffStream() {
     return _client.from('Staff').stream(primaryKey: ['id']).order('name');

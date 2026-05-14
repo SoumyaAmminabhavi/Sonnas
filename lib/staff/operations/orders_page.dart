@@ -66,7 +66,7 @@ class StaffOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final order = WhatsAppOrder.fromMap(orderMap);
+    final order = SonnaOrder.fromMap(orderMap);
     
     return InkWell(
       onTap: () => GlassOrderSheet.show(context, order),

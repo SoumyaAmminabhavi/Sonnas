@@ -6,6 +6,7 @@ enum OrderStatus {
   accepted,
   preparing,
   ready,
+  outForDelivery,
   delivered,
   completed,
   cancelled,
@@ -21,16 +22,23 @@ extension OrderStatusExtension on OrderStatus {
       case 'ACCEPTED': return OrderStatus.accepted;
       case 'PREPARING': return OrderStatus.preparing;
       case 'READY': return OrderStatus.ready;
+      case 'OUT_FOR_DELIVERY': return OrderStatus.outForDelivery;
       case 'DELIVERED': return OrderStatus.delivered;
       case 'COMPLETED': return OrderStatus.completed;
       case 'CANCELLED': return OrderStatus.cancelled;
       default: return OrderStatus.pending;
     }
   }
+
+  String get dbValue {
+    if (this == OrderStatus.outForDelivery) return 'OUT_FOR_DELIVERY';
+    return name;
+  }
 }
 
 class OrderItem {
   final String id;
+  final String? cakeId;
   final String cakeName;
   final int quantity;
   final double price;
@@ -38,6 +46,7 @@ class OrderItem {
 
   OrderItem({
     required this.id,
+    this.cakeId,
     required this.cakeName,
     required this.quantity,
     required this.price,
@@ -47,6 +56,7 @@ class OrderItem {
   factory OrderItem.fromMap(Map<String, dynamic> map) {
     return OrderItem(
       id: map['id']?.toString() ?? '',
+      cakeId: map['cakeId']?.toString(),
       cakeName: map['cakeName']?.toString() ?? 'Unknown Cake',
       quantity: int.tryParse(map['quantity']?.toString() ?? '1') ?? 1,
       price: (double.tryParse(map['price']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0,
@@ -55,7 +65,7 @@ class OrderItem {
   }
 }
 
-class WhatsAppOrder {
+class SonnaOrder {
   final String id;
   final String orderNumber;
   final String customerName;
@@ -67,8 +77,10 @@ class WhatsAppOrder {
   final List<OrderItem> items;
   final String? notes;
   final String? customImageUrl;
+  final String source;
+  final bool isCustom;
 
-  WhatsAppOrder({
+  SonnaOrder({
     required this.id,
     required this.orderNumber,
     required this.customerName,
@@ -80,11 +92,13 @@ class WhatsAppOrder {
     required this.items,
     this.notes,
     this.customImageUrl,
+    required this.source,
+    required this.isCustom,
   });
 
-  factory WhatsAppOrder.fromMap(Map<String, dynamic> map) {
+  factory SonnaOrder.fromMap(Map<String, dynamic> map) {
     final List<dynamic> rawItems = map['items'] as List<dynamic>? ?? [];
-    return WhatsAppOrder(
+    return SonnaOrder(
       id: map['id']?.toString() ?? '',
       orderNumber: map['orderNumber']?.toString() ?? '---',
       customerName: map['customerName']?.toString() ?? 'Guest',
@@ -96,6 +110,8 @@ class WhatsAppOrder {
       items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i))).toList(),
       notes: map['notes']?.toString(),
       customImageUrl: map['customImageUrl']?.toString(),
+      source: map['source']?.toString() ?? 'WHATSAPP',
+      isCustom: map['isCustom'] == true,
     );
   }
 
@@ -104,5 +120,10 @@ class WhatsAppOrder {
     return "₹${fmt.format(totalPrice)}";
   }
   
-  bool get isKitchenActionable => status == OrderStatus.pending || status == OrderStatus.confirmed || status == OrderStatus.accepted || status == OrderStatus.preparing;
+  bool get isKitchenActionable => 
+    status == OrderStatus.pending || 
+    status == OrderStatus.confirmed || 
+    status == OrderStatus.accepted || 
+    status == OrderStatus.preparing ||
+    status == OrderStatus.ready;
 }

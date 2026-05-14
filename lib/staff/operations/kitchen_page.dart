@@ -72,7 +72,7 @@ class KitchenOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final order = WhatsAppOrder.fromMap(orderMap);
+    final order = SonnaOrder.fromMap(orderMap);
     final String status = order.status.name.toUpperCase();
     
     // Status Logic

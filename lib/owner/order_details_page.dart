@@ -29,7 +29,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
         return FutureBuilder<Map<String, dynamic>?>(
           future: streamOrder != null
               ? SupabaseService.client
-                    .from('WhatsAppOrder')
+                    .from('Order')
                     .select('*, WhatsAppConversation(*)')
                     .eq('id', streamOrder['id'])
                     .maybeSingle()
@@ -143,7 +143,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            "Order $orderId",
+                                            "Order #${order['orderNumber'] ?? '---'}",
                                             style: GoogleFonts.notoSerif(
                                               fontSize: 24,
                                               fontWeight: FontWeight.bold,

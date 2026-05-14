@@ -72,9 +72,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
     int paidOrdersCount = 0;
     for (var order in _orders) {
-      // Only count revenue from completed payments
-      final isPaid = (order['paymentStatus'] ?? 'PENDING') == 'PAID';
-      if (!isPaid) continue;
+      // Only count revenue from completed payments (Case-insensitive Enum check)
+      final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+      if (pStatus != 'PAID') continue;
 
       paidOrdersCount++;
       final priceStr = order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
@@ -92,15 +92,16 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     Map<String, Map<String, dynamic>> itemDetails = {};
 
     for (var item in items) {
+      final String? cakeId = item['cakeId']?.toString();
       final String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
       
-      // Match with menu to get category and image
+      // Match with menu to get category and image (Prefer ID, fallback to name)
       final matchingCake = menu.firstWhere(
-        (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
+        (c) => (cakeId != null && c['id'] == cakeId) || (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
         orElse: () => <String, dynamic>{},
       );
 
-      final category = matchingCake['category'] ?? 'Custom';
+      final category = matchingCake['Category']?['name'] ?? 'Custom';
       final priceStr = item['price']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
       final itemPrice = (double.tryParse(priceStr) ?? 0.0) / 100.0;
       final qty = (item['quantity'] as num?)?.toInt() ?? 1;
