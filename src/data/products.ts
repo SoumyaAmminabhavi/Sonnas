@@ -257,7 +257,6 @@ export const products: Product[] = [
     options: [{ size: "Slice", serves: "1", price: 13500 }],
     image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.png", // Fallback image
   },
-  },
 ];
 
 export const categories: Category[] = [
