@@ -55,6 +55,7 @@ model User {
   accounts      Account[]
   posts         Post[]
   sessions      Session[]
+  orders        Order[]
 }
 
 model VerificationToken {
@@ -79,6 +80,7 @@ model Cake {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   options     CakeOption[]
+  orderItems  OrderItem[]
 }
 
 model Category {
@@ -179,4 +181,41 @@ model WhatsAppOrderItem {
   price    Int
   quantity Int           @default(1)
   order    WhatsAppOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  customerName    String
+  customerEmail   String?
+  customerPhone   String
+  totalPrice      Int
+  address         String
+  notes           String?
+  status          String      @default("PENDING")
+  paymentStatus   String      @default("PENDING")
+  razorpayOrderId String?
+  paymentId       String?
+  paymentLink     String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+
+  @@index([customerPhone])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id       String @id @default(cuid())
+  orderId  String
+  cakeId   String?
+  cake     Cake?   @relation(fields: [cakeId], references: [id])
+  cakeName String
+  size     String
+  price    Int
+  quantity Int    @default(1)
+  order    Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
