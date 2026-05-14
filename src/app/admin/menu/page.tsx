@@ -20,6 +20,7 @@ interface CakeFormData {
   slug: string;
   description: string;
   category: string;
+  categoryId: string;
   image: string;
   isAvailable: boolean;
   sortOrder: number;
@@ -30,7 +31,8 @@ const INITIAL_FORM: CakeFormData = {
   name: "",
   slug: "",
   description: "",
-  category: "Chocolate Cakes",
+  category: "",
+  categoryId: "",
   image: "",
   isAvailable: true,
   sortOrder: 0,
@@ -46,6 +48,7 @@ export default function AdminMenuPage() {
 
   const utils = api.useUtils();
   const cakesQuery = api.cake.getAll.useQuery();
+  const categoriesQuery = api.cake.getAllCategories.useQuery();
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
 
   const createMutation = api.cake.create.useMutation({
@@ -75,7 +78,9 @@ export default function AdminMenuPage() {
     name: string;
     slug: string;
     description: string | null;
-    category?: string | null;
+    category?: { id: string, name: string } | null;
+    categoryName?: string | null;
+    categoryId?: string | null;
     image: string;
     isAvailable: boolean;
     sortOrder: number;
@@ -87,7 +92,8 @@ export default function AdminMenuPage() {
         name: cake.name,
         slug: cake.slug,
         description: cake.description ?? "",
-        category: cake.category ?? "Chocolate Cakes",
+        category: cake.category?.name ?? cake.categoryName ?? "",
+        categoryId: cake.category?.id ?? cake.categoryId ?? "",
         image: cake.image,
         isAvailable: cake.isAvailable,
         sortOrder: cake.sortOrder,
@@ -97,7 +103,6 @@ export default function AdminMenuPage() {
           serves: o.serves,
           price: o.price.toString(),
         })),
-
       });
       setIsEditing(true);
     } else {
@@ -152,6 +157,7 @@ export default function AdminMenuPage() {
         options: { size: string; serves: string; price: number; id?: string }[]; 
         description?: string; 
         category?: string;
+        categoryId?: string;
         isAvailable?: boolean;
         sortOrder?: number;
       });
@@ -163,6 +169,7 @@ export default function AdminMenuPage() {
         options: { size: string; serves: string; price: number }[]; 
         description?: string; 
         category?: string;
+        categoryId?: string;
         isAvailable?: boolean;
         sortOrder?: number;
       });
@@ -186,12 +193,9 @@ export default function AdminMenuPage() {
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
               <option value="All">All Categories</option>
-              <option value="Chocolate Cakes">Chocolate Cakes</option>
-              <option value="Vanilla Cakes">Vanilla Cakes</option>
-              <option value="Mini Cheesecakes">Mini Cheesecakes</option>
-              <option value="Slices">Slices</option>
-              <option value="Tea Cakes">Tea Cakes</option>
-              <option value="Seasonal Cakes">Seasonal Cakes</option>
+              {categoriesQuery.data?.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
             </select>
             <button
               onClick={() => openModal()}
@@ -208,7 +212,7 @@ export default function AdminMenuPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {cakesQuery.data
-              ?.filter((c) => categoryFilter === "All" || c.category === categoryFilter)
+              ?.filter((c) => categoryFilter === "All" || c.categoryId === categoryFilter || c.category?.id === categoryFilter)
               .map((cake) => (
               <div key={cake.id} className={`bg-white rounded-2xl overflow-hidden shadow-soft border border-[#E8DED4] group relative ${!cake.isAvailable ? "grayscale-[0.5] opacity-80" : ""}`}>
                 {!cake.isAvailable && (
@@ -247,7 +251,7 @@ export default function AdminMenuPage() {
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-lg font-heading text-[#2B2B2B]">{cake.name}</h3>
                     <span className="text-[10px] bg-[#F4C2C2]/20 text-[#F4C2C2] px-2 py-1 rounded-full uppercase tracking-wider font-bold">
-                      {cake.category ? cake.category : "General"}
+                      {cake.category?.name ?? cake.categoryName ?? "General"}
                     </span>
                   </div>
                   <p className="text-sm text-[#9A9A9A] mb-4 line-clamp-2">{cake.description}</p>
@@ -293,15 +297,20 @@ export default function AdminMenuPage() {
                     <label className="text-sm font-semibold text-[#6E6E6E]">Category</label>
                     <select
                       className="w-full p-3 rounded-xl border border-[#E8DED4] focus:ring-2 focus:ring-[#F4C2C2] outline-none bg-white"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      value={formData.categoryId}
+                      onChange={(e) => {
+                        const cat = categoriesQuery.data?.find(c => c.id === e.target.value);
+                        setFormData({ 
+                          ...formData, 
+                          categoryId: e.target.value,
+                          category: cat?.name ?? "" 
+                        });
+                      }}
                     >
-                      <option value="Chocolate Cakes">Chocolate Cakes</option>
-                      <option value="Vanilla Cakes">Vanilla Cakes</option>
-                      <option value="Mini Cheesecakes">Mini Cheesecakes</option>
-                      <option value="Slices">Slices</option>
-                      <option value="Tea Cakes">Tea Cakes</option>
-                      <option value="Seasonal Cakes">Seasonal Cakes</option>
+                      <option value="">Select Category</option>
+                      {categoriesQuery.data?.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

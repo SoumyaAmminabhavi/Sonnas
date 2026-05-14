@@ -10,10 +10,16 @@ import {
 export const cakeRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
     const cakes = await ctx.db.cake.findMany({
-      include: { options: true },
+      include: { options: true, category: true },
       orderBy: { sortOrder: "asc" },
     });
     return cakes;
+  }),
+
+  getAllCategories: publicProcedure.query(async ({ ctx }) => {
+    return ctx.db.category.findMany({
+      orderBy: { sortOrder: "asc" },
+    });
   }),
 
   getById: publicProcedure
@@ -32,7 +38,8 @@ export const cakeRouter = createTRPCRouter({
         name: z.string().min(1, "Cake name is required"),
         slug: z.string().optional(),
         description: z.string().optional(),
-        category: z.string().default("Chocolate Cakes"),
+        category: z.string().optional(),
+        categoryId: z.string().optional(),
         image: z.string().min(1, "Image is required"),
         isAvailable: z.boolean().default(true),
         sortOrder: z.number().default(0),
@@ -41,7 +48,6 @@ export const cakeRouter = createTRPCRouter({
             size: z.string().min(1),
             serves: z.string().min(1),
             price: z.number().min(1),
-
           })
         ).min(1, "At least one size option is required"),
       })
@@ -54,7 +60,8 @@ export const cakeRouter = createTRPCRouter({
           name: input.name,
           slug,
           description: input.description ?? "",
-          category: input.category,
+          categoryName: input.category,
+          categoryId: input.categoryId,
           image: input.image,
           isAvailable: input.isAvailable,
           sortOrder: input.sortOrder,
@@ -62,7 +69,7 @@ export const cakeRouter = createTRPCRouter({
             create: input.options,
           },
         },
-        include: { options: true },
+        include: { options: true, category: true },
       });
 
       // Clear WhatsApp bot cache
@@ -79,6 +86,7 @@ export const cakeRouter = createTRPCRouter({
         slug: z.string().optional(),
         description: z.string().optional(),
         category: z.string().optional(),
+        categoryId: z.string().optional(),
         image: z.string().min(1),
         isAvailable: z.boolean().optional(),
         sortOrder: z.number().optional(),
@@ -88,10 +96,8 @@ export const cakeRouter = createTRPCRouter({
             size: z.string().min(1),
             serves: z.string().min(1),
             price: z.number().min(1),
-
           })
         ).min(1, "At least one size option is required"),
-
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -109,7 +115,8 @@ export const cakeRouter = createTRPCRouter({
             name: input.name,
             slug,
             description: input.description ?? "",
-            category: input.category,
+            categoryName: input.category,
+            categoryId: input.categoryId,
             image: input.image,
             isAvailable: input.isAvailable,
             sortOrder: input.sortOrder,
@@ -121,7 +128,7 @@ export const cakeRouter = createTRPCRouter({
               })),
             },
           },
-          include: { options: true },
+          include: { options: true, category: true },
         });
       });
 
