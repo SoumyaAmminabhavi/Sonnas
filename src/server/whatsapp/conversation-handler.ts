@@ -662,6 +662,18 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       }
 
       await refreshActivity(phone);
+
+      // ── Anti-Flood Cooldown (1.5s) ─────────────────────────────────────────
+      const convo = await getConversation(phone);
+      if (convo.lastActivityAt) {
+        const lastActivity = new Date(convo.lastActivityAt).getTime();
+        const COOLDOWN_MS = 1500;
+        if (Date.now() - lastActivity < COOLDOWN_MS) {
+          console.warn(`[WhatsApp] 🛡️ Flood protection: ${phone} ignored (too fast).`);
+          return;
+        }
+      }
+
       await _internalHandleMessage(msg);
 
       // Only mark as processed after successful handling
