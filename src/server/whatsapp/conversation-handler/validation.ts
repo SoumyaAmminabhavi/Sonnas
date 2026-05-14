@@ -1,7 +1,7 @@
-import { validateAndSanitize as libValidateAndSanitize } from "~/lib/validators";
+import { validateAndSanitize as libValidateAndSanitize, type ValidatorKey } from "~/lib/validators";
 
-export function validateAndSanitize(field: any, value: any) {
-  return libValidateAndSanitize(field as any, value);
+export function validateAndSanitize(field: ValidatorKey, value: unknown) {
+  return libValidateAndSanitize(field, value);
 }
 
 // Add specialized validations here if needed

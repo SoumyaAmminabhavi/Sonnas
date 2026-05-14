@@ -44,6 +44,8 @@ export const WhatsAppValidators = {
   ),
 };
 
+export type ValidatorKey = keyof typeof WhatsAppValidators;
+
 /**
  * Generic helper to validate and sanitize input
  */
