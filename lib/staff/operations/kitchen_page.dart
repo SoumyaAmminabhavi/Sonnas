@@ -73,7 +73,7 @@ class KitchenOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final order = SonnaOrder.fromMap(orderMap);
-    final String status = order.status.name.toUpperCase();
+    final String status = order.status.dbValue;
     
     // Highlight confirmed (ready-to-dispatch) orders
     bool isConfirmed = status == 'CONFIRMED';

@@ -61,7 +61,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                     const SizedBox(height: 32),
                     _buildItemsList(cs),
                     const SizedBox(height: 32),
-                    if (widget.order.notes != null) _buildNotes(cs),
+                    if (widget.order.notes?.trim().isNotEmpty == true) _buildNotes(cs),
                     const SizedBox(height: 120), // Padding for actions
                   ],
                 ),
@@ -326,11 +326,12 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                 try {
                   await OrderService.updateOrderStatus(widget.order.id, nextStatus);
                   if (context.mounted) Navigator.pop(context);
-                } catch (e) {
+                } catch (e, st) {
+                  debugPrint('❌ Status update failed: $e\n$st');
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text("Failed to update status: $e"),
+                        content: const Text("Failed to update order status. Please try again."),
                         backgroundColor: cs.error,
                       ),
                     );

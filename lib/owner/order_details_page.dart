@@ -231,10 +231,20 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                     ...items.map<Widget>((item) {
                                                       String displayImageUrl = '';
                                                       final String cakeName = item['cakeName'] ?? '';
-                                                      final matchingCake = menu.firstWhere(
-                                                        (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
-                                                        orElse: () => <String, dynamic>{},
-                                                      );
+                                                      final String? cakeId = item['cakeId']?.toString();
+                                                      // Prefer cakeId match for reliability; fall back to name match
+                                                      final matchingCake = cakeId != null
+                                                          ? menu.firstWhere(
+                                                              (c) => c['id']?.toString() == cakeId,
+                                                              orElse: () => menu.firstWhere(
+                                                                (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
+                                                                orElse: () => <String, dynamic>{},
+                                                              ),
+                                                            )
+                                                          : menu.firstWhere(
+                                                              (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
+                                                              orElse: () => <String, dynamic>{},
+                                                            );
                                                       displayImageUrl = matchingCake['image'] ?? '';
 
                                                       bool isCustomUrl = false;
@@ -480,22 +490,22 @@ class _SlimProgressIndicator extends StatelessWidget {
     String poeticNote = "The atelier is awaiting your review to begin the creation.";
     final normalizedStatus = status.toUpperCase();
 
-    if (normalizedStatus == 'ACCEPTED' || normalizedStatus == 'CONFIRMED') {
-      progress = 0.50;
+    if (normalizedStatus == 'CONFIRMED') {
+      progress = 0.40;
       statusText = "ORDER CONFIRMED";
-      poeticNote = "The selection has been confirmed and is being queued for the chef.";
-    } else if (normalizedStatus == 'PREPARING') {
+      poeticNote = "The selection has been confirmed and is being prepared for dispatch.";
+    } else if (normalizedStatus == 'OUT_FOR_DELIVERY') {
       progress = 0.70;
-      statusText = "IN PREPARATION";
-      poeticNote = "Chef Sonna is currently finishing the artisan details.";
-    } else if (normalizedStatus == 'READY') {
-      progress = 0.85;
-      statusText = "READY FOR PICKUP";
-      poeticNote = "The creation is complete and awaits its final destination.";
-    } else if (normalizedStatus == 'OUT_FOR_DELIVERY' || normalizedStatus == 'DELIVERED' || normalizedStatus == 'COMPLETED') {
+      statusText = "OUT FOR DELIVERY";
+      poeticNote = "The creation is on its way to you — the final journey begins.";
+    } else if (normalizedStatus == 'DELIVERED') {
+      progress = 0.90;
+      statusText = "DELIVERED";
+      poeticNote = "The selection has reached its destination.";
+    } else if (normalizedStatus == 'COMPLETED') {
       progress = 1.0;
-      statusText = normalizedStatus == 'OUT_FOR_DELIVERY' ? "OUT FOR DELIVERY" : "HANDED OVER";
-      poeticNote = "The selection has been successfully completed.";
+      statusText = "COMPLETED";
+      poeticNote = "The order is complete. Thank you for choosing Sonna's Patisserie.";
     }
 
     return Column(

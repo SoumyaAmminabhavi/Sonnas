@@ -131,7 +131,7 @@ class _OrderCardBase extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () => Navigator.push(
+      onTap: orderId.isEmpty ? null : () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => OwnerOrderDetailsView(

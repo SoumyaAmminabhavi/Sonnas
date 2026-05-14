@@ -701,7 +701,8 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         final bytes = await _selectedImage!.readAsBytes();
         // Standardize extension for web/mobile compatibility
         String extension = _selectedImage!.name.split('.').last.toLowerCase();
-        if (extension == 'blob' || extension.length > 4) extension = 'jpg';
+        const validExtensions = {'jpg', 'jpeg', 'png', 'webp', 'gif'};
+        if (!validExtensions.contains(extension)) extension = 'jpg';
         
         final fileName = 'cake_${DateTime.now().millisecondsSinceEpoch}.$extension';
         
@@ -804,8 +805,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         if (existingCat.isNotEmpty) {
           categoryId = existingCat['id'];
         } else {
-          // Do not fallback to legacy strings to prevent FK violations
-          categoryId = null;
+          // If no matching category found, pass the existing ID as-is so legacy
+          // associations are preserved. The DB will reject it if truly invalid.
+          categoryId = _selectedCategoryId!.isNotEmpty ? _selectedCategoryId : null;
         }
       }
 
@@ -1046,7 +1048,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _saveItem,
+                      onPressed: _isUploading ? null : _saveItem,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: cs.primary,
                         foregroundColor: Colors.white,

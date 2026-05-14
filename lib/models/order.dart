@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 enum OrderStatus {
@@ -10,23 +11,33 @@ enum OrderStatus {
 }
 
 extension OrderStatusExtension on OrderStatus {
-  String get name => toString().split('.').last.toUpperCase();
+  /// Display name (e.g. 'OUTFORDELIVERY') — for UI labels only.
+  String get displayName => toString().split('.').last.toUpperCase();
   
   static OrderStatus fromString(String status) {
     switch (status.toUpperCase()) {
       case 'PENDING': return OrderStatus.pending;
       case 'CONFIRMED': return OrderStatus.confirmed;
+      // Legacy statuses — map to closest canonical equivalent
+      case 'ACCEPTED': return OrderStatus.confirmed;
+      case 'PREPARING':
+      case 'READY': return OrderStatus.outForDelivery;
       case 'OUT_FOR_DELIVERY': return OrderStatus.outForDelivery;
       case 'DELIVERED': return OrderStatus.delivered;
       case 'COMPLETED': return OrderStatus.completed;
       case 'CANCELLED': return OrderStatus.cancelled;
-      default: return OrderStatus.pending;
+      default:
+        debugPrint('⚠️ Unknown OrderStatus: $status — defaulting to pending');
+        return OrderStatus.pending;
     }
   }
 
+  /// Canonical DB value — always use this for persistence.
   String get dbValue {
-    if (this == OrderStatus.outForDelivery) return 'OUT_FOR_DELIVERY';
-    return name;
+    switch (this) {
+      case OrderStatus.outForDelivery: return 'OUT_FOR_DELIVERY';
+      default: return displayName;
+    }
   }
 }
 

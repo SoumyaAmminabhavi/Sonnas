@@ -68,6 +68,7 @@ class OrderService {
 
   /// Bulk fetch items for multiple orders
   static Future<List<Map<String, dynamic>>> fetchBulkOrderItems(List<String> orderIds) async {
+    if (orderIds.isEmpty) return [];
     final res = await _client.from('OrderItem').select().inFilter('orderId', orderIds);
     return List<Map<String, dynamic>>.from(res);
   }
