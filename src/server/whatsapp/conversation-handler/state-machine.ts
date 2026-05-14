@@ -115,7 +115,7 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
   }
 
   // ── Integrity Check: Catch "Zombie" States ──────────────────────────────
-  const statesRequiringCake = [ConversationState.SELECTING_SIZE, ConversationState.SELECTING_QUANTITY];
+  const statesRequiringCake: ConversationState[] = [ConversationState.SELECTING_SIZE, ConversationState.SELECTING_QUANTITY];
   if (statesRequiringCake.includes(state) && !convo.selectedCakeId) {
     console.warn(`[WhatsApp] Integrity Check Failed: ${msg.from} in ${state} with no cake selected.`);
     await updateState(msg.from, ConversationState.IDLE, RESET_STATE);
