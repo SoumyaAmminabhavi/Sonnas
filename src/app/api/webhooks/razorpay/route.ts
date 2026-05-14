@@ -108,9 +108,18 @@ export async function POST(req: Request) {
             .replace(/📍 GPS Location:.*?\n/g, "")
             .trim();
 
+          const deliveryDateStr = order.deliveryDate
+            ? new Date(order.deliveryDate).toLocaleDateString("en-IN", {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })
+            : "Today";
+
           bill += `*Delivery Details*\n`;
           bill += `📍 ${cleanAddress ?? "_Address not provided_"}\n`;
-          bill += `📅 ${order.deliveryDate ?? "Today"}\n`;
+          bill += `📅 ${deliveryDateStr}\n`;
           bill += `🕒 ${order.deliverySlot ?? "Anytime"}\n\n`;
 
           if (order.notes) {
