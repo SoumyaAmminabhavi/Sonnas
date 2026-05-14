@@ -83,6 +83,7 @@ async function main() {
         where: { slug },
         update: {
           categoryId: category.id,
+          image: `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
         },
         create: {
           name: cakeData.name,
