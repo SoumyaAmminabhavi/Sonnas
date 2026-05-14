@@ -25,20 +25,6 @@ const STATUS_CONFIG: Record<
     bg: "#F4F9F4",
     border: "#E8F0E8",
   },
-  PREPARING: {
-    label: "Artisan Kitchen",
-    emoji: "👨‍🍳",
-    color: "#8B6FC0",
-    bg: "#F7F5FB",
-    border: "#EFECF6",
-  },
-  READY: {
-    label: "Ready for Departure",
-    emoji: "🎀",
-    color: "#4A90D9",
-    bg: "#F4F8FD",
-    border: "#E8F0F9",
-  },
   OUT_FOR_DELIVERY: {
     label: "Out for Delivery",
     emoji: "🚀",
@@ -51,6 +37,13 @@ const STATUS_CONFIG: Record<
     emoji: "💝",
     color: "#5A3E36",
     bg: "#F7F3EF",
+    border: "#E8DED4",
+  },
+  COMPLETED: {
+    label: "Completed",
+    emoji: "✅",
+    color: "#C9A27E",
+    bg: "rgba(201,162,126,0.15)",
     border: "#E8DED4",
   },
   CANCELLED: {
@@ -95,19 +88,17 @@ const PAYMENT_STATUS_CONFIG: Record<
 const STATUS_FLOW = [
   "PENDING",
   "CONFIRMED",
-  "PREPARING",
-  "READY",
   "OUT_FOR_DELIVERY",
   "DELIVERED",
+  "COMPLETED",
 ] as const;
 
 type OrderStatus =
   | "PENDING"
   | "CONFIRMED"
-  | "PREPARING"
-  | "READY"
   | "OUT_FOR_DELIVERY"
   | "DELIVERED"
+  | "COMPLETED"
   | "CANCELLED";
 
 interface AdminOrderItem {
@@ -143,7 +134,7 @@ interface AdminOrder {
 // ─── Page ───────────────────────────────────────────────────────────────────
 
 function WhatsAppAdminContent() {
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "ALL">("ALL");
   const [customFilter, setCustomFilter] = useState<boolean>(false);
   const [dateFilter, setDateFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -165,7 +156,7 @@ function WhatsAppAdminContent() {
   });
   const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading, error: ordersError } = 
     api.whatsapp.getOrders.useQuery({ 
-      status: statusFilter === "ALL" ? undefined : statusFilter,
+      status: statusFilter === "ALL" ? undefined : (statusFilter as any),
       customOnly: customFilter || undefined
     }, {
       refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
