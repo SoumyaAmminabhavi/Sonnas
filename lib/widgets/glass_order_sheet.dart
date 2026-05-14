@@ -286,21 +286,21 @@ class GlassOrderSheet extends StatelessWidget {
       buttonText = "CONFIRM ORDER";
       nextStatus = "CONFIRMED";
       buttonColor = Colors.blue;
-    } else if (statusStr == 'CONFIRMED' || statusStr == 'ACCEPTED') {
+    } else if (statusStr == 'CONFIRMED') {
       showButton = true;
-      buttonText = "START PREPARATION";
-      nextStatus = "PREPARING";
+      buttonText = "OUT FOR DELIVERY";
+      nextStatus = "OUT_FOR_DELIVERY";
       buttonColor = Colors.teal;
-    } else if (statusStr == 'PREPARING') {
+    } else if (statusStr == 'OUT_FOR_DELIVERY') {
       showButton = true;
-      buttonText = "MARK AS READY";
-      nextStatus = "READY";
-      buttonColor = Colors.green.shade700;
-    } else if (statusStr == 'READY') {
-      showButton = true;
-      buttonText = "DELIVER ORDER";
+      buttonText = "MARK AS DELIVERED";
       nextStatus = "DELIVERED";
       buttonColor = cs.secondary;
+    } else if (statusStr == 'DELIVERED') {
+      showButton = true;
+      buttonText = "COMPLETE ORDER";
+      nextStatus = "COMPLETED";
+      buttonColor = Colors.green.shade700;
     }
 
     if (!showButton) return const SizedBox.shrink();
@@ -343,12 +343,10 @@ class _StatusChip extends StatelessWidget {
     Color color = cs.primary;
     if (status == OrderStatus.pending) {
       color = Colors.orange;
-    } else if (status == OrderStatus.confirmed || status == OrderStatus.accepted) {
+    } else if (status == OrderStatus.confirmed) {
       color = Colors.blue;
-    } else if (status == OrderStatus.preparing) {
+    } else if (status == OrderStatus.outForDelivery) {
       color = Colors.teal;
-    } else if (status == OrderStatus.ready) {
-      color = Colors.green.shade700;
     } else if (status == OrderStatus.delivered || status == OrderStatus.completed) {
       color = cs.secondary;
     }

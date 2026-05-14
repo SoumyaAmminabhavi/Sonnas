@@ -649,11 +649,20 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   }
 
   Future<void> _loadCategories() async {
-    final cats = await MenuService.fetchCategories();
-    if (mounted) {
-      setState(() {
-        _categories = cats;
-      });
+    try {
+      final cats = await MenuService.fetchCategories();
+      if (mounted) {
+        setState(() {
+          _categories = cats;
+        });
+      }
+    } catch (e) {
+      debugPrint('⚠️ Load Categories Failed: $e');
+      if (mounted) {
+        setState(() {
+          _categories = [];
+        });
+      }
     }
   }
 
@@ -703,7 +712,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         );
         
         if (uploadedPath != null) {
-          imagePath = fileName;
+          imagePath = uploadedPath;
         }
       }
 
@@ -727,7 +736,22 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       }
 
       final newId = 'c${DateTime.now().millisecondsSinceEpoch}';
-      final finalCakeId = widget.initialData?['id'] ?? existingCakeId ?? newId;
+      final isNewItem = widget.initialData == null;
+      
+      // If creating a new item but slug already exists, warn the user
+      if (isNewItem && existingCakeId != null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('A cake with this name already exists. Please use a unique name.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      final finalCakeId = widget.initialData?['id'] ?? newId;
       
       String? categoryId;
 
@@ -780,7 +804,8 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         if (existingCat.isNotEmpty) {
           categoryId = existingCat['id'];
         } else {
-          // It might be an old category string not in the Category table yet
+          // Fallback to the ID itself if it's already an ID, or leave as null for legacy strings
+          categoryId = _selectedCategoryId;
         }
       }
 

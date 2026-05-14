@@ -3,9 +3,6 @@ import 'package:intl/intl.dart';
 enum OrderStatus {
   pending,
   confirmed,
-  accepted,
-  preparing,
-  ready,
   outForDelivery,
   delivered,
   completed,
@@ -19,9 +16,6 @@ extension OrderStatusExtension on OrderStatus {
     switch (status.toUpperCase()) {
       case 'PENDING': return OrderStatus.pending;
       case 'CONFIRMED': return OrderStatus.confirmed;
-      case 'ACCEPTED': return OrderStatus.accepted;
-      case 'PREPARING': return OrderStatus.preparing;
-      case 'READY': return OrderStatus.ready;
       case 'OUT_FOR_DELIVERY': return OrderStatus.outForDelivery;
       case 'DELIVERED': return OrderStatus.delivered;
       case 'COMPLETED': return OrderStatus.completed;
@@ -102,7 +96,7 @@ class SonnaOrder {
       id: map['id']?.toString() ?? '',
       orderNumber: map['orderNumber']?.toString() ?? '---',
       customerName: map['customerName']?.toString() ?? 'Guest',
-      phone: map['phone']?.toString() ?? '',
+      phone: (map['customerPhone'] ?? map['phone'])?.toString() ?? '',
       status: OrderStatusExtension.fromString(map['status']?.toString() ?? 'PENDING'),
       paymentStatus: map['paymentStatus']?.toString() ?? 'PENDING',
       totalPrice: (double.tryParse(map['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0,
@@ -122,8 +116,5 @@ class SonnaOrder {
   
   bool get isKitchenActionable => 
     status == OrderStatus.pending || 
-    status == OrderStatus.confirmed || 
-    status == OrderStatus.accepted || 
-    status == OrderStatus.preparing ||
-    status == OrderStatus.ready;
+    status == OrderStatus.confirmed;
 }

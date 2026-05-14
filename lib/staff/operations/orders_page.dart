@@ -172,10 +172,8 @@ class StaffOrderCard extends StatelessWidget {
   IconData _getStatusIcon(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending: return Icons.hourglass_empty;
-      case OrderStatus.confirmed:
-      case OrderStatus.accepted: return Icons.check_circle_outline;
-      case OrderStatus.preparing: return Icons.restaurant_menu;
-      case OrderStatus.ready: return Icons.shopping_bag_outlined;
+      case OrderStatus.confirmed: return Icons.check_circle_outline;
+      case OrderStatus.outForDelivery: return Icons.local_shipping_outlined;
       case OrderStatus.delivered:
       case OrderStatus.completed: return Icons.done_all;
       default: return Icons.shopping_bag_outlined;
@@ -185,10 +183,8 @@ class StaffOrderCard extends StatelessWidget {
   Color _getStatusColor(OrderStatus status, ColorScheme cs) {
     switch (status) {
       case OrderStatus.pending: return Colors.orange;
-      case OrderStatus.confirmed:
-      case OrderStatus.accepted: return Colors.blue;
-      case OrderStatus.preparing: return Colors.teal;
-      case OrderStatus.ready: return Colors.green;
+      case OrderStatus.confirmed: return Colors.blue;
+      case OrderStatus.outForDelivery: return Colors.teal;
       case OrderStatus.delivered:
       case OrderStatus.completed: return cs.secondary;
       default: return cs.primary;
@@ -209,12 +205,10 @@ class _StatusBadge extends StatelessWidget {
 
     if (status == OrderStatus.pending) {
       color = Colors.orange;
-    } else if (status == OrderStatus.confirmed || status == OrderStatus.accepted) {
+    } else if (status == OrderStatus.confirmed) {
       color = Colors.blue;
-    } else if (status == OrderStatus.preparing) {
+    } else if (status == OrderStatus.outForDelivery) {
       color = Colors.teal;
-    } else if (status == OrderStatus.ready) {
-      color = Colors.green;
     } else if (status == OrderStatus.delivered || status == OrderStatus.completed) {
       color = cs.secondary;
     }

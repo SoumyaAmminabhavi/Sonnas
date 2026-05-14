@@ -94,7 +94,7 @@ class OrderService {
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       debugPrint('⚠️ Fetch Order Items failed: $e');
-      return [];
+      rethrow;
     }
   }
 

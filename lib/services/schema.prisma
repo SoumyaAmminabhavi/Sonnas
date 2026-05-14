@@ -262,7 +262,7 @@ model WhatsAppCartItem {
   @@index([phone, createdAt])
 }
 
-model WhatsAppSetting {
+model SystemSetting {
   id    String @id @default(cuid())
   key   String @unique
   value String

@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:io' show File;
+import 'dart:io' if (dart.library.html) 'dart:html' as io show File;
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
@@ -68,7 +68,7 @@ class SupabaseService {
     try {
       if (file is Uint8List) {
         await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
-      } else if (file is File) {
+      } else if (file is io.File) {
         await storageClient.from(bucket).upload(path, file, fileOptions: const FileOptions(upsert: true));
       } else {
         throw ArgumentError('uploadImage: file must be Uint8List or File instance');
