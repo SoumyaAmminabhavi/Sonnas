@@ -1297,7 +1297,9 @@ async function sendMenu(to: string) {
     );
     await updateState(to, "BROWSING_MENU");
   } else {
-    // Too many cakes for a single list
+    // Too many cakes for a single list — show dynamic categories (max 10)
+    const categories = Array.from(new Set(cakes.map(c => c.category).filter(Boolean))) as string[];
+
     await updateState(to, "SELECTING_CATEGORY");
     await sendInteractiveList(
       to,
@@ -1307,14 +1309,13 @@ async function sendMenu(to: string) {
       [
         {
           title: "Filter by Type",
-          rows: [
-            { id: "cat_chocolate", title: "🍫 Chocolate", description: "Rich & decadent cakes" },
-            { id: "cat_vanilla", title: "🍦 Vanilla & Fruit", description: "Light & refreshing flavors" },
-            { id: "cat_cheesecakes", title: "🧁 Mini Cheesecakes", description: "Bite-sized delights" },
-            { id: "cat_slices", title: "🍰 Slices", description: "Perfect cake portions" },
-            { id: "cat_tea", title: "☕ Tea Time", description: "Perfect with your afternoon tea" },
-            { id: "cat_seasonal", title: "🍓 Seasonal", description: "Special treats for this month" },
-          ],
+          rows: categories.slice(0, 10).map((cat) => {
+            const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) ?? cat;
+            return {
+              id: `cat_${shortId}`,
+              title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat,
+            };
+          }),
         },
       ]
     );
