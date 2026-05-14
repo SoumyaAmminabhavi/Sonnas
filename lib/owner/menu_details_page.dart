@@ -7,93 +7,88 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import 'menu_page.dart';
 
-class MenuDetailsPage extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/dashboard_provider.dart';
+
+class MenuDetailsPage extends ConsumerWidget {
   final String cakeId;
   final ValueChanged<int>? onTabChanged;
 
   const MenuDetailsPage({super.key, required this.cakeId, this.onTabChanged});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final menuAsync = ref.watch(menuProvider);
 
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: SupabaseService.client
-          .from('Cake')
-          .select('*, CakeOption(*)')
-          .eq('id', cakeId)
-          .maybeSingle(),
-      builder: (context, snapshot) {
-        final cake = snapshot.data;
-        final options = cake?['CakeOption'] as List? ?? [];
+    return menuAsync.when(
+      loading: () => Scaffold(
+        backgroundColor: cs.surface,
+        body: Shimmer.fromColors(
+          baseColor: cs.surfaceContainer,
+          highlightColor: cs.surface,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 56),
+                Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                const SizedBox(height: 24),
+                Container(width: 220, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                const SizedBox(height: 12),
+                Container(width: 100, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
+                const SizedBox(height: 32),
+                Container(width: 120, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                const SizedBox(height: 16),
+                ...List.generate(3, (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14))),
+                )),
+              ],
+            ),
+          ),
+        ),
+      ),
+      error: (err, stack) => Scaffold(
+        backgroundColor: cs.surface,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.cloud_off_rounded, color: cs.error, size: 48),
+              const SizedBox(height: 16),
+              Text("Connection Error", style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary)),
+              Text("Unable to fetch artisan details.", style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant)),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("GO BACK"),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (allCakes) {
+        final cake = allCakes.firstWhere(
+          (c) => c['id'] == cakeId,
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (cake.isEmpty) {
+          return Scaffold(
+            backgroundColor: cs.surface,
+            body: Center(child: Text("Item not found: $cakeId")),
+          );
+        }
+
+        final options = cake['CakeOption'] as List? ?? [];
+        final imageUrl = SupabaseService.getPublicUrl(cake['image'], bucket: 'cakes');
 
         return LayoutBuilder(
           builder: (context, constraints) {
             final isDesktop = constraints.maxWidth >= 768;
-
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Shimmer.fromColors(
-                  baseColor: cs.surfaceContainer,
-                  highlightColor: cs.surface,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 56),
-                        Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
-                        const SizedBox(height: 24),
-                        Container(width: 220, height: 30, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                        const SizedBox(height: 12),
-                        Container(width: 100, height: 22, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20))),
-                        const SizedBox(height: 32),
-                        Container(width: 120, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                        const SizedBox(height: 16),
-                        ...List.generate(3, (i) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Container(height: 60, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14))),
-                        )),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cloud_off_rounded, color: cs.error, size: 48),
-                      const SizedBox(height: 16),
-                      Text("Connection Error", style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary)),
-                      Text("Unable to fetch artisan details.", style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant)),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text("GO BACK"),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            if (cake == null) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Center(child: Text("Item not found: $cakeId")),
-              );
-            }
-
-            final imageUrl = SupabaseService.getPublicUrl(cake['image'], bucket: 'cakes');
-
             return Scaffold(
               backgroundColor: cs.surface,
               appBar: AppBar(
@@ -178,7 +173,12 @@ class MenuDetailsPage extends StatelessWidget {
                               const SizedBox(height: 48),
                               Row(
                                 children: [
-                                  _InfoBadge(icon: Icons.category_outlined, label: "COLLECTION", value: cake['category'] ?? 'General', cs: cs),
+                                  _InfoBadge(
+                                    icon: Icons.category_outlined,
+                                    label: "COLLECTION",
+                                    value: cake['Category'] != null ? cake['Category']['name'] : 'General',
+                                    cs: cs,
+                                  ),
                                   const SizedBox(width: 24),
                                   _InfoBadge(icon: Icons.timer_outlined, label: "EST. WEIGHT", value: "600-800g", cs: cs),
                                 ],

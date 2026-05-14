@@ -25,15 +25,28 @@ class SupabaseService {
       throw ArgumentError('Resize parameters not supported for public URLs (Supabase Free Tier)');
     }
     
-    if (path == null || path.isEmpty) return '';
+    if (path == null || path.isEmpty || path == 'cake_placeholder.png') return '';
     if (path.startsWith('http')) return path;
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
+
+    // Sanitize path: strip leading bucket names or extra slashes if present
+    String cleanPath = path;
+    if (cleanPath.startsWith('/$bucket/')) {
+      cleanPath = cleanPath.replaceFirst('/$bucket/', '');
+    } else if (cleanPath.startsWith('$bucket/')) {
+      cleanPath = cleanPath.replaceFirst('$bucket/', '');
+    }
+    
+    // Remove leading slash if it remains
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
 
     // Use the unified primary client for all storage buckets
     final storageClient = client.storage;
     
     // Use direct public URL (Transformation is a paid feature)
-    return storageClient.from(bucket).getPublicUrl(path);
+    return storageClient.from(bucket).getPublicUrl(cleanPath);
   }
 
   /// Helper to get a signed URL for private storage items

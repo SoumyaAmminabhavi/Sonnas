@@ -588,16 +588,16 @@ class AddMenuPage extends StatelessWidget {
 // ─────────────────────────────────────────────
 //  Add Menu Form (was the old MenuPage content)
 // ─────────────────────────────────────────────
-class _AddMenuContent extends StatefulWidget {
+class _AddMenuContent extends ConsumerStatefulWidget {
   final bool isDesktop;
   final Map<String, dynamic>? initialData;
   const _AddMenuContent({required this.isDesktop, this.initialData});
 
   @override
-  State<_AddMenuContent> createState() => _AddMenuContentState();
+  ConsumerState<_AddMenuContent> createState() => _AddMenuContentState();
 }
 
-class _AddMenuContentState extends State<_AddMenuContent> {
+class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _priceController;
@@ -709,8 +709,25 @@ class _AddMenuContentState extends State<_AddMenuContent> {
 
       // 2. Save cake details
       final name = _nameController.text;
-      final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+      final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+      
+      // Smart search for existing cake with same slug
+      String? existingCakeId;
+      try {
+        final existingCakes = await MenuService.fetchMenu();
+        final match = existingCakes.firstWhere(
+          (c) => c['slug'] == slug,
+          orElse: () => <String, dynamic>{},
+        );
+        if (match.isNotEmpty) {
+          existingCakeId = match['id'].toString();
+        }
+      } catch (e) {
+        debugPrint('Smart search failed: $e');
+      }
+
       final newId = 'c${DateTime.now().millisecondsSinceEpoch}';
+      final finalCakeId = widget.initialData?['id'] ?? existingCakeId ?? newId;
       
       String? categoryId;
 
@@ -725,13 +742,25 @@ class _AddMenuContentState extends State<_AddMenuContent> {
           return;
         }
         
-        // Create new Category record
-        final catSlug = trimmed.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-        categoryId = await MenuService.upsertCategory({
-          'id': 'cat_${DateTime.now().millisecondsSinceEpoch}',
-          'name': trimmed,
-          'slug': catSlug,
-        });
+        // First, check if a category with this name already exists
+        final existing = await MenuService.fetchCategories();
+        final match = existing.firstWhere(
+          (c) => c['name'].toString().toLowerCase() == trimmed.toLowerCase(),
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (match.isNotEmpty) {
+          categoryId = match['id'].toString();
+        } else {
+          // Create new Category record
+          final catSlug = trimmed.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+          categoryId = await MenuService.upsertCategory({
+            'id': 'cat_${DateTime.now().millisecondsSinceEpoch}',
+            'name': trimmed,
+            'slug': catSlug,
+            'updatedAt': DateTime.now().toIso8601String(),
+          });
+        }
       } else {
         if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
           if (!mounted) return;
@@ -756,12 +785,12 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       }
 
       final cakeId = await MenuService.upsertCake({
-        'id': widget.initialData?['id'] ?? newId,
+        'id': finalCakeId,
         'name': name,
         'slug': slug,
         'categoryId': categoryId,
         'description': _descriptionController.text,
-        'image': imagePath,
+        'image': imagePath ?? '',
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
@@ -772,9 +801,10 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       await MenuService.upsertCakeOption({
         'id': firstOption?['id'] ?? 'co${DateTime.now().millisecondsSinceEpoch}',
         'cakeId': cakeId,
-        'price': (double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0) * 100,
+        'price': ((double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0) * 100).toInt(),
         'size': _weightController.text, // Consistently using 'size' as per Prisma schema
         'serves': _servesController.text,
+        'updatedAt': DateTime.now().toIso8601String(),
       });
 
       if (!mounted) return;
@@ -785,6 +815,10 @@ class _AddMenuContentState extends State<_AddMenuContent> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+      // Invalidate menu cache to reflect changes immediately
+      ref.invalidate(menuProvider);
+
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -1019,6 +1053,52 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  if (widget.initialData != null)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Delete Item?"),
+                              content: const Text("This will move the item to the archive. You can't undo this action from the app."),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("CANCEL")),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text("DELETE", style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirmed == true) {
+                            setState(() => _isUploading = true);
+                            try {
+                              await MenuService.deleteCake(widget.initialData!['id']);
+                              ref.invalidate(menuProvider);
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Delete failed: $e")));
+                            } finally {
+                              if (mounted) setState(() => _isUploading = false);
+                            }
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text("DELETE CREATION", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
                   const SizedBox(height: 100),
                 ],
               );

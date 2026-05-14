@@ -80,7 +80,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
             orderNumber: orderNumber,
             onView: () {
               overlayEntry.remove();
-              Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: orderNumber)));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: order['id'])));
             },
             onClose: () => overlayEntry.remove(),
           ),
