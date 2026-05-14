@@ -101,7 +101,7 @@ export const whatsappRouter = createTRPCRouter({
         notifyCustomer: z.boolean().default(true),
       })
     )
-    .query(async ({ ctx, input }) => {
+    .mutation(async ({ ctx, input }) => {
       const order = await ctx.db.order.update({
         where: { id: input.id },
         data: { status: input.status },
