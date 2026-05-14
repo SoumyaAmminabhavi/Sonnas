@@ -34,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
           // Dark Overlay
           Positioned.fill(
             child: Container(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withOpacity(0.5),
             ),
           ),
           // Content

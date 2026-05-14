@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
@@ -14,7 +15,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class CustomerCheckoutScreen extends StatefulWidget {
-  const CustomerCheckoutScreen({super.key});
+  final bool isSelfCheckout;
+  const CustomerCheckoutScreen({super.key, this.isSelfCheckout = false});
 
   @override
   State<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
@@ -27,6 +29,10 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   bool _isGettingLocation = false;
   LatLng _currentLatLng = const LatLng(12.9716, 77.5946); // Default to Bangalore
   final MapController _mapController = MapController();
+
+  static const primary = Color(0xFFC2185B);
+  static const background = Color(0xFFFFF0F5);
+  static const berryText = Color(0xFF4A152C);
 
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -126,9 +132,6 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFFC2185B);
-    const background = Color(0xFFFFF0F5);
-    const berryText = Color(0xFF4A152C);
     final cart = Provider.of<CartProvider>(context);
 
     return Scaffold(
@@ -187,7 +190,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
-                  boxShadow: [BoxShadow(color: secondary.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20))],
+                  boxShadow: [BoxShadow(color: primary.withOpacity(0.08), blurRadius: 40, offset: const Offset(0, 20))],
                 ),
                 child: Column(
                   children: [
@@ -207,7 +210,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   final trimmedName = _nameController.text.trim();
-                  final trimmedPhone = _phoneController.text.trim().replaceAll(RegExp(r'[^\d+]'), '');
+                  final trimmedPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
                   final trimmedAddress = _addressController.text.trim();
                   
                   if (trimmedName.isEmpty || trimmedPhone.length < 10 || trimmedAddress.isEmpty) {
@@ -218,10 +221,13 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                   }
                   
                   final addressLower = trimmedAddress.toLowerCase();
-                  if (!addressLower.contains('hubli') && !addressLower.contains('hubballi')) {
+                  const allowedCities = ['hubli', 'hubballi', 'dharwad'];
+                  final isServiceable = allowedCities.any((city) => addressLower.contains(city));
+
+                  if (!isServiceable) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("In your city it is not available. We currently serve Hubli only."),
+                        content: Text("In your city it is not available. We currently serve Hubli-Dharwad only."),
                         backgroundColor: Colors.red,
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -229,8 +235,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                     return;
                   }
                   
+                  final supabase = Supabase.instance.client;
                   final user = supabase.auth.currentUser;
-                  final String userPhone = user?.userMetadata?['phone']?.toString() ?? user?.phone ?? '';
 
                   Navigator.push(
                     context,
@@ -263,7 +269,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   }
 
   Widget _sectionTitle(String title) {
-    return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: const Color(0xFF4A152C).withValues(alpha: 0.5)));
+    return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: const Color(0xFF4A152C).withOpacity(0.5)));
   }
 
   Widget _buildTextField(String hint, IconData icon, {int maxLines = 1, TextEditingController? controller, TextInputType? keyboardType, List<TextInputFormatter>? inputFormatters}) {
@@ -278,7 +284,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFFC2185B)),
         filled: true,
         fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withOpacity(0.05))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC2185B))),
       ),
     );
@@ -289,7 +295,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.1)),
+        border: Border.all(color: const Color(0xFFC2185B).withOpacity(0.1)),
       ),
       clipBehavior: Clip.antiAlias,
       child: FlutterMap(
@@ -381,7 +387,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         ),
         filled: true,
         fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withOpacity(0.05))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC2185B))),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
@@ -396,7 +402,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       },
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withOpacity(0.05))),
         child: Row(
           children: [
             const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFFC2185B)),
@@ -411,7 +417,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   Widget _buildTimePicker() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withOpacity(0.05))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           hint: const Text("Time", style: TextStyle(fontSize: 14)),
@@ -437,8 +443,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? primary : primary.withValues(alpha: 0.05)),
-          boxShadow: isSelected ? [BoxShadow(color: primary.withValues(alpha: 0.05), blurRadius: 10)] : null,
+          border: Border.all(color: isSelected ? primary : primary.withOpacity(0.05)),
+          boxShadow: isSelected ? [BoxShadow(color: primary.withOpacity(0.05), blurRadius: 10)] : null,
         ),
         child: Row(
           children: [
@@ -460,8 +466,17 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     );
   }
 
-  Widget _summaryRow(String label, String value) {
-    return Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)), Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13))]));
+  Widget _summaryRow(String label, String value, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: isTotal ? Colors.black : Colors.grey, fontSize: isTotal ? 14 : 13, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: isTotal ? 16 : 13, color: isTotal ? primary : Colors.black)),
+        ],
+      ),
+    );
   }
 }
 
@@ -484,7 +499,7 @@ class SuccessScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.1), blurRadius: 40)]),
+                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: primary.withOpacity(0.1), blurRadius: 40)]),
                 child: const Icon(Icons.check_circle, size: 80, color: Colors.green),
               ),
               const SizedBox(height: 40),
@@ -494,7 +509,7 @@ class SuccessScreen extends StatelessWidget {
               const SizedBox(height: 48),
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: primary.withValues(alpha: 0.05))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: primary.withOpacity(0.05))),
                 child: Column(
                   children: [
                     const Text("ORDER ID", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.grey)),
@@ -515,7 +530,7 @@ class SuccessScreen extends StatelessWidget {
                 child: const Text("TRACK ORDER", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 16),
-              TextButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: Text("VIEW ALL ORDERS", style: TextStyle(color: primary.withValues(alpha: 0.6), fontWeight: FontWeight.bold))),
+              TextButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: Text("VIEW ALL ORDERS", style: TextStyle(color: primary.withOpacity(0.6), fontWeight: FontWeight.bold))),
             ],
           ),
         ),

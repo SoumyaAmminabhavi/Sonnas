@@ -20,6 +20,7 @@ class CartProvider with ChangeNotifier {
   }
 
   void addItem(String id, String name, double price, String imageUrl, {int quantity = 1}) {
+    if (quantity <= 0) throw ArgumentError("Quantity must be greater than zero");
     if (_items.containsKey(id)) {
       _items[id]!.quantity += quantity;
     } else {

@@ -48,7 +48,7 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
         return Scaffold(
           backgroundColor: _bgColor,
           appBar: AppBar(
-            backgroundColor: _bgColor.withValues(alpha: 0.9),
+            backgroundColor: _bgColor.withOpacity(0.9),
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
@@ -158,7 +158,7 @@ class _TopNavText extends StatelessWidget {
           style: GoogleFonts.plusJakartaSans(
             color: isSelected
                 ? _primaryColor
-                : _secondaryColor.withValues(alpha: 0.6),
+                : _secondaryColor.withOpacity(0.6),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 12,
             letterSpacing: 1.5,
@@ -182,9 +182,9 @@ class _MobileBottomNav extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
-      backgroundColor: _bgColor.withValues(alpha: 0.95),
+      backgroundColor: _bgColor.withOpacity(0.95),
       selectedItemColor: _primaryColor,
-      unselectedItemColor: _secondaryColor.withValues(alpha: 0.6),
+      unselectedItemColor: _secondaryColor.withOpacity(0.6),
       selectedLabelStyle: GoogleFonts.plusJakartaSans(
         fontSize: 9,
         fontWeight: FontWeight.bold,
@@ -248,7 +248,7 @@ class _MainContent extends StatelessWidget {
           Container(
             width: 48,
             height: 1,
-            color: _secondaryColor.withValues(alpha: 0.3),
+            color: _secondaryColor.withOpacity(0.3),
           ),
           const SizedBox(height: 48),
           _buildPerformanceChart(context, isDesktop),
@@ -272,7 +272,7 @@ class _MainContent extends StatelessWidget {
                   Text(
                     "Latest activity from the boutique",
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.6),
+                      color: _secondaryColor.withOpacity(0.6),
                       fontSize: 14,
                     ),
                   ),
@@ -336,7 +336,7 @@ class _MainContent extends StatelessWidget {
                     child: Text(
                       "No recent activity yet.",
                       style: GoogleFonts.plusJakartaSans(
-                        color: _secondaryColor.withValues(alpha: 0.4),
+                        color: _secondaryColor.withOpacity(0.4),
                       ),
                     ),
                   ),
@@ -351,7 +351,7 @@ class _MainContent extends StatelessWidget {
                 final status = (o['status'] ?? 'PENDING').toString().toUpperCase();
                 
                 Color statusColor = _primaryColor;
-                Color statusBg = _primaryColor.withValues(alpha: 0.1);
+                Color statusBg = _primaryColor.withOpacity(0.1);
                 String statusText = status;
 
                 if (status == 'PREPARING') {
@@ -361,11 +361,11 @@ class _MainContent extends StatelessWidget {
                 } else if (status == 'PENDING') {
                   statusText = "NEW ORDER";
                   statusColor = const Color(0xFFFDBF97);
-                  statusBg = const Color(0xFFFDBF97).withValues(alpha: 0.1);
+                  statusBg = const Color(0xFFFDBF97).withOpacity(0.1);
                 } else if (status == 'DELIVERED' || status == 'SHIPPED') {
                   statusText = "COMPLETED";
                   statusColor = Colors.green;
-                  statusBg = Colors.green.withValues(alpha: 0.1);
+                  statusBg = Colors.green.withOpacity(0.1);
                 }
 
                 return _OrderCard(
@@ -438,7 +438,7 @@ class _MainContent extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: _secondaryColor.withValues(alpha: 0.04),
+            color: _secondaryColor.withOpacity(0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -464,7 +464,7 @@ class _MainContent extends StatelessWidget {
                   Text(
                     "Revenue trend for the past week",
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      color: _secondaryColor.withOpacity(0.5),
                       fontSize: 12,
                     ),
                   ),
@@ -476,7 +476,7 @@ class _MainContent extends StatelessWidget {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: _primaryColor.withValues(alpha: 0.05),
+                  color: _primaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -502,7 +502,7 @@ class _MainContent extends StatelessWidget {
                   horizontalInterval: 5,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: _secondaryColor.withValues(alpha: 0.05),
+                      color: _secondaryColor.withOpacity(0.05),
                       strokeWidth: 1,
                     );
                   },
@@ -539,7 +539,7 @@ class _MainContent extends StatelessWidget {
                             child: Text(
                               days[value.toInt()],
                               style: GoogleFonts.plusJakartaSans(
-                                color: _secondaryColor.withValues(alpha: 0.4),
+                                color: _secondaryColor.withOpacity(0.4),
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -587,8 +587,8 @@ class _MainContent extends StatelessWidget {
                       show: true,
                       gradient: LinearGradient(
                         colors: [
-                          _primaryColor.withValues(alpha: 0.2),
-                          _primaryColor.withValues(alpha: 0.0),
+                          _primaryColor.withOpacity(0.2),
+                          _primaryColor.withOpacity(0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -673,7 +673,7 @@ class _OrderCard extends StatelessWidget {
                       child: Text(
                         id,
                         style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withValues(alpha: 0.4),
+                          color: _secondaryColor.withOpacity(0.4),
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 2.0,
@@ -718,7 +718,7 @@ class _OrderCard extends StatelessWidget {
                 Text(
                   customer,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withValues(alpha: 0.7),
+                    color: _secondaryColor.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -726,7 +726,7 @@ class _OrderCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Icon(Icons.chevron_right, color: _secondaryColor.withValues(alpha: 0.3)),
+          Icon(Icons.chevron_right, color: _secondaryColor.withOpacity(0.3)),
         ],
       ),
     ),

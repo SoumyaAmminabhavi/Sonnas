@@ -48,6 +48,7 @@ class _MenuScreenState extends State<MenuScreen> {
             }
 
             return {
+              'id': cake['id'],
               'title': (cake['name'] as String?) ?? 'Unnamed',
               'price': priceDisplay,
               'numericPrice': numericPrice,
@@ -203,7 +204,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.1)),
+                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withOpacity(0.1)),
                             ),
                             showCheckmark: false,
                           ),
@@ -219,7 +220,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         "${filteredItems.length} items",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: secondaryColor.withValues(alpha: 0.6),
+                          color: secondaryColor.withOpacity(0.6),
                         ),
                       ),
                       Row(
@@ -372,7 +373,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)],
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),

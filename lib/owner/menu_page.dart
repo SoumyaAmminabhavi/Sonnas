@@ -62,14 +62,23 @@ class _AddMenuContentState extends State<_AddMenuContent> {
 
     try {
       final supabase = Supabase.instance.client;
+
+      final rawPrice = _priceController.text.replaceAll(RegExp(r'[^0-9.]'), '');
+      final priceInRupees = double.tryParse(rawPrice) ?? 0.0;
+      
+      if (priceInRupees <= 0) {
+        throw Exception("Please enter a valid price greater than zero.");
+      }
+
+      final priceInPaise = (priceInRupees * 100).toInt();
       
       // 1. Insert the main Cake entry
       final cakeResponse = await supabase.from('Cake').insert({
-        'name': _nameController.text,
-        'slug': _nameController.text.toLowerCase().replaceAll(' ', '-'),
-        'description': _descriptionController.text,
-        'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587', // Default image as form doesn't have picker yet
-        'category': _categoryController.text,
+        'name': _nameController.text.trim(),
+        'slug': _nameController.text.trim().toLowerCase().replaceAll(' ', '-'),
+        'description': _descriptionController.text.trim(),
+        'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587', 
+        'category': _categoryController.text.trim(),
         'isAvailable': true,
         'createdAt': DateTime.now().toIso8601String(),
         'updatedAt': DateTime.now().toIso8601String(),
@@ -78,30 +87,12 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       final cakeId = cakeResponse['id'];
 
       // 2. Insert the CakeOption (Price/Size)
-      // Standardize: Convert INR to Paise for backend storage
-      final rawPrice = _priceController.text.replaceAll(RegExp(r'[^0-9.]'), '');
-      final priceInRupees = double.tryParse(rawPrice) ?? 0.0;
-      
-      if (priceInRupees <= 0) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Please enter a valid price greater than zero."),
-              backgroundColor: _secondaryColor,
-            ),
-          );
-        }
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      final priceInPaise = (priceInRupees * 100).toInt();
-
       await supabase.from('CakeOption').insert({
         'cakeId': cakeId,
-        'size': _weightController.text,
-        'serves': _servesController.text,
+        'size': 'Standard',
         'price': priceInPaise,
+        'createdAt': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
       });
 
       if (mounted) {
@@ -175,7 +166,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         const SizedBox(height: 24),
         Container(
           height: 1,
-          color: _secondaryColor.withValues(alpha: 0.3),
+          color: _secondaryColor.withOpacity(0.3),
         ),
         const SizedBox(height: 48),
 
@@ -400,7 +391,7 @@ class _InputField extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            color: _secondaryColor.withValues(alpha: 0.8),
+            color: _secondaryColor.withOpacity(0.8),
             fontWeight: FontWeight.bold,
             fontSize: 12,
             letterSpacing: 1.0,
@@ -422,18 +413,18 @@ class _InputField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: GoogleFonts.plusJakartaSans(
-               color: _secondaryColor.withValues(alpha: 0.3),
+               color: _secondaryColor.withOpacity(0.3),
             ),
-            prefixIcon: maxLines == 1 ? Icon(icon, color: _primaryColor.withValues(alpha: 0.6)) : null,
+            prefixIcon: maxLines == 1 ? Icon(icon, color: _primaryColor.withOpacity(0.6)) : null,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _secondaryColor.withValues(alpha: 0.1)),
+              borderSide: BorderSide(color: _secondaryColor.withOpacity(0.1)),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _secondaryColor.withValues(alpha: 0.1)),
+              borderSide: BorderSide(color: _secondaryColor.withOpacity(0.1)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

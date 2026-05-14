@@ -145,8 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.2),
-                          background.withValues(alpha: 1.0),
+                          Colors.black.withOpacity(0.2),
+                          background.withOpacity(1.0),
                         ],
                         stops: const [0.0, 1.0],
                       ),
@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 180,
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.05),
+                                color: primaryColor.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: ClipRRect(
@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   cake['image']!,
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) => Container(
-                                    color: primaryColor.withValues(alpha: 0.1),
+                                    color: primaryColor.withOpacity(0.1),
                                     child: const Icon(Icons.cake, color: primaryColor),
                                   ),
                                 ),
@@ -349,8 +349,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 colors: [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
               )
             : null,
-        border: isGradient ? null : Border.all(color: primaryColor.withValues(alpha: 0.2)),
-        color: isGradient ? null : Colors.white.withValues(alpha: 0.8),
+        border: isGradient ? null : Border.all(color: primaryColor.withOpacity(0.2)),
+        color: isGradient ? null : Colors.white.withOpacity(0.8),
       ),
       child: Material(
         color: Colors.transparent,
@@ -389,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.1),
+                    color: primaryColor.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -403,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: primaryColor.withValues(alpha: 0.6),
+                color: primaryColor.withOpacity(0.6),
               ),
             ),
           ],

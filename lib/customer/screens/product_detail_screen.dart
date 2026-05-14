@@ -29,7 +29,10 @@ class ProductDetailScreen extends StatefulWidget {
     required this.price,
     required this.imageUrl,
     List<dynamic> rawOptions = const [],
-  }) : options = rawOptions.map((o) => ProductOption.fromJson(o as Map<String, dynamic>)).toList();
+  }) : options = rawOptions
+            .where((o) => o is Map<String, dynamic>)
+            .map((o) => ProductOption.fromJson(o as Map<String, dynamic>))
+            .toList();
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -58,11 +61,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
-  double _parsePrice(dynamic price) {
-    if (price == null) return 0.0;
-    String priceStr = price.toString().replaceAll('₹', '').replaceAll('INR', '').replaceAll(',', '').trim();
-    return (double.tryParse(priceStr) ?? 0.0) / 100.0;
-  }
 
   void _updatePriceDisplay() {
     currentPriceDisplay = "₹${(currentPriceValue * quantity).toStringAsFixed(2)}";
@@ -140,6 +138,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   if (loadingProgress == null) return child;
                                   return const Center(child: CircularProgressIndicator(color: primaryColor));
                                 },
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  width: double.infinity,
+                                  height: 320,
+                                  color: Colors.grey.shade100,
+                                  child: const Icon(Icons.cake, color: primaryColor, size: 64),
+                                ),
                               ),
                             ),
                           ),
@@ -149,7 +153,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.brown.withValues(alpha: 0.3)),
+                              border: Border.all(color: Colors.brown.withOpacity(0.3)),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Icon(Icons.stop_circle_outlined, color: Colors.brown.shade800, size: 12),
@@ -308,7 +312,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border(top: BorderSide(color: Colors.grey.shade200)),
-                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
                     ),
                     child: Row(
                       children: [
@@ -316,7 +320,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           height: 50,
                           decoration: BoxDecoration(
-                            border: Border.all(color: accentRed.withValues(alpha: 0.2)),
+                            border: Border.all(color: accentRed.withOpacity(0.2)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -340,7 +344,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               context.read<CartProvider>().addItem(
                                 id, 
                                 "${widget.title} ($selectedSize)", 
-                                (currentPriceValue * 100).round(), 
+                                (currentPriceValue * 100).round().toDouble(), 
                                 widget.imageUrl,
                                 quantity: quantity,
                               );

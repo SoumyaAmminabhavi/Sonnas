@@ -49,7 +49,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2.5,
-                      color: cs.secondary.withValues(alpha: 0.6),
+                      color: cs.secondary.withOpacity(0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -76,7 +76,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
                 indicatorColor: cs.primary,
                 indicatorWeight: 2,
                 labelColor: cs.primary,
-                unselectedLabelColor: cs.secondary.withValues(alpha: 0.4),
+                unselectedLabelColor: cs.secondary.withOpacity(0.4),
                 labelStyle: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
@@ -121,7 +121,7 @@ class _OrdersList extends StatelessWidget {
     final supabase = Supabase.instance.client;
 
     final stream = status == 'SHIPPED_OR_DELIVERED'
-        ? supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).order('createdAt', ascending: false)
+        ? supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).inFilter('status', ['SHIPPED', 'DELIVERED']).order('createdAt', ascending: false)
         : supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).eq('status', status).order('createdAt', ascending: false);
 
     return StreamBuilder<List<Map<String, dynamic>>>(
@@ -136,17 +136,12 @@ class _OrdersList extends StatelessWidget {
         }
 
         var data = snapshot.data ?? [];
-        if (status == 'SHIPPED_OR_DELIVERED') {
-          // Note: supabase_flutter stream doesn't support .inFilter yet, so we filter locally
-          // for the combined view but keep it optimized by only streaming relevant columns if needed.
-          data = data.where((o) => o['status'] == 'SHIPPED' || o['status'] == 'DELIVERED').toList();
-        }
 
         if (data.isEmpty) {
           return Center(
             child: Text(
               "No ${status == 'SHIPPED_OR_DELIVERED' ? 'SHIPPED/DONE' : status} orders",
-              style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4)),
+              style: GoogleFonts.plusJakartaSans(color: cs.secondary.withOpacity(0.4)),
             ),
           );
         }
@@ -254,12 +249,12 @@ class _OrderCompactCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: cs.secondary.withValues(alpha: 0.04),
+              color: cs.secondary.withOpacity(0.04),
               blurRadius: 20,
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+          border: Border.all(color: cs.secondary.withOpacity(0.05)),
         ),
         child: Row(
           children: [
@@ -274,7 +269,7 @@ class _OrderCompactCard extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) => Container(
                   width: 90,
                   height: 90,
-                  color: cs.primaryContainer.withValues(alpha: 0.2),
+                  color: cs.primaryContainer.withOpacity(0.2),
                   child: Icon(Icons.cake, color: cs.primary),
                 ),
               ),
@@ -293,14 +288,14 @@ class _OrderCompactCard extends StatelessWidget {
                         style: GoogleFonts.notoSerif(
                           fontSize: 10,
                           fontStyle: FontStyle.italic,
-                          color: cs.secondary.withValues(alpha: 0.5),
+                          color: cs.secondary.withOpacity(0.5),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: data.statusBg.withValues(alpha: 0.8),
+                          color: data.statusBg.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -337,7 +332,7 @@ class _OrderCompactCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.more_vert, color: cs.secondary.withValues(alpha: 0.3)),
+                  icon: Icon(Icons.more_vert, color: cs.secondary.withOpacity(0.3)),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -376,14 +371,14 @@ class _CompactInfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: cs.secondary.withValues(alpha: 0.5)),
+        Icon(icon, size: 14, color: cs.secondary.withOpacity(0.5)),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
-              color: cs.secondary.withValues(alpha: 0.6),
+              color: cs.secondary.withOpacity(0.6),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

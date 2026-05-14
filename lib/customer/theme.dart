@@ -33,7 +33,7 @@ class CustomerTheme {
         surface: cardSurface,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.white.withValues(alpha: 0.9),
+        backgroundColor: Colors.white.withOpacity(0.9),
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: accent),

@@ -66,7 +66,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   ),
                 )
               : AppBar(
-                  backgroundColor: _bgColor.withValues(alpha: 0.8),
+                  backgroundColor: _bgColor.withOpacity(0.8),
                   elevation: 0,
                   leading: IconButton(
                     icon: const Icon(Icons.arrow_back, color: _primaryColor),
@@ -86,7 +86,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                       Text(
                         "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
                         style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withValues(alpha: 0.6),
+                          color: _secondaryColor.withOpacity(0.6),
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.0,
@@ -126,7 +126,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                             Text(
                               "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
                               style: GoogleFonts.plusJakartaSans(
-                                color: _secondaryColor.withValues(alpha: 0.6),
+                                color: _secondaryColor.withOpacity(0.6),
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.0,
@@ -174,7 +174,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     color: _surfaceContainerLow,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _outlineVariant.withValues(alpha: 0.5),
+                      color: _outlineVariant.withOpacity(0.5),
                       style: BorderStyle.solid,
                       width: 2,
                     ),
@@ -298,7 +298,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
           color: isSelected
-              ? _primaryContainer.withValues(alpha: 0.1)
+              ? _primaryContainer.withOpacity(0.1)
               : _surfaceContainerLow,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -314,7 +314,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               icon,
               color: isSelected
                   ? _primaryColor
-                  : _secondaryColor.withValues(alpha: 0.4),
+                  : _secondaryColor.withOpacity(0.4),
               size: 28,
             ),
             const SizedBox(height: 8),
@@ -323,7 +323,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               style: GoogleFonts.plusJakartaSans(
                 color: isSelected
                     ? _primaryColor
-                    : _secondaryColor.withValues(alpha: 0.6),
+                    : _secondaryColor.withOpacity(0.6),
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -367,7 +367,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   Text(
                     key,
                     style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withValues(alpha: 0.8),
+                      color: _secondaryColor.withOpacity(0.8),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -392,7 +392,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         height: 20,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: value ? _primaryColor : _outlineVariant.withValues(alpha: 0.4),
+          color: value ? _primaryColor : _outlineVariant.withOpacity(0.4),
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 200),
@@ -438,7 +438,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     "START",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      color: _secondaryColor.withOpacity(0.5),
                     ),
                   ),
                   _buildGhostInput(
@@ -461,7 +461,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                     "END",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
-                      color: _secondaryColor.withValues(alpha: 0.5),
+                      color: _secondaryColor.withOpacity(0.5),
                     ),
                   ),
                   _buildGhostInput(
@@ -519,7 +519,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                   style: GoogleFonts.plusJakartaSans(
                     color: isSelected
                         ? Colors.white
-                        : _secondaryColor.withValues(alpha: 0.5),
+                        : _secondaryColor.withOpacity(0.5),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -553,7 +553,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(height: 1, color: _outlineVariant.withValues(alpha: 0.3)),
+        Container(height: 1, color: _outlineVariant.withOpacity(0.3)),
         const SizedBox(height: 24),
         _buildGhostInput(label: "USERNAME", placeholder: "staff_julianne"),
         const SizedBox(height: 24),
@@ -605,7 +605,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
             borderRadius: BorderRadius.circular(100),
             boxShadow: [
               BoxShadow(
-                color: _primaryColor.withValues(alpha: 0.3),
+                color: _primaryColor.withOpacity(0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -647,7 +647,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           child: Text(
             "CANCEL",
             style: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.6),
+              color: _secondaryColor.withOpacity(0.6),
               fontWeight: FontWeight.bold,
               fontSize: 10,
               letterSpacing: 2.0,
@@ -674,7 +674,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           Text(
             label,
             style: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.7),
+              color: _secondaryColor.withOpacity(0.7),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
@@ -693,7 +693,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
           decoration: InputDecoration(
             hintText: placeholder,
             hintStyle: GoogleFonts.plusJakartaSans(
-              color: _secondaryColor.withValues(alpha: 0.3),
+              color: _secondaryColor.withOpacity(0.3),
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
             enabledBorder: const UnderlineInputBorder(

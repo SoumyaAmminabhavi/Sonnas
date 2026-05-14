@@ -97,7 +97,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text("KEEP IT", style: TextStyle(color: secondary.withValues(alpha: 0.5))),
+            child: Text("KEEP IT", style: TextStyle(color: secondary.withOpacity(0.5))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -144,6 +144,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   void _showReviewDialog() {
     double rating = 5;
     final commentController = TextEditingController();
+    final parentContext = context;
 
     showModalBottomSheet(
       context: context,
@@ -168,7 +169,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: secondary.withValues(alpha: 0.1),
+                  color: secondary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -187,7 +188,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
-                  color: secondary.withValues(alpha: 0.5),
+                  color: secondary.withOpacity(0.5),
                 ),
               ),
               const SizedBox(height: 32),
@@ -212,7 +213,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   hintText: "Share your thoughts on the taste and presentation...",
                   hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
                   filled: true,
-                  fillColor: surfaceContainerLow.withValues(alpha: 0.3),
+                  fillColor: surfaceContainerLow.withOpacity(0.3),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -237,9 +238,9 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                         'createdAt': DateTime.now().toUtc().toIso8601String(),
                       });
 
-                      if (context.mounted) {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                      if (parentContext.mounted) {
+                        Navigator.pop(parentContext);
+                        ScaffoldMessenger.of(parentContext).showSnackBar(
                           const SnackBar(
                             content: Text("Thank you for your lovely review! 💖"),
                             backgroundColor: primary,
@@ -249,8 +250,8 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                       }
                     } catch (e) {
                       debugPrint("Feedback Error: $e");
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                      if (parentContext.mounted) {
+                        ScaffoldMessenger.of(parentContext).showSnackBar(
                           const SnackBar(content: Text("Failed to submit review. Please try again.")),
                         );
                       }
@@ -335,11 +336,11 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_bag_outlined, size: 64, color: secondary.withValues(alpha: 0.1)),
+          Icon(Icons.shopping_bag_outlined, size: 64, color: secondary.withOpacity(0.1)),
           const SizedBox(height: 24),
           Text(
             "No active orders found",
-            style: GoogleFonts.plusJakartaSans(fontSize: 16, color: secondary.withValues(alpha: 0.4)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 16, color: secondary.withOpacity(0.4)),
           ),
         ],
       ),
@@ -385,7 +386,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: secondary.withValues(alpha: 0.06),
+            color: secondary.withOpacity(0.06),
             blurRadius: 40,
             offset: const Offset(0, 20),
           ),
@@ -413,7 +414,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                             shape: BoxShape.circle,
                             boxShadow: isActive ? [
                               BoxShadow(
-                                color: primary.withValues(alpha: 0.3),
+                                color: primary.withOpacity(0.3),
                                 blurRadius: 15,
                                 offset: const Offset(0, 5),
                               )
@@ -421,7 +422,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                           ),
                           child: Icon(
                             stages[index]['icon'] as IconData,
-                            color: isCompleted ? Colors.white : secondary.withValues(alpha: 0.3),
+                            color: isCompleted ? Colors.white : secondary.withOpacity(0.3),
                             size: 20,
                           ),
                         ),
@@ -431,7 +432,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 10,
                             fontWeight: isCompleted ? FontWeight.w800 : FontWeight.w600,
-                            color: isCompleted ? secondary : secondary.withValues(alpha: 0.3),
+                            color: isCompleted ? secondary : secondary.withOpacity(0.3),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -491,7 +492,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: secondary.withValues(alpha: 0.05)),
+        border: Border.all(color: secondary.withOpacity(0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +506,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 2,
-                  color: secondary.withValues(alpha: 0.4),
+                  color: secondary.withOpacity(0.4),
                 ),
               ),
               Text(
@@ -529,14 +530,14 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.5,
-                color: secondary.withValues(alpha: 0.4),
+                color: secondary.withOpacity(0.4),
               ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: surfaceContainerLow.withValues(alpha: 0.3),
+                color: surfaceContainerLow.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -569,7 +570,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: secondary.withValues(alpha: 0.6),
+                  color: secondary.withOpacity(0.6),
                 ),
               ),
               Text(
@@ -618,7 +619,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   "Quantity: ${item['quantity']}",
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 11,
-                    color: secondary.withValues(alpha: 0.5),
+                    color: secondary.withOpacity(0.5),
                   ),
                 ),
               ],
@@ -641,7 +642,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: surfaceContainerLow.withValues(alpha: 0.5),
+        color: surfaceContainerLow.withOpacity(0.5),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
@@ -654,7 +655,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: secondary.withValues(alpha: 0.7),
+                color: secondary.withOpacity(0.7),
               ),
             ),
           ),
@@ -684,7 +685,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
     return TextButton(
       onPressed: _cancelOrder,
       style: TextButton.styleFrom(
-        foregroundColor: Colors.red.withValues(alpha: 0.6),
+        foregroundColor: Colors.red.withOpacity(0.6),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
       ),
       child: Row(

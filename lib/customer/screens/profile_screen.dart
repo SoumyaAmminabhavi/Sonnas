@@ -141,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           border: Border.all(color: surfaceContainerHigh, width: 4),
                           boxShadow: [
                             BoxShadow(
-                              color: secondary.withValues(alpha: 0.1),
+                              color: secondary.withOpacity(0.1),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -231,7 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withValues(alpha: 0.06),
+                          color: secondary.withOpacity(0.06),
                           blurRadius: 40,
                           offset: const Offset(0, 10),
                         ),
@@ -282,7 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Text(
                               "No recent activity found",
                               style: GoogleFonts.plusJakartaSans(
-                                color: outline.withValues(alpha: 0.5),
+                                color: outline.withOpacity(0.5),
                                 fontSize: 14,
                               ),
                             ),
@@ -292,11 +292,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       final latestOrder = data.first;
                       final String status = latestOrder['status'] ?? 'PENDING';
-                      final String totalPrice = latestOrder['totalPrice']?.toString() ?? '0';
+                      final String rawPrice = latestOrder['totalPrice']?.toString() ?? '0';
+                      final double priceVal = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
                       
                       return _buildActivityItem(
                         "${latestOrder['customerName']?.toString().split(' ').first}'s Selection",
-                        "₹$totalPrice",
+                        "₹${priceVal.toStringAsFixed(2)}",
                         "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
                         status.toUpperCase(),
                         latestOrder['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
@@ -332,7 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withValues(alpha: 0.3),
+                          color: primary.withOpacity(0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -380,7 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
-                        color: outline.withValues(alpha: 0.5),
+                        color: outline.withOpacity(0.5),
                       ),
                     ),
                   ),
@@ -403,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
-            color: labelColor.withValues(alpha: 0.6),
+            color: labelColor.withOpacity(0.6),
           ),
         ),
         const SizedBox(height: 4),
@@ -443,7 +444,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF701235).withValues(alpha: 0.06), blurRadius: 40, offset: const Offset(0, 10)),
+          BoxShadow(color: const Color(0xFF701235).withOpacity(0.06), blurRadius: 40, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -467,11 +468,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withValues(alpha: 0.6))),
+                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withOpacity(0.6))),
                     const SizedBox(width: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: statusBg.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: statusBg.withOpacity(0.4), borderRadius: BorderRadius.circular(4)),
                       child: Text(status, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: primary)),
                     ),
                   ],
@@ -486,7 +487,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSettingTile(IconData icon, String title, Color onSurface, Color outline, BuildContext context, {VoidCallback? onTap}) {
     return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withValues(alpha: 0.1)))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withOpacity(0.1)))),
       child: ListTile(
         onTap: onTap ?? () {},
         contentPadding: const EdgeInsets.symmetric(vertical: 8),

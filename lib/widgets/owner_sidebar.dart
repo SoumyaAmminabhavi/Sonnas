@@ -21,7 +21,7 @@ class OwnerSidebar extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: _primaryColor.withValues(alpha: 0.08),
+            color: _primaryColor.withOpacity(0.08),
             blurRadius: 30,
             offset: const Offset(10, 0),
           ),

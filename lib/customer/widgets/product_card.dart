@@ -42,12 +42,12 @@ class _ProductCardState extends State<ProductCard> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: primary.withValues(alpha: _isHovered ? 0.08 : 0.03),
+                  color: primary.withOpacity(_isHovered ? 0.08 : 0.03),
                   blurRadius: _isHovered ? 20 : 10,
                   offset: const Offset(0, 4),
                 ),
               ],
-              border: Border.all(color: primary.withValues(alpha: 0.05)),
+              border: Border.all(color: primary.withOpacity(0.05)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +115,7 @@ class _ProductCardState extends State<ProductCard> {
                               widget.product.category,
                               style: TextStyle(
                                 fontSize: 9,
-                                color: berryText.withValues(alpha: 0.4),
+                                color: berryText.withOpacity(0.4),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -138,7 +138,7 @@ class _ProductCardState extends State<ProductCard> {
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: BoxDecoration(
-                                    color: primary.withValues(alpha: 0.1),
+                                    color: primary.withOpacity(0.1),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.add, size: 14, color: primary),

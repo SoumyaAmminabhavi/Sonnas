@@ -72,7 +72,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: berryText.withValues(alpha: 0.05),
+                    color: berryText.withOpacity(0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -87,7 +87,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                       children: [
                         Text(
                           "${item.name} (x${item.quantity})",
-                          style: GoogleFonts.plusJakartaSans(fontSize: 14, color: berryText.withValues(alpha: 0.7)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, color: berryText.withOpacity(0.7)),
                         ),
                         Text(
                           "₹${((item.price * item.quantity) / 100).toStringAsFixed(2)}",
@@ -99,7 +99,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                   const Divider(height: 32),
                   _summaryRow("Subtotal", "₹${(cart.total / 100).toStringAsFixed(2)}"),
                   _summaryRow("In-Store Service", "FREE"),
-                  _summaryRow("Tax (5%)", "₹${((cart.total * 0.05) / 100).toStringAsFixed(2)}"),
+                  _summaryRow("Tax (5%)", "₹${(((cart.total.round() * 5) + 50) ~/ 100 / 100).toStringAsFixed(2)}"),
                   const Divider(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -109,7 +109,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                         style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        "₹${((cart.total + (cart.total * 0.05)) / 100).toStringAsFixed(2)}",
+                        "₹${((cart.total.round() + ((cart.total.round() * 5) + 50) ~/ 100) / 100).toStringAsFixed(2)}",
                         style: GoogleFonts.notoSerif(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
@@ -184,7 +184,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.5,
-        color: const Color(0xFF701235).withValues(alpha: 0.5),
+        color: const Color(0xFF701235).withOpacity(0.5),
       ),
     );
   }
@@ -210,7 +210,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
         fillColor: Colors.white,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: const Color(0xFFFF4D8D).withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: const Color(0xFFFF4D8D).withOpacity(0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),

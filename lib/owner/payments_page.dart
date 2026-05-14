@@ -125,7 +125,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                     width: 160,
                     height: 160,
                     decoration: BoxDecoration(
-                      color: cs.primaryContainer.withValues(alpha: 0.3),
+                      color: cs.primaryContainer.withOpacity(0.3),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -137,7 +137,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: cs.secondary.withValues(alpha: 0.1),
+                          color: cs.secondary.withOpacity(0.1),
                           blurRadius: 40,
                           offset: const Offset(0, 20),
                         ),
@@ -174,7 +174,7 @@ class _PaymentsPageState extends State<PaymentsPage>
         Text(
           label,
           style: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF825433).withValues(alpha: 0.6),
+            color: const Color(0xFF825433).withOpacity(0.6),
             fontWeight: FontWeight.bold,
             fontSize: 10,
             letterSpacing: 1.5,
@@ -201,7 +201,7 @@ class _PaymentsPageState extends State<PaymentsPage>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFD8C1C6).withValues(alpha: 0.3),
+            color: const Color(0xFFD8C1C6).withOpacity(0.3),
             width: 1,
           ),
         ),
@@ -214,7 +214,7 @@ class _PaymentsPageState extends State<PaymentsPage>
         indicatorWeight: 2,
         dividerColor: Colors.transparent,
         labelColor: cs.primary,
-        unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
+        unselectedLabelColor: cs.secondary.withOpacity(0.5),
         labelStyle: GoogleFonts.plusJakartaSans(
           fontWeight: FontWeight.bold,
           fontSize: 12,
@@ -287,7 +287,7 @@ class _PaymentsPageState extends State<PaymentsPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.04),
+            color: cs.secondary.withOpacity(0.04),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -305,7 +305,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                   Text(
                     "ORDER ${item['id']}",
                     style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary.withValues(alpha: 0.4),
+                      color: cs.secondary.withOpacity(0.4),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
@@ -323,7 +323,7 @@ class _PaymentsPageState extends State<PaymentsPage>
               ),
               Icon(
                 Icons.receipt_long,
-                color: cs.primaryContainer.withValues(alpha: 0.4),
+                color: cs.primaryContainer.withOpacity(0.4),
               ),
             ],
           ),
@@ -340,7 +340,7 @@ class _PaymentsPageState extends State<PaymentsPage>
           Text(
             item['description']!,
             style: GoogleFonts.notoSerif(
-              color: cs.secondary.withValues(alpha: 0.6),
+              color: cs.secondary.withOpacity(0.6),
               fontSize: 12,
               fontStyle: FontStyle.italic,
             ),
@@ -382,13 +382,13 @@ class _PaymentsPageState extends State<PaymentsPage>
             Icon(
               Icons.check_circle_outline,
               size: 64,
-              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2),
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
             ),
             const SizedBox(height: 16),
             Text(
               "No Completed Payments for Today",
               style: GoogleFonts.plusJakartaSans(
-                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -443,7 +443,7 @@ class _PaymentsPageState extends State<PaymentsPage>
                 Text(
                   "Archived transactions for the month of October",
                   style: GoogleFonts.plusJakartaSans(
-                    color: cs.secondary.withValues(alpha: 0.6),
+                    color: cs.secondary.withOpacity(0.6),
                     fontSize: 14,
                   ),
                 ),
@@ -453,7 +453,7 @@ class _PaymentsPageState extends State<PaymentsPage>
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: cs.primaryContainer.withValues(alpha: 0.3),
+                    color: cs.primaryContainer.withOpacity(0.3),
                     width: 2,
                   ),
                 ),
@@ -494,7 +494,7 @@ class _PaymentsPageState extends State<PaymentsPage>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFD8C1C6).withValues(alpha: 0.2),
+            color: const Color(0xFFD8C1C6).withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -522,7 +522,7 @@ class _PaymentsPageState extends State<PaymentsPage>
       text,
       textAlign: textAlign,
       style: GoogleFonts.plusJakartaSans(
-        color: cs.secondary.withValues(alpha: 0.5),
+        color: cs.secondary.withOpacity(0.5),
         fontSize: 10,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.5,
@@ -537,7 +537,7 @@ class _PaymentsPageState extends State<PaymentsPage>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFD8C1C6).withValues(alpha: 0.1),
+            color: const Color(0xFFD8C1C6).withOpacity(0.1),
             width: 1,
           ),
         ),
@@ -559,7 +559,7 @@ class _PaymentsPageState extends State<PaymentsPage>
             child: Text(
               item['ref']!,
               style: GoogleFonts.plusJakartaSans(
-                color: cs.secondary.withValues(alpha: 0.7),
+                color: cs.secondary.withOpacity(0.7),
                 fontSize: 14,
               ),
             ),
@@ -569,7 +569,7 @@ class _PaymentsPageState extends State<PaymentsPage>
             child: Text(
               item['date']!,
               style: GoogleFonts.plusJakartaSans(
-                color: cs.secondary.withValues(alpha: 0.7),
+                color: cs.secondary.withOpacity(0.7),
                 fontSize: 14,
               ),
             ),

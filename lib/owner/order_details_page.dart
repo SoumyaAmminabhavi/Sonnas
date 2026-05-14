@@ -144,7 +144,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                     fontSize: 10,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 3.0,
-                                    color: cs.primary.withValues(alpha: 0.5),
+                                    color: cs.primary.withOpacity(0.5),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -161,7 +161,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    Icon(Icons.calendar_today_outlined, size: 16, color: cs.primary.withValues(alpha: 0.6)),
+                                    Icon(Icons.calendar_today_outlined, size: 16, color: cs.primary.withOpacity(0.6)),
                                     const SizedBox(width: 8),
                                     Text(
                                       formattedDate,
@@ -172,13 +172,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 16),
-                                    Icon(Icons.schedule_outlined, size: 16, color: cs.primary.withValues(alpha: 0.6)),
+                                    Icon(Icons.schedule_outlined, size: 16, color: cs.primary.withOpacity(0.6)),
                                     const SizedBox(width: 8),
                                     Text(
                                       deliveryTime,
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 14,
-                                        color: cs.secondary.withValues(alpha: 0.6),
+                                        color: cs.secondary.withOpacity(0.6),
                                       ),
                                     ),
                                   ],
@@ -195,15 +195,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: cs.surfaceContainerLow.withValues(alpha: 0.5),
+                                color: cs.surfaceContainerLow.withOpacity(0.5),
                                 borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+                                border: Border.all(color: cs.primary.withOpacity(0.05)),
                               ),
                               child: Row(
                                 children: [
                                   CircleAvatar(
                                     radius: 24,
-                                    backgroundColor: cs.primaryContainer.withValues(alpha: 0.3),
+                                    backgroundColor: cs.primaryContainer.withOpacity(0.3),
                                     child: Icon(Icons.person, color: cs.primary),
                                   ),
                                   const SizedBox(width: 16),
@@ -223,7 +223,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                           orderData!['phone'] ?? 'No Phone',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
-                                            color: cs.primary.withValues(alpha: 0.7),
+                                            color: cs.primary.withOpacity(0.7),
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -234,7 +234,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        "₹${(orderData!['totalPrice'] / 100).toStringAsFixed(2)}",
+                                        "₹${( (double.tryParse(orderData!['totalPrice'].toString()) ?? 0.0) / 100).toStringAsFixed(2)}",
                                         style: GoogleFonts.notoSerif(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -264,7 +264,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 2.0,
-                                color: cs.secondary.withValues(alpha: 0.4),
+                                color: cs.secondary.withOpacity(0.4),
                               ),
                             ),
                             const SizedBox(height: 16),
@@ -275,7 +275,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                                   child: _SelectionTile(
                                     title: item['cakeName'] ?? "Exquisite Creation",
                                     subtitle: "Quantity: ${item['quantity']}",
-                                    price: "₹${(item['price'] / 100).toStringAsFixed(2)}",
+                                    price: "₹${( (double.tryParse(item['price'].toString()) ?? 0.0) / 100).toStringAsFixed(2)}",
                                     imageUrl: orderData!['customImageUrl'] ??
                                         "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=60",
                                     cs: cs,
@@ -313,7 +313,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [cs.surface.withValues(alpha: 0.0), cs.surface, cs.surface],
+                              colors: [cs.surface.withOpacity(0.0), cs.surface, cs.surface],
                             ),
                           ),
                           child: Row(
@@ -417,7 +417,7 @@ class _InfoSection extends StatelessWidget {
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 2.0,
-            color: cs.secondary.withValues(alpha: 0.4),
+            color: cs.secondary.withOpacity(0.4),
           ),
         ),
         const SizedBox(height: 8),
@@ -426,18 +426,18 @@ class _InfoSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cs.primary.withValues(alpha: 0.1)),
+            border: Border.all(color: cs.primary.withOpacity(0.1)),
           ),
           child: Row(
             children: [
-              Icon(icon, color: cs.primary.withValues(alpha: 0.4)),
+              Icon(icon, color: cs.primary.withOpacity(0.4)),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   content,
                   style: GoogleFonts.notoSerif(
                     fontSize: 13,
-                    color: cs.onSurface.withValues(alpha: 0.8),
+                    color: cs.onSurface.withOpacity(0.8),
                   ),
                 ),
               ),
@@ -500,7 +500,7 @@ class _SlimProgressIndicator extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 4,
-            backgroundColor: cs.primary.withValues(alpha: 0.1),
+            backgroundColor: cs.primary.withOpacity(0.1),
             valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
           ),
         ),
@@ -510,7 +510,7 @@ class _SlimProgressIndicator extends StatelessWidget {
           style: GoogleFonts.notoSerif(
             fontSize: 12,
             fontStyle: FontStyle.italic,
-            color: cs.secondary.withValues(alpha: 0.5),
+            color: cs.secondary.withOpacity(0.5),
           ),
         ),
       ],
@@ -547,7 +547,7 @@ class _SelectionTile extends StatelessWidget {
             errorBuilder: (context, error, stackTrace) => Container(
               width: 64,
               height: 64,
-              color: cs.primaryContainer.withValues(alpha: 0.2),
+              color: cs.primaryContainer.withOpacity(0.2),
               child: Icon(Icons.cake, color: cs.primary),
             ),
           ),
@@ -569,7 +569,7 @@ class _SelectionTile extends StatelessWidget {
                 subtitle,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
-                  color: cs.secondary.withValues(alpha: 0.5),
+                  color: cs.secondary.withOpacity(0.5),
                 ),
               ),
             ],
@@ -611,12 +611,12 @@ class _ElegantAction extends StatelessWidget {
         color: isPrimary ? cs.primary : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: !isPrimary
-            ? Border.all(color: cs.primary.withValues(alpha: 0.1))
+            ? Border.all(color: cs.primary.withOpacity(0.1))
             : null,
         boxShadow: isPrimary
             ? [
                 BoxShadow(
-                  color: cs.primary.withValues(alpha: 0.2),
+                  color: cs.primary.withOpacity(0.2),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),

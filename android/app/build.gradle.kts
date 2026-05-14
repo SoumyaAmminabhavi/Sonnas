@@ -31,24 +31,35 @@ android {
     }
     signingConfigs {
         create("release") {
+            // Configuration is done here, but validation is moved to task execution
+            // to avoid breaking all builds (like debug/assemble) when env vars are missing.
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("KEY_ALIAS")
+            keyPassword = System.getenv("KEY_PASSWORD")
+        }
+    }
+
+    // Move validation to task execution time
+    gradle.taskGraph.whenReady {
+        val releaseTasks = tasks.matching { 
+            it.name.contains("Release", ignoreCase = true) && 
+            (it.name.startsWith("assemble") || it.name.startsWith("bundle"))
+        }
+        
+        if (releaseTasks.isNotEmpty()) {
             val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
             val keyAlias = System.getenv("KEY_ALIAS")
             val keyPassword = System.getenv("KEY_PASSWORD")
-            val keystorePath = System.getenv("KEYSTORE_PATH") ?: "release.keystore"
-
+            
             if (keystorePassword == null || keyAlias == null || keyPassword == null) {
                 val missing = mutableListOf<String>()
                 if (keystorePassword == null) missing.add("KEYSTORE_PASSWORD")
                 if (keyAlias == null) missing.add("KEY_ALIAS")
                 if (keyPassword == null) missing.add("KEY_PASSWORD")
                 
-                throw GradleException("Release build failed: Missing environment variables: ${missing.joinToString(", ")}. Please set them in your CI/CD or local environment.")
+                throw GradleException("Release build failed: Missing environment variables: ${missing.joinToString(", ")}. Please set them in your environment.")
             }
-
-            storeFile = file(keystorePath)
-            storePassword = keystorePassword
-            keyAlias = keyAlias
-            keyPassword = keyPassword
         }
     }
 
