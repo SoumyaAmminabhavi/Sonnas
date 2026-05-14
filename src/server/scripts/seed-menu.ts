@@ -77,7 +77,7 @@ async function main() {
 
     for (const cakeData of catData.cakes) {
       const slug = cakeData.name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
-      
+
       console.log(`  - Adding cake: ${cakeData.name}...`);
       await db.cake.upsert({
         where: { slug },
@@ -88,7 +88,7 @@ async function main() {
           name: cakeData.name,
           slug,
           description: `Handcrafted ${cakeData.name}`,
-          image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cake_placeholder.png",
+          image: `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
           categoryId: category.id,
           options: {
             create: cakeData.options,
