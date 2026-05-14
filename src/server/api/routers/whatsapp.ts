@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { sendTextMessage } from "~/server/whatsapp";
 import { env } from "~/env";
+import { OrderStatus, PaymentStatus, OrderSource } from "../../../generated/prisma";
 
 export const whatsappRouter = createTRPCRouter({
   // ─── Orders ────────────────────────────────────────────────────────────
@@ -13,37 +14,29 @@ export const whatsappRouter = createTRPCRouter({
   getOrders: protectedProcedure
     .input(
       z.object({
-        status: z.string().optional(),
+        status: z.nativeEnum(OrderStatus).optional(),
         customOnly: z.boolean().optional(),
         limit: z.number().min(1).max(100).default(50),
         cursor: z.string().optional(),
+        source: z.nativeEnum(OrderSource).optional(),
       })
     )
     .query(async ({ ctx, input }) => {
-      const where: { status?: string; isCustom?: boolean } = {};
+      const where: any = {};
       if (input.status) where.status = input.status;
       if (input.customOnly) where.isCustom = true;
+      if (input.source) where.source = input.source;
 
-      const orders = await ctx.db.whatsAppOrder.findMany({
+      const orders = await ctx.db.order.findMany({
         where,
         orderBy: { createdAt: "desc" },
         include: { 
-          items: {
-            select: {
-              id: true,
-              orderId: true,
-              cakeName: true,
-              size: true,
-              price: true,
-              quantity: true,
-            }
-          } 
+          items: true
         },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
         skip: input.cursor ? 1 : 0,
       });
-
 
       // Fetch all cakes to map images (don't let this fail the whole query)
       let cakeImageMap = new Map<string, string>();
@@ -76,19 +69,10 @@ export const whatsappRouter = createTRPCRouter({
   getOrder: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      const order = await ctx.db.whatsAppOrder.findUnique({
+      const order = await ctx.db.order.findUnique({
         where: { id: input.id },
         include: { 
-          items: {
-            select: {
-              id: true,
-              orderId: true,
-              cakeName: true,
-              size: true,
-              price: true,
-              quantity: true,
-            }
-          } 
+          items: true
         },
       });
       if (!order) return null;
@@ -113,37 +97,22 @@ export const whatsappRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.string(),
-        status: z.enum([
-          "PENDING",
-          "CONFIRMED",
-          "PREPARING",
-          "READY",
-          "DELIVERED",
-          "CANCELLED",
-        ]),
+        status: z.nativeEnum(OrderStatus),
         notifyCustomer: z.boolean().default(true),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      const order = await ctx.db.whatsAppOrder.update({
+    .query(async ({ ctx, input }) => {
+      const order = await ctx.db.order.update({
         where: { id: input.id },
         data: { status: input.status },
         include: { 
-          items: {
-            select: {
-              id: true,
-              orderId: true,
-              cakeName: true,
-              size: true,
-              price: true,
-              quantity: true,
-            }
-          } 
+          items: true
         },
       });
 
-      // Notify the customer via WhatsApp
-      if (input.notifyCustomer) {
+      // Notify the customer via WhatsApp (only if it's a WhatsApp order)
+      if (input.notifyCustomer && (order.whatsappPhone || order.source === OrderSource.WHATSAPP)) {
+        const phone = order.whatsappPhone ?? order.customerPhone;
         const firstItem = order.items[0];
         const cakeName = firstItem?.cakeName ?? "Cake";
         const size = firstItem?.size ?? "Standard";
@@ -153,15 +122,14 @@ export const whatsappRouter = createTRPCRouter({
 
         const statusMessages: Record<string, string> = {
           CONFIRMED: `✅ *Order Confirmed!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nWe'll start preparing your order soon!`,
-          PREPARING: `👩‍🍳 *Now Preparing!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nOur bakers are working their magic! ✨`,
-          READY: `📦 *Order Ready!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nYour cake is ready for pickup/delivery! 🎉`,
+          OUT_FOR_DELIVERY: `👩‍🍳 *Out for Delivery!*\n\n🧾 #${order.orderNumber}\n🎂 ${itemsList}\n\nOur delivery partner is on the way! 🚀`,
           DELIVERED: `🎉 *Order Delivered!*\n\n🧾 #${order.orderNumber}\n\nEnjoy your cake! We'd love to hear your feedback 💕\n\nReply *Menu* to order again!`,
           CANCELLED: `❌ *Order Cancelled*\n\n🧾 #${order.orderNumber}\n\nYour order has been cancelled. If you have any questions, please call us at ${env.NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED}.`,
         };
 
         const message = statusMessages[input.status];
         if (message) {
-          void sendTextMessage(order.phone, message);
+          void sendTextMessage(phone, message);
         }
       }
 
@@ -207,22 +175,22 @@ export const whatsappRouter = createTRPCRouter({
       totalConversations,
       revenueData,
     ] = await Promise.all([
-      ctx.db.whatsAppOrder.count(),
-      ctx.db.whatsAppOrder.count({ where: { status: "PENDING" } }),
-      ctx.db.whatsAppOrder.count({ where: { createdAt: { gte: today } } }),
+      ctx.db.order.count(),
+      ctx.db.order.count({ where: { status: OrderStatus.PENDING } }),
+      ctx.db.order.count({ where: { createdAt: { gte: today } } }),
       ctx.db.whatsAppConversation.count(),
-      ctx.db.whatsAppOrder.aggregate({
-        where: { paymentStatus: "PAID" },
+      ctx.db.order.aggregate({
+        where: { paymentStatus: PaymentStatus.PAID },
         _sum: { totalPrice: true },
       }),
     ]);
 
     // 2. Revenue Trend (Last 7 days) - Efficient GroupBy
-    const dailyRevenue = await ctx.db.whatsAppOrder.groupBy({
+    const dailyRevenue = await ctx.db.order.groupBy({
       by: ['createdAt'],
       where: {
         createdAt: { gte: sevenDaysAgo },
-        paymentStatus: "PAID"
+        paymentStatus: PaymentStatus.PAID
       },
       _sum: { totalPrice: true },
     });
@@ -244,7 +212,7 @@ export const whatsappRouter = createTRPCRouter({
     });
 
     // 3. Find Most Popular Cake using GroupBy on items
-    const popularCakeData = await ctx.db.whatsAppOrderItem.groupBy({
+    const popularCakeData = await ctx.db.orderItem.groupBy({
       by: ['cakeName'],
       _count: { cakeName: true },
       orderBy: { _count: { cakeName: 'desc' } },

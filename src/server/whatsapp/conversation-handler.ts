@@ -3,7 +3,14 @@
  * WhatsApp Conversation State Machine
  * Handles the full ordering flow: IDLE → BROWSING → SELECTING_SIZE → CONFIRMING → COMPLETE
  */
-import { db } from "~/server/db";
+import { 
+  PrismaClient, 
+  OrderStatus, 
+  PaymentStatus, 
+  ConversationState, 
+  OrderSource 
+} from "../../../generated/prisma";
+export const db = new PrismaClient();
 import { products } from "~/data/landing";
 import {
   sendTextMessage,
@@ -104,7 +111,7 @@ export function clearMenuCache() {
 // The Map is keyed by phone number and holds the full conversation object.
 
 // Conversation state cache
-const convoCache = new Map<string, Conversation>();
+export const convoCache = new Map<string, WhatsAppConversation>();
 const processingLocks = new Map<string, Promise<void>>();
 
 // ─── Message Deduplication (HIGH-07) ──────────────────────────────────────
@@ -133,7 +140,7 @@ function markMessageProcessed(messageId: string) {
 const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
 
 const RESET_STATE = {
-  selectedCake: null,
+  selectedCakeId: null,
   selectedSize: null,
   selectedPrice: null,
   selectedAddress: null,
@@ -141,6 +148,7 @@ const RESET_STATE = {
   selectedDeliveryDate: null,
   selectedDeliveryTime: null,
   customImageUrl: null,
+  state: ConversationState.IDLE,
 };
 
 // ─── Category Helpers ─────────────────────────────────────────────────────
@@ -165,9 +173,9 @@ async function safeGetCategories(): Promise<DBCategory[]> {
 }
 
 
-function updateConvoCache(phone: string, data: Partial<Conversation>) {
-  const existing = convoCache.get(phone) ?? { phone, state: "IDLE" } as Conversation;
-  convoCache.set(phone, { ...existing, ...data });
+function updateConvoCache(phone: string, data: Partial<WhatsAppConversation>) {
+  const current = convoCache.get(phone) || { phone, state: ConversationState.IDLE } as WhatsAppConversation;
+  convoCache.set(phone, { ...current, ...data } as WhatsAppConversation);
 }
 
 async function safeGetCakes(): Promise<Cake[]> {
@@ -378,7 +386,7 @@ async function sendMenuPDF(to: string) {
 
 // ─── Get or create conversation ────────────────────────────────────────────
 
-async function getConversation(phone: string, name?: string, force = false): Promise<Conversation> {
+async function getConversation(phone: string, name?: string, force = false): Promise<WhatsAppConversation> {
   // ── Cache hit: skip DB entirely ──────────────────────────────────────────
   const cached = convoCache.get(phone);
   if (cached && !force) {
@@ -422,7 +430,7 @@ async function getConversation(phone: string, name?: string, force = false): Pro
       );
     }
 
-    const result = convo as unknown as Conversation;
+    const result = convo as WhatsAppConversation;
 
     // HIGH-05: Clear stale cart items selectively (older than 24 hours)
     if (result.cart && Array.isArray(result.cart) && result.cart.length > 0) {
@@ -454,7 +462,7 @@ async function getConversation(phone: string, name?: string, force = false): Pro
     return result;
   } catch {
     // Return a dummy object to allow the bot to continue with default state
-    const fallback = { phone, state: "IDLE", name: name ?? "Customer", cart: [] } as unknown as Conversation;
+    const fallback = { phone, state: ConversationState.IDLE, name: name ?? "Customer", cart: [] } as WhatsAppConversation;
     convoCache.set(phone, fallback);
     return fallback;
   }
@@ -465,7 +473,7 @@ async function getConversation(phone: string, name?: string, force = false): Pro
 async function updateState(
   phone: string,
   state: ConversationState,
-  extra: Partial<Conversation> = {}
+  extra: Partial<WhatsAppConversation> = {}
 ) {
   // Update in-memory cache immediately
   updateConvoCache(phone, { state, ...extra });
@@ -619,7 +627,7 @@ function getCartSummary(cart: CartItem[]): string {
   return summary;
 }
 
-function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
+function buildOrderSummary(cart: CartItem[], convo: WhatsAppConversation): string {
   let summary = `📋 *Order Summary*\n\n`;
   if (cart.length === 0) {
     summary += "_No items in cart._\n";
@@ -633,15 +641,16 @@ function buildOrderSummary(cart: CartItem[], convo: Conversation): string {
 
   summary += `📍 Address: ${convo.selectedAddress ?? "_Not provided_"}\n`;
   summary += `📝 Notes: ${convo.selectedNotes ?? "_None_"}\n`;
-  summary += `📅 Delivery: *${convo.selectedDeliveryDate ?? "Today"}*\n`;
-  summary += `🕒 Timing: *${convo.selectedDeliveryTime ?? "Anytime"}*\n\n`;
+  const dateStr = convo.selectedDeliveryDate ? convo.selectedDeliveryDate.toLocaleDateString("en-IN") : "Today";
+  summary += `📅 Delivery: *${dateStr}*\n`;
+  summary += `🕒 Timing: *${convo.selectedDeliverySlot ?? "Anytime"}*\n\n`;
   summary += `\n\nShall we prepare this for you?`;
   return summary;
 }
 
 async function createCustomOrder(
   msg: IncomingMessage,
-  convo: Conversation,
+  convo: WhatsAppConversation,
   publicUrl: string | null | undefined,
   mediaId: string,
   caption: string
@@ -650,14 +659,18 @@ async function createCustomOrder(
   const notes = (convo.selectedNotes ?? "") + (caption ? `\nTheme: ${caption}` : "");
   const imageUrl = publicUrl ?? `whatsapp://media/${mediaId}`;
 
-  await db.whatsAppOrder.create({
+  const dbOrder = await db.order.create({
     data: {
       orderNumber,
-      phone: msg.from,
-      customerName: convo.name ?? msg.name,
-      totalPrice: null,
+      source: OrderSource.WHATSAPP,
+      whatsappPhone: msg.from,
+      customerPhone: msg.from,
+      customerName: convo.name ?? msg.name ?? "Customer",
+      totalPrice: 0,
+      address: convo.selectedAddress ?? "Store Pickup",
       notes,
-      status: "PENDING",
+      status: OrderStatus.PENDING,
+      paymentStatus: PaymentStatus.PENDING,
       isCustom: true,
       customImageUrl: imageUrl,
       items: {
@@ -668,13 +681,7 @@ async function createCustomOrder(
           quantity: 1
         }]
       }
-
     }
-  });
-
-  await updateState(msg.from, "IDLE", {
-    ...RESET_STATE,
-    selectedNotes: (convo.selectedNotes ?? "") + "\n[Reference Image Attached] " + caption,
   });
 
   return orderNumber;
@@ -818,7 +825,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   let state = convo.state as ConversationState;
 
   // ── Session Timeout Check ────────────────────────────────────────────────
-  if (state !== "IDLE" && convo.lastActivityAt) {
+  if (state !== ConversationState.IDLE && convo.lastActivityAt) {
     const lastActivity = new Date(convo.lastActivityAt).getTime();
     const timeoutMins = await getSessionTimeoutMins();
 
@@ -826,7 +833,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       console.log(`[WhatsApp] Session timeout for ${msg.from} (${timeoutMins}m). Resetting.`);
       await Promise.all([
         clearCart(msg.from),
-        updateState(msg.from, "IDLE", RESET_STATE),
+        updateState(msg.from, ConversationState.IDLE, RESET_STATE),
       ]);
       await sendTextMessage(msg.from, "Your previous session timed out due to inactivity. Starting fresh for you! ✨");
 
@@ -837,11 +844,11 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   }
 
   // ── Integrity Check: Catch "Zombie" States ──────────────────────────────
-  const statesRequiringCake: ConversationState[] = ["SELECTING_SIZE", "SELECTING_QUANTITY"];
-  if (statesRequiringCake.includes(state) && !convo.selectedCake) {
+  const statesRequiringCake: ConversationState[] = [ConversationState.SELECTING_SIZE, ConversationState.SELECTING_QUANTITY];
+  if (statesRequiringCake.includes(state) && !convo.selectedCakeId) {
     console.warn(`[WhatsApp] Integrity Check Failed: ${msg.from} is in ${state} but no cake is selected. Healing...`);
-    await updateState(msg.from, "IDLE", RESET_STATE);
-    state = "IDLE";
+    await updateState(msg.from, ConversationState.IDLE, RESET_STATE);
+    state = ConversationState.IDLE;
     convo = await getConversation(msg.from, msg.name, true);
   }
 
@@ -852,7 +859,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   const isGreeting = GREETINGS.includes(input);
 
   if (isGreeting) {
-    if (state === "IDLE") {
+    if (state === ConversationState.IDLE) {
       await sendWelcome(msg.from, msg.name);
     } else {
       // MED-12: Single combined message instead of greeting + re-prompt
@@ -864,7 +871,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   if (input === "restart" || input === "start over" || input === "reset") {
     await Promise.all([
       clearCart(msg.from),
-      updateState(msg.from, "IDLE", RESET_STATE),
+      updateState(msg.from, ConversationState.IDLE, RESET_STATE),
     ]);
     await sendTextMessage(msg.from, "No worries! Everything's been cleared. \u2728\n\nWhenever you're ready, I'm here to help you find the perfect cake. \ud83c\udf38");
     await sendWelcome(msg.from, msg.name);
@@ -886,8 +893,8 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
     if (selectedProduct) {
       const tasks: Promise<unknown>[] = [
-        updateState(msg.from, "SELECTING_SIZE", {
-          selectedCake: selectedProduct.name,
+        updateState(msg.from, ConversationState.SELECTING_SIZE, {
+          selectedCakeId: selectedProduct.id as string,
           selectedSize: null,
           selectedPrice: null,
         })
@@ -937,8 +944,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   // ── Design Your Cake Trigger from Website ──────────────────────────────
   if (input.includes("design my own cake")) {
     await Promise.all([
-      updateState(msg.from, "UPLOADING_REFERENCE_IMAGE", {
-        selectedCake: "CUSTOM_CAKE",
+      updateState(msg.from, ConversationState.CUSTOM_ORDER_IMAGE, {
         selectedSize: "Custom Design",
         selectedPrice: 0,
       }),
@@ -952,8 +958,8 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (input === "menu" || input === "cakes" || interactiveId === "btn_menu") {
     await Promise.all([
-      updateState(msg.from, "BROWSING_MENU", {
-        selectedCake: null,
+      updateState(msg.from, ConversationState.BROWSING_MENU, {
+        selectedCakeId: null,
         selectedSize: null,
         selectedPrice: null,
       }),
@@ -965,8 +971,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (interactiveId === "btn_custom") {
     await Promise.all([
-      updateState(msg.from, "REQUESTING_CUSTOM", {
-        selectedCake: "CUSTOM_CAKE",
+      updateState(msg.from, ConversationState.CUSTOM_ORDER_DETAILS, {
         selectedSize: "Custom Design",
         selectedPrice: 0,
       }),
@@ -1003,10 +1008,9 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
-  if (input === "cancel" || input === "cancel order" || interactiveId === "btn_cancel") {
     await Promise.all([
       clearCart(msg.from),
-      updateState(msg.from, "IDLE", RESET_STATE),
+      updateState(msg.from, ConversationState.IDLE, RESET_STATE),
     ]);
     await sendTextMessage(
       msg.from,
@@ -1023,17 +1027,17 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     let targetState: ConversationState = "IDLE";
 
     switch (state) {
-      case "SELECTING_SIZE": {
-        targetState = "BROWSING_MENU";
+      case ConversationState.SELECTING_SIZE: {
+        targetState = ConversationState.BROWSING_MENU;
         break;
       }
-      case "SELECTING_QUANTITY": {
-        targetState = "SELECTING_SIZE";
+      case ConversationState.SELECTING_QUANTITY: {
+        targetState = ConversationState.SELECTING_SIZE;
         break;
       }
-      case "ASKING_ADDRESS": {
+      case ConversationState.INPUTTING_ADDRESS: {
         // Back from address selection goes to Cart View
-        await updateState(msg.from, "IDLE");
+        await updateState(msg.from, ConversationState.IDLE);
         const updatedConvo = convoCache.get(msg.from) ?? convo;
         const summary = getCartSummary(updatedConvo.cart ?? []);
         await sendInteractiveButtons(msg.from, summary, [
@@ -1043,10 +1047,10 @@ async function _internalHandleMessage(msg: IncomingMessage) {
         ]);
         return;
       }
-      case "ASKING_INSTRUCTIONS": {
+      case ConversationState.ADDING_NOTES: {
         // If pickup, go back to pickup/delivery choice. If delivery, go back to address.
         if (convo.selectedAddress === "🏪 Store Pickup") {
-          await updateState(msg.from, "ASKING_ADDRESS");
+          await updateState(msg.from, ConversationState.INPUTTING_ADDRESS);
           await sendInteractiveButtons(
             msg.from,
             "\ud83c\udfe0 *How would you like to receive your order?*",
@@ -1056,24 +1060,20 @@ async function _internalHandleMessage(msg: IncomingMessage) {
             ]
           );
         } else {
-          targetState = "ASKING_ADDRESS";
+          targetState = ConversationState.INPUTTING_ADDRESS;
         }
         break;
       }
-      case "ASKING_DELIVERY_DATE": {
-        targetState = "ASKING_INSTRUCTIONS";
+      case ConversationState.ASKING_DELIVERY_DATE: {
+        targetState = ConversationState.ADDING_NOTES;
         break;
       }
-      case "ASKING_DELIVERY_TIME": {
-        targetState = "ASKING_DELIVERY_DATE";
-        break;
-      }
-      case "CONFIRMING": {
-        targetState = "ASKING_DELIVERY_TIME";
+      case ConversationState.CONFIRMING_ORDER: {
+        targetState = ConversationState.ASKING_DELIVERY_DATE;
         break;
       }
       default: {
-        targetState = "IDLE";
+        targetState = ConversationState.IDLE;
       }
     }
 
@@ -1104,7 +1104,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (interactiveId === "btn_pickup") {
     await Promise.all([
-      updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: "🏪 Store Pickup" }),
+      updateState(msg.from, ConversationState.ADDING_NOTES, { selectedAddress: "🏪 Store Pickup" }),
       sendInteractiveButtons(
         msg.from,
         "\u2728 *Store Pickup Selected*\n\nWhat message would you like on your cake?\n\nReply *Skip* if none.",
@@ -1116,14 +1116,14 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (interactiveId === "saved_addr_yes") {
     try {
-      const lastOrder = await db.whatsAppOrder.findFirst({
-        where: { phone: msg.from, status: { not: "CANCELLED" }, address: { not: null } },
+      const lastOrder = await db.order.findFirst({
+        where: { OR: [{ whatsappPhone: msg.from }, { customerPhone: msg.from }], status: { not: OrderStatus.CANCELLED }, address: { not: null } },
         orderBy: { createdAt: "desc" },
         select: { address: true }
       });
       if (lastOrder?.address) {
         await Promise.all([
-          updateState(msg.from, "ASKING_INSTRUCTIONS", { selectedAddress: lastOrder.address }),
+          updateState(msg.from, ConversationState.ADDING_NOTES, { selectedAddress: lastOrder.address }),
           sendInteractiveButtons(
             msg.from,
             `\u2705 *Address set!* (\ud83d\udccd Previous used)\n\n\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?`,
@@ -1139,7 +1139,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (interactiveId === "btn_delivery") {
     await Promise.all([
-      updateState(msg.from, "ASKING_ADDRESS"),
+      updateState(msg.from, ConversationState.INPUTTING_ADDRESS),
       sendTextMessage(msg.from, "\ud83d\udccd *Delivery Address*\n\nPlease share your delivery address or tap the \ud83d\udcce icon to send your *GPS Location*.")
     ]);
     return;
@@ -1149,7 +1149,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     const [, categoryName, offsetStr] = interactiveId.split("_");
     if (categoryName && offsetStr) {
       const newOffset = parseInt(offsetStr, 10);
-      await updateState(msg.from, "BROWSING_MENU", { menuOffset: newOffset });
+      await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: newOffset });
       await handleCategorySelection({ ...msg, interactiveId: `cat_${categoryName}` });
     }
     return;
@@ -1201,7 +1201,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   // ── State-specific handling ────────────────────────────────────────────
 
   switch (state) {
-    case "IDLE":
+    case ConversationState.IDLE:
       if (input.length > 3) {
         const found = await findCake(input);
         if (found) {
@@ -1212,43 +1212,43 @@ async function _internalHandleMessage(msg: IncomingMessage) {
       await sendWelcome(msg.from, msg.name);
       break;
 
-    case "BROWSING_MENU":
+    case ConversationState.BROWSING_MENU:
       await handleCakeSelection(msg);
       break;
 
-    case "SELECTING_CATEGORY":
+    case ConversationState.SELECTING_CATEGORY:
       await handleCategorySelection(msg);
       break;
 
-    case "SELECTING_SIZE":
+    case ConversationState.SELECTING_SIZE:
       await handleSizeSelection(msg, convo);
       break;
 
-    case "SELECTING_QUANTITY":
+    case ConversationState.SELECTING_QUANTITY:
       await handleQuantitySelection(msg, convo);
       break;
 
-    case "ASKING_ADDRESS":
+    case ConversationState.INPUTTING_ADDRESS:
       await handleAddressInput(msg, convo);
       break;
 
-    case "ASKING_INSTRUCTIONS":
+    case ConversationState.ADDING_NOTES:
       await handleInstructionsInput(msg, convo);
       break;
 
-    case "ASKING_DELIVERY_DATE":
+    case ConversationState.ASKING_DELIVERY_DATE:
       await handleDeliverySlotSelection(msg, convo);
       break;
 
-    case "REQUESTING_CUSTOM":
+    case ConversationState.CUSTOM_ORDER_DETAILS:
       await handleCustomRequest(msg, convo);
       break;
 
-    case "UPLOADING_REFERENCE_IMAGE":
+    case ConversationState.CUSTOM_ORDER_IMAGE:
       await handleReferenceImageUpload(msg, convo);
       break;
 
-    case "CONFIRMING":
+    case ConversationState.CONFIRMING_ORDER:
       await handleConfirmation(msg, convo);
       break;
 
@@ -1363,12 +1363,12 @@ async function sendMenu(to: string) {
       "View Cakes",
       sections
     );
-    await updateState(to, "BROWSING_MENU");
+    await updateState(to, ConversationState.BROWSING_MENU);
   } else {
     // Too many cakes — show dynamic categories from DB
     const dbCategories = await safeGetCategories();
 
-    await updateState(to, "SELECTING_CATEGORY");
+    await updateState(to, ConversationState.SELECTING_CATEGORY);
     await sendInteractiveList(
       to,
       "🧁 Our Categories",
@@ -1429,7 +1429,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
 
   if (filtered.length === 0) {
     await Promise.all([
-      updateState(msg.from, "BROWSING_MENU"),
+      updateState(msg.from, ConversationState.BROWSING_MENU),
       sendTextMessage(msg.from, `No cakes found in *${catName}* at the moment.`),
       sendMenu(msg.from),
     ]);
@@ -1451,7 +1451,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
     });
   }
 
-  await updateState(msg.from, "BROWSING_MENU", { menuOffset: offset });
+  await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: offset });
 
   await sendInteractiveList(
     msg.from,
@@ -1497,8 +1497,8 @@ async function handleCakeSelection(msg: IncomingMessage) {
 
   // Store the selection and move to size selection
   const tasks: Promise<unknown>[] = [
-    updateState(msg.from, "SELECTING_SIZE", {
-      selectedCake: selectedProduct.name,
+    updateState(msg.from, ConversationState.SELECTING_SIZE, {
+      selectedCakeId: selectedProduct.id as string,
     })
   ];
 
@@ -1551,12 +1551,12 @@ async function handleCakeSelection(msg: IncomingMessage) {
 
 async function handleSizeSelection(
   msg: IncomingMessage,
-  convo: Conversation
+  convo: WhatsAppConversation
 ) {
-  const cake = await findCake(convo.selectedCake);
+  const cake = await findCake(convo.selectedCakeId!);
   if (!cake) {
-    console.warn(`[WhatsApp] handleSizeSelection: Cake not found for selection "${convo.selectedCake}"`);
-    await updateState(msg.from, "IDLE", RESET_STATE);
+    console.warn(`[WhatsApp] handleSizeSelection: Cake not found for selection ID "${convo.selectedCakeId}"`);
+    await updateState(msg.from, ConversationState.IDLE, RESET_STATE);
     await sendTextMessage(msg.from, "Oops! I seem to have lost track of which cake you were looking at. 🧁\n\nStarting fresh for you! Please select a cake from the menu below.");
     await sendMenu(msg.from);
     return;
@@ -1596,7 +1596,7 @@ async function handleSizeSelection(
     selectedQuantity: 1,
   };
 
-  await updateState(msg.from, "SELECTING_QUANTITY", {
+  await updateState(msg.from, ConversationState.SELECTING_QUANTITY, {
     selectedSize: selectedOption.size,
     selectedPrice: selectedOption.price,
     selectedQuantity: 1,
@@ -1609,7 +1609,7 @@ async function handleSizeSelection(
 
 async function handleQuantitySelection(
   msg: IncomingMessage,
-  convo: Conversation
+  convo: WhatsAppConversation
 ) {
   let quantity = 1;
 
@@ -1625,16 +1625,16 @@ async function handleQuantitySelection(
     quantity = validation.data as number;
   }
 
-  await updateState(msg.from, "SELECTING_QUANTITY", { selectedQuantity: quantity });
+  await updateState(msg.from, ConversationState.SELECTING_QUANTITY, { selectedQuantity: quantity });
 
   // Transition to Cart Actions
-  await handleCartActions(msg, { ...convo, selectedQuantity: quantity } as Conversation);
+  await handleCartActions(msg, { ...convo, selectedQuantity: quantity } as WhatsAppConversation);
 }
 
-async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
+async function handleCartActions(msg: IncomingMessage, convo: WhatsAppConversation) {
   try {
     const isCheckout = msg.interactiveId === "btn_checkout" || msg.interactiveId === "btn_checkout_now";
-    const hasActiveSelection = !!(convo.selectedCake && convo.selectedSize && convo.selectedPrice);
+    const hasActiveSelection = !!(convo.selectedCakeId && convo.selectedSize && convo.selectedPrice);
 
     // Case 1: Transitioning from Quantity selection, Size selection (Shortcut), OR "Add to Order" clicked
     const isAdding = !!(
@@ -1645,9 +1645,12 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
     );
 
     if (isAdding && hasActiveSelection) {
+      const selectedCake = await findCake(convo.selectedCakeId!);
+      const cakeName = selectedCake?.name ?? "Cake";
       const quantity = convo.selectedQuantity ?? 1;
+
       await addToCart(msg.from, {
-        cakeName: convo.selectedCake!,
+        cakeName: cakeName,
         size: convo.selectedSize!,
         price: convo.selectedPrice!,
         quantity: quantity
@@ -1670,10 +1673,10 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
       }
 
       await Promise.all([
-        sendTextMessage(msg.from, `✨ *${convo.selectedCake}* added to your order!`),
+        sendTextMessage(msg.from, `✨ *${cakeName}* added to your order!`),
         sendInteractiveButtons(msg.from, summary, cartButtons),
-        updateState(msg.from, "IDLE", {
-          selectedCake: null,
+        updateState(msg.from, ConversationState.IDLE, {
+          selectedCakeId: null,
           selectedSize: null,
           selectedPrice: null,
           selectedQuantity: null
@@ -1697,8 +1700,8 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
 
       // Check for saved address
       try {
-        const lastOrder = await db.whatsAppOrder.findFirst({
-          where: { phone: msg.from, status: { not: "CANCELLED" }, address: { not: null } },
+        const lastOrder = await db.order.findFirst({
+          where: { OR: [{ whatsappPhone: msg.from }, { customerPhone: msg.from }], status: { not: OrderStatus.CANCELLED }, address: { not: null } },
           orderBy: { createdAt: "desc" },
           select: { address: true }
         });
@@ -1713,7 +1716,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
               { id: "btn_pickup", title: "\ud83c\udfea Store Pickup" },
             ]
           );
-          await updateState(msg.from, "ASKING_ADDRESS");
+          await updateState(msg.from, ConversationState.INPUTTING_ADDRESS);
           return;
         }
       } catch (err) {
@@ -1722,7 +1725,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
 
       // Default: Offer pickup or delivery choice
       await Promise.all([
-        updateState(msg.from, "ASKING_ADDRESS"),
+        updateState(msg.from, ConversationState.INPUTTING_ADDRESS),
         sendInteractiveButtons(
           msg.from,
           "\ud83c\udfe0 *How would you like to receive your order?*",
@@ -1744,7 +1747,7 @@ async function handleCartActions(msg: IncomingMessage, convo: Conversation) {
 
 async function handleAddressInput(
   msg: IncomingMessage,
-  _convo: Conversation
+  _convo: WhatsAppConversation
 ) {
   let address = msg.text?.trim() ?? "";
 
@@ -1790,7 +1793,7 @@ async function handleAddressInput(
 
   // Move to asking instructions
   await Promise.all([
-    updateState(msg.from, "ASKING_INSTRUCTIONS", {
+    updateState(msg.from, ConversationState.ADDING_NOTES, {
       selectedAddress: address,
     }),
     sendInteractiveButtons(
@@ -1807,7 +1810,7 @@ async function handleAddressInput(
 
 async function handleInstructionsInput(
   msg: IncomingMessage,
-  _convo: Conversation
+  _convo: WhatsAppConversation
 ) {
   const input = msg.text?.trim() ?? "";
   const isSkip =
@@ -1833,7 +1836,7 @@ async function handleInstructionsInput(
 
   // Move to asking delivery slot
   await Promise.all([
-    updateState(msg.from, "ASKING_DELIVERY_DATE", {
+    updateState(msg.from, ConversationState.ASKING_DELIVERY_DATE, {
       selectedNotes: notes,
     }),
     sendDeliverySlotOptions(msg.from)
@@ -1901,9 +1904,9 @@ async function sendDeliverySlotOptions(to: string) {
 
 async function handleDeliverySlotSelection(
   msg: IncomingMessage,
-  convo: Conversation
+  convo: WhatsAppConversation
 ) {
-  let deliveryDate = "";
+  let deliveryDate: Date | null = null;
   let deliveryTime = "";
 
   if (msg.interactiveId?.startsWith("slot_")) {
@@ -1920,12 +1923,10 @@ async function handleDeliverySlotSelection(
       return;
     }
 
-    const d = new Date(year, month - 1, day);
-
-    deliveryDate = d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+    deliveryDate = new Date(year, month - 1, day);
     deliveryTime = timePart.charAt(0).toUpperCase() + timePart.slice(1); // "Morning", etc.
   } else if (msg.text?.trim()) {
-    deliveryDate = "As specified";
+    deliveryDate = new Date(); // Fallback to today if they type it
     deliveryTime = msg.text.trim();
   } else {
     await sendTextMessage(msg.from, "Please select a delivery slot from the list.");
@@ -1934,9 +1935,9 @@ async function handleDeliverySlotSelection(
 
   try {
     // Move to confirmation
-    await updateState(msg.from, "CONFIRMING", {
+    await updateState(msg.from, ConversationState.CONFIRMING_ORDER, {
       selectedDeliveryDate: deliveryDate,
-      selectedDeliveryTime: deliveryTime,
+      selectedDeliverySlot: deliveryTime,
     });
 
     const cart = convoCache.get(msg.from)?.cart ?? [];
@@ -2054,8 +2055,8 @@ async function handleReferenceImageUpload(
 // ─── Order status lookup ───────────────────────────────────────────────────
 
 async function sendOrderStatus(to: string) {
-  const orders = await db.whatsAppOrder.findMany({
-    where: { phone: to },
+  const orders = await db.order.findMany({
+    where: { OR: [{ whatsappPhone: to }, { customerPhone: to }] },
     orderBy: { createdAt: "desc" },
     include: { items: true },
     take: 3,
@@ -2160,18 +2161,20 @@ async function handleConfirmation(
     const freshConvo = convoCache.get(msg.from) ?? (await getConversation(msg.from));
 
     // 1. Create DB Order first (Durable Storage)
-    const dbOrder = await db.whatsAppOrder.create({
+    const dbOrder = await db.order.create({
       data: {
         orderNumber,
-        phone: msg.from,
+        source: OrderSource.WHATSAPP,
+        whatsappPhone: msg.from,
+        customerPhone: msg.from,
         customerName: freshConvo?.name ?? msg.name ?? "Customer",
         totalPrice: totalAmount,
-        address: freshConvo.selectedAddress ?? null,
+        address: freshConvo.selectedAddress ?? "Store Pickup",
         notes: freshConvo.selectedNotes ?? null,
-        deliveryDate: freshConvo.selectedDeliveryDate ?? null,
-        deliveryTime: freshConvo.selectedDeliveryTime ?? null,
-        status: "PENDING",
-        paymentStatus: "PENDING",
+        deliveryDate: freshConvo.selectedDeliveryDate,
+        deliverySlot: freshConvo.selectedDeliverySlot ?? null,
+        status: OrderStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
         razorpayOrderId: "",
         paymentLink: "",
         isCustom: cart.some((item) => item.cakeName === "CUSTOM_CAKE"),
@@ -2207,7 +2210,7 @@ async function handleConfirmation(
     if (rzpLinkResult?.short_url) {
       paymentLink = rzpLinkResult.short_url;
       // Update order with payment details
-      await db.whatsAppOrder.update({
+      await db.order.update({
         where: { id: dbOrder.id },
         data: {
           paymentLink: rzpLinkResult.short_url,
@@ -2223,7 +2226,8 @@ async function handleConfirmation(
     ]);
 
     let successMessage = `🎉 *Order #${orderNumber} Placed!*\n\n`;
-    successMessage += `📅 *${freshConvo.selectedDeliveryDate ?? "Today"}* | 🕒 *${freshConvo.selectedDeliveryTime ?? "Anytime"}*\n`;
+    const dateStr = freshConvo.selectedDeliveryDate ? freshConvo.selectedDeliveryDate.toLocaleDateString("en-IN") : "Today";
+    successMessage += `📅 *${dateStr}* | 🕒 *${freshConvo.selectedDeliverySlot ?? "Anytime"}*\n`;
     successMessage += `📍 ${freshConvo.selectedAddress ?? "Store Pickup"}\n\n`;
 
     if (paymentLink) {
@@ -2244,15 +2248,15 @@ async function handleConfirmation(
 
 // ─── Re-prompt current state ─────────────────────────────────────────────
 
-async function rePromptState(phone: string, state: ConversationState, convo: Conversation) {
+async function rePromptState(phone: string, state: ConversationState, convo: WhatsAppConversation) {
   switch (state) {
-    case "BROWSING_MENU":
+    case ConversationState.BROWSING_MENU:
       await sendMenu(phone);
       break;
-    case "SELECTING_CATEGORY":
+    case ConversationState.SELECTING_CATEGORY:
       await sendMenu(phone); // Go back to category list
       break;
-    case "SELECTING_SIZE":
+    case ConversationState.SELECTING_SIZE:
       if (convo.selectedCake) {
         const cake = await findCake(convo.selectedCake);
         if (cake) {
@@ -2288,18 +2292,10 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         await sendMenu(phone);
       }
       break;
-    case "SELECTING_QUANTITY":
-      await sendInteractiveButtons(
-        phone,
-        `*${convo.selectedCake}* (${convo.selectedSize})\n\nHow many would you like to order? \ud83e\udde1`,
-        [
-          { id: "qty_1", title: "1" },
-          { id: "qty_2", title: "2" },
-          { id: "btn_back", title: "⬅️ Back" },
-        ]
-      );
-      break;
-    case "ASKING_ADDRESS":
+    case ConversationState.SELECTING_SIZE: // Fallback or duplicate check
+       await sendMenu(phone);
+       break;
+    case ConversationState.ASKING_ADDRESS:
       await sendInteractiveButtons(
         phone,
         "\ud83c\udfe0 *How would you like to receive your order?*",
@@ -2310,7 +2306,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         ]
       );
       break;
-    case "ASKING_INSTRUCTIONS":
+    case ConversationState.ADDING_NOTES:
       await sendInteractiveButtons(
         phone,
         "\u270d\ufe0f *Personalize Your Cake*\n\nWhat message would you like on your cake?\n\nReply *Skip* if none.",
@@ -2319,13 +2315,7 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
         ]
       );
       break;
-    case "ASKING_DELIVERY_DATE":
-      await sendDeliverySlotOptions(phone);
-      await sendInteractiveButtons(phone, "_Need to change something?_", [
-        { id: "btn_back", title: "⬅️ Back" },
-      ]);
-      break;
-    case "CONFIRMING": {
+    case ConversationState.CONFIRMING_ORDER: {
       // Use cached cart
       const cart = convoCache.get(phone)?.cart ?? [];
       await sendInteractiveButtons(phone, buildOrderSummary(cart, convo), [
@@ -2336,10 +2326,10 @@ async function rePromptState(phone: string, state: ConversationState, convo: Con
       break;
     }
 
-    case "REQUESTING_CUSTOM":
+    case ConversationState.CUSTOM_ORDER_DETAILS:
       await sendTextMessage(phone, "🎨 *Custom Cake Request*\n\nPlease describe the cake or send a **Reference Photo**. 📸");
       break;
-    case "UPLOADING_REFERENCE_IMAGE":
+    case ConversationState.CUSTOM_ORDER_IMAGE:
       await sendTextMessage(phone, "📸 *Reference Photo Needed*\n\nPlease upload a photo of the design you'd like us to create for you! ✨");
       break;
     default:

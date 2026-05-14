@@ -39,6 +39,13 @@ const STATUS_CONFIG: Record<
     bg: "#F4F8FD",
     border: "#E8F0F9",
   },
+  OUT_FOR_DELIVERY: {
+    label: "Out for Delivery",
+    emoji: "🚀",
+    color: "#8B6FC0",
+    bg: "#F7F5FB",
+    border: "#EFECF6",
+  },
   DELIVERED: {
     label: "Enjoyed",
     emoji: "💝",
@@ -90,6 +97,7 @@ const STATUS_FLOW = [
   "CONFIRMED",
   "PREPARING",
   "READY",
+  "OUT_FOR_DELIVERY",
   "DELIVERED",
 ] as const;
 
@@ -98,6 +106,7 @@ type OrderStatus =
   | "CONFIRMED"
   | "PREPARING"
   | "READY"
+  | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED";
 
@@ -122,12 +131,13 @@ interface AdminOrder {
   address?: string | null;
   notes?: string | null;
   deliveryDate?: string | null;
-  deliveryTime?: string | null;
+  deliverySlot?: string | null;
   customImageUrl?: string | null;
   createdAt: string | Date;
   items: AdminOrderItem[];
   isCustom?: boolean;
   paymentStatus: string;
+  source: "WHATSAPP" | "APP";
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
@@ -540,6 +550,16 @@ function WhatsAppAdminContent() {
                         </span>
                       </div>
                       <div style={styles.badges}>
+                        <span style={{ 
+                          ...styles.paymentBadge, 
+                          color: o.source === "WHATSAPP" ? "#25D366" : "#4A90D9", 
+                          backgroundColor: o.source === "WHATSAPP" ? "rgba(37, 211, 102, 0.1)" : "rgba(74, 144, 217, 0.1)",
+                          marginRight: 4,
+                          fontSize: 9,
+                          fontWeight: 700
+                        }}>
+                          {o.source}
+                        </span>
                         <span style={{ ...styles.statusBadge, color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.border }}>
                           {cfg.label}
                         </span>
@@ -581,7 +601,7 @@ function WhatsAppAdminContent() {
                       </div>
                       <div style={styles.detailItem}>
                         <span style={styles.detailIcon}>🕒</span>
-                        <span style={styles.detailText}>{o.deliveryTime ?? "Anytime"}</span>
+                        <span style={styles.detailText}>{o.deliverySlot ?? "Anytime"}</span>
                       </div>
                     </div>
 

@@ -83,7 +83,6 @@ async function main() {
         where: { slug },
         update: {
           categoryId: category.id,
-          categoryName: catData.name,
         },
         create: {
           name: cakeData.name,
@@ -91,7 +90,6 @@ async function main() {
           description: `Handcrafted ${cakeData.name}`,
           image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cake_placeholder.png",
           categoryId: category.id,
-          categoryName: catData.name,
           options: {
             create: cakeData.options,
           },
