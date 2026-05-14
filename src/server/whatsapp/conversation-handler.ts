@@ -1283,10 +1283,12 @@ async function sendWelcome(to: string, name?: string) {
       },
       {
         title: "📋 Browse by Category",
-        rows: dbCategories.slice(0, 6).map(cat => ({
-          id: `cat_${cat.id}`,
-          title: cat.name.slice(0, 24)
-        }))
+        rows: dbCategories.length > 0 
+          ? dbCategories.slice(0, 6).map(cat => ({
+              id: `cat_${cat.id}`,
+              title: cat.name.slice(0, 24)
+            }))
+          : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }]
       },
       {
         title: "✨ Other Services",
@@ -1375,10 +1377,12 @@ async function sendMenu(to: string) {
       [
         {
           title: "Filter by Type",
-          rows: dbCategories.slice(0, 10).map((cat) => ({
-            id: `cat_${cat.id}`,
-            title: cat.name.slice(0, 24),
-          })),
+          rows: dbCategories.length > 0 
+            ? dbCategories.slice(0, 10).map((cat) => ({
+                id: `cat_${cat.id}`,
+                title: cat.name.slice(0, 24),
+              }))
+            : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }],
         },
       ]
     );
