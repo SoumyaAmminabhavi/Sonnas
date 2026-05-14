@@ -1,4 +1,4 @@
-import { WhatsAppConversation, Cake, DBCategory } from "./types";
+import type { WhatsAppConversation, Cake, DBCategory } from "./types";
 import { MAX_PROCESSED_IDS } from "./constants";
 
 // Conversation state cache

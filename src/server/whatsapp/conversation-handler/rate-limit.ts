@@ -1,4 +1,4 @@
-import { WhatsAppConversation } from "./types";
+import type { WhatsAppConversation } from "./types";
 import { 
   RATE_LIMIT_WINDOW_MS, 
   RATE_LIMIT_MAX_MSGS, 

@@ -1,5 +1,5 @@
 import { db } from "./prisma";
-import { IncomingMessage, WhatsAppConversation } from "./types";
+import type { IncomingMessage, WhatsAppConversation } from "./types";
 import { convoCache } from "./cache";
 import { getCartTotal, clearCart } from "./cart";
 import { formatPrice } from "~/lib/format";

@@ -1,4 +1,4 @@
-import { IncomingMessage, WhatsAppConversation } from "./types";
+import type { IncomingMessage, WhatsAppConversation } from "./types";
 import { updateState } from "./session";
 import { sendTextMessage, sendInteractiveButtons } from "~/server/whatsapp";
 import { validateAndSanitize } from "./validation";

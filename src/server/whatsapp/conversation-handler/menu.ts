@@ -8,7 +8,7 @@ import {
 } from "./cache";
 import { CACHE_TTL, DB_TIMEOUT } from "./constants";
 import { withTimeout } from "./helpers";
-import { Cake, DBCake, DBCategory, IncomingMessage, WhatsAppConversation } from "./types";
+import type { Cake, DBCake, DBCategory, IncomingMessage, WhatsAppConversation } from "./types";
 import { products } from "~/data/landing";
 import { formatPrice } from "~/lib/format";
 import natural from "natural";

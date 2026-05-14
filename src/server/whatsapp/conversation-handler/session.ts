@@ -2,7 +2,7 @@ import { db } from "./prisma";
 import { withTimeout } from "./helpers";
 import { DB_TIMEOUT } from "./constants";
 import { convoCache, updateConvoCache } from "./cache";
-import { WhatsAppConversation } from "./types";
+import type { WhatsAppConversation } from "./types";
 import { ConversationState } from "../../../../generated/prisma";
 
 export async function getConversation(phone: string, name?: string, force = false): Promise<WhatsAppConversation> {

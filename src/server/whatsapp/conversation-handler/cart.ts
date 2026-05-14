@@ -1,6 +1,6 @@
 import { db } from "./prisma";
 import { convoCache, updateConvoCache } from "./cache";
-import { CartItem, WhatsAppConversation, IncomingMessage } from "./types";
+import type { CartItem, WhatsAppConversation, IncomingMessage } from "./types";
 import { formatPrice } from "~/lib/format";
 import { formatItemTotal } from "./helpers";
 import { sendTextMessage, sendInteractiveButtons } from "~/server/whatsapp";

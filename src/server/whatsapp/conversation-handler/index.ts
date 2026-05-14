@@ -1,4 +1,4 @@
-import { IncomingMessage } from "./types";
+import type { IncomingMessage } from "./types";
 import { 
   beginMessageProcessing, 
   markMessageProcessed,
