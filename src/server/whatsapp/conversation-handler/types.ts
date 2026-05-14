@@ -73,6 +73,7 @@ export interface WhatsAppConversation {
   customImageUrl?: string | null;
   cart?: CartItem[];
   lastActivityAt?: Date | string | null;
+  lastMessageAt?: Date | string | null;
   rateLimitCount?: number;
   rateLimitWindowStart?: number;
   menuOffset?: number;
