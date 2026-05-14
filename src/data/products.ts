@@ -259,7 +259,7 @@ export const products: Product[] = [
   },
   {
     id: 101,
-    name: "Panipoori",
+    name: "Panipuri",
     description: "Crispy puris filled with spicy tangy water and potato mash",
     category: "Chaat",
     options: [{ size: "Plate", serves: "1", price: 10000 }],

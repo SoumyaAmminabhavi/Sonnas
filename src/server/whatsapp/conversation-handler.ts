@@ -157,9 +157,29 @@ async function safeGetCakes(): Promise<Cake[]> {
     );
 
     if (result) {
-      cakeCache = (result as unknown as Cake[])
-        .filter(c => c.isAvailable !== false)
-        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      const dbCakes = result as unknown as Cake[];
+      const fallbackCakes = products as unknown as Cake[];
+
+      // Merge DB data with Fallbacks (Prefer DB image/price, but use code if DB is empty)
+      cakeCache = dbCakes.map(dbCake => {
+        const fallback = fallbackCakes.find(f => 
+          f.name.toLowerCase() === dbCake.name.toLowerCase() || 
+          f.id.toString() === dbCake.id.toString()
+        );
+        
+        if (fallback) {
+          return {
+            ...fallback,
+            ...dbCake,
+            image: dbCake.image && dbCake.image.length > 10 ? dbCake.image : fallback.image,
+            description: dbCake.description ?? fallback.description,
+          };
+        }
+        return dbCake;
+      })
+      .filter(c => c.isAvailable !== false)
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
       lastCacheUpdate = now;
       return cakeCache;
     }
