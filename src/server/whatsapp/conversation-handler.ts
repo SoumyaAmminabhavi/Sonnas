@@ -1087,7 +1087,7 @@ async function _internalHandleMessage(msg: IncomingMessage) {
   }
 
   if (interactiveId.startsWith("more_")) {
-    const [_, categoryName, offsetStr] = interactiveId.split("_");
+    const [, categoryName, offsetStr] = interactiveId.split("_");
     if (categoryName && offsetStr) {
       const newOffset = parseInt(offsetStr, 10);
       await updateState(msg.from, "BROWSING_MENU", { menuOffset: newOffset });
@@ -1353,7 +1353,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
 
   // Get current conversation to check for pagination offset
   const phone = msg.from;
-  const convo = convoCache.get(phone) || (await getConversation(phone));
+  const convo = convoCache.get(phone) ?? (await getConversation(phone));
 
   // If this is a fresh category selection (not from "See More"), reset offset
   const isPagination = msg.interactiveId?.startsWith("more_");
