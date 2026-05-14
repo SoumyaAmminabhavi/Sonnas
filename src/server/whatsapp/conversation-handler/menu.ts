@@ -388,7 +388,7 @@ export async function handleSizeSelection(
   msg: IncomingMessage,
   convo: WhatsAppConversation
 ) {
-  const cake = await findCake(convo.selectedCakeId!);
+  const cake = await findCake(convo.selectedCakeId);
   if (!cake) {
     await updateState(msg.from, ConversationState.IDLE, RESET_STATE);
     await sendTextMessage(msg.from, "Oops! I seem to have lost track of which cake you were looking at. 🧁\n\nStarting fresh for you! Please select a cake from the menu below.");

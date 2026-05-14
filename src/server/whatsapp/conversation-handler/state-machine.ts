@@ -2,16 +2,15 @@ import type { IncomingMessage, WhatsAppConversation } from "./types";
 import { ConversationState } from "../../../../generated/prisma";
 import { GREETINGS, RESET_STATE } from "./constants";
 import { sendWelcome, sendMenu, sendMenuPDF, findCake, handleCakeSelection, handleCategorySelection } from "./menu";
-import { updateState, getConversation, getSessionTimeoutMins, refreshActivity } from "./session";
-import { sendTextMessage, sendInteractiveButtons, sendInteractiveList, sendImageMessage } from "~/server/whatsapp";
+import { updateState, getConversation, getSessionTimeoutMins } from "./session";
+import { sendTextMessage, sendInteractiveButtons, sendInteractiveList } from "~/server/whatsapp";
 import { formatPrice } from "~/lib/format";
-import { handleCartActions, getCartSummary, removeLastItem, getCartTotal, clearCart, buildOrderSummary } from "./cart";
+import { handleCartActions, getCartSummary, removeLastItem, clearCart, buildOrderSummary } from "./cart";
 import { sendOrderStatus, handleConfirmation } from "./orders";
-import { handleDeliverySlotSelection, handleAddressInput, handleInstructionsInput, sendDeliverySlotOptions } from "./delivery";
+import { handleDeliverySlotSelection, handleAddressInput, handleInstructionsInput } from "./delivery";
 import { handleCustomRequest, handleReferenceImageUpload } from "./custom-orders";
 import { convoCache } from "./cache";
 import { db } from "./prisma";
-import { validateAndSanitize } from "./validation";
 
 export async function rePromptState(phone: string, state: ConversationState, convo: WhatsAppConversation) {
   switch (state) {

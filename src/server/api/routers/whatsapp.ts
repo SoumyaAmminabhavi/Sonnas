@@ -22,10 +22,11 @@ export const whatsappRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const where: any = {};
-      if (input.status) where.status = input.status;
-      if (input.customOnly) where.isCustom = true;
-      if (input.source) where.source = input.source;
+      const where = {
+        ...(input.status && { status: input.status }),
+        ...(input.customOnly && { isCustom: true }),
+        ...(input.source && { source: input.source }),
+      };
 
       const orders = await ctx.db.order.findMany({
         where,

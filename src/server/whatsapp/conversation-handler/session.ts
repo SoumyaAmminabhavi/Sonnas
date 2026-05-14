@@ -4,6 +4,7 @@ import { DB_TIMEOUT } from "./constants";
 import { convoCache, updateConvoCache } from "./cache";
 import type { WhatsAppConversation } from "./types";
 import { ConversationState } from "../../../../generated/prisma";
+import type { Prisma } from "../../../../generated/prisma";
 
 export async function getConversation(phone: string, name?: string, force = false): Promise<WhatsAppConversation> {
   const cached = convoCache.get(phone);
@@ -89,7 +90,7 @@ export async function updateState(
   const { cart, lastActivityAt: _, lastMessageAt: __, rateLimitCount, rateLimitWindowStart, selectedCake, ...otherExtra } = extra;
 
   // Filter out any undefined/null fields that might cause issues with strict types
-  const data: any = { 
+  const data: Prisma.WhatsAppConversationUpdateInput = { 
     state, 
     lastMessageAt: new Date(), 
     lastActivityAt: new Date(),

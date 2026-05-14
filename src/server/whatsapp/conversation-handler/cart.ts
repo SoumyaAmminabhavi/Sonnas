@@ -1,12 +1,11 @@
 import { db } from "./prisma";
-import { convoCache, updateConvoCache } from "./cache";
+import { convoCache } from "./cache";
 import type { CartItem, WhatsAppConversation, IncomingMessage } from "./types";
 import { formatPrice } from "~/lib/format";
 import { formatItemTotal } from "./helpers";
 import { sendTextMessage, sendInteractiveButtons } from "~/server/whatsapp";
 import { updateState, getConversation } from "./session";
 import { ConversationState } from "../../../../generated/prisma";
-import { RESET_STATE } from "./constants";
 import { findCake, sendMenu } from "./menu";
 
 export async function addToCart(phone: string, item: { cakeName: string; size: string; price: number; quantity: number }) {
@@ -140,7 +139,7 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
     );
 
     if (isAdding && hasActiveSelection) {
-      const selectedCake = await findCake(convo.selectedCakeId!);
+      const selectedCake = await findCake(convo.selectedCakeId);
       const cakeName = selectedCake?.name ?? "Cake";
       const quantity = convo.selectedQuantity ?? 1;
 

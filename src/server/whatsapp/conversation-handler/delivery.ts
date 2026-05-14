@@ -120,7 +120,7 @@ export async function handleDeliverySlotSelection(
   }
 }
 
-export async function handleAddressInput(msg: IncomingMessage, convo: WhatsAppConversation) {
+export async function handleAddressInput(msg: IncomingMessage, _convo: WhatsAppConversation) {
   let address = msg.text?.trim() ?? "";
 
   if (msg.type === "location" && msg.location) {
@@ -159,7 +159,7 @@ export async function handleAddressInput(msg: IncomingMessage, convo: WhatsAppCo
   ]);
 }
 
-export async function handleInstructionsInput(msg: IncomingMessage, convo: WhatsAppConversation) {
+export async function handleInstructionsInput(msg: IncomingMessage, _convo: WhatsAppConversation) {
   const input = msg.text?.trim() ?? "";
   const isSkip = ["none", "skip", "no"].includes(input.toLowerCase());
 

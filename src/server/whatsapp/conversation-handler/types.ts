@@ -1,4 +1,4 @@
-import { ConversationState } from "../../../../generated/prisma";
+import type { ConversationState } from "../../../../generated/prisma";
 
 export interface CakeOption {
   id?: string;

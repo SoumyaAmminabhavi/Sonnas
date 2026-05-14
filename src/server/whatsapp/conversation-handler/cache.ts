@@ -24,7 +24,7 @@ export function clearMenuCache() {
 }
 
 export function updateConvoCache(phone: string, data: Partial<WhatsAppConversation>) {
-  const current = convoCache.get(phone) || { phone, state: "IDLE" } as unknown as WhatsAppConversation;
+  const current = convoCache.get(phone) ?? ({ phone, state: "IDLE" } as unknown as WhatsAppConversation);
   convoCache.set(phone, { ...current, ...data } as WhatsAppConversation);
 }
 

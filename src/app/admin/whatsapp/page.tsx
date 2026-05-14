@@ -156,7 +156,7 @@ function WhatsAppAdminContent() {
   });
   const { data: ordersData, refetch: refetchOrders, isLoading: ordersLoading, error: ordersError } = 
     api.whatsapp.getOrders.useQuery({ 
-      status: statusFilter === "ALL" ? undefined : (statusFilter as any),
+      status: statusFilter === "ALL" ? undefined : statusFilter,
       customOnly: customFilter || undefined
     }, {
       refetchInterval: 15_000, // ADMIN-02: Auto-refresh every 15s
