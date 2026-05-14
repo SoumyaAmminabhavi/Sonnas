@@ -804,8 +804,8 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         if (existingCat.isNotEmpty) {
           categoryId = existingCat['id'];
         } else {
-          // Fallback to the ID itself if it's already an ID, or leave as null for legacy strings
-          categoryId = _selectedCategoryId;
+          // Do not fallback to legacy strings to prevent FK violations
+          categoryId = null;
         }
       }
 

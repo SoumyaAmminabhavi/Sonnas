@@ -9,7 +9,7 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/dashboard_provider.dart';
 
-class GlassOrderSheet extends StatelessWidget {
+class GlassOrderSheet extends StatefulWidget {
   final SonnaOrder order;
   final bool showActions;
 
@@ -23,6 +23,13 @@ class GlassOrderSheet extends StatelessWidget {
       builder: (context) => GlassOrderSheet(order: order, showActions: showActions),
     );
   }
+
+  @override
+  State<GlassOrderSheet> createState() => _GlassOrderSheetState();
+}
+
+class _GlassOrderSheetState extends State<GlassOrderSheet> {
+  bool _isUpdating = false;
 
   @override
   Widget build(BuildContext context) {
@@ -54,12 +61,12 @@ class GlassOrderSheet extends StatelessWidget {
                     const SizedBox(height: 32),
                     _buildItemsList(cs),
                     const SizedBox(height: 32),
-                    if (order.notes != null) _buildNotes(cs),
+                    if (widget.order.notes != null) _buildNotes(cs),
                     const SizedBox(height: 120), // Padding for actions
                   ],
                 ),
               ),
-              if (showActions) _buildActionArea(context, cs),
+              if (widget.showActions) _buildActionArea(context, cs),
             ],
           ),
         ),
@@ -90,7 +97,7 @@ class GlassOrderSheet extends StatelessWidget {
                 children: [
                   Text("ORDER NUMBER", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2.0, color: cs.primary)),
                   Text(
-                    "#${order.orderNumber}", 
+                    "#${widget.order.orderNumber}", 
                     style: GoogleFonts.notoSerif(fontSize: 28, fontWeight: FontWeight.bold),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -99,12 +106,12 @@ class GlassOrderSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            _StatusChip(status: order.status, cs: cs),
+            _StatusChip(status: widget.order.status, cs: cs),
           ],
         ),
         const SizedBox(height: 8),
         Text(
-          DateFormat('MMMM dd, yyyy • hh:mm a').format(order.createdAt),
+          DateFormat('MMMM dd, yyyy • hh:mm a').format(widget.order.createdAt),
           style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.5)),
         ),
       ],
@@ -123,14 +130,14 @@ class GlassOrderSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(order.customerName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(order.phone, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.secondary.withValues(alpha: 0.6))),
+                Text(widget.order.customerName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(widget.order.phone, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.secondary.withValues(alpha: 0.6))),
               ],
             ),
           ),
           IconButton(
             icon: Icon(Icons.chat_bubble_outline, color: cs.primary),
-            onPressed: () => OrderService.launchWhatsApp(order.phone, "Hi ${order.customerName}, regarding your order #${order.orderNumber}..."),
+            onPressed: () => OrderService.launchWhatsApp(widget.order.phone, "Hi ${widget.order.customerName}, regarding your order #${widget.order.orderNumber}..."),
           ),
         ],
       ),
@@ -145,7 +152,7 @@ class GlassOrderSheet extends StatelessWidget {
         const SizedBox(height: 16),
         Consumer(
           builder: (context, ref, child) {
-            final itemsAsync = ref.watch(orderItemsProvider(order.id));
+            final itemsAsync = ref.watch(orderItemsProvider(widget.order.id));
             final menuAsync = ref.watch(menuProvider);
             return itemsAsync.when(
               data: (items) {
@@ -169,8 +176,8 @@ class GlassOrderSheet extends StatelessWidget {
                     displayImageUrl = matchingCake['image'] ?? '';
 
                     bool isCustomUrl = false;
-                    if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && order.customImageUrl != null) {
-                      displayImageUrl = order.customImageUrl!;
+                    if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && widget.order.customImageUrl != null) {
+                      displayImageUrl = widget.order.customImageUrl!;
                       isCustomUrl = true;
                     }
 
@@ -245,7 +252,7 @@ class GlassOrderSheet extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text("TOTAL VALUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-            Text(order.formattedPrice, style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.w900, color: cs.primary)),
+            Text(widget.order.formattedPrice, style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.w900, color: cs.primary)),
           ],
         ),
       ],
@@ -267,14 +274,14 @@ class GlassOrderSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(order.notes!, style: GoogleFonts.notoSerif(fontSize: 13, fontStyle: FontStyle.italic, color: cs.error.withValues(alpha: 0.8))),
+          Text(widget.order.notes!, style: GoogleFonts.notoSerif(fontSize: 13, fontStyle: FontStyle.italic, color: cs.error.withValues(alpha: 0.8))),
         ],
       ),
     );
   }
 
   Widget _buildActionArea(BuildContext context, ColorScheme cs) {
-    final statusStr = order.status.name.toUpperCase();
+    final statusStr = widget.order.status.name.toUpperCase();
     
     bool showButton = false;
     String buttonText = "";
@@ -312,9 +319,23 @@ class GlassOrderSheet extends StatelessWidget {
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () async {
-                await OrderService.updateOrderStatus(order.id, nextStatus);
-                if (context.mounted) Navigator.pop(context);
+              onPressed: _isUpdating ? null : () async {
+                setState(() => _isUpdating = true);
+                try {
+                  await OrderService.updateOrderStatus(widget.order.id, nextStatus);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Failed to update status: $e"),
+                        backgroundColor: cs.error,
+                      ),
+                    );
+                  }
+                } finally {
+                  if (mounted) setState(() => _isUpdating = false);
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: buttonColor,
@@ -323,7 +344,9 @@ class GlassOrderSheet extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
-              child: Text(buttonText, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+              child: _isUpdating 
+                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Text(buttonText, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ),
           ),
         ],

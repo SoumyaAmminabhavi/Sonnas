@@ -83,7 +83,7 @@ class OrderService {
       }).toList();
     } catch (e) {
       debugPrint('❌ Order Fetch failed: $e');
-      return [];
+      rethrow;
     }
   }
 

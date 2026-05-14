@@ -138,7 +138,7 @@ model Order {
   userId          String?
   user            User?       @relation(fields: [userId], references: [id])
   whatsappPhone   String?
-  conversation    WhatsAppConversation? @relation(fields: [whatsappPhone], references: [phone], onDelete: Cascade)
+  conversation    WhatsAppConversation? @relation(fields: [whatsappPhone], references: [phone], onDelete: SetNull)
   
   // Customer Info
   customerName    String

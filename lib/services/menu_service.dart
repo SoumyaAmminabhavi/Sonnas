@@ -7,7 +7,11 @@ class MenuService {
 
   /// Real-time menu updates
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
-    return _client.from('Cake').stream(primaryKey: ['id']).order('name');
+    return _client
+        .from('Cake')
+        .stream(primaryKey: ['id'])
+        .order('name')
+        .map((list) => list.where((item) => item['deletedAt'] == null).toList());
   }
 
   /// Fetch all menu items with full category and option data

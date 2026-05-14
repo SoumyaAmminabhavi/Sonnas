@@ -114,7 +114,4 @@ class SonnaOrder {
     return "₹${fmt.format(totalPrice)}";
   }
   
-  bool get isKitchenActionable => 
-    status == OrderStatus.pending || 
-    status == OrderStatus.confirmed;
 }
