@@ -334,7 +334,8 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
   if (interactiveId.startsWith("slot_")) { await handleDeliverySlotSelection(msg, convo); return; }
 
   // ── Global: Image/Location sent outside flow ──────────────────────────
-  if (msg.type === "image" && ![ConversationState.CUSTOM_ORDER_DETAILS, ConversationState.CUSTOM_ORDER_IMAGE].includes(state)) {
+  const customOrderStates: ConversationState[] = [ConversationState.CUSTOM_ORDER_DETAILS, ConversationState.CUSTOM_ORDER_IMAGE];
+  if (msg.type === "image" && !customOrderStates.includes(state)) {
     await sendInteractiveButtons(msg.from, "📸 Beautiful photo! If you'd like us to create a custom cake based on this design, tap below:", [
       { id: "btn_custom", title: "🎨 Start Custom Order" },
       { id: "btn_menu", title: "📋 Browse Menu" },
