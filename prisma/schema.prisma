@@ -71,12 +71,26 @@ model Cake {
   slug        String       @unique
   description String?
   image       String
-  category    String       @default("General")
+  categoryId  String?
+  category    Category?    @relation(fields: [categoryId], references: [id])
+  categoryName String?     @default("General") @map("category")
   isAvailable Boolean      @default(true)
   sortOrder   Int          @default(0)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   options     CakeOption[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String?  @unique
+  emoji     String?  @default("✨")
+  image     String?
+  sortOrder Int      @default(0)
+  cakes     Cake[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CakeOption {

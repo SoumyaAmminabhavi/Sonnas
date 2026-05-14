@@ -66,8 +66,9 @@ const CACHE_TTL = 30 * 60 * 1000; // 30 minutes (admin panel triggers clearMenuC
  */
 export function clearMenuCache() {
   cakeCache = null;
+  categoryCache = null;
   lastCacheUpdate = 0;
-  console.log("[WhatsApp] Menu cache cleared via Admin Panel.");
+  console.log("[WhatsApp] Menu & Category cache cleared via Admin Panel.");
 }
 
 // ─── Conversation State Cache ─────────────────────────────────────────────
@@ -114,27 +115,26 @@ const RESET_STATE = {
   customImageUrl: null,
 };
 
-// ─── Category Mapping ─────────────────────────────────────────────────────
+// ─── Category Helpers ─────────────────────────────────────────────────────
+let categoryCache: any[] | null = null;
 
-const CATEGORY_MAP: Record<string, string> = {
-  chocolate: "Chocolate Cakes",
-  vanilla: "Vanilla Cakes",
-  cheesecakes: "Mini Cheesecakes",
-  slices: "Slices",
-  tea: "Tea Cakes",
-  seasonal: "Seasonal Cakes",
-  chaat: "Chaat",
-};
+async function safeGetCategories() {
+  const now = Date.now();
+  if (categoryCache && (now - lastCacheUpdate < CACHE_TTL)) {
+    return categoryCache;
+  }
 
-const CATEGORY_TITLES: Record<string, string> = {
-  chocolate: "🍫 Chocolate Based",
-  vanilla: "🍦 Vanilla & Fruit Based",
-  cheesecakes: "🧁 Mini Cheesecakes",
-  slices: "🍰 Slices",
-  tea: "☕ Tea Time Specials",
-  seasonal: "🍓 Seasonal Specials",
-  chaat: "🥙 Street Food / Chaat",
-};
+  try {
+    const result = await db.category.findMany({
+      orderBy: { sortOrder: "asc" }
+    });
+    categoryCache = result;
+    return result;
+  } catch (e) {
+    console.error("[WhatsApp] Failed to fetch categories:", e);
+    return [];
+  }
+}
 
 
 function updateConvoCache(phone: string, data: Partial<Conversation>) {
@@ -152,7 +152,7 @@ async function safeGetCakes(): Promise<Cake[]> {
   console.log("[WhatsApp] Cache expired or missing. Fetching cakes from DB...");
   try {
     const result = await withTimeout(
-      db.cake.findMany({ include: { options: true } }),
+      db.cake.findMany({ include: { options: true, category: true } }),
       DB_TIMEOUT
     );
 
@@ -162,6 +162,9 @@ async function safeGetCakes(): Promise<Cake[]> {
 
       // Merge DB data with Fallbacks (Prefer DB image/price, but use code if DB is empty)
       cakeCache = dbCakes.map(dbCake => {
+        // Use relation name if it exists, otherwise fallback to the string field
+        const effectiveCategory = dbCake.category?.name ?? dbCake.categoryName ?? "General";
+        
         const fallback = fallbackCakes.find(f => 
           f.name.toLowerCase() === dbCake.name.toLowerCase() || 
           f.id.toString() === dbCake.id.toString()
@@ -171,13 +174,17 @@ async function safeGetCakes(): Promise<Cake[]> {
           return {
             ...fallback,
             ...dbCake,
+            category: effectiveCategory,
             image: (dbCake.image && String(dbCake.image).startsWith('http') && String(dbCake.image).length > 15) 
                    ? dbCake.image 
                    : fallback.image,
             description: dbCake.description ?? fallback.description,
           };
         }
-        return dbCake;
+        return {
+          ...dbCake,
+          category: effectiveCategory
+        } as unknown as Cake;
       })
       .filter(c => c.isAvailable !== false)
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
@@ -1229,8 +1236,8 @@ async function sendWelcome(to: string, name?: string) {
   const cakes = await safeGetCakes();
   const topCakes = cakes.slice(0, 2);
 
-  // Get unique categories for the browse section
-  const categories = Array.from(new Set(cakes.map(c => c.category).filter(Boolean))) as string[];
+  // Get dynamic categories from DB
+  const dbCategories = await safeGetCategories();
 
   await sendInteractiveList(
     to,
@@ -1241,21 +1248,17 @@ async function sendWelcome(to: string, name?: string) {
       {
         title: "⭐ Top Favorites",
         rows: topCakes.map(c => ({
-          id: `cake_${c.name}`,
+          id: `cake_${c.id}`,
           title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
           description: `Signature Selection`
         }))
       },
       {
         title: "📋 Browse by Category",
-        rows: categories.slice(0, 6).map(cat => {
-          // Find short ID if it exists in map, else use raw name
-          const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) ?? cat;
-          return {
-            id: `cat_${shortId}`,
-            title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat
-          };
-        })
+        rows: dbCategories.slice(0, 6).map(cat => ({
+          id: `cat_${cat.id}`,
+          title: `${cat.emoji ?? "✨"} ${cat.name}`.slice(0, 24)
+        }))
       },
       {
         title: "✨ Other Services",
@@ -1332,8 +1335,8 @@ async function sendMenu(to: string) {
     );
     await updateState(to, "BROWSING_MENU");
   } else {
-    // Too many cakes for a single list — show dynamic categories (max 10)
-    const categories = Array.from(new Set(cakes.map(c => c.category).filter(Boolean))) as string[];
+    // Too many cakes — show dynamic categories from DB
+    const dbCategories = await safeGetCategories();
 
     await updateState(to, "SELECTING_CATEGORY");
     await sendInteractiveList(
@@ -1344,13 +1347,10 @@ async function sendMenu(to: string) {
       [
         {
           title: "Filter by Type",
-          rows: categories.slice(0, 10).map((cat) => {
-            const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) ?? cat;
-            return {
-              id: `cat_${shortId}`,
-              title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat,
-            };
-          }),
+          rows: dbCategories.slice(0, 10).map((cat) => ({
+            id: `cat_${cat.id}`,
+            title: `${cat.emoji ?? "✨"} ${cat.name}`.slice(0, 24),
+          })),
         },
       ]
     );
@@ -1369,8 +1369,8 @@ const cakeRow = (c: Cake) => ({
 // ─── Handle category selection ─────────────────────────────────────────────
 
 async function handleCategorySelection(msg: IncomingMessage) {
-  const rawId = msg.interactiveId?.replace("cat_", "");
-  if (!rawId) {
+  const categoryId = msg.interactiveId?.replace("cat_", "");
+  if (!categoryId) {
     await sendMenu(msg.from);
     return;
   }
@@ -1383,15 +1383,16 @@ async function handleCategorySelection(msg: IncomingMessage) {
   const isPagination = msg.interactiveId?.startsWith("more_");
   const offset = isPagination ? (convo.menuOffset ?? 0) : 0;
 
-  // Find if it's a short ID or a full name
-  const categoryKey = rawId.toLowerCase();
-  const catName = CATEGORY_MAP[categoryKey] ?? rawId;
-  const title = CATEGORY_TITLES[categoryKey] ?? `✨ ${rawId}`;
+  // Find category details from DB/Cache
+  const dbCategories = await safeGetCategories();
+  const category = dbCategories.find(c => c.id === categoryId);
+  const catName = category?.name ?? categoryId;
+  const title = category ? `${category.emoji ?? "✨"} ${category.name}` : `✨ ${categoryId}`;
 
   const allCakes = await safeGetCakes();
   const filtered = allCakes.filter((p) => {
-    const pCat = (p.category ?? "").toLowerCase();
-    return pCat === catName.toLowerCase() || pCat.includes(categoryKey);
+    // Match by category relation ID OR fallback category name
+    return p.categoryId === categoryId || p.category?.toLowerCase() === catName.toLowerCase();
   });
 
   if (filtered.length === 0) {
