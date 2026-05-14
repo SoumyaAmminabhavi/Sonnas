@@ -1213,7 +1213,7 @@ async function sendWelcome(to: string, name?: string) {
       },
       {
         title: "📋 Browse by Category",
-        rows: categories.slice(0, 10).map(cat => {
+        rows: categories.slice(0, 6).map(cat => {
           // Find short ID if it exists in map, else use raw name
           const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) ?? cat;
           return {
