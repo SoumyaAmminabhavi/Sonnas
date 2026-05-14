@@ -13,13 +13,19 @@ void main() async {
   
   // Load environment variables
   try {
-    await dotenv.load(fileName: ".env");
+    await dotenv.load(fileName: "assets/.env");
   } catch (e) {
-    debugPrint("Warning: .env file not found or failed to load. Falling back to dart-define.");
+    debugPrint("Warning: .env file not found or failed to load. Falling back to compile-time constants via --dart-define (String.fromEnvironment): $e");
   }
 
-  final String supabaseUrl = dotenv.get('SUPABASE_URL', fallback: const String.fromEnvironment('SUPABASE_URL'));
-  final String supabaseAnonKey = dotenv.get('SUPABASE_ANON_KEY', fallback: const String.fromEnvironment('SUPABASE_ANON_KEY'));
+  // Use a safer way to get environment variables to avoid NotInitializedError
+  final String supabaseUrl = dotenv.isInitialized 
+      ? dotenv.get('SUPABASE_URL', fallback: const String.fromEnvironment('SUPABASE_URL'))
+      : const String.fromEnvironment('SUPABASE_URL');
+      
+  final String supabaseAnonKey = dotenv.isInitialized 
+      ? dotenv.get('SUPABASE_ANON_KEY', fallback: const String.fromEnvironment('SUPABASE_ANON_KEY'))
+      : const String.fromEnvironment('SUPABASE_ANON_KEY');
 
   try {
     if (supabaseUrl.isEmpty || supabaseUrl == 'your_url_here' || supabaseAnonKey.isEmpty) {

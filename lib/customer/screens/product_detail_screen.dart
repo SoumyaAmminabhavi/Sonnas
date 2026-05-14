@@ -3,19 +3,33 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 
+class ProductOption {
+  final String size;
+  final int price;
+
+  ProductOption({required this.size, required this.price});
+
+  factory ProductOption.fromJson(Map<String, dynamic> json) {
+    return ProductOption(
+      size: json['size']?.toString() ?? '',
+      price: int.tryParse(json['price']?.toString() ?? '0') ?? 0,
+    );
+  }
+}
+
 class ProductDetailScreen extends StatefulWidget {
   final String title;
   final String price;
   final String imageUrl;
-  final List<dynamic> options;
+  final List<ProductOption> options;
 
-  const ProductDetailScreen({
+  ProductDetailScreen({
     super.key,
     required this.title,
     required this.price,
     required this.imageUrl,
-    this.options = const [],
-  });
+    List<dynamic> rawOptions = const [],
+  }) : options = rawOptions.map((o) => ProductOption.fromJson(o as Map<String, dynamic>)).toList();
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -38,8 +52,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     if (widget.options.isNotEmpty) {
-      selectedSize = widget.options[0]['size']?.toString() ?? "";
-      currentPriceValue = _parsePrice(widget.options[0]['price']);
+      selectedSize = widget.options[0].size;
+      currentPriceValue = widget.options[0].price / 100.0;
       _updatePriceDisplay();
     }
   }
@@ -191,14 +205,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           _buildTitle("CHOOSE YOUR PORTION"),
                           const SizedBox(height: 8),
                           ...widget.options.map((opt) {
-                            final size = opt['size']?.toString() ?? "";
-                            final price = opt['price']?.toString() ?? "0";
-                            final isSelected = selectedSize == size;
+                            final isSelected = selectedSize == opt.size;
                             return InkWell(
                               onTap: () {
                                 setState(() {
-                                  selectedSize = size;
-                                  currentPriceValue = _parsePrice(price);
+                                  selectedSize = opt.size;
+                                  currentPriceValue = opt.price / 100.0;
                                   _updatePriceDisplay();
                                 });
                               },
@@ -211,7 +223,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        size,
+                                        opt.size,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 16,
                                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
@@ -220,7 +232,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                       ),
                                     ),
                                     Text(
-                                      "₹${((double.tryParse(price.toString()) ?? 0.0) / 100.0).toStringAsFixed(2)}",
+                                      "₹${(opt.price / 100.0).toStringAsFixed(2)}",
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 14,
                                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
@@ -324,11 +336,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              final String id = "${widget.title}_${selectedSize}_${_messageController.text}";
+                              final String id = "${widget.title}_${selectedSize}_${_messageController.text}_${DateTime.now().millisecondsSinceEpoch}";
                               context.read<CartProvider>().addItem(
                                 id, 
                                 "${widget.title} ($selectedSize)", 
-                                currentPriceValue * 100, 
+                                (currentPriceValue * 100).round(), 
                                 widget.imageUrl,
                                 quantity: quantity,
                               );

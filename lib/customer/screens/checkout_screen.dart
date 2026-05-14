@@ -176,47 +176,48 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             const SizedBox(height: 40),
             _sectionTitle("ORDER SUMMARY"),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: primary.withValues(alpha: 0.05))),
-              child: Column(
-                children: [
-                  _summaryRow("Subtotal", "₹${(cart.total / 100).toStringAsFixed(2)}"),
-                  _summaryRow("Packaging & Delivery", "₹${(15000 / 100).toStringAsFixed(2)}"),
-                  _summaryRow("Tax (5%)", "₹${((cart.total * 0.05) / 100).toStringAsFixed(2)}"),
-                  const Divider(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text("Grand Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      Text("₹${((cart.total + 15000 + (cart.total * 0.05)) / 100).toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: primary)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+            Builder(builder: (context) {
+              final int subtotalCents = cart.total.round();
+              final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
+              final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
+              final int grandTotalCents = subtotalCents + packagingCents + taxCents;
+
+              return Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [BoxShadow(color: secondary.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20))],
+                ),
+                child: Column(
+                  children: [
+                    _summaryRow("Bag Total", "₹${(subtotalCents / 100).toStringAsFixed(2)}"),
+                    _summaryRow("Delivery", "₹${(packagingCents / 100).toStringAsFixed(2)}"),
+                    _summaryRow("Taxes (5%)", "₹${(taxCents / 100).toStringAsFixed(2)}"),
+                    const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
+                    _summaryRow("Grand Total", "₹${(grandTotalCents / 100).toStringAsFixed(2)}", isTotal: true),
+                  ],
+                ),
+              );
+            }),
 
             const SizedBox(height: 48),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  final phone = _phoneController.text.trim();
-                  if (_nameController.text.isEmpty || phone.isEmpty || _addressController.text.isEmpty) {
+                  final trimmedName = _nameController.text.trim();
+                  final trimmedPhone = _phoneController.text.trim().replaceAll(RegExp(r'[^\d+]'), '');
+                  final trimmedAddress = _addressController.text.trim();
+                  
+                  if (trimmedName.isEmpty || trimmedPhone.length < 10 || trimmedAddress.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please fill in all delivery details")),
-                    );
-                    return;
-                  }
-
-                  if (phone.length != 10) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please enter a valid 10-digit contact number")),
+                      const SnackBar(content: Text("Please provide valid name, phone, and address")),
                     );
                     return;
                   }
                   
-                  final addressLower = _addressController.text.toLowerCase();
+                  final addressLower = trimmedAddress.toLowerCase();
                   if (!addressLower.contains('hubli') && !addressLower.contains('hubballi')) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -228,13 +229,16 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                     return;
                   }
                   
+                  final user = supabase.auth.currentUser;
+                  final String userPhone = user?.userMetadata?['phone']?.toString() ?? user?.phone ?? '';
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => PaymentScreen(
-                        customerName: _nameController.text,
-                        phone: _phoneController.text,
-                        address: _addressController.text,
+                        customerName: trimmedName,
+                        phone: trimmedPhone,
+                        address: trimmedAddress,
                         deliveryDate: selectedDate?.toIso8601String(),
                         deliveryTime: selectedTimeSlot,
                         notes: _notesController.text,

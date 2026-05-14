@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 
 class CustomerOrderHistoryScreen extends StatefulWidget {
@@ -35,7 +36,6 @@ class _CustomerOrderHistoryScreenState extends State<CustomerOrderHistoryScreen>
           .select('*, items:WhatsAppOrderItem(*)')
           .eq('phone', phone)
           .order('createdAt', ascending: false);
-
       if (mounted) {
         setState(() {
           _orders = List<Map<String, dynamic>>.from(response);
@@ -175,7 +175,7 @@ class _CustomerOrderHistoryScreenState extends State<CustomerOrderHistoryScreen>
                       final cart = context.read<CartProvider>();
                       for (var item in items) {
                         cart.addItem(
-                          "reorder_${item['cakeName']}", 
+                          "reorder_${item['cakeName']}_${DateTime.now().millisecondsSinceEpoch}", 
                           item['cakeName'] ?? "Exquisite Creation", 
                           double.tryParse(item['price'].toString()) ?? 0.0, 
                           '',

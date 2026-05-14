@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
 class CustomOrderScreen extends StatefulWidget {
   const CustomOrderScreen({super.key});
@@ -14,10 +16,14 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   String? selectedSize = "Petit (4-6 guests)";
   String? selectedFlavor = "Valrhona Dark Chocolate";
   final _narrativeController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _flavorController = TextEditingController();
+  final _designController = TextEditingController();
+  String? selectedOccasion;
 
   bool _isSubmitting = false;
 
-  void _submitQuoteRequest() {
+  Future<void> _submitQuoteRequest() async {
     if (selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -40,22 +46,27 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
       return;
     }
 
+    setState(() => _isSubmitting = true);
+    
     try {
       final supabase = Supabase.instance.client;
       final currentUser = supabase.auth.currentUser;
       
-      await supabase.from('CustomOrderRequest').insert({
-        'narrative': _narrativeController.text.trim(),
-        'occasion': _selectedOccasion,
-        'expectedDate': _selectedDate?.toIso8601String(),
-        'userId': currentUser?.id,
-        'userPhone': currentUser?.userMetadata?['phone']?.toString() ?? currentUser?.phone,
+      final phone = currentUser?.userMetadata?['phone']?.toString() ?? '';
+
+      await supabase.from('CustomOrderQuote').insert({
+        'customerName': currentUser?.userMetadata?['name'] ?? 'Bespoke Patron',
+        'phone': phone,
+        'occasion': selectedOccasion ?? 'Artisan Creation',
+        'expectedDate': selectedDate?.toIso8601String(),
+        'cakeSize': selectedSize,
+        'flavorPreference': selectedFlavor ?? 'Chef\'s Choice',
+        'designNotes': _narrativeController.text.trim(),
         'status': 'PENDING',
         'createdAt': DateTime.now().toUtc().toIso8601String(),
       });
 
       if (mounted) {
-        setState(() => _isSubmitting = false);
         showDialog(
           context: context,
           builder: (context) => AlertDialog(

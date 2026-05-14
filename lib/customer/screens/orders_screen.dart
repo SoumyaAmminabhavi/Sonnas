@@ -129,7 +129,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
   }
 
-  void _showReviewDialog() {
+  void _showReviewDialog(Map<String, dynamic> order) {
     double rating = 5;
     final commentController = TextEditingController();
 
@@ -201,11 +201,34 @@ class _OrdersScreenState extends State<OrdersScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Thank you for your feedback! 💖"), backgroundColor: primary),
-                    );
+                  onPressed: () async {
+                    try {
+                      final supabase = Supabase.instance.client;
+                      final currentUser = supabase.auth.currentUser;
+                      
+                      await supabase.from('Feedback').insert({
+                        'rating': rating,
+                        'orderId': order['uuid'],
+                        'message': commentController.text,
+                        'userId': currentUser?.id,
+                        'userPhone': currentUser?.userMetadata?['phone']?.toString() ?? currentUser?.phone,
+                        'createdAt': DateTime.now().toUtc().toIso8601String(),
+                      });
+
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Thank you for your feedback! 💖"), backgroundColor: primary),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Feedback Error: $e");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Failed to submit review.")),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
@@ -438,7 +461,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                     if (order['status'] == 'DELIVERED' || order['status'] == 'COMPLETED')
                       TextButton(
-                        onPressed: _showReviewDialog,
+                        onPressed: () => _showReviewDialog(order),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.only(right: 16),
                           minimumSize: Size.zero,

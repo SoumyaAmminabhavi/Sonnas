@@ -351,7 +351,7 @@ class _MenuScreenState extends State<MenuScreen> {
           title: item['title'],
           price: item['price'],
           imageUrl: item['image'],
-          options: item['options'] ?? [],
+          rawOptions: item['options'] ?? [],
         ),
       ),
     );
@@ -365,7 +365,7 @@ class _MenuScreenState extends State<MenuScreen> {
           child: InkWell(
             onTap: () => _openDetail(item),
             child: Hero(
-              tag: item['title'],
+              tag: 'menu_item_${item['id'] ?? item['title']}',
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(4),

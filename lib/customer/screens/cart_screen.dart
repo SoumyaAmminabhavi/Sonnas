@@ -244,7 +244,8 @@ class CartScreen extends StatelessWidget {
     const Color primaryContainerColor = Color(0xFFFFB6D3);
 
     final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
-    final double delivery = 15000.0; // 150.00 Rupees in paise
+    // Source delivery fee from a central service/config in production
+    const double delivery = 15000.0; // 150.00 Rupees in paise
     final double tax = cart.total * 0.05;
     final double total = cart.total + delivery + tax;
 
@@ -313,7 +314,7 @@ class CartScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Colors.brown.withValues(alpha: 0.7))),
+          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
           Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),

@@ -262,6 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   StreamBuilder<List<Map<String, dynamic>>>(
+                    key: Key(_phoneController.text),
                     stream: Supabase.instance.client
                         .from('WhatsAppOrder')
                         .stream(primaryKey: ['id'])

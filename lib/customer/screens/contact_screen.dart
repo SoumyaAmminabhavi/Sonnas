@@ -126,12 +126,15 @@ class _ContactScreenState extends State<ContactScreen> {
     if (_formKey.currentState!.validate()) {
       try {
         final supabase = Supabase.instance.client;
-        final currentUser = supabase.auth.currentUser;
+        
+        final user = supabase.auth.currentUser;
+        final String phone = user?.userMetadata?['phone']?.toString() ?? user?.phone ?? '';
         
         await supabase.from('SupportReport').insert({
-          'orderId': _orderIdController.text,
+          'title': _subjectController.text,
           'message': _messageController.text,
-          'userPhone': currentUser?.phone,
+          'user_phone': phone,
+          'status': 'PENDING',
           'createdAt': DateTime.now().toUtc().toIso8601String(),
         });
 
@@ -142,7 +145,7 @@ class _ContactScreenState extends State<ContactScreen> {
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text("Report Submitted", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
-            content: Text("We've received your report for Order ${_orderIdController.text}. Our support team will review it and get back to you within 24 hours.", 
+            content: Text("We've received your report. Our support team will review it and get back to you within 24 hours.", 
               style: GoogleFonts.plusJakartaSans()),
             actions: [
               TextButton(
@@ -150,6 +153,7 @@ class _ContactScreenState extends State<ContactScreen> {
                   Navigator.pop(context);
                   _orderIdController.clear();
                   _messageController.clear();
+                  _subjectController.clear();
                 },
                 child: Text("OK", style: TextStyle(color: primaryColor)),
               ),
@@ -173,13 +177,14 @@ class _ContactScreenState extends State<ContactScreen> {
   Future<void> _handleFeedback(double rating) async {
     try {
       final supabase = Supabase.instance.client;
-      final currentUser = supabase.auth.currentUser;
       
-      // Persist feedback to Supabase
+      final user = supabase.auth.currentUser;
+      final String phone = user?.userMetadata?['phone']?.toString() ?? user?.phone ?? '';
+
       await supabase.from('Feedback').insert({
         'rating': rating,
-        'userId': currentUser?.id,
-        'userPhone': currentUser?.phone,
+        'message': _feedbackController.text,
+        'user_phone': phone,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
       });
 

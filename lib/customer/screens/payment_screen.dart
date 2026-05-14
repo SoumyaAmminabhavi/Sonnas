@@ -40,6 +40,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? _placedOrderId;
   double? _placedOrderTotal;
 
+  double _calculateTotal(double cartTotal) {
+    final int subtotalCents = cartTotal.round();
+    final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
+    final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
+    return (subtotalCents + packagingCents + taxCents).toDouble();
+  }
+
   Future<void> _placeOrder(CartProvider cart) async {
     if (cart.items.isEmpty) return;
     
@@ -48,8 +55,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final supabase = Supabase.instance.client;
       final String orderId = "ORD-${DateTime.now().millisecondsSinceEpoch}";
       _placedOrderId = orderId;
-      // 15000 paise = 150 Rupees
-      _placedOrderTotal = cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05);
+      _placedOrderTotal = _calculateTotal(cart.total);
       final String orderNumber = "SN-${DateTime.now().millisecondsSinceEpoch}";
       final String customerPhone = widget.phone ?? '0000000000';
       
@@ -76,8 +82,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       // 2. Insert Order (The primary goal)
-      final totalWithExtras = cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05);
-      final totalInPaise = totalWithExtras.round();
+      final double totalWithExtras = _calculateTotal(cart.total);
+      final int totalInPaise = totalWithExtras.round();
 
       await supabase.from('WhatsAppOrder').insert({
         'id': orderId,
@@ -432,7 +438,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format((cart.total + (widget.isSelfCheckout ? 0 : 15000) + (cart.total * 0.05)) / 100),
+                                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
@@ -750,8 +756,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               TextButton(
                 onPressed: () {
                   final user = Supabase.instance.client.auth.currentUser;
-                  // Redirect to Owner Dashboard if it's the owner email, otherwise Customer Dashboard
-                  if (user?.email == 'soonas@gmail.com') {
+                  final role = user?.userMetadata?['role']?.toString();
+                  
+                  if (role == 'owner' || role == 'admin') {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const OwnerDashboard()),
                       (route) => false,

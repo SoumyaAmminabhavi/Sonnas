@@ -31,10 +31,24 @@ android {
     }
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
+            val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
+            val keyAlias = System.getenv("KEY_ALIAS")
+            val keyPassword = System.getenv("KEY_PASSWORD")
+            val keystorePath = System.getenv("KEYSTORE_PATH") ?: "release.keystore"
+
+            if (keystorePassword == null || keyAlias == null || keyPassword == null) {
+                val missing = mutableListOf<String>()
+                if (keystorePassword == null) missing.add("KEYSTORE_PASSWORD")
+                if (keyAlias == null) missing.add("KEY_ALIAS")
+                if (keyPassword == null) missing.add("KEY_PASSWORD")
+                
+                throw GradleException("Release build failed: Missing environment variables: ${missing.joinToString(", ")}. Please set them in your CI/CD or local environment.")
+            }
+
+            storeFile = file(keystorePath)
+            storePassword = keystorePassword
+            keyAlias = keyAlias
+            keyPassword = keyPassword
         }
     }
 

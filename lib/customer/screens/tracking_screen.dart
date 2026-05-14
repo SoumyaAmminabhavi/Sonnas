@@ -573,7 +573,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                 ),
               ),
               Text(
-                "₹${orderData?['totalPrice'] ?? '0'}",
+                "₹${((orderData?['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
                 style: GoogleFonts.notoSerif(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -625,7 +625,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             ),
           ),
           Text(
-            "₹${item['price']}",
+            "₹${((item['price'] ?? 0) / 100).toStringAsFixed(2)}",
             style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               fontWeight: FontWeight.w600,

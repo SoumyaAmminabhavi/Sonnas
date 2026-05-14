@@ -369,7 +369,7 @@ class _MainContent extends StatelessWidget {
                 }
 
                 return _OrderCard(
-                  id: "#${o['orderNumber']?.toString().split('-').last ?? 'ORD-0000'}",
+                  id: "#${o['orderNumber']?.toString().contains('-') == true ? o['orderNumber'].toString().split('-').last : (o['orderNumber']?.toString() ?? 'ORD-0000')}",
                   orderId: hasValidId ? safeOrderId : 'unknown',
                   status: statusText,
                   statusColor: statusColor,
