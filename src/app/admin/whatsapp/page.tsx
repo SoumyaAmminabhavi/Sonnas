@@ -694,7 +694,7 @@ function WhatsAppAdminContent() {
 
                           </div>
                           <div style={styles.footerActions}>
-                            <button style={styles.secondaryAction} onClick={(e) => { e.stopPropagation(); setReplyPhone(order.phone); }}>
+                            <button style={styles.secondaryAction} onClick={(e) => { e.stopPropagation(); setReplyPhone(o.phone); }}>
                               Contact Client
                             </button>
                             <button 
