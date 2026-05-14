@@ -22,6 +22,14 @@ const config = {
       },
     ],
   },
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "webworker-threads": false,
+      lapack: false,
+    };
+    return config;
+  },
 };
 
 export default config;
