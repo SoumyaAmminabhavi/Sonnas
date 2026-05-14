@@ -144,13 +144,10 @@ function updateConvoCache(phone: string, data: Partial<Conversation>) {
 
 async function safeGetCakes(): Promise<Cake[]> {
   const now = Date.now();
-  // Temporarily forcing refresh to ensure new Panipuri images show up
-  /*
   if (cakeCache && (now - lastCacheUpdate < CACHE_TTL)) {
     console.log("[WhatsApp] Using cached cake menu.");
     return cakeCache;
   }
-  */
 
   console.log("[WhatsApp] Cache expired or missing. Fetching cakes from DB...");
   try {
