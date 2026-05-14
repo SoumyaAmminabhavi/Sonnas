@@ -1,4 +1,4 @@
-import { ConversationState } from "../../../generated/prisma";
+import { ConversationState } from "../../../../generated/prisma";
 
 export const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
 

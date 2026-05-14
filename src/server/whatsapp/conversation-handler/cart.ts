@@ -5,7 +5,7 @@ import { formatPrice } from "~/lib/format";
 import { formatItemTotal } from "./helpers";
 import { sendTextMessage, sendInteractiveButtons } from "~/server/whatsapp";
 import { updateState, getConversation } from "./session";
-import { ConversationState } from "../../../generated/prisma";
+import { ConversationState } from "../../../../generated/prisma";
 import { RESET_STATE } from "./constants";
 import { findCake, sendMenu } from "./menu";
 

@@ -1,5 +1,5 @@
 import type { IncomingMessage, WhatsAppConversation } from "./types";
-import { ConversationState } from "../../../generated/prisma";
+import { ConversationState } from "../../../../generated/prisma";
 import { GREETINGS, RESET_STATE } from "./constants";
 import { sendWelcome, sendMenu, sendMenuPDF, findCake, handleCakeSelection, handleCategorySelection } from "./menu";
 import { updateState, getConversation, getSessionTimeoutMins, clearCart, refreshActivity } from "./session";

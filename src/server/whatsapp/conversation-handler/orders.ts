@@ -10,7 +10,7 @@ import {
 } from "~/server/whatsapp";
 import { createPaymentLink } from "~/server/razorpay";
 import { updateState, getConversation } from "./session";
-import { OrderStatus, PaymentStatus, OrderSource, ConversationState } from "../../../generated/prisma";
+import { OrderStatus, PaymentStatus, OrderSource, ConversationState } from "../../../../generated/prisma";
 import { RESET_STATE } from "./constants";
 import { formatItemTotal } from "./helpers";
 

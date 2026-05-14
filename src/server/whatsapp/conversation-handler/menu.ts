@@ -19,7 +19,7 @@ import {
   sendDocumentMessage,
   sendTextMessage
 } from "~/server/whatsapp";
-import { ConversationState } from "../../../generated/prisma";
+import { ConversationState } from "../../../../generated/prisma";
 import { updateState, getConversation } from "./session";
 import { RESET_STATE } from "./constants";
 

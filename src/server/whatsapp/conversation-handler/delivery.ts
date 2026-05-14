@@ -3,7 +3,7 @@ import { GREETINGS } from "./constants";
 import { validateAndSanitize } from "./validation";
 import { updateState } from "./session";
 import { sendTextMessage, sendInteractiveButtons, sendInteractiveList } from "~/server/whatsapp";
-import { ConversationState } from "../../../generated/prisma";
+import { ConversationState } from "../../../../generated/prisma";
 import { convoCache } from "./cache";
 import { buildOrderSummary } from "./cart";
 

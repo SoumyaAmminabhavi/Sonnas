@@ -3,7 +3,7 @@ import { updateState } from "./session";
 import { sendTextMessage, sendInteractiveButtons } from "~/server/whatsapp";
 import { validateAndSanitize } from "./validation";
 import { createCustomOrder } from "./orders";
-import { ConversationState } from "../../../generated/prisma";
+import { ConversationState } from "../../../../generated/prisma";
 
 export async function handleCustomRequest(
   msg: IncomingMessage,
