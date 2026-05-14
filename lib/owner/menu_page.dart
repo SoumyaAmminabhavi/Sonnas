@@ -707,6 +707,13 @@ class _AddMenuContentState extends State<_AddMenuContent> {
         }
         category = trimmed;
       } else {
+        if (_selectedCategory == null || _selectedCategory!.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please select a category')),
+          );
+          setState(() => _isUploading = false);
+          return;
+        }
         category = _selectedCategory;
       }
 

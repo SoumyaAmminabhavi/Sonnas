@@ -28,12 +28,12 @@ class SupabaseService {
 
   /// Unified helper to get public URL for a file in Supabase storage
   static String getPublicUrl(String? path, {String bucket = 'staff_photos', int? width, int? height}) {
-    // Determine which client to use (Friend's vs Mine)
-    final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
-    
     if (path == null || path.isEmpty) return '';
     if (path.startsWith('http')) return path;
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
+
+    // Determine which client to use (Friend's vs Mine)
+    final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
     
     // Use direct public URL (Transformation is a paid feature)
     return storageClient.from(bucket).getPublicUrl(path);
