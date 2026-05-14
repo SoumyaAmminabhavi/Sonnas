@@ -121,7 +121,7 @@ interface AdminOrder {
   status: OrderStatus;
   address?: string | null;
   notes?: string | null;
-  deliveryDate?: string | null;
+  deliveryDate?: string | Date | null;
   deliverySlot?: string | null;
   customImageUrl?: string | null;
   createdAt: string | Date;
@@ -233,7 +233,8 @@ function WhatsAppAdminContent() {
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
           if (filterByDelivery && order.deliveryDate) {
-            return order.deliveryDate.includes(todayStr) || order.deliveryDate.toLowerCase().includes("today");
+            const ddStr = getLocalDateKey(order.deliveryDate);
+            return ddStr === todayStr;
           }
           return getLocalDateKey(o.createdAt) === todayStr;
         });
@@ -244,7 +245,8 @@ function WhatsAppAdminContent() {
         filtered = filtered.filter(o => {
           const order = o as unknown as AdminOrder;
           if (filterByDelivery && order.deliveryDate) {
-            return order.deliveryDate.includes(tomorrowStr) || order.deliveryDate.toLowerCase().includes("tomorrow");
+            const ddStr = getLocalDateKey(order.deliveryDate);
+            return ddStr === tomorrowStr;
           }
           return getLocalDateKey(o.createdAt) === tomorrowStr;
         });
@@ -254,7 +256,8 @@ function WhatsAppAdminContent() {
           const orderCreatedDate = getLocalDateKey(o.createdAt);
 
           if (filterByDelivery && order.deliveryDate) {
-            return order.deliveryDate.includes(normalizedFilter) || order.deliveryDate.includes(dateFilter);
+            const ddStr = getLocalDateKey(order.deliveryDate);
+            return ddStr === normalizedFilter || ddStr === dateFilter;
           }
           return orderCreatedDate === normalizedFilter || orderCreatedDate === dateFilter;
         });
@@ -584,9 +587,13 @@ function WhatsAppAdminContent() {
                         <span style={styles.detailText}>
                           {(() => {
                             if (!o.deliveryDate) return "Today";
-                            if (o.deliveryDate.includes(",")) return o.deliveryDate.split(',')[0];
                             const date = new Date(o.deliveryDate);
-                            return isNaN(date.getTime()) ? o.deliveryDate : date.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric', month: 'short' });
+                            if (isNaN(date.getTime())) {
+                              // Fallback for string-based dates if any
+                              const dStr = String(o.deliveryDate);
+                              return dStr.includes(",") ? dStr.split(',')[0] : dStr;
+                            }
+                            return date.toLocaleDateString("en-IN", { weekday: 'short', day: 'numeric', month: 'short' });
                           })()}
                         </span>
                       </div>
