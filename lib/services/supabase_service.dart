@@ -27,7 +27,7 @@ class SupabaseService {
   static SupabaseClient get myClient => _myClient;
 
   /// Unified helper to get public URL for a file in Supabase storage
-  static String getPublicUrl(String? path, {String bucket = 'cakes', int? width, int? height}) {
+  static String getPublicUrl(String? path, {String bucket = 'staff_photos', int? width, int? height}) {
     // Determine which client to use (Friend's vs Mine)
     final storageClient = bucket == 'staff_photos' ? myClient.storage : client.storage;
     

@@ -92,7 +92,7 @@ class MenuDetailsPage extends StatelessWidget {
               );
             }
 
-            final imageUrl = SupabaseService.getPublicUrl(cake['image']);
+            final imageUrl = SupabaseService.getPublicUrl(cake['image'], bucket: 'cakes');
 
             return Scaffold(
               backgroundColor: cs.surface,

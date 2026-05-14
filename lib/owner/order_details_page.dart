@@ -249,7 +249,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                           title: cakeName,
                                                           subtitle: "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
                                                           price: OrderService.formatPrice(item['price']),
-                                                          imageUrl: isCustomUrl ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl),
+                                                          imageUrl: isCustomUrl ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'),
                                                           cs: cs,
                                                         ),
                                                       );

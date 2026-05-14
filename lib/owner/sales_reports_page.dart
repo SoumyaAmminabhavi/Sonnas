@@ -125,7 +125,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         return {
           'name': e.key,
           'count': e.value,
-          'image': SupabaseService.getPublicUrl(details['image']?.toString()),
+          'image': SupabaseService.getPublicUrl(details['image']?.toString(), bucket: 'cakes'),
           'category': details['category']?.toString() ?? 'Delicacy',
         };
       }).toList();

@@ -111,7 +111,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                   description: data['description'] ?? '',
                   serves: baseServes,
                   weight: "Standard",
-                  imageUrl: SupabaseService.getPublicUrl(data['image'], width: 250, height: 250),
+                  imageUrl: SupabaseService.getPublicUrl(data['image'], bucket: 'cakes', width: 250, height: 250),
                 );
               }).toList();
 
@@ -634,7 +634,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       text: displayPrice > 0 ? displayPrice.toStringAsFixed(0) : '',
     );
     _descriptionController = TextEditingController(text: data?['description']?.toString());
-    _weightController = TextEditingController(text: firstOption?['weight']?.toString() ?? '');
+    _weightController = TextEditingController(text: (firstOption?['size'] ?? firstOption?['weight'])?.toString() ?? '');
     _servesController = TextEditingController(text: firstOption?['serves']?.toString() ?? '');
     _newCategoryController = TextEditingController();
     _existingImageUrl = data?['image'];
@@ -693,24 +693,42 @@ class _AddMenuContentState extends State<_AddMenuContent> {
       // 2. Save cake details
       final name = _nameController.text;
       final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-      final newId = 'c${DateTime.now().millisecondsSinceEpoch}'; // Simple unique ID generator
+      final newId = 'c${DateTime.now().millisecondsSinceEpoch}';
+      
+      String? category;
+      if (_showNewCategoryField) {
+        final trimmed = _newCategoryController.text.trim();
+        if (trimmed.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please enter a category name')),
+          );
+          setState(() => _isUploading = false);
+          return;
+        }
+        category = trimmed;
+      } else {
+        category = _selectedCategory;
+      }
 
       final cakeId = await MenuService.upsertCake({
         'id': widget.initialData?['id'] ?? newId,
         'name': name,
         'slug': slug,
-        'category': _showNewCategoryField ? _newCategoryController.text : _selectedCategory,
+        'category': category,
         'description': _descriptionController.text,
         'image': imagePath,
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
       // 3. Save cake options
+      final options = widget.initialData?['CakeOption'] as List? ?? [];
+      final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
+      
       await MenuService.upsertCakeOption({
-        'id': 'co${DateTime.now().millisecondsSinceEpoch}', // Unique ID for option
+        'id': firstOption?['id'] ?? 'co${DateTime.now().millisecondsSinceEpoch}',
         'cakeId': cakeId,
         'price': (double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0) * 100,
-        'size': _weightController.text, // Mapping weight input to 'size' column
+        'size': _weightController.text, // Consistently using 'size' as per Prisma schema
         'serves': _servesController.text,
       });
 
@@ -1096,7 +1114,7 @@ class _AddMenuContentState extends State<_AddMenuContent> {
                     : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
-                        SupabaseService.getPublicUrl(_existingImageUrl),
+                        SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
                         fit: BoxFit.cover,
                       )
                     : Column(

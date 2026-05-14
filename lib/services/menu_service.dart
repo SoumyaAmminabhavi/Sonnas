@@ -18,10 +18,24 @@ class MenuService {
         final res = await SupabaseService.client.from('Cake').select('*, CakeOption(*)').order('name');
         return List<Map<String, dynamic>>.from(res);
       } catch (e) {
-        debugPrint('⚠️ Join fetch failed, trying simple fetch: $e');
+        debugPrint('⚠️ Join fetch failed, trying simple fetch + merge: $e');
         // Fallback to simple select if join fails (relationship name might be different)
-        final res = await SupabaseService.client.from('Cake').select('*').order('name');
-        return List<Map<String, dynamic>>.from(res);
+        final cakes = await SupabaseService.client.from('Cake').select('*').order('name');
+        final List<Map<String, dynamic>> cakesList = List<Map<String, dynamic>>.from(cakes);
+        
+        if (cakesList.isEmpty) return [];
+
+        // Manual join/merge for CakeOption
+        final cakeIds = cakesList.map((c) => c['id'].toString()).toList();
+        final options = await SupabaseService.client.from('CakeOption').select('*').inFilter('cakeId', cakeIds);
+        final List<Map<String, dynamic>> optionsList = List<Map<String, dynamic>>.from(options);
+
+        // Merge options back into cakes
+        for (var cake in cakesList) {
+          cake['CakeOption'] = optionsList.where((o) => o['cakeId'] == cake['id']).toList();
+        }
+        
+        return cakesList;
       }
     } catch (e) {
       debugPrint('⚠️ Friend\'s Menu Fetch Failed: $e. Falling back to Private DB.');
@@ -31,7 +45,7 @@ class MenuService {
         return List<Map<String, dynamic>>.from(res);
       } catch (e2) {
         debugPrint('❌ All Menu Fetch attempts failed: $e2');
-        return []; 
+        rethrow; // Rethrow to allow UI to handle error state
       }
     }
   }
