@@ -83,13 +83,39 @@ async function main() {
         where: { slug },
         update: {
           categoryId: category.id,
-          image: `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
+          image: [
+            "chocolate--orange-slice",
+            "caramalised-white-chocolate-with-almonds",
+            "lemon-mousse",
+            "blueberry",
+            "nutella",
+            "macaron",
+            "almond-brittle-slice",
+            "strawberry-vanilla",
+            "strawberry--vanilla",
+            "panipuri"
+          ].includes(slug)
+            ? `/cakes/${slug}.png`
+            : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
         },
         create: {
           name: cakeData.name,
           slug,
           description: `Handcrafted ${cakeData.name}`,
-          image: `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
+          image: [
+            "chocolate--orange-slice",
+            "caramalised-white-chocolate-with-almonds",
+            "lemon-mousse",
+            "blueberry",
+            "nutella",
+            "macaron",
+            "almond-brittle-slice",
+            "strawberry-vanilla",
+            "strawberry--vanilla",
+            "panipuri"
+          ].includes(slug)
+            ? `/cakes/${slug}.png`
+            : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
           categoryId: category.id,
           options: {
             create: cakeData.options,
