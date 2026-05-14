@@ -257,6 +257,14 @@ export const products: Product[] = [
     options: [{ size: "Slice", serves: "1", price: 13500 }],
     image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.png", // Fallback image
   },
+  {
+    id: 101,
+    name: "Panipoori",
+    description: "Crispy puris filled with spicy tangy water and potato mash",
+    category: "Chaat",
+    options: [{ size: "Plate", serves: "1", price: 10000 }],
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cake_1778742803857.jpg",
+  },
 ];
 
 export const categories: Category[] = [
@@ -296,5 +304,11 @@ export const categories: Category[] = [
     name: "Slices",
     slug: "slices",
     image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-slices.png",
+  },
+  {
+    id: "chaat",
+    name: "Chaat",
+    slug: "chaat",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cake_1778742803857.jpg",
   },
 ];

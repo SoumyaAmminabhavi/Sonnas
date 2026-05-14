@@ -123,6 +123,7 @@ const CATEGORY_MAP: Record<string, string> = {
   slices: "Slices",
   tea: "Tea Cakes",
   seasonal: "Seasonal Cakes",
+  chaat: "Chaat",
 };
 
 const CATEGORY_TITLES: Record<string, string> = {
@@ -132,6 +133,7 @@ const CATEGORY_TITLES: Record<string, string> = {
   slices: "🍰 Slices",
   tea: "☕ Tea Time Specials",
   seasonal: "🍓 Seasonal Specials",
+  chaat: "🥙 Street Food / Chaat",
 };
 
 
