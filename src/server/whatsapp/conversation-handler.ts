@@ -264,6 +264,7 @@ interface Conversation {
   lastActivityAt?: Date | string;
   rateLimitCount?: number;
   rateLimitWindowStart?: number;
+  menuOffset?: number;
 }
 
 
@@ -1085,6 +1086,16 @@ async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
+  if (interactiveId.startsWith("more_")) {
+    const [_, categoryName, offsetStr] = interactiveId.split("_");
+    if (categoryName && offsetStr) {
+      const newOffset = parseInt(offsetStr, 10);
+      await updateState(msg.from, "BROWSING_MENU", { menuOffset: newOffset });
+      await handleCategorySelection({ ...msg, interactiveId: `cat_${categoryName}` });
+    }
+    return;
+  }
+
   if (interactiveId.startsWith("cat_")) {
     await handleCategorySelection(msg);
     return;
@@ -1340,42 +1351,62 @@ async function handleCategorySelection(msg: IncomingMessage) {
     return;
   }
 
+  // Get current conversation to check for pagination offset
+  const phone = msg.from;
+  const convo = convoCache.get(phone) || (await getConversation(phone));
+
+  // If this is a fresh category selection (not from "See More"), reset offset
+  const isPagination = msg.interactiveId?.startsWith("more_");
+  const offset = isPagination ? (convo.menuOffset ?? 0) : 0;
+
   // Find if it's a short ID or a full name
   const categoryKey = rawId.toLowerCase();
-  const catName = CATEGORY_MAP[categoryKey] ?? rawId; // Fallback to rawId if not in map
+  const catName = CATEGORY_MAP[categoryKey] ?? rawId;
   const title = CATEGORY_TITLES[categoryKey] ?? `✨ ${rawId}`;
 
   const allCakes = await safeGetCakes();
-  console.log(`[WhatsApp] Category filter: rawId="${rawId}", catName="${catName}", total cakes=${allCakes.length}`);
-
   const filtered = allCakes.filter((p) => {
     const pCat = (p.category ?? "").toLowerCase();
-    // Match exact category name OR the short ID if it's contained
     return pCat === catName.toLowerCase() || pCat.includes(categoryKey);
   });
 
-  console.log(`[WhatsApp] Filtered cakes for ${catName}: ${filtered.length}`);
-
   if (filtered.length === 0) {
-    // If we can't find cakes even with the raw ID, maybe it was a transient error or bad sync
     await Promise.all([
       updateState(msg.from, "BROWSING_MENU"),
-      sendTextMessage(msg.from, `No cakes found in *${catName}* at the moment. Here's our full collection!`),
-      sendMenu(msg.from)
+      sendTextMessage(msg.from, `No cakes found in *${catName}* at the moment.`),
+      sendMenu(msg.from),
     ]);
     return;
   }
 
-  await updateState(msg.from, "BROWSING_MENU");
+  // Pagination Logic
+  const PAGE_SIZE = 10;
+  const hasMore = filtered.length > offset + PAGE_SIZE;
+  const currentBatch = filtered.slice(offset, offset + (hasMore ? PAGE_SIZE - 1 : PAGE_SIZE));
+
+  const rows = currentBatch.map(cakeRow);
+
+  if (hasMore) {
+    rows.push({
+      id: `more_${categoryKey}_${offset + (PAGE_SIZE - 1)}`,
+      title: "➡️ See More...",
+      description: `Showing ${offset + 1}-${offset + (PAGE_SIZE - 1)} of ${filtered.length}`,
+    });
+  }
+
+  await updateState(msg.from, "BROWSING_MENU", { menuOffset: offset });
+
   await sendInteractiveList(
     msg.from,
     title,
-    `Here are our signature ${catName.toLowerCase()} selections:`,
-    "Select a Cake",
+    isPagination
+      ? `Continuing our ${catName.toLowerCase()} selection:`
+      : `Here are our signature ${catName.toLowerCase()} selections:`,
+    isPagination ? "Next Items" : "Select a Cake",
     [
       {
-        title: "Choose your favorite",
-        rows: filtered.map(cakeRow),
+        title: isPagination ? `Page ${Math.floor(offset / (PAGE_SIZE - 1)) + 1}` : "Choose your favorite",
+        rows,
       },
     ]
   );
