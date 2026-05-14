@@ -10,6 +10,7 @@ import { sendOrderStatus, handleConfirmation } from "./orders";
 import { handleDeliverySlotSelection, handleAddressInput, handleInstructionsInput, sendDeliverySlotOptions } from "./delivery";
 import { handleCustomRequest, handleReferenceImageUpload } from "./custom-orders";
 import { convoCache } from "./cache";
+import { db } from "./prisma";
 import { validateAndSanitize } from "./validation";
 
 export async function rePromptState(phone: string, state: ConversationState, convo: WhatsAppConversation) {
