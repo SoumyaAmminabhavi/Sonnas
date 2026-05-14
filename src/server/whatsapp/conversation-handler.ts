@@ -114,6 +114,27 @@ const RESET_STATE = {
   customImageUrl: null,
 };
 
+// ─── Category Mapping ─────────────────────────────────────────────────────
+
+const CATEGORY_MAP: Record<string, string> = {
+  chocolate: "Chocolate Cakes",
+  vanilla: "Vanilla Cakes",
+  cheesecakes: "Mini Cheesecakes",
+  slices: "Slices",
+  tea: "Tea Cakes",
+  seasonal: "Seasonal Cakes",
+};
+
+const CATEGORY_TITLES: Record<string, string> = {
+  chocolate: "🍫 Chocolate Based",
+  vanilla: "🍦 Vanilla & Fruit Based",
+  cheesecakes: "🧁 Mini Cheesecakes",
+  slices: "🍰 Slices",
+  tea: "☕ Tea Time Specials",
+  seasonal: "🍓 Seasonal Specials",
+};
+
+
 function updateConvoCache(phone: string, data: Partial<Conversation>) {
   const existing = convoCache.get(phone) ?? { phone, state: "IDLE" } as Conversation;
   convoCache.set(phone, { ...existing, ...data });
@@ -1151,10 +1172,14 @@ async function sendWelcome(to: string, name?: string) {
       },
       {
         title: "📋 Browse by Category",
-        rows: categories.slice(0, 6).map(cat => ({
-          id: `cat_${cat}`,
-          title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat
-        }))
+        rows: categories.slice(0, 10).map(cat => {
+          // Find short ID if it exists in map, else use raw name
+          const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) || cat;
+          return {
+            id: `cat_${shortId}`,
+            title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat
+          };
+        })
       },
       {
         title: "✨ Other Services",
@@ -1267,54 +1292,33 @@ const cakeRow = (c: Cake) => ({
 // ─── Handle category selection ─────────────────────────────────────────────
 
 async function handleCategorySelection(msg: IncomingMessage) {
-  const category = msg.interactiveId?.replace("cat_", "") as
-    | "chocolate"
-    | "vanilla"
-    | "cheesecakes"
-    | "slices"
-    | "tea"
-    | "seasonal";
-
-  if (!category || !["chocolate", "vanilla", "cheesecakes", "slices", "tea", "seasonal"].includes(category)) {
+  const rawId = msg.interactiveId?.replace("cat_", "");
+  if (!rawId) {
     await sendMenu(msg.from);
     return;
   }
 
-  const categoryMap: Record<string, string> = {
-    chocolate: "Chocolate Cakes",
-    vanilla: "Vanilla Cakes",
-    cheesecakes: "Mini Cheesecakes",
-    slices: "Slices",
-    tea: "Tea Cakes",
-    seasonal: "Seasonal Cakes",
-  };
-
-  const titles: Record<string, string> = {
-    chocolate: "🍫 Chocolate Based",
-    vanilla: "🍦 Vanilla & Fruit Based",
-    cheesecakes: "🧁 Mini Cheesecakes",
-    slices: "🍰 Slices",
-    tea: "☕ Tea Time Specials",
-    seasonal: "🍓 Seasonal Specials",
-  };
-
-  const title = titles[category] ?? "Cakes";
-  const catName = categoryMap[category] ?? "Cakes";
+  // Find if it's a short ID or a full name
+  const categoryKey = rawId.toLowerCase();
+  const catName = CATEGORY_MAP[categoryKey] || rawId; // Fallback to rawId if not in map
+  const title = CATEGORY_TITLES[categoryKey] || `✨ ${rawId}`;
 
   const allCakes = await safeGetCakes();
-  console.log(`[WhatsApp] Category filter: catName="${catName}", category="${category}", total cakes=${allCakes.length}`);
-  console.log(`[WhatsApp] Cake categories in DB:`, allCakes.map(c => c.category));
+  console.log(`[WhatsApp] Category filter: rawId="${rawId}", catName="${catName}", total cakes=${allCakes.length}`);
+
   const filtered = allCakes.filter((p) => {
-    const cat = (p.category ?? "").toLowerCase();
-    return cat === catName.toLowerCase() || cat.includes(category);
+    const pCat = (p.category ?? "").toLowerCase();
+    // Match exact category name OR the short ID if it's contained
+    return pCat === catName.toLowerCase() || pCat.includes(categoryKey);
   });
-  console.log(`[WhatsApp] Filtered cakes: ${filtered.length}`);
+
+  console.log(`[WhatsApp] Filtered cakes for ${catName}: ${filtered.length}`);
 
   if (filtered.length === 0) {
-    // No cakes in this category — show full menu instead
+    // If we can't find cakes even with the raw ID, maybe it was a transient error or bad sync
     await Promise.all([
       updateState(msg.from, "BROWSING_MENU"),
-      sendTextMessage(msg.from, "No cakes found in that category. Here's our full menu:"),
+      sendTextMessage(msg.from, `No cakes found in *${catName}* at the moment. Here's our full collection!`),
       sendMenu(msg.from)
     ]);
     return;
@@ -1324,7 +1328,7 @@ async function handleCategorySelection(msg: IncomingMessage) {
   await sendInteractiveList(
     msg.from,
     title,
-    `Here are our signature ${title.toLowerCase()} cakes:`,
+    `Here are our signature ${catName.toLowerCase()} selections:`,
     "Select a Cake",
     [
       {

@@ -37,7 +37,7 @@ export const products: Product[] = [
   },
   {
     id: 2,
-    name: "Almond Brittle Salted Caramel",
+    name: "Almond Brittle with Salted Caramel Ganache",
     description: "Caramel chocolate ganache + almond brittle",
     category: "Chocolate Cakes",
     options: [
@@ -81,7 +81,7 @@ export const products: Product[] = [
   },
   {
     id: 6,
-    name: "Caramelised White Chocolate",
+    name: "Caramalised White Chocolate with Almonds",
     description: "Vanilla cake with white chocolate ganache",
     category: "Vanilla Cakes",
     options: [
@@ -170,7 +170,7 @@ export const products: Product[] = [
   // Mini Cheesecakes
   {
     id: 14,
-    name: "Blueberry Mini Cheesecake",
+    name: "Blueberry",
     description: "Creamy cheesecake with glossy blueberry compote",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 17000 }],
@@ -178,7 +178,7 @@ export const products: Product[] = [
   },
   {
     id: 15,
-    name: "Nutella Mini Cheesecake",
+    name: "Nutella",
     description: "Nutella flavor with smooth hazelnut chocolate swirl",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 18000 }],
@@ -186,7 +186,7 @@ export const products: Product[] = [
   },
   {
     id: 16,
-    name: "Biscoff Mini Cheesecake",
+    name: "Biscoff",
     description: "Lotus Biscoff flavor with speculoos cookie spread drip",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 19000 }],
@@ -194,7 +194,7 @@ export const products: Product[] = [
   },
   {
     id: 17,
-    name: "Mango Mini Cheesecake",
+    name: "Mango",
     description: "Fresh Mango flavor with vibrant yellow mango glaze",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 16000 }],
@@ -203,7 +203,7 @@ export const products: Product[] = [
   // Slices
   {
     id: 18,
-    name: "Almond Brittle Caramel Slice",
+    name: "Almond Brittle with Salted Caramel Ganache",
     description: "Almond Brittle with Salted Caramel Ganache slice",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 17500 }],
@@ -211,7 +211,7 @@ export const products: Product[] = [
   },
   {
     id: 19,
-    name: "Chocolate Mousse Slice",
+    name: "Chocolate Mousse",
     description: "Deep dark chocolate layers with airy mousse texture",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 14500 }],
@@ -219,7 +219,7 @@ export const products: Product[] = [
   },
   {
     id: 20,
-    name: "Chocolate & Orange Slice",
+    name: "Chocolate & Orange",
     description: "Layers of chocolate and bright orange mousse",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 12000 }],
@@ -227,7 +227,7 @@ export const products: Product[] = [
   },
   {
     id: 21,
-    name: "Lemon Mousse Slice",
+    name: "Lemon Mousse",
     description: "Bright yellow and white layers with tangy lemon curd",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 9500 }],
@@ -235,7 +235,7 @@ export const products: Product[] = [
   },
   {
     id: 22,
-    name: "Macaron Slice",
+    name: "Macaron",
     description: "Elegant macaron-themed cake slice",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 8000 }],
@@ -243,11 +243,20 @@ export const products: Product[] = [
   },
   {
     id: 23,
-    name: "Coconut & Mango Slice",
+    name: "Coconut & Mango",
     description: "Layers of tropical coconut sponge and fresh mango mousse",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 18000 }],
     image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-coconut-mango.png",
+},
+  {
+    id: 100,
+    name: "Chocolate Cake Slice",
+    description: "Classic chocolate cake slice",
+    category: "Slices",
+    options: [{ size: "Slice", serves: "1", price: 13500 }],
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.png", // Fallback image
+  },
   },
 ];
 
