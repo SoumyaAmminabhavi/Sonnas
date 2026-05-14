@@ -262,6 +262,8 @@ interface Conversation {
   customImageUrl?: string | null;
   cart?: CartItem[];
   lastActivityAt?: Date | string;
+  rateLimitCount?: number;
+  rateLimitWindowStart?: number;
 }
 
 
@@ -662,17 +664,42 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       }
 
       await refreshActivity(phone);
-
-      // ── Anti-Flood Cooldown (1.5s) ─────────────────────────────────────────
       const convo = await getConversation(phone);
+
+      // ── Anti-Flood Rate Limit (15 msgs / 60s) ──────────────────────────────
+      const NOW = Date.now();
+      const WINDOW_MS = 60000;
+      const MAX_MSGS = 15;
+      const COOLDOWN_MS = 1500;
+
+      // 1. Sliding Cooldown (1.5s)
       if (convo.lastActivityAt) {
         const lastActivity = new Date(convo.lastActivityAt).getTime();
-        const COOLDOWN_MS = 1500;
-        if (Date.now() - lastActivity < COOLDOWN_MS) {
-          console.warn(`[WhatsApp] 🛡️ Flood protection: ${phone} ignored (too fast).`);
+        if (NOW - lastActivity < COOLDOWN_MS) {
+          console.warn(`[WhatsApp] 🛡️ Cooldown: ${phone} ignored (too fast).`);
           return;
         }
       }
+
+      // 2. Rolling Window (15 msgs / 1 min)
+      if (!convo.rateLimitWindowStart || NOW - convo.rateLimitWindowStart > WINDOW_MS) {
+        convo.rateLimitWindowStart = NOW;
+        convo.rateLimitCount = 1;
+      } else {
+        convo.rateLimitCount = (convo.rateLimitCount ?? 0) + 1;
+        if (convo.rateLimitCount > MAX_MSGS) {
+          console.warn(`[WhatsApp] 🛡️ Rate limit: ${phone} (${convo.rateLimitCount} msgs/min).`);
+          if (convo.rateLimitCount === MAX_MSGS + 1) {
+            await sendTextMessage(phone, "⚠️ *Slow down!* You've reached the message limit. Please wait a minute.");
+          }
+          return;
+        }
+      }
+
+      updateConvoCache(phone, {
+        rateLimitCount: convo.rateLimitCount,
+        rateLimitWindowStart: convo.rateLimitWindowStart
+      });
 
       await _internalHandleMessage(msg);
 
