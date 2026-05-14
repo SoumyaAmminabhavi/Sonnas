@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       // 1. Update Order in DB (Include items for the bill)
       let order;
       try {
-        order = await db.whatsAppOrder.update({
+        order = await db.order.update({
           where: { orderNumber: orderNumber as string },
           data: {
             status: "CONFIRMED",
@@ -70,7 +70,8 @@ export async function POST(req: Request) {
       // 2. Generate Premium Bill and Notify Customer via WhatsApp (Non-fatal)
       try {
         if (order) {
-          console.log(`[Razorpay Webhook] Sending Premium WhatsApp bill to ${order.phone}...`);
+          const targetPhone = order.whatsappPhone ?? order.customerPhone;
+          console.log(`[Razorpay Webhook] Sending Premium WhatsApp bill to ${targetPhone}...`);
 
           const dateStr = new Date(order.createdAt).toLocaleDateString("en-IN", {
             day: "numeric",
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
           bill += `*Delivery Details*\n`;
           bill += `📍 ${cleanAddress ?? "_Address not provided_"}\n`;
           bill += `📅 ${order.deliveryDate ?? "Today"}\n`;
-          bill += `🕒 ${order.deliveryTime ?? "Anytime"}\n\n`;
+          bill += `🕒 ${order.deliverySlot ?? "Anytime"}\n\n`;
 
           if (order.notes) {
             bill += `📝 *Custom Message*\n`;
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
           bill += `_Your dessert is being handcrafted with care. We'll notify you once it's ready._ 👩‍🍳\n\n`;
           bill += `*Thank you for choosing Sonna’s.* 💕`;
 
-          await sendTextMessage(order.phone, bill);
+          await sendTextMessage(targetPhone, bill);
           console.log(`[Razorpay Webhook] Premium WhatsApp bill sent!`);
         }
       } catch (wsError) {
