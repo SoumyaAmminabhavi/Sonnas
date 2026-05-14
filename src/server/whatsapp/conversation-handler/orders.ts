@@ -209,7 +209,12 @@ export async function handleConfirmation(
     const dateStr = deliveryDate 
       ? (typeof deliveryDate === 'string' ? new Date(deliveryDate) : deliveryDate).toLocaleDateString("en-IN") 
       : "Today";
-    successMessage += `📅 *${dateStr}* | 🕒 *${freshConvo.selectedDeliverySlot ?? "Anytime"}*\n`;
+    const slotStr = freshConvo.selectedDeliverySlot?.trim() ?? "Anytime";
+    const formattedSlot = slotStr === "Morning" ? "Morning (10 AM - 1 PM)" :
+                          slotStr === "Afternoon" ? "Afternoon (2 PM - 5 PM)" :
+                          slotStr === "Evening" ? "Evening (6 PM - 9 PM)" :
+                          slotStr;
+    successMessage += `📅 *${dateStr}* | 🕒 *${formattedSlot}*\n`;
     successMessage += `📍 ${freshConvo.selectedAddress ?? "Store Pickup"}\n\n`;
 
     if (paymentLink) {

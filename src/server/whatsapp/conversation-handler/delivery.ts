@@ -35,9 +35,9 @@ export function getAvailableSlots() {
   const today = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
 
   const windows = [
-    { id: "morning", title: "Morning", time: "10 AM - 1 PM", startHour: 10 },
-    { id: "afternoon", title: "Afternoon", time: "2 PM - 5 PM", startHour: 14 },
-    { id: "evening", title: "Evening", time: "6 PM - 9 PM", startHour: 18 },
+    { id: "slot1", title: "12 PM - 3 PM", time: "12 PM - 3 PM", startHour: 12 },
+    { id: "slot2", title: "3 PM - 6 PM", time: "3 PM - 6 PM", startHour: 15 },
+    { id: "slot3", title: "6 PM - 9 PM", time: "6 PM - 9 PM", startHour: 18 },
   ];
 
   for (let i = 0; i < 4; i++) {
@@ -51,7 +51,7 @@ export function getAvailableSlots() {
       slots.push({
         id: `slot_${dateKey}_${win.id}`,
         title: `${dayLabel} (${win.title})`,
-        description: win.time
+        description: "Handcrafted fresh delivery"
       });
     }
   }
@@ -87,7 +87,15 @@ export async function handleDeliverySlotSelection(
     if (year === undefined || month === undefined || day === undefined) return;
 
     deliveryDate = new Date(year, month - 1, day);
-    deliveryTime = timePart.charAt(0).toUpperCase() + timePart.slice(1);
+    const windowMap: Record<string, string> = {
+      slot1: "12 PM - 3 PM",
+      slot2: "3 PM - 6 PM",
+      slot3: "6 PM - 9 PM",
+      morning: "10 AM - 1 PM",
+      afternoon: "2 PM - 5 PM",
+      evening: "6 PM - 9 PM",
+    };
+    deliveryTime = windowMap[timePart] ?? (timePart.charAt(0).toUpperCase() + timePart.slice(1));
   } else if (msg.text?.trim()) {
     deliveryDate = new Date();
     deliveryTime = msg.text.trim();

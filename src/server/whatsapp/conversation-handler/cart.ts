@@ -120,8 +120,13 @@ export function buildOrderSummary(cart: CartItem[], convo: WhatsAppConversation)
     ? (typeof deliveryDate === 'string' ? new Date(deliveryDate) : deliveryDate).toLocaleDateString("en-IN") 
     : "Today";
     
+  const slotStr = convo.selectedDeliverySlot?.trim() ?? "Anytime";
+  const formattedSlot = slotStr === "Morning" ? "Morning (10 AM - 1 PM)" :
+                        slotStr === "Afternoon" ? "Afternoon (2 PM - 5 PM)" :
+                        slotStr === "Evening" ? "Evening (6 PM - 9 PM)" :
+                        slotStr;
   summary += `📅 Delivery: *${dateStr}*\n`;
-  summary += `🕒 Timing: *${convo.selectedDeliverySlot ?? "Anytime"}*\n\n`;
+  summary += `🕒 Timing: *${formattedSlot}*\n\n`;
   summary += `\n\nShall we prepare this for you?`;
   return summary;
 }

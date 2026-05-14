@@ -117,10 +117,16 @@ export async function POST(req: Request) {
               })
             : "Today";
 
+          const slotStr = order.deliverySlot?.trim() ?? "Anytime";
+          const formattedSlot = slotStr === "Morning" ? "Morning (10 AM - 1 PM)" :
+                                slotStr === "Afternoon" ? "Afternoon (2 PM - 5 PM)" :
+                                slotStr === "Evening" ? "Evening (6 PM - 9 PM)" :
+                                slotStr;
+
           bill += `*Delivery Details*\n`;
           bill += `📍 ${cleanAddress ?? "_Address not provided_"}\n`;
           bill += `📅 ${deliveryDateStr}\n`;
-          bill += `🕒 ${order.deliverySlot ?? "Anytime"}\n\n`;
+          bill += `🕒 ${formattedSlot}\n\n`;
 
           if (order.notes) {
             bill += `📝 *Custom Message*\n`;
