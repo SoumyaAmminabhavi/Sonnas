@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { sendTextMessage } from "~/server/whatsapp";
 import { env } from "~/env";
-import { OrderStatus, PaymentStatus, OrderSource } from "../../../generated/prisma";
+import { OrderStatus, PaymentStatus, OrderSource } from "../../../../generated/prisma";
 
 export const whatsappRouter = createTRPCRouter({
   // ─── Orders ────────────────────────────────────────────────────────────
