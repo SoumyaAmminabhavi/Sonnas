@@ -1174,7 +1174,7 @@ async function sendWelcome(to: string, name?: string) {
         title: "📋 Browse by Category",
         rows: categories.slice(0, 10).map(cat => {
           // Find short ID if it exists in map, else use raw name
-          const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) || cat;
+          const shortId = Object.keys(CATEGORY_MAP).find(key => CATEGORY_MAP[key] === cat) ?? cat;
           return {
             id: `cat_${shortId}`,
             title: cat.length > 24 ? cat.substring(0, 21) + "..." : cat
@@ -1300,8 +1300,8 @@ async function handleCategorySelection(msg: IncomingMessage) {
 
   // Find if it's a short ID or a full name
   const categoryKey = rawId.toLowerCase();
-  const catName = CATEGORY_MAP[categoryKey] || rawId; // Fallback to rawId if not in map
-  const title = CATEGORY_TITLES[categoryKey] || `✨ ${rawId}`;
+  const catName = CATEGORY_MAP[categoryKey] ?? rawId; // Fallback to rawId if not in map
+  const title = CATEGORY_TITLES[categoryKey] ?? `✨ ${rawId}`;
 
   const allCakes = await safeGetCakes();
   console.log(`[WhatsApp] Category filter: rawId="${rawId}", catName="${catName}", total cakes=${allCakes.length}`);
