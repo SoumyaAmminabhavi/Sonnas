@@ -191,7 +191,7 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
 
       try {
         const lastOrder = await db.order.findFirst({
-          where: { OR: [{ whatsappPhone: msg.from }, { customerPhone: msg.from }], status: { not: "CANCELLED" }, address: { not: null } },
+          where: { OR: [{ whatsappPhone: msg.from }, { customerPhone: msg.from }], status: { not: "CANCELLED" }, address: { not: "" } },
           orderBy: { createdAt: "desc" },
           select: { address: true }
         });
