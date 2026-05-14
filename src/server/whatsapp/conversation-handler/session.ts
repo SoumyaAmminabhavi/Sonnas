@@ -86,12 +86,20 @@ export async function updateState(
   updateConvoCache(phone, { state, ...extra });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { cart, lastActivityAt: _, ...otherExtra } = extra;
+  const { cart, lastActivityAt: _, lastMessageAt: __, rateLimitCount, rateLimitWindowStart, selectedCake, ...otherExtra } = extra;
+
+  // Filter out any undefined/null fields that might cause issues with strict types
+  const data: any = { 
+    state, 
+    lastMessageAt: new Date(), 
+    lastActivityAt: new Date(),
+    ...otherExtra 
+  };
 
   return withTimeout(
     db.whatsAppConversation.update({
       where: { phone },
-      data: { state, lastMessageAt: new Date(), lastActivityAt: new Date(), ...otherExtra },
+      data,
     }),
     DB_TIMEOUT
   ).catch((e) => {
