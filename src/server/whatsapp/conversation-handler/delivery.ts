@@ -172,7 +172,7 @@ export async function handleInstructionsInput(msg: IncomingMessage, _convo: What
   const isSkip = ["none", "skip", "no"].includes(input.toLowerCase());
 
   if (!isSkip && (input.length < 2 || GREETINGS.includes(input.toLowerCase()))) {
-    await sendTextMessage(msg.from, "What message would you like on your cake? ✍️\n\n_(e.g., \"Happy Birthday Priya!\")_\n\nReply *Skip* if none.");
+    await sendTextMessage(msg.from, "What message would you like on your cake? ✍️\n\n_(e.g., \"Happy Birthday Priya!\")_\n\nReply *Skip*or *No*if none.");
     return;
   }
 
