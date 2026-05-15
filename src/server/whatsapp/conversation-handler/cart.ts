@@ -114,17 +114,17 @@ export function buildOrderSummary(cart: CartItem[], convo: WhatsAppConversation)
 
   summary += `📍 Address: ${convo.selectedAddress ?? "_Not provided_"}\n`;
   summary += `📝 Notes: ${convo.selectedNotes ?? "_None_"}\n`;
-  
+
   const deliveryDate = convo.selectedDeliveryDate;
-  const dateStr = deliveryDate 
-    ? (typeof deliveryDate === 'string' ? new Date(deliveryDate) : deliveryDate).toLocaleDateString("en-IN") 
+  const dateStr = deliveryDate
+    ? (typeof deliveryDate === 'string' ? new Date(deliveryDate) : deliveryDate).toLocaleDateString("en-IN")
     : "Today";
-    
+
   const slotStr = convo.selectedDeliverySlot?.trim() ?? "Anytime";
   const formattedSlot = slotStr === "Morning" ? "Morning (10 AM - 1 PM)" :
-                        slotStr === "Afternoon" ? "Afternoon (2 PM - 5 PM)" :
-                        slotStr === "Evening" ? "Evening (6 PM - 9 PM)" :
-                        slotStr;
+    slotStr === "Afternoon" ? "Afternoon (2 PM - 5 PM)" :
+      slotStr === "Evening" ? "Evening (6 PM - 9 PM)" :
+        slotStr;
   summary += `📅 Delivery: *${dateStr}*\n`;
   summary += `🕒 Timing: *${formattedSlot}*\n\n`;
   summary += `\n\nShall we prepare this for you?`;
@@ -159,14 +159,14 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
       const cartButtons = [
-        { id: "btn_checkout", title: "💳 Place My Order" },
+        { id: "btn_checkout", title: "💳 Confirm Order" },
         { id: "btn_menu", title: "➕ Add More" },
       ];
 
       if (updatedConvo.cart && updatedConvo.cart.length > 1) {
         cartButtons.push({ id: "btn_remove_last", title: "❌ Remove Last" });
       } else {
-        cartButtons.push({ id: "btn_clear_cart", title: "🔄 Start Fresh" });
+        cartButtons.push({ id: "btn_clear_cart", title: "🔄 Clear Cart" });
       }
 
       await Promise.all([
