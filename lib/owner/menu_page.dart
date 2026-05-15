@@ -712,9 +712,18 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           file: bytes,
         );
         
-        if (uploadedPath != null) {
-          imagePath = uploadedPath;
+        if (uploadedPath == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to upload image. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isUploading = false);
+          return;
         }
+        imagePath = uploadedPath;
       }
 
       // 2. Save cake details
@@ -724,13 +733,26 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       // Smart search for existing cake with same slug
       String? existingCakeId;
       try {
-        final existingCakes = await MenuService.fetchMenu();
+        final existingCakes = await MenuService.fetchMenu(includeArchived: true);
         final match = existingCakes.firstWhere(
           (c) => c['slug'] == slug,
           orElse: () => <String, dynamic>{},
         );
         if (match.isNotEmpty) {
           existingCakeId = match['id'].toString();
+          
+          // Check if it's archived
+          if (match['deletedAt'] != null) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('This item name is reserved by an archived product. Please use a different name or restore it.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            setState(() => _isUploading = false);
+            return;
+          }
         }
       } catch (e) {
         debugPrint('Smart search failed: $e');
@@ -966,6 +988,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                             hint: "e.g. SONNA'S CLASSIC CHOCOLATE",
                             icon: Icons.cake,
                             controller: _nameController,
+                            validator: (v) => v == null || v.trim().isEmpty ? "Required" : null,
                           ),
                         ),
                         const SizedBox(width: 24),
@@ -975,6 +998,12 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                             hint: "e.g. 675/-",
                             icon: Icons.currency_rupee,
                             controller: _priceController,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return "Required";
+                              final clean = v.replaceAll('/-', '').replaceAll('₹', '').trim();
+                              if (double.tryParse(clean) == null) return "Invalid price";
+                              return null;
+                            },
                           ),
                         ),
                       ],
@@ -985,6 +1014,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                       hint: "e.g. SONNA'S CLASSIC CHOCOLATE",
                       icon: Icons.cake,
                       controller: _nameController,
+                      validator: (v) => v == null || v.trim().isEmpty ? "Required" : null,
                     ),
                     const SizedBox(height: 24),
                     _InputField(
@@ -992,6 +1022,12 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                       hint: "e.g. 675/-",
                       icon: Icons.currency_rupee,
                       controller: _priceController,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return "Required";
+                        final clean = v.replaceAll('/-', '').replaceAll('₹', '').trim();
+                        if (double.tryParse(clean) == null) return "Invalid price";
+                        return null;
+                      },
                     ),
                   ],
                   const SizedBox(height: 24),
@@ -1189,7 +1225,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         ),
         const SizedBox(height: 8),
          DropdownButtonFormField<String>(
-           value: _selectedCategoryId,
+           initialValue: _selectedCategoryId,
            hint: Text(
              "Select Collection",
              style: GoogleFonts.plusJakartaSans(
@@ -1325,6 +1361,7 @@ class _InputField extends StatelessWidget {
   final IconData icon;
   final int maxLines;
   final TextEditingController? controller;
+  final String? Function(String?)? validator;
 
   const _InputField({
     required this.label,
@@ -1332,6 +1369,7 @@ class _InputField extends StatelessWidget {
     required this.icon,
     this.maxLines = 1,
     this.controller,
+    this.validator,
   });
 
   @override
@@ -1352,6 +1390,7 @@ class _InputField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          validator: validator,
           maxLines: maxLines,
           style: GoogleFonts.plusJakartaSans(color: cs.secondary),
           decoration: InputDecoration(

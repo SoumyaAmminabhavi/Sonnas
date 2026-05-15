@@ -411,7 +411,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                   }
                                                 } catch (e) {
                                                   if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update: $e")));
+                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to update order. Please try again.")));
                                                   }
                                                 }
                                               } : null,
@@ -453,7 +453,8 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                   cake = items.first['cakeName'] ?? 'your selection';
                                                 }
                                               } catch (_) {}
-                                              OrderService.launchWhatsApp(phone, "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderId ($cake).");
+                                               final orderNum = order['orderNumber'] ?? orderId;
+                                               OrderService.launchWhatsApp(phone, "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderNum ($cake).");
                                             },
                                           ),
                                         ),

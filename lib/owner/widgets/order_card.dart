@@ -31,7 +31,7 @@ class OrderCardReactive extends ConsumerWidget {
           if (items.isNotEmpty && menuAsync.hasValue) {
             final String firstName = items[0]['cakeName'] ?? '';
             final matchingCake = menuAsync.value!.firstWhere(
-              (c) => (c['name'] as String).toLowerCase() == firstName.toLowerCase(),
+              (c) => (c['name']?.toString().toLowerCase() == firstName.toLowerCase()),
               orElse: () => <String, dynamic>{},
             );
             imageUrl = matchingCake['image'] ?? '';

@@ -176,7 +176,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                   _InfoBadge(
                                     icon: Icons.category_outlined,
                                     label: "COLLECTION",
-                                    value: cake['Category'] != null ? cake['Category']['name'] : 'General',
+                                    value: (cake['Category']?['name']?.toString() ?? 'General'),
                                     cs: cs,
                                   ),
                                   const SizedBox(width: 24),

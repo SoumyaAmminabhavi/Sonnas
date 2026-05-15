@@ -201,7 +201,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Color color = cs.primary;
-    String label = status.name;
+    String label = status.humanReadable;
 
     if (status == OrderStatus.pending) {
       color = Colors.orange;

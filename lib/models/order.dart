@@ -13,6 +13,17 @@ enum OrderStatus {
 extension OrderStatusExtension on OrderStatus {
   /// Display name (e.g. 'OUTFORDELIVERY') — for UI labels only.
   String get displayName => toString().split('.').last.toUpperCase();
+
+  String get humanReadable {
+    switch (this) {
+      case OrderStatus.pending: return 'Pending';
+      case OrderStatus.confirmed: return 'Confirmed';
+      case OrderStatus.outForDelivery: return 'Out for Delivery';
+      case OrderStatus.delivered: return 'Delivered';
+      case OrderStatus.completed: return 'Completed';
+      case OrderStatus.cancelled: return 'Cancelled';
+    }
+  }
   
   static OrderStatus fromString(String status) {
     switch (status.toUpperCase()) {

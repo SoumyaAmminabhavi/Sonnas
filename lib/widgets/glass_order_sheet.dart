@@ -170,15 +170,13 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                     
                     String displayImageUrl = '';
                     final matchingCake = menu.firstWhere(
-                      (c) => (c['name'] as String).toLowerCase() == item.cakeName.toLowerCase(),
+                      (c) => (c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase()),
                       orElse: () => <String, dynamic>{},
                     );
                     displayImageUrl = matchingCake['image'] ?? '';
 
-                    bool isCustomUrl = false;
                     if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && widget.order.customImageUrl != null) {
                       displayImageUrl = widget.order.customImageUrl!;
-                      isCustomUrl = true;
                     }
 
                      Widget imageWidget;
@@ -381,7 +379,7 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Text(
-        status.name,
+        status.humanReadable,
         style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w900, color: color, letterSpacing: 1.0),
       ),
     );
