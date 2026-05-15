@@ -45,7 +45,7 @@ export async function getAvailableSlots() {
   try {
     const dbWindows = await getWhatsAppSetting("DELIVERY_SLOTS", "");
     if (dbWindows) {
-      windows = JSON.parse(dbWindows);
+      windows = JSON.parse(dbWindows) as typeof defaultWindows;
     }
   } catch (e) {
     console.error("[WhatsApp] Failed to parse DELIVERY_SLOTS setting:", e);
