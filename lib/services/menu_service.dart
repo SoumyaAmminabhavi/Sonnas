@@ -9,11 +9,33 @@ class MenuService {
   /// Real-time menu updates
   /// Real-time menu updates with joined data
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
-    final controller = StreamController<void>.broadcast();
-    _client.from('Cake').stream(primaryKey: ['id']).listen((_) => controller.add(null), cancelOnError: false);
-    _client.from('Category').stream(primaryKey: ['id']).listen((_) => controller.add(null), cancelOnError: false);
-    _client.from('CakeOption').stream(primaryKey: ['id']).listen((_) => controller.add(null), cancelOnError: false);
-    return controller.stream.asyncMap((_) => fetchMenu(includeArchived: false));
+    final controller = StreamController<List<Map<String, dynamic>>>();
+    final subscriptions = <StreamSubscription>[];
+
+    Future<void> refresh() async {
+      try {
+        final data = await fetchMenu(includeArchived: false);
+        if (!controller.isClosed) controller.add(data);
+      } catch (e) {
+        if (!controller.isClosed) controller.addError(e);
+      }
+    }
+
+    void handleEvent(_) => refresh();
+
+    subscriptions.add(_client.from('Cake').stream(primaryKey: ['id']).listen(handleEvent));
+    subscriptions.add(_client.from('Category').stream(primaryKey: ['id']).listen(handleEvent));
+    subscriptions.add(_client.from('CakeOption').stream(primaryKey: ['id']).listen(handleEvent));
+
+    controller.onCancel = () {
+      for (final sub in subscriptions) {
+        sub.cancel();
+      }
+    };
+
+    refresh();
+
+    return controller.stream;
   }
 
   /// Fetch all menu items with full category and option data

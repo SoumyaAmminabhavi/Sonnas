@@ -23,7 +23,7 @@ class OwnerBottomNav extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Dashboard"),
         BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Orders"),
         BottomNavigationBarItem(icon: Icon(Icons.payments), label: "Finance"),
-        BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Catalog"),
+        BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Menu"),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
       ],
     );

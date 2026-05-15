@@ -20,7 +20,19 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
     final cs = Theme.of(context).colorScheme;
     final isDesktop = MediaQuery.sizeOf(context).width > 1100;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          final close = widget.onClose;
+          if (close != null) {
+            close();
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: Scaffold(
       backgroundColor: cs.surface,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddItemSheet(context, cs),
@@ -84,6 +96,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
             ],
           );
         },
+      ),
       ),
     );
   }

@@ -203,9 +203,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       onSelected: (value) async {
         try {
           if (value == 'pdf') {
-            await ReportService.downloadPDF(_orders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
+            await ReportService.downloadPDF(_paidOrders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
           } else if (value == 'csv') {
-            await ReportService.downloadCSV(_orders, _totalRevenue, _totalOrders);
+            await ReportService.downloadCSV(_paidOrders, _totalRevenue, _totalOrders);
           }
         } catch (e) {
           if (mounted) {

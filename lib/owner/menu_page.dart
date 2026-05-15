@@ -724,7 +724,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       
       // Make slug unique for new items to avoid accidental overwrites
       if (widget.initialData == null) {
-        slug = '$slug-${DateTime.now().millisecondsSinceEpoch % 10000}';
+        slug = '$slug-${DateTime.now().millisecondsSinceEpoch}';
       }
 
       if (slug.isEmpty || slug == '-') {

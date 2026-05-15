@@ -33,7 +33,8 @@ extension OrderStatusExtension on OrderStatus {
       case 'ACCEPTED': return OrderStatus.confirmed;
       case 'PREPARING': return OrderStatus.confirmed;
       case 'READY': return OrderStatus.outForDelivery;
-      case 'OUT_FOR_DELIVERY': return OrderStatus.outForDelivery;
+      case 'OUT_FOR_DELIVERY':
+      case 'OUTFORDELIVERY': return OrderStatus.outForDelivery;
       case 'DELIVERED': return OrderStatus.delivered;
       case 'COMPLETED': return OrderStatus.completed;
       case 'CANCELLED': return OrderStatus.cancelled;

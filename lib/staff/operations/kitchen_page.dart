@@ -360,7 +360,11 @@ class KitchenOrderCard extends StatelessWidget {
 
     final resolvedUrl = (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
         ? imageUrl
-        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes') + (version != null ? "?v=$version" : "");
+        : (() {
+            final base = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+            if (version == null) return base;
+            return base.contains('?') ? '$base&v=$version' : '$base?v=$version';
+          })();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
