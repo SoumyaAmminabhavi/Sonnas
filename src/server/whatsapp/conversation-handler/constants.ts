@@ -9,8 +9,7 @@ export const MAX_PROCESSED_IDS = 2000;
 // Anti-Flood Constants
 export const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 export const RATE_LIMIT_MAX_MSGS = 15;
-export const RATE_LIMIT_COOLDOWN_MS = 1500;
-
+export const RATE_LIMIT_COOLDOWN_MS = 150
 export const RESET_STATE = {
   selectedCakeId: null,
   selectedSize: null,
