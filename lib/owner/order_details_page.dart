@@ -237,12 +237,12 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                           ? menu.firstWhere(
                                                               (c) => c['id']?.toString() == cakeId,
                                                               orElse: () => menu.firstWhere(
-                                                                (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
+                                                                (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
                                                                 orElse: () => <String, dynamic>{},
                                                               ),
                                                             )
                                                           : menu.firstWhere(
-                                                              (c) => (c['name'] as String).toLowerCase() == cakeName.toLowerCase(),
+                                                              (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
                                                               orElse: () => <String, dynamic>{},
                                                             );
                                                       displayImageUrl = matchingCake['image'] ?? '';

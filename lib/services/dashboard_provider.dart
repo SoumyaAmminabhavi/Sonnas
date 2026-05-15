@@ -62,7 +62,7 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
       'avgOrderValue': 0,
       'isLoading': true,
     },
-    error: (_, __) => {
+    error: (error, stack) => {
       'totalOrders': 0,
       'totalRevenue': 0.0,
       'activeCustomers': 0,

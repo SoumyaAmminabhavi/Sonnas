@@ -225,7 +225,7 @@ class KitchenOrderCard extends StatelessWidget {
                           ],
                         ),
                         loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                        error: (_, __) => Text("No items found", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.3))),
+                        error: (err, stack) => Text("No items found", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.3))),
                       );
                     },
                   ),

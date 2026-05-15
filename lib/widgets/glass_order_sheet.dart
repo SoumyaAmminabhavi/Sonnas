@@ -248,7 +248,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (_, __) => Padding(
+              error: (err, stack) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Text("Error loading items.", style: GoogleFonts.plusJakartaSans(color: cs.error)),
               ),

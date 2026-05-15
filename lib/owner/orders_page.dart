@@ -159,8 +159,8 @@ class _OrdersList extends StatelessWidget {
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               itemCount: 6,
-              separatorBuilder: (_, __) => const SizedBox(height: 16),
-              itemBuilder: (_, __) => Container(
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) => Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: Colors.white,

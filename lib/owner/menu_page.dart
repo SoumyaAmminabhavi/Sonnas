@@ -76,7 +76,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                       childAspectRatio: 0.75,
                     ),
                     itemCount: crossAxisCount * 2,
-                    itemBuilder: (_, __) => Container(
+                    itemBuilder: (context, index) => Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -895,9 +895,10 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     } catch (e) {
       if (!mounted) return;
       final cs = Theme.of(context).colorScheme;
+      debugPrint('❌ Save item failed: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error: $e"),
+          content: const Text("Failed to save item. Please try again."),
           backgroundColor: cs.error,
           behavior: SnackBarBehavior.floating,
         ),

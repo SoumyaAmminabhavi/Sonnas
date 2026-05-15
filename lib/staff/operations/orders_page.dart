@@ -134,7 +134,7 @@ class StaffOrderCard extends StatelessWidget {
                             color: cs.secondary.withValues(alpha: 0.2),
                           ),
                         ),
-                        error: (_, __) => Text(
+                        error: (err, stack) => Text(
                           "#${order.orderNumber} • 0 items",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,

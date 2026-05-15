@@ -210,7 +210,7 @@ class _CardImage extends StatelessWidget {
           color: cs.primary.withValues(alpha: 0.05),
           child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         ),
-        errorWidget: (_, __, ___) => Container(
+        errorWidget: (context, url, error) => Container(
           width: 90,
           height: 90,
           color: cs.primary.withValues(alpha: 0.05),
