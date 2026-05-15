@@ -63,8 +63,10 @@ export async function safeGetCakes(): Promise<Cake[]> {
           ...dbCake,
           category: effectiveCategory,
           // Ensure image is a valid URL or placeholder
-          image: (dbCake.image && String(dbCake.image).startsWith('http')) 
-                 ? dbCake.image 
+          image: (dbCake.image && String(dbCake.image).trim().length > 0)
+                 ? (String(dbCake.image).startsWith('http') 
+                    ? dbCake.image 
+                    : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
                  : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
         } as unknown as Cake;
       })
