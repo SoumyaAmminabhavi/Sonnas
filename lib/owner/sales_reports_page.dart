@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -7,12 +8,13 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/menu_service.dart';
 import '../services/report_service.dart';
-import '../widgets/owner_sidebar.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class SalesReportsPage extends ConsumerStatefulWidget {
-  const SalesReportsPage({super.key});
+  final VoidCallback? onClose;
+  const SalesReportsPage({super.key, this.onClose});
 
   @override
   ConsumerState<SalesReportsPage> createState() => _SalesReportsPageState();
@@ -28,11 +30,27 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   List<Map<String, dynamic>> _topItems = [];
   List<Map<String, dynamic>> _cachedMenu = [];
   String _lastProcessedIds = "";
+  StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
+      if (mounted) {
+        setState(() {
+          _orders = orders;
+          _calculateMetrics();
+          _processItemsFromOrders(_orders, _cachedMenu);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _ordersSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -48,9 +66,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         });
       }
 
-      // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
-      final orderIds = _orders.map((o) => o['id'] as String).toList();
-      final allItems = await OrderService.fetchBulkOrderItems(orderIds);
+       // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
+       final paidOrderIds = _paidOrders.map((o) => o['id'] as String).toList();
+       final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
       if (mounted) {
         setState(() {
           _processItems(allItems, menu);
@@ -230,69 +248,62 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: OrderService.getAllOrdersStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
-          return _buildSkeleton(cs);
-        }
+    if (_isLoading) {
+      return _buildSkeleton(cs);
+    }
 
-        if (snapshot.hasData) {
-          _orders = snapshot.data!;
-          _calculateMetrics();
-          _processItemsFromOrders(_orders, _cachedMenu);
-        }
-
-        return CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Sales Intelligence",
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 48,
-                        color: cs.secondary,
-                        height: 1.1,
-                      ),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Sales Intelligence",
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 48,
+                      color: cs.secondary,
+                      height: 1.1,
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Performance Overview",
-                          style: GoogleFonts.plusJakartaSans(
-                            color: cs.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            letterSpacing: 2.0,
-                          ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Performance Overview",
+                        style: GoogleFonts.plusJakartaSans(
+                          color: cs.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          letterSpacing: 2.0,
                         ),
-                        _buildExportButton(cs),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
-                    const SizedBox(height: 32),
-                    _buildMetricsGrid(cs),
-                    const SizedBox(height: 32),
-                    _buildRevenueChart(cs, isDark),
-                    const SizedBox(height: 32),
-                    _buildSecondaryStats(cs, isDark),
-                    const SizedBox(height: 100),
-                  ],
-                ),
+                      ),
+                      _buildExportButton(cs),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
+                  const SizedBox(height: 32),
+                  _buildMetricsGrid(cs),
+                  const SizedBox(height: 32),
+                  _buildRevenueChart(cs, isDark),
+                  const SizedBox(height: 32),
+                  _buildSecondaryStats(cs, isDark),
+                  const SizedBox(height: 100),
+                ],
               ),
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
+
   Widget _buildMetricsGrid(ColorScheme cs) {
     return LayoutBuilder(builder: (context, constraints) {
       final isMobile = constraints.maxWidth < 600;
@@ -716,36 +727,39 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   Widget _buildSkeleton(ColorScheme cs) {
-    return Shimmer.fromColors(
-      baseColor: cs.surfaceContainer,
-      highlightColor: cs.surface,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.5,
-              children: List.generate(3, (_) => Container(
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-              )),
-            ),
-            const SizedBox(height: 32),
-            Container(height: 280, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
-                const SizedBox(width: 16),
-                Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
-              ],
-            ),
-          ],
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: Shimmer.fromColors(
+        baseColor: cs.surfaceContainer,
+        highlightColor: cs.surface,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GridView.count(
+                crossAxisCount: 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.5,
+                children: List.generate(3, (_) => Container(
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                )),
+              ),
+              const SizedBox(height: 32),
+              Container(height: 280, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
+                  const SizedBox(width: 16),
+                  Expanded(child: Container(height: 260, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)))),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

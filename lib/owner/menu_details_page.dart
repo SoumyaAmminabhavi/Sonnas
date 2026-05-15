@@ -60,7 +60,7 @@ class MenuDetailsPage extends ConsumerWidget {
               Icon(Icons.cloud_off_rounded, color: cs.error, size: 48),
               const SizedBox(height: 16),
               Text("Connection Error", style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary)),
-              Text("Unable to fetch artisan details.", style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant)),
+              Text("Unable to fetch menu details.", style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant)),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -88,8 +88,9 @@ class MenuDetailsPage extends ConsumerWidget {
 
         final options = cake['CakeOption'] as List? ?? [];
         final String imageField = cake['image']?.toString() ?? '';
-        final imageUrl = SupabaseService.getPublicUrl(imageField, bucket: 'cakes') + 
-                        (imageField.isNotEmpty ? "?t=${DateTime.now().millisecondsSinceEpoch}" : "");
+        final imageUrl = imageField.isEmpty
+            ? ''
+            : SupabaseService.getPublicUrl(imageField, bucket: 'cakes');
 
         return LayoutBuilder(
           builder: (context, constraints) {

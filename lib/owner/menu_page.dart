@@ -14,7 +14,7 @@ import '../services/menu_service.dart';
 import '../services/dashboard_provider.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
-import 'inventory_analytics_page.dart';
+
 
 // ─────────────────────────────────────────────
 //  MenuPage — the landing page (shows all items)
@@ -33,33 +33,9 @@ class _MenuPageState extends ConsumerState<MenuPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: cs.surface,
-        appBar: AppBar(
-          backgroundColor: cs.surface,
-          elevation: 0,
-          toolbarHeight: 0,
-          bottom: TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelColor: cs.primary,
-            unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
-            indicatorColor: cs.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            tabs: const [
-              Tab(text: "PRODUCTS"),
-              Tab(text: "INVENTORY"),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildProductsView(context),
-            const InventoryAnalyticsPage(),
-          ],
-        ),
+        body: _buildProductsView(context),
         floatingActionButton: FloatingActionButton(
           backgroundColor: cs.primary,
           elevation: 6,
@@ -79,8 +55,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
           },
           child: const Icon(Icons.add, color: Colors.white, size: 28),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildProductsView(BuildContext context) {
@@ -146,7 +121,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
               return _MenuItem(
                 id: data['id'],
                 name: data['name'] ?? 'Untitled Cake',
-                category: data['Category']?['name'] ?? 'General',
+                category: data['Category']?['name'] ?? data['category'] ?? 'General',
                 price: basePrice,
                 description: data['description'] ?? '',
                 serves: baseServes,
@@ -766,8 +741,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
         String extension = _selectedImage!.name.split('.').last.toLowerCase();
-        const validExtensions = {'jpg', 'jpeg', 'png', 'webp', 'gif'};
-        if (!validExtensions.contains(extension)) extension = 'jpg';
+        // Keep original extension; don't relabel unrecognized extensions as .jpg
         
         final fileName = '$finalCakeId.$extension';
         
@@ -837,11 +811,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           orElse: () => <String, dynamic>{},
         );
 
-        if (existingCat.isNotEmpty) {
-          categoryId = existingCat['id'];
-        } else {
-          categoryId = widget.initialData?['categoryId'] ?? _selectedCategoryId;
-        }
+         if (existingCat.isNotEmpty) {
+           categoryId = existingCat['id'];
+         } else {
+           categoryId = widget.initialData?['categoryId'];
+           if (categoryId == null) {
+             throw StateError('Please select a valid category');
+           }
+         }
       }
 
       // 3. Perform Upsert
@@ -1329,7 +1306,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                     : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
-                        SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes') + "?t=${DateTime.now().millisecondsSinceEpoch}",
+                        "${SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes')}?t=${DateTime.now().millisecondsSinceEpoch}",
                         fit: BoxFit.cover,
                       )
                     : Column(

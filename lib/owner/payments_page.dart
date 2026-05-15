@@ -76,6 +76,16 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
                 unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
                 indicatorColor: cs.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
+                labelStyle: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                  letterSpacing: 2.0,
+                ),
+                unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                  letterSpacing: 2.0,
+                ),
                 tabs: const [
                   Tab(text: "PAYMENTS"),
                   Tab(text: "EXPENSES"),
@@ -97,7 +107,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
   }
 
   Widget _buildPaymentsView(BuildContext context, bool isDesktop, double weeklyGross, double totalPending, List<Map<String, dynamic>> pendingOrders, List<Map<String, dynamic>> completedHistory) {
-    final cs = Theme.of(context).colorScheme;
+    
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 40.0 : 20.0,
@@ -284,8 +294,8 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
       unselectedLabelColor: cs.secondary.withValues(alpha: 0.4),
       labelStyle: GoogleFonts.plusJakartaSans(
         fontWeight: FontWeight.bold,
-        fontSize: 12,
-        letterSpacing: 1.2,
+        fontSize: 10,
+        letterSpacing: 2.0,
       ),
       tabs: const [
         Tab(text: "PENDING PAYMENTS"),

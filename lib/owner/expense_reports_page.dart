@@ -5,10 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/finance_service.dart';
 import '../services/report_service.dart';
-import '../widgets/owner_sidebar.dart';
 
 class ExpenseReportsPage extends StatefulWidget {
-  const ExpenseReportsPage({super.key});
+  final VoidCallback? onClose;
+  const ExpenseReportsPage({super.key, this.onClose});
 
   @override
   State<ExpenseReportsPage> createState() => _ExpenseReportsPageState();
@@ -261,7 +261,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
           ? _buildSkeleton(cs)
           : CustomScrollView(
               slivers: [
-                _buildHeader(cs, true),
+               _buildHeader(cs, MediaQuery.sizeOf(context).width > 1100),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),

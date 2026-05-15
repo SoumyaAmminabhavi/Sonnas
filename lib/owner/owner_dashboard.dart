@@ -27,6 +27,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
   int _selectedYear = DateTime.now().year;
   late PageController _pageController;
   int? _lastOrderCount;
+  int _settingsResetCounter = 0;
 
   @override
   void initState() {
@@ -41,7 +42,12 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
   }
 
   void _handleNavigation(int index) {
-    setState(() => _selectedIndex = index);
+    setState(() {
+      if (_selectedIndex == index && index == 4) {
+        _settingsResetCounter++;
+      }
+      _selectedIndex = index;
+    });
     if (_pageController.hasClients) {
       _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     }
@@ -145,7 +151,11 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
       case 1: return ManageOrdersPage(onTabChanged: _handleNavigation);
       case 2: return const PaymentsPage();
       case 3: return MenuPage(onTabChanged: _handleNavigation);
-      case 4: return OwnerSettingsPage(onTabChanged: _handleNavigation);
+      case 4: 
+        return OwnerSettingsPage(
+          key: ValueKey("settings_$_settingsResetCounter"),
+          onTabChanged: _handleNavigation
+        );
       default:
         return DashboardContent(
           isDesktop: isDesktop,

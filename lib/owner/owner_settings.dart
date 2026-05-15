@@ -45,6 +45,8 @@ class _SettingsContentState extends State<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
   late bool _isDarkMode;
+  Widget? _activeSubPage;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +57,17 @@ class _SettingsContentState extends State<_SettingsContent> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    if (_activeSubPage != null) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          setState(() => _activeSubPage = null);
+        },
+        child: _activeSubPage!,
+      );
+    }
+
     return ListView(
       padding: EdgeInsets.symmetric(
         horizontal: widget.isDesktop ? 48.0 : 16.0,
@@ -337,30 +350,14 @@ class _SettingsContentState extends State<_SettingsContent> {
             "Sales Reports",
             Icons.bar_chart,
             "View historical data",
-            onTap: () async {
-              final index = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SalesReportsPage()),
-              );
-              if (index is int && widget.onTabChanged != null) {
-                widget.onTabChanged!(index);
-              }
-            },
+            onTap: () => setState(() => _activeSubPage = SalesReportsPage(onClose: () => setState(() => _activeSubPage = null))),
           ),
           _buildActionRow(
             cs,
             "Expense Reports",
             Icons.receipt_long,
             "Analyze costs",
-            onTap: () async {
-              final index = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ExpenseReportsPage()),
-              );
-              if (index is int && widget.onTabChanged != null) {
-                widget.onTabChanged!(index);
-              }
-            },
+            onTap: () => setState(() => _activeSubPage = ExpenseReportsPage(onClose: () => setState(() => _activeSubPage = null))),
           ),
 
           _buildActionRow(
@@ -368,15 +365,7 @@ class _SettingsContentState extends State<_SettingsContent> {
             "Inventory Analytics",
             Icons.inventory,
             "Stock trends",
-            onTap: () async {
-              final index = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const InventoryAnalyticsPage()),
-              );
-              if (index is int && widget.onTabChanged != null) {
-                widget.onTabChanged!(index);
-              }
-            },
+            onTap: () => setState(() => _activeSubPage = InventoryAnalyticsPage(onClose: () => setState(() => _activeSubPage = null))),
           ),
 
         ],

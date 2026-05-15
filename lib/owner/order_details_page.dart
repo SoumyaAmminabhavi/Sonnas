@@ -247,7 +247,11 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                           title: cakeName,
                                                           subtitle: "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
                                                           price: OrderService.formatPrice(item['price']),
-                                                          imageUrl: isCustomUrl ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'),
+                                                          imageUrl: displayImageUrl.isEmpty
+                                                              ? ''
+                                                              : (isCustomUrl
+                                                                  ? displayImageUrl
+                                                                  : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes')),
                                                           cs: cs,
                                                         ),
                                                       );
@@ -441,8 +445,14 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                                   cake = items.first['cakeName'] ?? 'your selection';
                                                 }
                                               } catch (_) {}
-                                               final orderNum = order['orderNumber'] ?? orderId;
-                                               OrderService.launchWhatsApp(phone, "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding your order #$orderNum ($cake).");
+                                               final orderNum = order['orderNumber']?.toString();
+                                               final orderRef = (orderNum != null && orderNum.isNotEmpty)
+                                                   ? 'your order #$orderNum'
+                                                   : 'your order';
+                                               OrderService.launchWhatsApp(
+                                                 phone,
+                                                 "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding $orderRef ($cake).",
+                                               );
                                             },
                                           ),
                                         ),

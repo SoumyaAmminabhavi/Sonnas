@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/inventory_service.dart';
-import '../widgets/owner_sidebar.dart';
 import '../widgets/skeleton.dart';
 
 class InventoryAnalyticsPage extends StatefulWidget {
-  const InventoryAnalyticsPage({super.key});
+  final VoidCallback? onClose;
+  const InventoryAnalyticsPage({super.key, this.onClose});
 
   @override
   State<InventoryAnalyticsPage> createState() => _InventoryAnalyticsPageState();
@@ -56,7 +56,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
           return CustomScrollView(
             slivers: [
-              _buildSliverHeader(cs, true),
+              _buildSliverHeader(cs, isDesktop),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),

@@ -62,7 +62,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                     _buildItemsList(cs),
                     const SizedBox(height: 32),
                     if (widget.order.notes?.trim().isNotEmpty == true) _buildNotes(cs),
-                    const SizedBox(height: 120), // Padding for actions
+                    SizedBox(height: widget.showActions ? 120 : 0), // Padding for actions
                   ],
                 ),
               ),

@@ -66,7 +66,7 @@ class OwnerSidebar extends StatelessWidget {
           ),
           _DrawerEntry(
             icon: Icons.inventory_2,
-            title: "CATALOG",
+            title: "MENU",
             isSelected: currentIndex == 3,
             onTap: () => onTap(3),
           ),

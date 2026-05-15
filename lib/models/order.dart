@@ -116,11 +116,14 @@ class SonnaOrder {
 
   factory SonnaOrder.fromMap(Map<String, dynamic> map) {
     final List<dynamic> rawItems = map['items'] as List<dynamic>? ?? [];
+    final customerPhone = map['customerPhone']?.toString().trim();
     return SonnaOrder(
       id: map['id']?.toString() ?? '',
       orderNumber: map['orderNumber']?.toString() ?? '---',
       customerName: map['customerName']?.toString() ?? 'Guest',
-      phone: (map['customerPhone'] ?? map['phone'])?.toString() ?? '',
+      phone: (customerPhone != null && customerPhone.isNotEmpty)
+          ? customerPhone
+          : map['phone']?.toString() ?? '',
       status: OrderStatusExtension.fromString(map['status']?.toString() ?? 'PENDING'),
       paymentStatus: map['paymentStatus']?.toString() ?? 'PENDING',
       totalPrice: (double.tryParse(map['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0,

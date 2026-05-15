@@ -48,7 +48,7 @@ class MenuService {
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       debugPrint('⚠️ Category fetch failed: $e');
-      return [];
+      rethrow;
     }
   }
 
@@ -107,31 +107,10 @@ class MenuService {
   /// Permanently delete a product and clean up its category if empty
   static Future<void> deleteCake(String id) async {
     try {
-      // 1. Get the categoryId before we delete the cake
-      final cakeRes = await _client
-          .from('Cake')
-          .select('categoryId')
-          .eq('id', id)
-          .maybeSingle();
-      
-      final String? categoryId = cakeRes?['categoryId'];
-
-      // 2. Perform HARD DELETE (this will also delete CakeOptions due to Cascade)
+      // 1. Perform HARD DELETE (this will also delete CakeOptions due to Cascade)
       await _client.from('Cake').delete().eq('id', id);
 
-      // 3. Smart Category Cleanup: delete category if it's now empty
-      if (categoryId != null) {
-        final remainingCakes = await _client
-            .from('Cake')
-            .select('id')
-            .eq('categoryId', categoryId)
-            .limit(1);
-
-        if (remainingCakes.isEmpty) {
-          debugPrint('🧹 Cleaning up empty category: $categoryId');
-          await _client.from('Category').delete().eq('id', categoryId);
-        }
-      }
+      // 3. Keep empty categories; they are now user-managed records.
     } catch (e) {
       debugPrint('⚠️ Hard Delete Failed: $e');
       rethrow;
