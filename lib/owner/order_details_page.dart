@@ -163,7 +163,10 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                       const SizedBox(height: 32),
                                       _CustomerInfoCard(
                                         name: order['customerName'] ?? conversation?['name'] ?? 'Guest Customer',
-                                        phone: order['customerPhone'] ?? conversation?['phone'] ?? 'Contact hidden',
+                                        phone: (() {
+                                          final p = order['customerPhone']?.toString().trim();
+                                          return (p != null && p.isNotEmpty) ? p : (conversation?['phone']?.toString() ?? 'Contact hidden');
+                                        })(),
                                         address: (order['address'] ?? conversation?['address'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
                                       ),
@@ -419,8 +422,11 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                             cs: cs,
                                             isPrimary: false,
                                             onPressed: () async {
-                                              final phone = order['customerPhone'] ?? conversation?['phone'];
-                                              if (phone == null || phone.toString().isEmpty) {
+                                              final rawPhone = order['customerPhone']?.toString().trim();
+                                              final phone = (rawPhone != null && rawPhone.isNotEmpty)
+                                                  ? rawPhone
+                                                  : (conversation?['phone']?.toString() ?? '');
+                                              if (phone.isEmpty) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
                                                   SnackBar(

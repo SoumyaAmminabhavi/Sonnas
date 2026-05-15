@@ -204,6 +204,23 @@ class StaffOrderCard extends StatelessWidget {
         ? imageUrl
         : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
 
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final bytes = UriData.parse(imageUrl).contentAsBytes();
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.memory(
+            bytes,
+            width: 52,
+            height: 52,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (_) {
+        // Fall through to placeholder
+      }
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: CachedNetworkImage(

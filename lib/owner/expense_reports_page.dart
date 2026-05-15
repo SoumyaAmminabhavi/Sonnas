@@ -248,7 +248,19 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          final close = widget.onClose;
+          if (close != null) {
+            close();
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: Scaffold(
       backgroundColor: cs.surface,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddExpenseDialog,
@@ -280,7 +292,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                 ),
               ],
             ),
-    );
+    ));
   }
 
   Widget _buildHeader(ColorScheme cs, bool isDesktop) {

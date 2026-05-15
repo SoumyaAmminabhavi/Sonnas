@@ -81,7 +81,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Sales Analytics Error: ${e.toString()}"),
+            content: const Text("Unable to load sales analytics. Please try again."),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -156,6 +156,8 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           'category': details['category']?.toString() ?? 'Delicacy',
         };
       }).toList();
+    } else {
+      _topItems = [];
     }
   }
 

@@ -114,9 +114,11 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                   ? "Serves ${options[0]['serves']}"
                   : "";
 
+              final String imageField = data['image']?.toString() ?? '';
               final String version = data['updatedAt']?.toString() ?? '1';
-              final String imageUrl = SupabaseService.getPublicUrl(data['image'], bucket: 'cakes') + 
-                                     (data['image'].isNotEmpty ? "?v=$version" : "");
+              final String imageUrl = imageField.isEmpty
+                  ? ''
+                  : '${SupabaseService.getPublicUrl(imageField, bucket: 'cakes')}?v=$version';
 
               return _MenuItem(
                 id: data['id'],
@@ -1142,9 +1144,10 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                               ref.invalidate(menuProvider);
                               if (!context.mounted) return;
                               Navigator.pop(context);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Delete failed: $e")));
+                             } catch (e) {
+                               debugPrint("Menu item delete failed: $e");
+                               if (!context.mounted) return;
+                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Delete failed")));
                             } finally {
                               if (mounted) setState(() => _isUploading = false);
                             }

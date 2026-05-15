@@ -55,12 +55,30 @@ class OrderService {
     try {
       final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
       
+      final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
+      
       // Try ID, then OrderNumber
-      final res = await _client
+      var res = await _client
           .from('Order')
           .select('*, WhatsAppConversation(*)')
-          .or('id.eq.$idOrNumber,orderNumber.eq.$idOrNumber,orderNumber.ilike.%$cleanInput%')
+          .eq('id', idOrNumber)
           .maybeSingle();
+
+      if (res == null) {
+        res = await _client
+            .from('Order')
+            .select('*, WhatsAppConversation(*)')
+            .eq('orderNumber', idOrNumber)
+            .maybeSingle();
+      }
+
+      if (res == null) {
+        res = await _client
+            .from('Order')
+            .select('*, WhatsAppConversation(*)')
+            .ilike('orderNumber', '%$escapedInput%')
+            .maybeSingle();
+      }
       
       return res;
     } catch (e) {
@@ -191,8 +209,14 @@ class OrderService {
 
   /// Update order status
   static Future<void> updateOrderStatus(String orderId, String status) async {
-    // Note: status should be one of OrderStatus Enum (e.g. 'CONFIRMED', 'DELIVERED')
-    await _client.from('Order').update({'status': status}).eq('id', orderId);
+    final now = DateTime.now().toUtc().toIso8601String();
+    final Map<String, dynamic> payload = {
+      'status': status,
+    };
+    if (status == 'CONFIRMED') payload['confirmedAt'] = now;
+    if (status == 'DELIVERED') payload['deliveredAt'] = now;
+    if (status == 'CANCELLED') payload['cancelledAt'] = now;
+    await _client.from('Order').update(payload).eq('id', orderId);
   }
 
   /// Update payment status

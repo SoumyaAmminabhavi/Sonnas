@@ -385,8 +385,9 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       });
                       
                       if (context.mounted) {
+                        final messenger = ScaffoldMessenger.of(context);
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(
                             content: Text("Inventory item added!"),
                             backgroundColor: Colors.green,

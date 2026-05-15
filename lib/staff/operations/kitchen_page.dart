@@ -267,7 +267,19 @@ class KitchenOrderCard extends StatelessWidget {
                       nextStatus = 'OUT_FOR_DELIVERY';
                     }
                     
-                    await OrderService.updateOrderStatus(order.id, nextStatus);
+                    try {
+                      await OrderService.updateOrderStatus(order.id, nextStatus);
+                    } catch (e) {
+                      debugPrint("Kitchen order status update failed: $e");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text("Failed to update order status"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isConfirmed ? Colors.teal : cs.primary,

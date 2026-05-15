@@ -33,7 +33,9 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
     final cs = theme.colorScheme;
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
-    return StreamBuilder<List<Map<String, dynamic>>>(
+    return DefaultTabController(
+      length: 3,
+      child: StreamBuilder<List<Map<String, dynamic>>>(
       stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
@@ -61,9 +63,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
           }
         }
 
-        return DefaultTabController(
-          length: 3,
-          child: Scaffold(
+        return Scaffold(
             backgroundColor: cs.surface,
             appBar: AppBar(
               backgroundColor: cs.surface,
@@ -100,10 +100,9 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
                 const SalesReportsPage(),
               ],
             ),
-          ),
         );
       },
-    );
+    ));
   }
 
   Widget _buildPaymentsView(BuildContext context, bool isDesktop, double weeklyGross, double totalPending, List<Map<String, dynamic>> pendingOrders, List<Map<String, dynamic>> completedHistory) {

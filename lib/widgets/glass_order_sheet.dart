@@ -137,7 +137,9 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
           ),
           IconButton(
             icon: Icon(Icons.chat_bubble_outline, color: cs.primary),
-            onPressed: () => OrderService.launchWhatsApp(widget.order.phone, "Hi ${widget.order.customerName}, regarding your order #${widget.order.orderNumber}..."),
+            onPressed: widget.order.phone.isNotEmpty
+                ? () => OrderService.launchWhatsApp(widget.order.phone, "Hi ${widget.order.customerName}, regarding your order #${widget.order.orderNumber}...")
+                : null,
           ),
         ],
       ),
