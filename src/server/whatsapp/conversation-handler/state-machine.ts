@@ -310,7 +310,7 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
   }
 
   if (interactiveId.startsWith("morecat_") || interactiveId.startsWith("prevcat_")) {
-    const offset = parseInt(interactiveId.split("_")[1]) || 0;
+    const offset = parseInt(interactiveId.split("_")[1] ?? "0") || 0;
     await sendMenu(msg.from, offset);
     return;
   }

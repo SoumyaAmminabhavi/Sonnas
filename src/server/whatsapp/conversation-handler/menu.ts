@@ -288,7 +288,7 @@ export async function handleCategorySelection(msg: IncomingMessage) {
     const parts = msg.interactiveId.split("_");
     // ID format: more_{categoryId}_{newOffset} or prev_{categoryId}_{newOffset}
     categoryId = parts[1];
-    offset = parseInt(parts[2]) || 0;
+    offset = parseInt(parts[2] ?? "0") || 0;
   }
 
   if (!categoryId) {
