@@ -32,6 +32,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
   bool _isUpdating = false;
 
   bool _shouldShowActionArea() {
+    if (!widget.showActions) return false;
     final status = widget.order.status;
     return status == OrderStatus.pending ||
         status == OrderStatus.confirmed ||

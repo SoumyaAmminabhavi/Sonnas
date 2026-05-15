@@ -332,7 +332,7 @@ class KitchenOrderCard extends StatelessWidget {
     String? version;
 
     // 2. Fallback to Menu Item image if still empty
-    if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+    if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://') || imageUrl.toLowerCase() == 'cake_placeholder.png') {
       if (items.isNotEmpty && menu.isNotEmpty) {
         final String firstName = items[0]['cakeName'] ?? '';
         final String? firstCakeId = items[0]['cakeId']?.toString();

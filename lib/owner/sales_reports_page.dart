@@ -36,22 +36,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   void initState() {
     super.initState();
     _loadData();
-    _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
-      if (mounted) {
-        setState(() {
-          _orders = orders;
-          _calculateMetrics();
-          _processItemsFromOrders(_orders, _cachedMenu);
-        });
-      }
-    }, onError: (error) {
-      debugPrint("Sales reports stream error: $error");
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
   }
 
   @override
@@ -80,6 +64,17 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         setState(() {
           _processItems(allItems, menu);
           _isLoading = false;
+        });
+        _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
+          if (mounted) {
+            setState(() {
+              _orders = orders;
+              _calculateMetrics();
+              _processItemsFromOrders(_orders, _cachedMenu);
+            });
+          }
+        }, onError: (error) {
+          debugPrint("Sales reports stream error: $error");
         });
       }
     } catch (e) {
@@ -298,7 +293,17 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                           letterSpacing: 2.0,
                         ),
                       ),
-                      _buildExportButton(cs),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.onClose != null)
+                            IconButton(
+                              icon: Icon(Icons.close, color: cs.secondary.withValues(alpha: 0.4)),
+                              onPressed: () => widget.onClose?.call(),
+                            ),
+                          _buildExportButton(cs),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),

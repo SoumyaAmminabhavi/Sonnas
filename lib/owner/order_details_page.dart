@@ -69,6 +69,30 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
               );
             }
 
+            if (snapshot.hasError) {
+              return Scaffold(
+                backgroundColor: cs.surface,
+                body: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.error_outline, size: 48, color: cs.error),
+                      const SizedBox(height: 16),
+                      Text("Unable to load this order right now.",
+                        style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
+                      ),
+                      const SizedBox(height: 24),
+                      TextButton.icon(
+                        onPressed: () => setState(() => _orderFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''))),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text("Retry"),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             if (order == null) {
               return Scaffold(
                 backgroundColor: cs.surface,
@@ -401,29 +425,30 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                               label: label,
                                               cs: cs,
                                               isPrimary: active,
-                                               onPressed: active ? () async {
-                                                 try {
-                                                   await OrderService.updateOrderStatus(order['id'], next);
-                                                   setState(() => _orderFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), '')));
-                                                   if (context.mounted) {
-                                                     ScaffoldMessenger.of(context).showSnackBar(
-                                                       SnackBar(
-                                                         content: Row(
-                                                           children: [
-                                                             const Icon(Icons.check_circle_outline, color: Colors.white),
-                                                             const SizedBox(width: 12),
-                                                             Expanded(child: Text("Order updated to $next")),
-                                                           ],
-                                                         ),
-                                                       ),
-                                                     );
-                                                   }
-                                                 } catch (e) {
-                                                   if (context.mounted) {
-                                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to update order. Please try again.")));
-                                                   }
-                                                 }
-                                               } : null,
+                                                onPressed: active ? () async {
+                                                  try {
+                                                    await OrderService.updateOrderStatus(order['id'], next);
+                                                    if (!context.mounted) return;
+                                                    setState(() => _orderFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), '')));
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Row(
+                                                            children: [
+                                                              const Icon(Icons.check_circle_outline, color: Colors.white),
+                                                              const SizedBox(width: 12),
+                                                              Expanded(child: Text("Order updated to $next")),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to update order. Please try again.")));
+                                                    }
+                                                  }
+                                                } : null,
                                             );
                                           }(),
                                         ),

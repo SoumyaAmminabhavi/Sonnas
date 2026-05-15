@@ -48,9 +48,9 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                     AddMenuPage(onTabChanged: widget.onTabChanged),
               ),
             );
+            if (!context.mounted) return;
             ref.invalidate(menuProvider);
             ref.invalidate(categoriesProvider);
-            // Reset filter to All so new item is visible
             setState(() => _selectedCategories = {'All'});
           },
           child: const Icon(Icons.add, color: Colors.white, size: 28),
@@ -673,7 +673,6 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       debugPrint('⚠️ Load Categories Failed: $e');
       if (mounted) {
         setState(() {
-          _categories = [];
           _isLoadingCategories = false;
         });
       }

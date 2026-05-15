@@ -60,17 +60,13 @@ class SupabaseService {
   static Future<String?> uploadImage({
     required String bucket,
     required String path,
-    required dynamic file,
+    required Uint8List file,
   }) async {
     // Use the unified primary client for all storage buckets
     final storageClient = client.storage;
 
     try {
-      if (file is Uint8List) {
-        await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
-      } else {
-        throw ArgumentError('uploadImage: file must be Uint8List instance');
-      }
+      await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
       return path;
     } catch (e) {
       debugPrint('❌ Storage Upload Error: $e');

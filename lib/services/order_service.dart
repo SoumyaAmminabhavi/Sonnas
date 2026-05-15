@@ -214,6 +214,7 @@ class OrderService {
     };
     if (status == 'CONFIRMED') payload['confirmedAt'] = now;
     if (status == 'DELIVERED') payload['deliveredAt'] = now;
+    if (status == 'COMPLETED') payload['completedAt'] = now;
     if (status == 'CANCELLED') payload['cancelledAt'] = now;
     await _client.from('Order').update(payload).eq('id', orderId);
   }

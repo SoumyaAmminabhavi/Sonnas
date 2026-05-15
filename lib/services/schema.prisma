@@ -176,6 +176,7 @@ model Order {
   items           OrderItem[]
 
   @@index([customerPhone])
+  @@index([whatsappPhone])
   @@index([status])
   @@index([createdAt])
   @@index([source])

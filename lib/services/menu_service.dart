@@ -136,15 +136,12 @@ class MenuService {
     }
   }
 
-  /// Permanently delete a product and clean up its category if empty
+  /// Permanently delete a product and its options
   static Future<void> deleteCake(String id) async {
     try {
-      // 1. Perform HARD DELETE (this will also delete CakeOptions due to Cascade)
       await _client.from('Cake').delete().eq('id', id);
-
-      // 3. Keep empty categories; they are now user-managed records.
     } catch (e) {
-      debugPrint('⚠️ Hard Delete Failed: $e');
+      debugPrint('⚠️ Delete Failed: $e');
       rethrow;
     }
   }
