@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
@@ -8,11 +9,11 @@ class MenuService {
   /// Real-time menu updates
   /// Real-time menu updates with joined data
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
-    // We stream the raw Cake table to detect changes, then fetch the full joined data
-    return _client
-        .from('Cake')
-        .stream(primaryKey: ['id'])
-        .asyncMap((_) => fetchMenu(includeArchived: false));
+    final controller = StreamController<void>.broadcast();
+    _client.from('Cake').stream(primaryKey: ['id']).listen((_) => controller.add(null), cancelOnError: false);
+    _client.from('Category').stream(primaryKey: ['id']).listen((_) => controller.add(null), cancelOnError: false);
+    _client.from('CakeOption').stream(primaryKey: ['id']).listen((_) => controller.add(null), cancelOnError: false);
+    return controller.stream.asyncMap((_) => fetchMenu(includeArchived: false));
   }
 
   /// Fetch all menu items with full category and option data

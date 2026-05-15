@@ -44,6 +44,13 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           _processItemsFromOrders(_orders, _cachedMenu);
         });
       }
+    }, onError: (error) {
+      debugPrint("Sales reports stream error: $error");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     });
   }
 
@@ -162,7 +169,13 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   void _processItemsFromOrders(List<Map<String, dynamic>> orders, List<Map<String, dynamic>> menu) {
-    if (menu.isEmpty || orders.isEmpty) return;
+    if (menu.isEmpty) return;
+    if (orders.isEmpty) {
+      _topItems = [];
+      _categorySales = {};
+      _lastProcessedIds = '';
+      return;
+    }
     
     // Performance: Only fetch if order IDs have changed
     final paidOrders = orders.where((order) {

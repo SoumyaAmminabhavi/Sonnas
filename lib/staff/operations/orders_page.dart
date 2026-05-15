@@ -182,7 +182,11 @@ class StaffOrderCard extends StatelessWidget {
   }
 
   Widget _buildStaffOrderImage(SonnaOrder order, ColorScheme cs) {
-    String imageUrl = order.customImageUrl ?? order.conversationImageUrl ?? '';
+    final customUrl = order.customImageUrl?.trim();
+    final convoUrl = order.conversationImageUrl?.trim();
+    String imageUrl = (customUrl != null && customUrl.isNotEmpty)
+        ? customUrl
+        : (convoUrl ?? '');
     
     if (imageUrl.isEmpty) {
       return Container(

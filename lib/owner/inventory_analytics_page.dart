@@ -374,13 +374,27 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                   onPressed: () async {
                     if (nameController.text.isEmpty) return;
                     
+                    final currentStock = double.tryParse(currentController.text);
+                    final minStock = double.tryParse(minController.text);
+                    if (currentStock == null || minStock == null || currentStock < 0 || minStock < 0) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Invalid stock values. Enter non-negative numbers."),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                    
                     try {
                       await InventoryService.addInventoryItem({
                         'name': nameController.text,
                         'category': selectedCategory,
                         'unit': unitController.text,
-                        'currentStock': double.tryParse(currentController.text) ?? 0.0,
-                        'minStock': double.tryParse(minController.text) ?? 0.0,
+                        'currentStock': currentStock,
+                        'minStock': minStock,
                         'lastRestocked': DateTime.now().toIso8601String(),
                       });
                       

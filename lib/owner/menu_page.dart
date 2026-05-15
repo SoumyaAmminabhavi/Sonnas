@@ -789,6 +789,12 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           categoryId = matchCat['id'].toString();
         } else {
           final catSlug = trimmedCat.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+          if (catSlug.isEmpty) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Category name must contain at least one letter or number')));
+            setState(() => _isUploading = false);
+            return;
+          }
           final nextSortOrder = existingCats.isEmpty ? 0 : (existingCats.map((c) => int.tryParse(c['sortOrder']?.toString() ?? '0') ?? 0).reduce((a, b) => a > b ? a : b) + 1);
           
           categoryId = await MenuService.upsertCategory({
@@ -813,14 +819,26 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           orElse: () => <String, dynamic>{},
         );
 
-         if (existingCat.isNotEmpty) {
-           categoryId = existingCat['id'];
-         } else {
-           categoryId = widget.initialData?['categoryId'];
-           if (categoryId == null) {
-             throw StateError('Please select a valid category');
-           }
-         }
+          if (existingCat.isNotEmpty) {
+            categoryId = existingCat['id'];
+          } else if (widget.initialData?['categoryId'] != null) {
+            categoryId = widget.initialData!['categoryId'];
+          } else if (_categories.isEmpty && _selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
+            final catSlug = _selectedCategoryId!.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+            categoryId = await MenuService.upsertCategory({
+              'id': _generateCmpId(),
+              'name': _selectedCategoryId,
+              'slug': catSlug.isNotEmpty ? catSlug : 'category-${DateTime.now().millisecondsSinceEpoch}',
+              'sortOrder': 0,
+              'updatedAt': DateTime.now().toIso8601String(),
+            });
+            _loadCategories();
+          } else {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a valid category')));
+            setState(() => _isUploading = false);
+            return;
+          }
       }
 
       // 3. Perform Upsert

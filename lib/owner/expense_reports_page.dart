@@ -195,12 +195,13 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                   'description': descController.text,
                 };
 
-                try {
-                  await FinanceService.addExpense(expense);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    _loadData();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  try {
+                    await FinanceService.addExpense(expense);
+                    if (context.mounted) {
+                      final messenger = ScaffoldMessenger.of(context);
+                      Navigator.pop(context);
+                      _loadData();
+                      messenger.showSnackBar(
                       const SnackBar(
                         content: Text("Expense logged successfully!"),
                         backgroundColor: Colors.green,

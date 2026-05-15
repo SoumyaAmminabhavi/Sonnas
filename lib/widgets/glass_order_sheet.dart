@@ -195,13 +195,34 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
 
                      Widget imageWidget;
                     if (displayImageUrl.isNotEmpty) {
-                      // Use raw URL for absolute paths, Supabase public URL for storage paths
-                      final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://') || displayImageUrl.startsWith('data:'))
-                          ? displayImageUrl
-                          : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
-                      imageWidget = ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: CachedNetworkImage(
+                      if (displayImageUrl.startsWith('data:')) {
+                        try {
+                          final bytes = UriData.parse(displayImageUrl).contentAsBytes();
+                          imageWidget = ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.memory(
+                              bytes,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        } catch (_) {
+                          imageWidget = Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                            child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+                          );
+                        }
+                      } else {
+                        // Use raw URL for absolute paths, Supabase public URL for storage paths
+                        final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://'))
+                            ? displayImageUrl
+                            : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
+                        imageWidget = ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
                           imageUrl: resolvedUrl,
                           width: 48,
                           height: 48,
@@ -217,7 +238,8 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                             child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
                           ),
                         ),
-                      );
+                        );
+                      }
                     } else {
                       imageWidget = Container(
                         width: 48,
