@@ -270,55 +270,80 @@ export async function handleCategorySelection(msg: IncomingMessage) {
   const PAGE_SIZE = 10;
   const totalItems = filtered.length;
   
-  // Decide how many items to show and if we need pagination buttons
-  let start = offset;
-  let end = start + PAGE_SIZE;
+  const isFirstPage = offset === 0;
+  const itemsRemainingAfterStart = totalItems - offset;
   
-  // Reserved slots for Prev/Next
-  const needsPrev = start > 0;
-  const needsNext = totalItems > end;
-  
-  // If we need both, we only have 8 slots for actual cakes
-  // If we need one, we have 9 slots
-  let displayCount = PAGE_SIZE;
-  if (needsPrev) displayCount--;
-  if (needsNext) displayCount--;
-  
-  const currentBatch = filtered.slice(start, start + displayCount);
+  let displayCount = 0;
+  let hasNext = false;
+  let hasPrev = !isFirstPage;
+
+  if (isFirstPage) {
+    if (totalItems > PAGE_SIZE) {
+      displayCount = 9;
+      hasNext = true;
+    } else {
+      displayCount = totalItems;
+      hasNext = false;
+    }
+  } else {
+    // We are on page 2 or further. 
+    // We definitely have a Prev button.
+    if (itemsRemainingAfterStart > 9) {
+      // We have more than 9 items left, so we need a Next button too.
+      // Prev (1) + Next (1) = 2 slots taken. 8 items left for cakes.
+      displayCount = 8;
+      hasNext = true;
+    } else {
+      // Last page.
+      // Prev (1) + remaining items.
+      displayCount = itemsRemainingAfterStart;
+      hasNext = false;
+    }
+  }
+
+  const currentBatch = filtered.slice(offset, offset + displayCount);
   const rows = currentBatch.map(cakeRow);
 
   // Add Pagination Buttons
-  if (needsNext) {
+  if (hasNext) {
+    const nextOffset = offset + displayCount;
     rows.push({
-      id: `more_${categoryId}_${start + displayCount}`,
+      id: `more_${categoryId}_${nextOffset}`,
       title: "➡️ Next Page",
-      description: `Show items ${start + displayCount + 1} - ${Math.min(start + displayCount + PAGE_SIZE, totalItems)}`
+      description: `Show items ${nextOffset + 1} - ${Math.min(nextOffset + 9, totalItems)}`
     });
   }
   
-  if (needsPrev) {
-    // To go back, we need to calculate the previous offset. 
-    // Since page sizes vary (8 or 9 or 10), we'll just go back by a fixed amount or to 0.
-    const prevOffset = Math.max(0, start - PAGE_SIZE);
+  if (hasPrev) {
+    // To go back, we need to know the offset of the previous page.
+    // Page 1 ends at 9. Page 2 starts at 9.
+    // If we are at offset 9 (Page 2), previous offset was 0.
+    // If we are at offset 17 (Page 3), previous offset was 9.
+    // The formula for previous offset is slightly tricky because page 1 is different.
+    let prevOffset = 0;
+    if (offset > 9) {
+      prevOffset = offset - 8;
+    }
+    
     rows.unshift({
       id: `prev_${categoryId}_${prevOffset}`,
       title: "⬅️ Previous Page",
-      description: `Return to items ${prevOffset + 1} - ${prevOffset + PAGE_SIZE}`
+      description: `Return to items ${prevOffset + 1} - ${prevOffset + (prevOffset === 0 ? 9 : 8)}`
     });
   }
 
-  await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: start });
+  await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: offset });
 
   await sendInteractiveList(
     msg.from,
     title,
-    start > 0
-      ? `Continuing our ${catName.toLowerCase()} selection (${start + 1}-${start + currentBatch.length} of ${totalItems}):`
+    !isFirstPage
+      ? `Continuing our ${catName.toLowerCase()} selection (${offset + 1}-${offset + currentBatch.length} of ${totalItems}):`
       : `Here are our signature ${catName.toLowerCase()} selections:`,
-    start > 0 ? "Browse Page" : "Select a Cake",
+    !isFirstPage ? "Browse Page" : "Select a Cake",
     [
       {
-        title: start > 0 ? `Page ${Math.floor(start / displayCount) + 1}` : "Available Delights",
+        title: !isFirstPage ? `Results ${offset + 1} - ${offset + currentBatch.length}` : "Available Delights",
         rows,
       },
     ]
