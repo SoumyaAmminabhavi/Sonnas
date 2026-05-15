@@ -159,7 +159,7 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
       const cartButtons = [
-        { id: "btn_checkout", title: "💳 Confirm Order" },
+        { id: "btn_checkout", title: "💳 confirm Order" },
         { id: "btn_menu", title: "➕ Add More" },
       ];
 
