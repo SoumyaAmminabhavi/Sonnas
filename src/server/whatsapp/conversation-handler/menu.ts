@@ -56,32 +56,17 @@ export async function safeGetCakes(): Promise<Cake[]> {
       DB_TIMEOUT
     );
 
-    if (result) {
+    if (result && result.length > 0) {
       const dbCakes = result as unknown as DBCake[];
-      const fallbackCakes = products as unknown as Cake[];
-
       const cakes = dbCakes.map(dbCake => {
         const effectiveCategory = dbCake.category?.name ?? dbCake.categoryName ?? "General";
-        
-        const fallback = fallbackCakes.find(f => 
-          f.name.toLowerCase() === dbCake.name.toLowerCase() || 
-          f.id.toString() === dbCake.id.toString()
-        );
-        
-        if (fallback) {
-          return {
-            ...fallback,
-            ...dbCake,
-            category: effectiveCategory,
-            image: (dbCake.image && String(dbCake.image).startsWith('http') && String(dbCake.image).length > 15) 
-                   ? dbCake.image 
-                   : fallback.image,
-            description: dbCake.description ?? fallback.description,
-          } as unknown as Cake;
-        }
         return {
           ...dbCake,
-          category: effectiveCategory
+          category: effectiveCategory,
+          // Ensure image is a valid URL or placeholder
+          image: (dbCake.image && String(dbCake.image).startsWith('http')) 
+                 ? dbCake.image 
+                 : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
         } as unknown as Cake;
       })
       .filter(c => c.isAvailable !== false)
@@ -202,20 +187,18 @@ export async function sendMenu(to: string) {
   const cakes = await safeGetCakes();
 
   if (cakes.length <= 10) {
-    const chocolateCakes = cakes.filter((p) => p.category === "Chocolate Cakes" || p.category === "Chocolate");
-    const vanillaCakes = cakes.filter((p) => p.category === "Vanilla Cakes" || p.category === "Vanilla");
-    const teaCakes = cakes.filter((p) => p.category === "Tea Cakes" || p.category === "Tea");
-    const seasonalCakes = cakes.filter((p) => p.category === "Seasonal Cakes" || p.category === "Seasonal");
-    const cheesecakes = cakes.filter((p) => p.category === "Mini Cheesecakes");
-    const slices = cakes.filter((p) => p.category === "Slices");
+    // Group cakes by category dynamically
+    const categoriesMap = new Map<string, Cake[]>();
+    for (const cake of cakes) {
+      const cat = cake.category || "Our Selection";
+      if (!categoriesMap.has(cat)) categoriesMap.set(cat, []);
+      categoriesMap.get(cat)!.push(cake);
+    }
 
-    const sections = [];
-    if (chocolateCakes.length > 0) sections.push({ title: "🍫 Chocolate Based", rows: chocolateCakes.map(cakeRow) });
-    if (vanillaCakes.length > 0) sections.push({ title: "🍦 Vanilla & Fruit Based", rows: vanillaCakes.map(cakeRow) });
-    if (cheesecakes.length > 0) sections.push({ title: "🧁 Mini Cheesecakes", rows: cheesecakes.map(cakeRow) });
-    if (slices.length > 0) sections.push({ title: "🍰 Slices", rows: slices.map(cakeRow) });
-    if (teaCakes.length > 0) sections.push({ title: "☕ Tea Time Specials", rows: teaCakes.map(cakeRow) });
-    if (seasonalCakes.length > 0) sections.push({ title: "🍓 Seasonal Specials", rows: seasonalCakes.map(cakeRow) });
+    const sections = Array.from(categoriesMap.entries()).map(([title, items]) => ({
+      title: title.length > 24 ? title.substring(0, 21) + "..." : title,
+      rows: items.map(cakeRow)
+    }));
 
     await sendInteractiveList(
       to,
