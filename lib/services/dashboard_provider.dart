@@ -8,6 +8,11 @@ final menuProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
   return await MenuService.fetchMenu();
 });
 
+/// Provider for all categories (including those without cakes).
+final categoriesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  return await MenuService.fetchCategories();
+});
+
 /// Provider for specific order items, cached by orderId.
 final orderItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, orderId) async {
   return await OrderService.fetchOrderItems(orderId);

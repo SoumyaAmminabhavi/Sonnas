@@ -87,7 +87,9 @@ class MenuDetailsPage extends ConsumerWidget {
         }
 
         final options = cake['CakeOption'] as List? ?? [];
-        final imageUrl = SupabaseService.getPublicUrl(cake['image'], bucket: 'cakes');
+        final String imageField = cake['image']?.toString() ?? '';
+        final imageUrl = SupabaseService.getPublicUrl(imageField, bucket: 'cakes') + 
+                        (imageField.isNotEmpty ? "?t=${DateTime.now().millisecondsSinceEpoch}" : "");
 
         return LayoutBuilder(
           builder: (context, constraints) {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/dashboard_provider.dart';
 import '../../services/order_service.dart';
+import '../../services/supabase_service.dart';
 import '../../models/order.dart';
 
 class KitchenPage extends StatelessWidget {
@@ -169,16 +171,25 @@ class KitchenOrderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    order.customerName,
-                    style: GoogleFonts.notoSerif(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
-                      color: cs.secondary,
-                      letterSpacing: -0.5,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          order.customerName,
+                          style: GoogleFonts.notoSerif(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                            color: cs.secondary,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildKitchenImage(orderMap, cs),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Consumer(
@@ -290,5 +301,51 @@ class KitchenOrderCard extends StatelessWidget {
       case 'CONFIRMED': return "DISPATCH ORDER";
       default: return "VIEW DETAILS";
     }
+  }
+
+  Widget _buildKitchenImage(Map<String, dynamic> data, ColorScheme cs) {
+    // Triple-check image resolution logic
+    String imageUrl = data['customImageUrl'] ?? '';
+    if (imageUrl.isEmpty && data['WhatsAppConversation'] != null) {
+      imageUrl = data['WhatsAppConversation']['customImageUrl'] ?? '';
+    }
+
+    if (imageUrl.isEmpty) {
+      return Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
+      );
+    }
+
+    final resolvedUrl = (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
+        ? imageUrl
+        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: CachedNetworkImage(
+        imageUrl: resolvedUrl,
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: 60,
+          height: 60,
+          color: cs.primary.withValues(alpha: 0.05),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) => Container(
+          width: 60,
+          height: 60,
+          color: cs.primary.withValues(alpha: 0.05),
+          child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
+        ),
+      ),
+    );
   }
 }

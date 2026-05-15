@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/dashboard_provider.dart';
 import '../../services/order_service.dart';
+import '../../services/supabase_service.dart';
 import '../../models/order.dart';
 import '../../widgets/glass_order_sheet.dart';
 
@@ -87,19 +89,7 @@ class StaffOrderCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: cs.primary.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                _getStatusIcon(order.status), 
-                color: _getStatusColor(order.status, cs).withValues(alpha: 0.7),
-                size: 22,
-              ),
-            ),
+            _buildStaffOrderImage(order, cs),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
@@ -189,6 +179,52 @@ class StaffOrderCard extends StatelessWidget {
       case OrderStatus.completed: return cs.secondary;
       default: return cs.primary;
     }
+  }
+
+  Widget _buildStaffOrderImage(SonnaOrder order, ColorScheme cs) {
+    String imageUrl = order.customImageUrl ?? order.conversationImageUrl ?? '';
+    
+    if (imageUrl.isEmpty) {
+      return Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: cs.primary.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(
+          _getStatusIcon(order.status), 
+          color: _getStatusColor(order.status, cs).withValues(alpha: 0.7),
+          size: 22,
+        ),
+      );
+    }
+
+    final resolvedUrl = (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
+        ? imageUrl
+        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: CachedNetworkImage(
+        imageUrl: resolvedUrl,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: 52,
+          height: 52,
+          color: cs.primary.withValues(alpha: 0.05),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        ),
+        errorWidget: (context, url, error) => Container(
+          width: 52,
+          height: 52,
+          color: cs.primary.withValues(alpha: 0.05),
+          child: Icon(_getStatusIcon(order.status), color: _getStatusColor(order.status, cs).withValues(alpha: 0.7), size: 22),
+        ),
+      ),
+    );
   }
 }
 

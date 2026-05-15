@@ -49,21 +49,55 @@ class OrderService {
   }
 
   /// Real-time stream for a single order
-  static Stream<Map<String, dynamic>?> getSingleOrderStream(String id) {
+  /// Get a single order by ID or Order Number
+  static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) {
+    // We stream the table and filter in memory to allow matching either ID or OrderNumber
+    // This is more flexible for deep-linking from notifications
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .eq('id', id)
-        .map((list) => list.isNotEmpty ? list.first : null);
+        .map((list) {
+          try {
+            return list.firstWhere(
+              (o) {
+                final String dbId = o['id'].toString();
+                final String dbNum = o['orderNumber']?.toString() ?? '';
+                
+                // Direct ID match
+                if (dbId == idOrNumber) return true;
+                
+                // Direct Order Number match
+                if (dbNum == idOrNumber) return true;
+                
+                // Cross-prefix matching (remove common prefixes to compare the core number)
+                final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-)'), '');
+                final cleanDbNum = dbNum.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-)'), '');
+                
+                return cleanInput != "" && cleanInput == cleanDbNum;
+              },
+              orElse: () => <String, dynamic>{},
+            );
+          } catch (_) {
+            return null;
+          }
+        })
+        .map((order) => (order == null || order.isEmpty) ? null : order);
   }
 
   /// Real-time stream for recent orders
+  /// Real-time stream for recent orders with joined data
   static Stream<List<Map<String, dynamic>>> getRecentOrdersStream() {
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .order('createdAt', ascending: false)
-        .limit(50);
+        .asyncMap((_) async {
+          final res = await _client
+              .from('Order')
+              .select('*, WhatsAppConversation(*)')
+              .order('createdAt', ascending: false)
+              .limit(50);
+          return List<Map<String, dynamic>>.from(res);
+        });
   }
 
   /// Bulk fetch items for multiple orders
@@ -158,11 +192,19 @@ class OrderService {
   }
 
   /// Real-time stream for kitchen
+  /// Real-time stream for kitchen with joined data
   static Stream<List<Map<String, dynamic>>> getKitchenOrdersStream() {
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .order('createdAt', ascending: true);
+        .asyncMap((_) async {
+          final res = await _client
+              .from('Order')
+              .select('*, WhatsAppConversation(*)')
+              .inFilter('status', ['PENDING', 'CONFIRMED'])
+              .order('createdAt', ascending: true);
+          return List<Map<String, dynamic>>.from(res);
+        });
   }
 
   /// Submit a new order from the public customer platform (Unified)

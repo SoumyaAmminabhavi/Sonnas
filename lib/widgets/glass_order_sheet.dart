@@ -183,8 +183,12 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                           );
                     displayImageUrl = matchingCake['image'] ?? '';
 
-                    if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && widget.order.customImageUrl != null) {
-                      displayImageUrl = widget.order.customImageUrl!;
+                    if (displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) {
+                      if (widget.order.customImageUrl != null && widget.order.customImageUrl!.isNotEmpty) {
+                        displayImageUrl = widget.order.customImageUrl!;
+                      } else if (widget.order.conversationImageUrl != null && widget.order.conversationImageUrl!.isNotEmpty) {
+                        displayImageUrl = widget.order.conversationImageUrl!;
+                      }
                     }
 
                      Widget imageWidget;

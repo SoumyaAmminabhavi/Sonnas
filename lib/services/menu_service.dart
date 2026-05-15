@@ -6,12 +6,13 @@ class MenuService {
   static SupabaseClient get _client => SupabaseService.client;
 
   /// Real-time menu updates
+  /// Real-time menu updates with joined data
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
+    // We stream the raw Cake table to detect changes, then fetch the full joined data
     return _client
         .from('Cake')
         .stream(primaryKey: ['id'])
-        .order('name')
-        .map((list) => list.where((item) => item['deletedAt'] == null).toList());
+        .asyncMap((_) => fetchMenu(includeArchived: false));
   }
 
   /// Fetch all menu items with full category and option data
@@ -36,21 +37,17 @@ class MenuService {
     }
   }
 
-  /// Fetch all categories that have at least one active product
+  /// Fetch all categories
   static Future<List<Map<String, dynamic>>> fetchCategories() async {
     try {
-      // We only want categories that have active cakes.
-      // This automatically "deletes" empty categories from the UI.
       final res = await _client
           .from('Category')
-          .select('*, Cake!inner(id)')
-          .isFilter('Cake.deletedAt', null)
+          .select('*')
           .order('sortOrder');
           
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      // If the join fails or returns nothing, we return an empty list
-      debugPrint('ℹ️ Category fetch filtered (might be empty): $e');
+      debugPrint('⚠️ Category fetch failed: $e');
       return [];
     }
   }
@@ -84,7 +81,23 @@ class MenuService {
   /// Create or update a cake option
   static Future<void> upsertCakeOption(Map<String, dynamic> option) async {
     try {
-      await _client.from('CakeOption').upsert(option);
+      final String cakeId = option['cakeId'].toString();
+      final String size = option['size'].toString();
+
+      // Safety check: Check for existing option with same size to avoid constraint violations
+      final existing = await _client
+          .from('CakeOption')
+          .select('id')
+          .eq('cakeId', cakeId)
+          .eq('size', size)
+          .maybeSingle();
+      
+      final data = Map<String, dynamic>.from(option);
+      if (existing != null) {
+        data['id'] = existing['id']; // Force update existing row
+      }
+
+      await _client.from('CakeOption').upsert(data);
     } catch (e) {
       debugPrint('⚠️ Upsert CakeOption Failed: $e');
       rethrow;
@@ -106,9 +119,8 @@ class MenuService {
       // 2. Perform HARD DELETE (this will also delete CakeOptions due to Cascade)
       await _client.from('Cake').delete().eq('id', id);
 
-      // 3. Smart Category Cleanup
+      // 3. Smart Category Cleanup: delete category if it's now empty
       if (categoryId != null) {
-        // Check if any other cakes (active or archived) still use this category
         final remainingCakes = await _client
             .from('Cake')
             .select('id')
@@ -116,7 +128,6 @@ class MenuService {
             .limit(1);
 
         if (remainingCakes.isEmpty) {
-          // No more products in this category at all. Delete it too.
           debugPrint('🧹 Cleaning up empty category: $categoryId');
           await _client.from('Category').delete().eq('id', categoryId);
         }

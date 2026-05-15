@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import 'dart:io' show File;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:math';
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/menu_service.dart';
@@ -57,6 +58,9 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 ),
               );
               ref.invalidate(menuProvider);
+              ref.invalidate(categoriesProvider);
+              // Reset filter to All so new item is visible
+              setState(() => _selectedCategories = {'All'});
             },
             child: const Icon(Icons.add, color: Colors.white, size: 28),
           ),
@@ -92,6 +96,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
               onRetry: () => ref.invalidate(menuProvider),
             ),
             data: (rawCakes) {
+              final catsAsync = ref.watch(categoriesProvider);
               final List<_MenuItem> allItems = rawCakes.map((data) {
                 final options = data['CakeOption'] as List? ?? [];
                 final basePrice = options.isNotEmpty
@@ -111,17 +116,28 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                   description: data['description'] ?? '',
                   serves: baseServes,
                   weight: "Standard",
-                  imageUrl: SupabaseService.getPublicUrl(data['image'], bucket: 'cakes'),
+                  imageUrl: SupabaseService.getPublicUrl(data['image'], bucket: 'cakes') + (data['image'].isNotEmpty ? "?t=${DateTime.now().millisecondsSinceEpoch}" : ""),
                 );
               }).toList();
 
-              // Dynamic Categories
+              // Dynamic Category Filtering (Only show categories with items)
               final Set<String> uniqueCategories = {'All'};
-              for (var item in allItems) {
-                if (item.category.isNotEmpty) {
-                  uniqueCategories.add(item.category);
+              
+              // Only add categories that have at least one item currently visible
+              final Set<String> activeCategoryNames = allItems.map((i) => i.category).toSet();
+              
+              // 1. Get all categories from DB, but only include them if they have items
+              final dbCategories = catsAsync.value ?? [];
+              for (var c in dbCategories) {
+                final catName = c['name']?.toString() ?? '';
+                if (activeCategoryNames.contains(catName)) {
+                  uniqueCategories.add(catName);
                 }
               }
+
+              // 2. Safety fallback: categories from items themselves
+              uniqueCategories.addAll(activeCategoryNames);
+
               final List<String> categories = uniqueCategories.toList()
                 ..sort((a, b) {
                   if (a == 'All') return -1;
@@ -130,12 +146,13 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 });
 
               // Filtering logic
-              // Safety: If the currently selected category was deleted/emptied, reset to 'All'
-              final availableCategories = allItems.map((i) => i.category).toSet();
+              // Safety: If the currently selected categories are now hidden/empty, fallback to 'All'
               if (!_selectedCategories.contains('All')) {
-                final stillExists = _selectedCategories.any((cat) => availableCategories.contains(cat));
-                if (!stillExists) {
+                final validSelection = _selectedCategories.where((cat) => uniqueCategories.contains(cat)).toSet();
+                if (validSelection.isEmpty) {
                   _selectedCategories = {'All'};
+                } else if (validSelection.length != _selectedCategories.length) {
+                  _selectedCategories = validSelection;
                 }
               }
 
@@ -711,7 +728,11 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
   String _generateCmpId() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    final randomPart = List.generate(19, (index) => chars[DateTime.now().microsecondsSinceEpoch % chars.length]).join();
+    final random = Random();
+    final randomPart = List.generate(
+      19,
+      (index) => chars[random.nextInt(chars.length)],
+    ).join();
     // This creates exactly 25 chars: cmp57z + 19 random chars
     return 'cmp57z$randomPart';
   }
@@ -723,50 +744,22 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
     try {
       final String cakeName = _nameController.text.trim();
-      final String slug = cakeName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
-
-      // 1. Smart ID Resolution (Check if item already exists by name/slug)
-      Map<String, dynamic> matchedCake = {};
-      try {
-        final existingCakes = await MenuService.fetchMenu(includeArchived: true);
-        matchedCake = existingCakes.firstWhere(
-          (c) => c['slug'] == slug,
-          orElse: () => <String, dynamic>{},
-        );
-      } catch (e) {
-        debugPrint('Smart search failed: $e');
-      }
-
-      final String? existingCakeId = matchedCake.isNotEmpty ? matchedCake['id']?.toString() : null;
-      final String? currentCakeId = widget.initialData?['id']?.toString();
+      String slug = cakeName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
       
-      // Safety check: Don't allow renaming to something that already exists elsewhere
-      if (existingCakeId != null && currentCakeId != null && existingCakeId != currentCakeId) {
+      // Make slug unique for new items to avoid accidental overwrites
+      if (widget.initialData == null) {
+        slug = '$slug-${DateTime.now().millisecondsSinceEpoch % 10000}';
+      }
+
+      if (slug.isEmpty || slug == '-') {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('A different item already uses this name.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid name.'), backgroundColor: Colors.red));
         setState(() => _isUploading = false);
         return;
       }
 
-      // Final ID to use for both Image and Database
-      final String finalCakeId = existingCakeId ?? currentCakeId ?? _generateCmpId();
-
-      if (slug.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter a valid name.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() => _isUploading = false);
-        return;
-      }
+      // Final ID: If editing, use existing. If adding, ALWAYS generate new to prevent overwrites.
+      final String finalCakeId = widget.initialData?['id']?.toString() ?? _generateCmpId();
 
       String? imagePath = _existingImageUrl;
 
@@ -867,16 +860,25 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       });
 
       // 4. Save Options (Handling duplicates)
-      final existingOptions = [
+      final List<dynamic> existingOptions = [
         ...(widget.initialData?['CakeOption'] as List? ?? []),
-        ...(matchedCake['CakeOption'] as List? ?? []),
       ];
       
-      final currentSize = _weightController.text;
-      final matchedOption = existingOptions.firstWhere(
-        (o) => o['size']?.toString() == currentSize,
-        orElse: () => existingOptions.isNotEmpty ? existingOptions[0] : null,
-      );
+      final currentSize = _weightController.text.trim();
+      
+      // Try to find an exact size match first to avoid unique constraint violations
+      Map<String, dynamic>? matchedOption;
+      for (var opt in existingOptions) {
+        if (opt['size']?.toString().trim() == currentSize) {
+          matchedOption = Map<String, dynamic>.from(opt);
+          break;
+        }
+      }
+
+      // If no exact size match, but we are editing and have options, use the first one as the "primary" option to update
+      if (matchedOption == null && existingOptions.isNotEmpty && widget.initialData != null) {
+        matchedOption = Map<String, dynamic>.from(existingOptions[0]);
+      }
 
       final normalizedPrice = _sanitizePrice(_priceController.text);
 
@@ -885,7 +887,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         'cakeId': cakeId,
         'price': ((double.tryParse(normalizedPrice) ?? 0) * 100).toInt(),
         'size': currentSize,
-        'serves': _servesController.text,
+        'serves': _servesController.text.trim(),
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
@@ -1328,7 +1330,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                     : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
-                        SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
+                        SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes') + "?t=${DateTime.now().millisecondsSinceEpoch}",
                         fit: BoxFit.cover,
                       )
                     : Column(

@@ -26,7 +26,16 @@ class OrderCardReactive extends ConsumerWidget {
         final status = data['status'] ?? 'PENDING';
         Color statusColor = status == 'COMPLETED' ? cs.secondary : cs.primary;
 
+        // 1. Try customImageUrl from the order
         String imageUrl = data['customImageUrl'] ?? '';
+        
+        // 2. Try to find an image from the associated WhatsApp Conversation if order image is missing
+        if (imageUrl.isEmpty && data['WhatsAppConversation'] != null) {
+          final convo = data['WhatsAppConversation'];
+          imageUrl = convo['customImageUrl'] ?? '';
+        }
+
+        // 3. Fallback to Menu Item image if still empty
         if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
           if (items.isNotEmpty && menuAsync.hasValue) {
             final String firstName = items[0]['cakeName'] ?? '';

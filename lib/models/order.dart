@@ -93,6 +93,7 @@ class SonnaOrder {
   final List<OrderItem> items;
   final String? notes;
   final String? customImageUrl;
+  final String? conversationImageUrl;
   final String source;
   final bool isCustom;
 
@@ -108,6 +109,7 @@ class SonnaOrder {
     required this.items,
     this.notes,
     this.customImageUrl,
+    this.conversationImageUrl,
     required this.source,
     required this.isCustom,
   });
@@ -126,6 +128,7 @@ class SonnaOrder {
       items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i))).toList(),
       notes: map['notes']?.toString(),
       customImageUrl: map['customImageUrl']?.toString(),
+      conversationImageUrl: map['WhatsAppConversation'] != null ? map['WhatsAppConversation']['customImageUrl']?.toString() : null,
       source: map['source']?.toString() ?? 'WHATSAPP',
       isCustom: map['isCustom'] == true,
     );
