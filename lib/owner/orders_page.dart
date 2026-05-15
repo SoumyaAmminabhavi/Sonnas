@@ -11,7 +11,8 @@ class ManageOrdersPage extends StatefulWidget {
   State<ManageOrdersPage> createState() => _ManageOrdersPageState();
 }
 
-class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerProviderStateMixin {
+class _ManageOrdersPageState extends State<ManageOrdersPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -66,7 +67,7 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
               ),
             ),
 
-            // Tabs
+            // Tabs — now reflect the unified OrderStatus enum
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: TabBar(
@@ -86,20 +87,26 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
                 dividerColor: Colors.transparent,
                 tabs: const [
                   Tab(text: "PENDING"),
-                  Tab(text: "PREPARING"),
+                  Tab(text: "CONFIRMED"),
                   Tab(text: "SHIPPED/DONE"),
                 ],
               ),
             ),
-            const Divider(height: 1, thickness: 0.5, color: Colors.black12, indent: 24, endIndent: 24),
+            const Divider(
+              height: 1,
+              thickness: 0.5,
+              color: Colors.black12,
+              indent: 24,
+              endIndent: 24,
+            ),
 
-            // Orders List/Grid
+            // Orders List
             Expanded(
               child: TabBarView(
                 controller: _tabController,
                 children: [
                   _OrdersList(cs: cs, status: 'PENDING'),
-                  _OrdersList(cs: cs, status: 'PREPARING'),
+                  _OrdersList(cs: cs, status: 'CONFIRMED'),
                   _OrdersList(cs: cs, status: 'SHIPPED_OR_DELIVERED'),
                 ],
               ),
@@ -111,6 +118,8 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> with SingleTickerPr
   }
 }
 
+// ─── Orders List ─────────────────────────────────────────────────────────────
+
 class _OrdersList extends StatelessWidget {
   final ColorScheme cs;
   final String status;
@@ -120,9 +129,18 @@ class _OrdersList extends StatelessWidget {
   Widget build(BuildContext context) {
     final supabase = Supabase.instance.client;
 
+    // Query the unified Order table
     final stream = status == 'SHIPPED_OR_DELIVERED'
-        ? supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).inFilter('status', ['SHIPPED', 'DELIVERED']).order('createdAt', ascending: false)
-        : supabase.from('WhatsAppOrder').stream(primaryKey: ['id']).eq('status', status).order('createdAt', ascending: false);
+        ? supabase
+            .from('Order')
+            .stream(primaryKey: ['id'])
+            .inFilter('status', ['OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED'])
+            .order('createdAt', ascending: false)
+        : supabase
+            .from('Order')
+            .stream(primaryKey: ['id'])
+            .eq('status', status)
+            .order('createdAt', ascending: false);
 
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: stream,
@@ -130,18 +148,19 @@ class _OrdersList extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
           return Center(child: Text("Error: ${snapshot.error}"));
         }
 
-        var data = snapshot.data ?? [];
+        final data = snapshot.data ?? [];
 
         if (data.isEmpty) {
           return Center(
             child: Text(
               "No ${status == 'SHIPPED_OR_DELIVERED' ? 'SHIPPED/DONE' : status} orders",
-              style: GoogleFonts.plusJakartaSans(color: cs.secondary.withOpacity(0.4)),
+              style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withOpacity(0.4)),
             ),
           );
         }
@@ -149,14 +168,16 @@ class _OrdersList extends StatelessWidget {
         return ListView.separated(
           padding: const EdgeInsets.all(24),
           itemCount: data.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 16),
+          separatorBuilder: (_, __) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final order = data[index];
-            final String deliveryDateStr = order['deliveryDate'] ?? '';
+
+            // deliveryDate is now a DateTime in the schema
+            final deliveryDateVal = order['deliveryDate'];
             String formattedDate = "No Date";
-            if (deliveryDateStr.isNotEmpty) {
+            if (deliveryDateVal != null) {
               try {
-                final date = DateTime.parse(deliveryDateStr);
+                final date = DateTime.parse(deliveryDateVal.toString());
                 formattedDate = DateFormat('MMM dd, yyyy').format(date);
               } catch (_) {}
             }
@@ -170,20 +191,51 @@ class _OrdersList extends StatelessWidget {
               } catch (_) {}
             }
 
+            final String orderStatus = order['status'] ?? 'PENDING';
+            final String source = order['source']?.toString() ?? 'APP';
+
+            Color statusBg;
+            Color statusFg;
+            switch (orderStatus) {
+              case 'CONFIRMED':
+                statusBg = cs.primaryContainer;
+                statusFg = cs.onPrimaryContainer;
+                break;
+              case 'OUT_FOR_DELIVERY':
+                statusBg = Colors.blue.shade100;
+                statusFg = Colors.blue.shade900;
+                break;
+              case 'DELIVERED':
+              case 'COMPLETED':
+                statusBg = Colors.green.shade100;
+                statusFg = Colors.green.shade900;
+                break;
+              case 'CANCELLED':
+                statusBg = Colors.red.shade100;
+                statusFg = Colors.red.shade900;
+                break;
+              default: // PENDING
+                statusBg = Colors.orange.shade100;
+                statusFg = Colors.orange.shade900;
+            }
+
             return _OrderCompactCard(
               cs: cs,
               data: _OrderData(
                 orderId: order['id'] ?? '',
                 orderNumber: order['orderNumber'] ?? 'N/A',
                 customerName: order['customerName'] ?? 'Guest',
-                status: order['status'] ?? 'PENDING',
-                item: "Order Details",
-                time: order['deliveryTime'] ?? 'No Time',
+                status: orderStatus,
+                source: source,
+                time: order['deliverySlot'] ?? 'No Time',
                 date: formattedDate,
                 orderTime: orderTime,
-                imageUrl: order['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=60",
-                statusBg: status == 'PENDING' ? Colors.orange.shade100 : (status == 'PREPARING' ? cs.primaryContainer : Colors.green.shade100),
-                statusFg: status == 'PENDING' ? Colors.orange.shade900 : (status == 'PREPARING' ? cs.onPrimaryContainer : Colors.green.shade900),
+                imageUrl: order['customImageUrl'] ??
+                    "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&auto=format&fit=crop&q=60",
+                statusBg: statusBg,
+                statusFg: statusFg,
+                phone: order['customerPhone'] ?? 'No Phone',
+                address: order['address'] ?? 'Self-Pickup',
               ),
             );
           },
@@ -193,54 +245,56 @@ class _OrdersList extends StatelessWidget {
   }
 }
 
+// ─── Data Model ──────────────────────────────────────────────────────────────
 class _OrderData {
   final String orderId;
   final String orderNumber;
   final String customerName;
   final String status;
-  final String item;
+  final String source;
   final String time;
   final String date;
   final String orderTime;
   final String imageUrl;
   final Color statusBg;
   final Color statusFg;
+  final String phone;
+  final String address;
 
   _OrderData({
     required this.orderId,
     required this.orderNumber,
     required this.customerName,
     required this.status,
-    required this.item,
+    required this.source,
     required this.time,
     required this.date,
     required this.orderTime,
     required this.imageUrl,
     required this.statusBg,
     required this.statusFg,
+    required this.phone,
+    required this.address,
   });
 }
+
+// ─── Order Card ──────────────────────────────────────────────────────────────
 
 class _OrderCompactCard extends StatelessWidget {
   final ColorScheme cs;
   final _OrderData data;
 
-  const _OrderCompactCard({
-    required this.cs,
-    required this.data,
-  });
+  const _OrderCompactCard({required this.cs, required this.data});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(orderId: data.orderId),
-          ),
-        );
-      },
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OrderDetailsPage(orderId: data.orderId),
+        ),
+      ),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -258,7 +312,7 @@ class _OrderCompactCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Image
+            // Cake image / custom image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
@@ -266,7 +320,7 @@ class _OrderCompactCard extends StatelessWidget {
                 width: 90,
                 height: 90,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+                errorBuilder: (_, __, ___) => Container(
                   width: 90,
                   height: 90,
                   color: cs.primaryContainer.withOpacity(0.2),
@@ -275,31 +329,59 @@ class _OrderCompactCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 16),
-            
+
             // Details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Order number + source + status badges
                   Row(
                     children: [
-                      Text(
-                        "${data.orderNumber} • Ordered at ${data.orderTime}",
-                        style: GoogleFonts.notoSerif(
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                          color: cs.secondary.withOpacity(0.5),
+                      Expanded(
+                        child: Text(
+                          "${data.orderNumber} • ${data.orderTime}",
+                          style: GoogleFonts.notoSerif(
+                            fontSize: 10,
+                            fontStyle: FontStyle.italic,
+                            color: cs.secondary.withOpacity(0.5),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
+                      // Source badge
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: data.source == 'WHATSAPP'
+                              ? Colors.green.shade50
+                              : cs.primaryContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          data.source == 'WHATSAPP' ? '💬 WA' : '📲 APP',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            color: data.source == 'WHATSAPP'
+                                ? Colors.green.shade700
+                                : cs.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      // Status badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: data.statusBg.withOpacity(0.8),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          data.status.toUpperCase(),
+                          data.status,
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 8,
                             fontWeight: FontWeight.bold,
@@ -319,20 +401,37 @@ class _OrderCompactCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  _CompactInfoRow(icon: Icons.calendar_today_outlined, text: data.date, cs: cs),
+                  _CompactInfoRow(
+                      icon: Icons.calendar_today_outlined,
+                      text: data.date,
+                      cs: cs),
                   const SizedBox(height: 2),
-                  _CompactInfoRow(icon: Icons.schedule_outlined, text: data.time, cs: cs),
+                  _CompactInfoRow(
+                      icon: Icons.schedule_outlined,
+                      text: data.time,
+                      cs: cs),
+                  const SizedBox(height: 2),
+                  _CompactInfoRow(
+                      icon: Icons.phone_outlined,
+                      text: data.phone,
+                      cs: cs),
+                  const SizedBox(height: 2),
+                  _CompactInfoRow(
+                      icon: Icons.location_on_outlined,
+                      text: data.address,
+                      cs: cs),
                 ],
               ),
             ),
-            
-            // Action
+
+            // Actions column
             const SizedBox(width: 8),
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.more_vert, color: cs.secondary.withOpacity(0.3)),
+                  icon: Icon(Icons.more_vert,
+                      color: cs.secondary.withOpacity(0.3)),
                   onPressed: () {},
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -341,13 +440,19 @@ class _OrderCompactCard extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [cs.primary, cs.primaryContainer],
-                    ),
+                    gradient:
+                        LinearGradient(colors: [cs.primary, cs.primaryContainer]),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.edit_note, color: Colors.white, size: 20),
-                    onPressed: () {},
+                    icon: const Icon(Icons.edit_note,
+                        color: Colors.white, size: 20),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            OrderDetailsPage(orderId: data.orderId),
+                      ),
+                    ),
                     padding: const EdgeInsets.all(8),
                     constraints: const BoxConstraints(),
                   ),
@@ -361,11 +466,14 @@ class _OrderCompactCard extends StatelessWidget {
   }
 }
 
+// ─── Helper Widget ───────────────────────────────────────────────────────────
+
 class _CompactInfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
   final ColorScheme cs;
-  const _CompactInfoRow({required this.icon, required this.text, required this.cs});
+  const _CompactInfoRow(
+      {required this.icon, required this.text, required this.cs});
 
   @override
   Widget build(BuildContext context) {
@@ -388,5 +496,3 @@ class _CompactInfoRow extends StatelessWidget {
     );
   }
 }
-
-

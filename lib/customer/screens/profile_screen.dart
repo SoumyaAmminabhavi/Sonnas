@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import '../providers/favorites_provider.dart';
+import 'product_detail_screen.dart';
 import 'contact_screen.dart';
 import 'welcome_screen.dart';
 
@@ -251,7 +254,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
+                  
+                  // My Wishlist Section
+                  Consumer<FavoritesProvider>(
+                    builder: (context, favorites, _) {
+                      if (favorites.favorites.isEmpty) return const SizedBox.shrink();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "MY WISHLIST",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 2,
+                                  color: primary,
+                                ),
+                              ),
+                              Text(
+                                "${favorites.favorites.length} ITEMS",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: secondary.withOpacity(0.4),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 140,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: favorites.favorites.length,
+                              itemBuilder: (context, index) {
+                                final item = favorites.favorites[index];
+                                return Container(
+                                  width: 100,
+                                  margin: const EdgeInsets.only(right: 16),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ProductDetailScreen(
+                                            title: item['title'],
+                                            price: item['price'],
+                                            imageUrl: item['image'],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Image.network(
+                                            item['image'],
+                                            height: 100,
+                                            width: 100,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, __, ___) => Container(
+                                              height: 100,
+                                              width: 100,
+                                              color: primary.withOpacity(0.05),
+                                              child: const Icon(Icons.cake, color: primary),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          item['title'],
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: secondary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+                      );
+                    },
+                  ),
+
                   // Recent Activity
                   Text(
                     "Recent Activity",
@@ -264,9 +363,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   StreamBuilder<List<Map<String, dynamic>>>(
                     key: Key(_phoneController.text),
                     stream: Supabase.instance.client
-                        .from('WhatsAppOrder')
+                        .from('Order')
                         .stream(primaryKey: ['id'])
-                        .eq('phone', _phoneController.text)
+                        .eq('customerPhone', _phoneController.text)
                         .order('createdAt', ascending: false)
                         .limit(1),
                     builder: (context, snapshot) {

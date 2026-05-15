@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'customer/providers/cart_provider.dart';
+import 'customer/providers/favorites_provider.dart';
 import 'customer/main.dart';
 import 'customer/screens/welcome_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables
   try {
     await dotenv.load(fileName: "assets/.env");
   } catch (e) {
-    debugPrint("Warning: .env file not found or failed to load. Falling back to compile-time constants via --dart-define (String.fromEnvironment): $e");
+    debugPrint("Warning: .env file not found or failed to load: $e");
   }
 
-  // Use a safer way to get environment variables to avoid NotInitializedError
   final String supabaseUrl = dotenv.isInitialized 
       ? dotenv.get('SUPABASE_URL', fallback: const String.fromEnvironment('SUPABASE_URL'))
       : const String.fromEnvironment('SUPABASE_URL');
@@ -28,47 +26,18 @@ void main() async {
       : const String.fromEnvironment('SUPABASE_ANON_KEY');
 
   try {
-    if (supabaseUrl.isEmpty || supabaseUrl == 'your_url_here' || supabaseAnonKey.isEmpty) {
-      throw Exception("Supabase configuration is missing or invalid.");
+    if (supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty) {
+      await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
     }
-
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseAnonKey,
-    );
   } catch (e) {
-    debugPrint("CRITICAL ERROR: Failed to initialize Supabase: $e");
-    runApp(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
-                  Text("Configuration Error", style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text("The application could not be initialized due to missing configuration. Please check your .env file or environment variables.", 
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    return;
+    debugPrint("Failed to initialize Supabase: $e");
   }
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
       ],
       child: const PatisserieApp(),
     ),
@@ -87,35 +56,30 @@ class PatisserieApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.light(
-          primary: Color(0xFFFF4D8D), // Vibrant Pink
-          secondary: Color(0xFF701235), // Deep Berry
-          surface: Color(0xFFFFF0F6), // Pale Pink Background
+          primary: Color(0xFFFF4D8D),
+          secondary: Color(0xFF701235),
+          surface: Color(0xFFFFF0F6),
           onSurface: Color(0xFF701235),
-          onSurfaceVariant: Color(0xFF964261),
-          primaryContainer: Color(0xFFFFB6D3), // Pastel Pink
-          onPrimaryContainer: Color(0xFF701235),
-          surfaceContainer: Color(0xFFFFFFFF), // Pure White for Cards
-          surfaceContainerLow: Color(0xFFFFF5F9),
-          outlineVariant: Color(0xFFFFB6D3),
+          primaryContainer: Color(0xFFFFB6D3),
         ),
         textTheme: _textTheme(const Color(0xFF701235)),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFFF4D8D), // Vibrant Pink
-          secondary: Color(0xFFFFB6D3), // Pastel Pink
-          surface: Color(0xFF1A0F14), // Deep Midnight Berry
-          onSurface: Color(0xFFFFF0F6), // Pale Pink text
-          onSurfaceVariant: Color(0xFFFFB6D3),
-          primaryContainer: Color(0xFF701235), // Deep Berry
-          onPrimaryContainer: Color(0xFFFFB6D3),
-          surfaceContainer: Color(0xFF2D1B22), // Slightly lighter for cards
-          surfaceContainerLow: Color(0xFF25161C),
-          outlineVariant: Color(0xFF701235),
+          primary: Color(0xFFFF4D8D),
+          secondary: Color(0xFFFFB6D3),
+          surface: Color(0xFF1A0F14),
+          onSurface: Color(0xFFFFF0F6),
+          primaryContainer: Color(0xFF701235),
         ),
         textTheme: _textTheme(const Color(0xFFFFF0F6)),
       ),
+      // Define routes for easy navigation
+      routes: {
+        '/home': (context) => const CustomerMainScreen(),
+        '/welcome': (context) => const WelcomeScreen(),
+      },
       home: Supabase.instance.client.auth.currentSession != null 
           ? const CustomerMainScreen() 
           : const WelcomeScreen(),
@@ -124,21 +88,10 @@ class PatisserieApp extends StatelessWidget {
 
   TextTheme _textTheme(Color color) {
     return TextTheme(
-      displayLarge: GoogleFonts.notoSerif(
-        color: color,
-        fontWeight: FontWeight.w400,
-      ),
-      headlineLarge: GoogleFonts.notoSerif(
-        color: color,
-        fontWeight: FontWeight.w400,
-      ),
-      bodyLarge: GoogleFonts.plusJakartaSans(
-        color: color,
-      ),
-      labelSmall: GoogleFonts.plusJakartaSans(
-        fontWeight: FontWeight.bold,
-        letterSpacing: 2.0,
-      ),
+      displayLarge: GoogleFonts.notoSerif(color: color),
+      headlineLarge: GoogleFonts.notoSerif(color: color),
+      bodyLarge: GoogleFonts.plusJakartaSans(color: color),
+      labelSmall: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 2.0),
     );
   }
 }

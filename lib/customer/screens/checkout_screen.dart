@@ -38,6 +38,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
+  final _giftMessageController = TextEditingController();
+  bool _isGiftWrapping = false;
+  static const int wrappingFeePaise = 25000; // ₹250 for premium wrapping
 
   Future<void> _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
@@ -127,6 +130,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _notesController.dispose();
+    _giftMessageController.dispose();
     super.dispose();
   }
 
@@ -160,6 +164,34 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             const SizedBox(height: 12),
             _buildTextField("Special Instructions (Notes)", Icons.note_add_outlined, controller: _notesController, maxLines: 2),
             
+            const SizedBox(height: 32),
+            _sectionTitle("PREMIUM GIFTING"),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: _isGiftWrapping ? primary : primary.withOpacity(0.05)),
+              ),
+              child: Column(
+                children: [
+                  SwitchListTile(
+                    title: Text("Add Premium Gift Wrapping", style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600)),
+                    subtitle: const Text("Includes silk ribbon & celebration box (+ ₹250)", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    secondary: Icon(Icons.card_giftcard, color: _isGiftWrapping ? primary : Colors.grey),
+                    value: _isGiftWrapping,
+                    activeColor: primary,
+                    onChanged: (val) => setState(() => _isGiftWrapping = val),
+                  ),
+                  if (_isGiftWrapping) ...[
+                    const Divider(height: 24),
+                    _buildTextField("Personalized Gift Note", Icons.edit_note, controller: _giftMessageController, maxLines: 2),
+                  ],
+                ],
+              ),
+            ),
+            
             const SizedBox(height: 24),
             Row(
               children: [
@@ -182,8 +214,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             Builder(builder: (context) {
               final int subtotalCents = cart.total.round();
               final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
-              final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
-              final int grandTotalCents = subtotalCents + packagingCents + taxCents;
+              final int wrappingCents = _isGiftWrapping ? wrappingFeePaise : 0;
+              final int taxCents = (((subtotalCents + wrappingCents) * 5) + 50) ~/ 100;
+              final int grandTotalCents = subtotalCents + packagingCents + wrappingCents + taxCents;
 
               return Container(
                 padding: const EdgeInsets.all(32),
@@ -195,6 +228,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                 child: Column(
                   children: [
                     _summaryRow("Bag Total", "₹${(subtotalCents / 100).toStringAsFixed(2)}"),
+                    if (_isGiftWrapping)
+                      _summaryRow("Premium Wrapping", "₹${(wrappingCents / 100).toStringAsFixed(2)}"),
                     _summaryRow("Delivery", "₹${(packagingCents / 100).toStringAsFixed(2)}"),
                     _summaryRow("Taxes (5%)", "₹${(taxCents / 100).toStringAsFixed(2)}"),
                     const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
@@ -247,7 +282,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                         address: trimmedAddress,
                         deliveryDate: selectedDate?.toIso8601String(),
                         deliveryTime: selectedTimeSlot,
-                        notes: _notesController.text,
+                        notes: _notesController.text + (_isGiftWrapping ? "\n[GIFT WRAP] Message: ${_giftMessageController.text}" : ""),
                       ),
                     ),
                   );

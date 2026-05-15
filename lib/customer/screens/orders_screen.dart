@@ -35,43 +35,51 @@ class _OrdersScreenState extends State<OrdersScreen> {
         return;
       }
 
-      // Fetch orders with their items for the specific user
-      final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
-      
+      final userPhone =
+          currentUser.userMetadata?['phone']?.toString() ??
+          currentUser.phone ??
+          '';
+
       if (userPhone.isEmpty) {
         if (mounted) setState(() => _isLoading = false);
         return;
       }
 
+      // Query the unified Order table using customerPhone
       final data = await supabase
-          .from('WhatsAppOrder')
-          .select('*, items:WhatsAppOrderItem(*)')
-          .eq('phone', userPhone)
+          .from('Order')
+          .select('*, items:OrderItem(*)')
+          .eq('customerPhone', userPhone)
           .order('createdAt', ascending: false);
-      
+
       if (mounted) {
         setState(() {
           orders = List<Map<String, dynamic>>.from(data).map((order) {
             final items = order['items'] as List?;
             String firstItemTitle = "Custom Order";
             String imageUrl = "";
-            
+
             if (items != null && items.isNotEmpty) {
               firstItemTitle = items[0]['cakeName'];
-              // If there's no image in the order, we might need a placeholder or first item image
-              // Since items don't have images in the schema, we'll use order's customImageUrl or a placeholder
-              imageUrl = order['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587";
+              imageUrl = order['customImageUrl'] ??
+                  "https://images.unsplash.com/photo-1578985545062-69928b1d9587";
             }
+
+            final status = order['status']?.toString() ?? 'PENDING';
 
             return {
               "id": order['orderNumber'] ?? order['id'],
               "uuid": order['id'],
               "date": _formatDate(order['createdAt']),
               "title": firstItemTitle,
-              "price": "₹${order['totalPrice'] ?? '0'}",
-              "status": order['status'],
+              // totalPrice is stored in paise → convert to rupees
+              "price": "₹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
+              "status": status,
+              "source": order['source']?.toString() ?? 'APP',
               "imageUrl": imageUrl,
-              "isActive": (order['status'] == 'PENDING' || order['status'] == 'PREPARING').toString()
+              // active = PENDING or CONFIRMED (not yet out for delivery)
+              "isActive":
+                  (status == 'PENDING' || status == 'CONFIRMED').toString(),
             };
           }).toList();
           _isLoading = false;
@@ -88,7 +96,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
   String _formatDate(String isoString) {
     final date = DateTime.parse(isoString);
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       return "Today";
     }
     return "${date.day}/${date.month}/${date.year}";
@@ -98,14 +108,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Cancel Order", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to cancel this order?"),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text("Cancel Order",
+            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+        content: const Text("Are you sure you want to cancel this order?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("NO")),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("NO")),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("YES, CANCEL", style: TextStyle(color: Colors.red)),
+            child: const Text("YES, CANCEL",
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -114,22 +129,23 @@ class _OrdersScreenState extends State<OrdersScreen> {
     if (confirmed == true) {
       try {
         final supabase = Supabase.instance.client;
-        await supabase
-            .from('WhatsAppOrder')
-            .update({'status': 'CANCELLED'})
-            .eq('id', uuid);
-        
+        await supabase.from('Order').update({
+          'status': 'CANCELLED',
+          'cancelledAt': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', uuid);
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Cancellation request sent"), backgroundColor: Colors.red),
+            const SnackBar(
+                content: Text("Cancellation request sent"),
+                backgroundColor: Colors.red),
           );
-          _fetchOrders(); // Refresh
+          _fetchOrders();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error: $e")),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text("Error: $e")));
         }
       }
     }
@@ -181,11 +197,14 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 children: List.generate(5, (index) {
                   return IconButton(
                     icon: Icon(
-                      index < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                      index < rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
                       color: primary,
                       size: 40,
                     ),
-                    onPressed: () => setModalState(() => rating = index + 1.0),
+                    onPressed: () =>
+                        setModalState(() => rating = index + 1.0),
                   );
                 }),
               ),
@@ -211,27 +230,34 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     try {
                       final supabase = Supabase.instance.client;
                       final currentUser = supabase.auth.currentUser;
-                      
+
                       await supabase.from('Feedback').insert({
                         'rating': rating,
                         'orderId': order['uuid'],
                         'message': commentController.text,
                         'userId': currentUser?.id,
-                        'userPhone': currentUser?.userMetadata?['phone']?.toString() ?? currentUser?.phone,
-                        'createdAt': DateTime.now().toUtc().toIso8601String(),
+                        'userPhone':
+                            currentUser?.userMetadata?['phone']?.toString() ??
+                                currentUser?.phone,
+                        'createdAt':
+                            DateTime.now().toUtc().toIso8601String(),
                       });
 
                       if (context.mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Thank you for your feedback! 💖"), backgroundColor: primary),
+                          const SnackBar(
+                              content:
+                                  Text("Thank you for your feedback! 💖"),
+                              backgroundColor: primary),
                         );
                       }
                     } catch (e) {
                       debugPrint("Feedback Error: $e");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Failed to submit review.")),
+                          const SnackBar(
+                              content: Text("Failed to submit review.")),
                         );
                       }
                     }
@@ -240,7 +266,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     backgroundColor: primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(100)),
                     elevation: 0,
                   ),
                   child: const Text("SUBMIT REVIEW"),
@@ -255,7 +282,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
@@ -288,23 +314,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ],
               ),
             ),
-            
+
             if (_isLoading)
-              const Expanded(child: Center(child: CircularProgressIndicator(color: primary)))
+              const Expanded(
+                  child: Center(
+                      child: CircularProgressIndicator(color: primary)))
             else if (orders.isEmpty)
-              const Expanded(child: Center(child: Text("You haven't placed any orders yet.")))
+              const Expanded(
+                  child: Center(
+                      child:
+                          Text("You haven't placed any orders yet.")))
             else ...[
-              // Active Order Banner (Compact)
+              // Active Order Banner
               if (orders.any((o) => o['isActive'] == 'true'))
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CustomerTrackingScreen()),
-                      );
-                    },
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const CustomerTrackingScreen()),
+                    ),
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -317,7 +348,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.delivery_dining, color: Colors.white, size: 24),
+                          const Icon(Icons.delivery_dining,
+                              color: Colors.white, size: 24),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
@@ -332,7 +364,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   ),
                                 ),
                                 Text(
-                                  orders.firstWhere((o) => o['isActive'] == 'true')['title'],
+                                  orders.firstWhere(
+                                      (o) => o['isActive'] == 'true')['title'],
                                   style: GoogleFonts.notoSerif(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -342,7 +375,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                               ],
                             ),
                           ),
-                          const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                          const Icon(Icons.arrow_forward_ios,
+                              color: Colors.white, size: 16),
                         ],
                       ),
                     ),
@@ -353,10 +387,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(24),
                   itemCount: orders.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    return _buildCompactOrderCard(context, orders[index]);
-                  },
+                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) =>
+                      _buildCompactOrderCard(context, orders[index]),
                 ),
               ),
             ],
@@ -366,7 +399,31 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
-  Widget _buildCompactOrderCard(BuildContext context, Map<String, dynamic> order) {
+  Widget _buildCompactOrderCard(
+      BuildContext context, Map<String, dynamic> order) {
+    final String status = order['status']?.toString() ?? 'PENDING';
+    final String source = order['source']?.toString() ?? 'APP';
+
+    // Map status → color
+    Color statusColor;
+    switch (status) {
+      case 'CONFIRMED':
+        statusColor = Colors.blue;
+        break;
+      case 'OUT_FOR_DELIVERY':
+        statusColor = Colors.indigo;
+        break;
+      case 'DELIVERED':
+      case 'COMPLETED':
+        statusColor = Colors.green;
+        break;
+      case 'CANCELLED':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = primary;
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -390,6 +447,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
               width: 80,
               height: 80,
               fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                width: 80,
+                height: 80,
+                color: primary.withOpacity(0.1),
+                child: const Icon(Icons.cake, color: primary),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -408,20 +471,48 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         color: secondary.withOpacity(0.5),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        order['status']!.toUpperCase(),
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                          color: primary,
+                    Row(
+                      children: [
+                        // Source badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: source == 'WHATSAPP'
+                                ? Colors.green.shade50
+                                : primary.withOpacity(0.07),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            source == 'WHATSAPP' ? '💬 WA' : '📲 APP',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: source == 'WHATSAPP'
+                                  ? Colors.green.shade700
+                                  : primary,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        // Status badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            status,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -447,7 +538,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (order['status'] == 'PENDING' || order['status'] == 'CONFIRMED')
+                    // Cancel — only for PENDING or CONFIRMED
+                    if (status == 'PENDING' || status == 'CONFIRMED')
                       TextButton(
                         onPressed: () => _cancelOrder(order['uuid']),
                         style: TextButton.styleFrom(
@@ -465,7 +557,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                       ),
-                    if (order['status'] == 'DELIVERED' || order['status'] == 'COMPLETED')
+                    // Review — for DELIVERED or COMPLETED
+                    if (status == 'DELIVERED' || status == 'COMPLETED')
                       TextButton(
                         onPressed: () => _showReviewDialog(order),
                         style: TextButton.styleFrom(
@@ -483,32 +576,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                       ),
-                    TextButton(
-                      onPressed: () {
-                        if (order['isActive'] == "true") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const CustomerTrackingScreen()),
-                          );
-                        }
-                      },
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: order['isActive'] == "true" 
-                        ? Text(
-                            "TRACK",
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                              color: primary,
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                    ),
                   ],
                 ),
               ],
@@ -519,4 +586,3 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 }
-

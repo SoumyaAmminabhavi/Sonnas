@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -29,14 +32,19 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    val keystoreProperties = Properties()
+    val keystorePropertiesFile = rootProject.file("key.properties")
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+
     signingConfigs {
         create("release") {
-            // Configuration is done here, but validation is moved to task execution
-            // to avoid breaking all builds (like debug/assemble) when env vars are missing.
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("KEY_ALIAS")
-            keyPassword = System.getenv("KEY_PASSWORD")
+            val keyPath = keystoreProperties["storeFile"] as String? ?: System.getenv("KEYSTORE_PATH") ?: "release.keystore"
+            storeFile = file(keyPath)
+            storePassword = keystoreProperties["storePassword"] as String? ?: System.getenv("KEYSTORE_PASSWORD")
+            keyAlias = keystoreProperties["keyAlias"] as String? ?: System.getenv("KEY_ALIAS")
+            keyPassword = keystoreProperties["keyPassword"] as String? ?: System.getenv("KEY_PASSWORD")
         }
     }
 
@@ -48,17 +56,17 @@ android {
         }
         
         if (releaseTasks.isNotEmpty()) {
-            val keystorePassword = System.getenv("KEYSTORE_PASSWORD")
-            val keyAlias = System.getenv("KEY_ALIAS")
-            val keyPassword = System.getenv("KEY_PASSWORD")
+            val keystorePassword = keystoreProperties["storePassword"] ?: System.getenv("KEYSTORE_PASSWORD")
+            val keyAlias = keystoreProperties["keyAlias"] ?: System.getenv("KEY_ALIAS")
+            val keyPassword = keystoreProperties["keyPassword"] ?: System.getenv("KEY_PASSWORD")
             
             if (keystorePassword == null || keyAlias == null || keyPassword == null) {
                 val missing = mutableListOf<String>()
-                if (keystorePassword == null) missing.add("KEYSTORE_PASSWORD")
-                if (keyAlias == null) missing.add("KEY_ALIAS")
-                if (keyPassword == null) missing.add("KEY_PASSWORD")
+                if (keystorePassword == null) missing.add("KEYSTORE_PASSWORD (or storePassword in key.properties)")
+                if (keyAlias == null) missing.add("KEY_ALIAS (or keyAlias in key.properties)")
+                if (keyPassword == null) missing.add("KEY_PASSWORD (or keyPassword in key.properties)")
                 
-                throw GradleException("Release build failed: Missing environment variables: ${missing.joinToString(", ")}. Please set them in your environment.")
+                throw GradleException("Release build failed: Missing signing configuration. ${missing.joinToString(", ")}. Please set them in your environment or android/key.properties.")
             }
         }
     }

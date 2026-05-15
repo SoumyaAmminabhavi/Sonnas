@@ -4,6 +4,8 @@ import 'tracking_screen.dart';
 import 'contact_screen.dart';
 import 'product_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import '../providers/favorites_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onViewMenu;
@@ -14,7 +16,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Map<String, String>> featuredCakes = [];
+  List<Map<String, dynamic>> featuredCakes = [];
   bool _isLoading = true;
 
   @override
@@ -36,15 +38,43 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           featuredCakes = List<Map<String, dynamic>>.from(data).map((cake) {
             final options = cake['options'] as List?;
+            debugPrint("DEBUG: Cake ${cake['name']} has ${options?.length ?? 0} options");
+            
             String price = "₹ 0.00";
             if (options != null && options.isNotEmpty) {
-              final numericPrice = (double.tryParse(options[0]['price']?.toString() ?? "0") ?? 0.0) / 100.0;
+              final rawPrice = options[0]['price']?.toString() ?? "0";
+              final numericPrice = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
               price = "₹ ${numericPrice.toStringAsFixed(2)}";
             }
+
+            // Robust image URL generation
+            final String imageName = (cake['image'] as String?) ?? '';
+            String imageUrl = '';
+
+            if (imageName.startsWith('http')) {
+              imageUrl = imageName;
+            } else if (imageName.isNotEmpty) {
+              final cleanPath = imageName
+                  .replaceFirst('cakes/', '')
+                  .replaceFirst('/cakes/', '')
+                  .replaceAll('.pngpng', '.png');
+              
+              imageUrl = supabase.storage.from('cakes').getPublicUrl(cleanPath);
+            }
+
+            // Fallback for missing or broken images
+            if (imageUrl.isEmpty || imageUrl.contains('null')) {
+              final String name = (cake['name'] as String?)?.toLowerCase() ?? '';
+              final String id = cake['id']?.toString() ?? '1';
+              imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
+            }
+
             return {
+              'id': cake['id']?.toString() ?? '',
               'title': (cake['name'] as String?) ?? 'Unnamed',
               'price': price,
-              'image': (cake['image'] as String?) ?? '',
+              'image': imageUrl,
+              'rawOptions': options ?? [],
             };
           }).toList();
           _isLoading = false;
@@ -56,19 +86,25 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           featuredCakes = [
             {
+              'id': '1',
               'title': "Classic Chocolate",
               'price': "₹ 650",
               'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
+              'rawOptions': [],
             },
             {
+              'id': '2',
               'title': "Strawberry Bliss",
               'price': "₹ 720",
               'image': 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
+              'rawOptions': [],
             },
             {
+              'id': '3',
               'title': "Red Velvet",
               'price': "₹ 680",
               'image': 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?q=80&w=1000&auto=format&fit=crop',
+              'rawOptions': [],
             },
           ];
           _isLoading = false;
@@ -246,9 +282,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ProductDetailScreen(
-                              title: cake['title']!,
-                              price: cake['price']!,
-                              imageUrl: cake['image']!,
+                              cakeId: cake['id'] as String,
+                              title: cake['title'] as String,
+                              price: cake['price'] as String,
+                              imageUrl: cake['image'] as String,
+                              rawOptions: cake['rawOptions'] as List<dynamic>,
                             ),
                           ),
                         );
@@ -269,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
                                   cake['image']!,
-                                  fit: BoxFit.contain,
+                                  fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
                                     color: primaryColor.withOpacity(0.1),
                                     child: const Icon(Icons.cake, color: primaryColor),
@@ -278,23 +316,49 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Text(
-                              cake['title']!,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFFFF4D8D),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              cake['price']!,
-                              style: GoogleFonts.notoSerif(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: primaryColor,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        cake['title']!,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFFFF4D8D),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        cake['price']!,
+                                        style: GoogleFonts.notoSerif(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Consumer<FavoritesProvider>(
+                                  builder: (context, favorites, _) {
+                                    final isFav = favorites.isFavorite(null, cake['title']!);
+                                    return IconButton(
+                                      onPressed: () => favorites.toggleFavorite(cake),
+                                      icon: Icon(
+                                        isFav ? Icons.favorite : Icons.favorite_border,
+                                        color: isFav ? primaryColor : Colors.grey.withOpacity(0.4),
+                                        size: 18,
+                                      ),
+                                      visualDensity: VisualDensity.compact,
+                                      padding: EdgeInsets.zero,
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),

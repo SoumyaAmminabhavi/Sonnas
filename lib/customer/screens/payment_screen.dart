@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'order_success_screen.dart';
 import '../../owner/owner_dashboard.dart';
 import '../main.dart';
 import '../providers/cart_provider.dart';
@@ -34,11 +39,87 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  String _selectedMethod = 'UPI Scanner';
+  String _selectedMethod = 'Razorpay';
   bool _showSuccess = false;
   bool _isLoading = false;
   String? _placedOrderId;
   double? _placedOrderTotal;
+  late Razorpay _razorpay;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) {
+    debugPrint("Razorpay Payment Success: ${response.paymentId}");
+    final cart = context.read<CartProvider>();
+    _placeOrder(cart, paymentId: response.paymentId);
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    debugPrint("Razorpay Payment Error: ${response.code} - ${response.message}");
+    setState(() => _isLoading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Payment Failed: ${response.message}"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    debugPrint("External Wallet: ${response.walletName}");
+  }
+
+  void _startRazorpayPayment(CartProvider cart) {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Online payments via Razorpay are only supported on Android & iOS mobile devices."),
+          backgroundColor: Color(0xFFFF4D8D),
+        ),
+      );
+      return;
+    }
+
+    final double totalWithExtras = _calculateTotal(cart.total);
+    final int amountInPaise = totalWithExtras.round();
+    
+    final options = {
+      'key': dotenv.get('RAZORPAY_KEY_ID', fallback: 'rzp_test_SlapcQRITI3KNO'),
+      'amount': amountInPaise,
+      'name': "Sonna's Patisserie",
+      'description': 'Order Payment',
+      'retry': {'enabled': true, 'max_count': 1},
+      'send_sms_hash': true,
+      'prefill': {
+        'contact': widget.phone ?? '',
+        'email': '',
+      },
+      'external': {
+        'wallets': ['paytm']
+      }
+    };
+
+    try {
+      setState(() => _isLoading = true);
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint("Error opening Razorpay: $e");
+      setState(() => _isLoading = false);
+    }
+  }
 
   double _calculateTotal(double cartTotal) {
     final int subtotalCents = cartTotal.round();
@@ -47,7 +128,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return (subtotalCents + packagingCents + taxCents).toDouble();
   }
 
-  Future<void> _placeOrder(CartProvider cart) async {
+  Future<void> _placeOrder(CartProvider cart, {String? paymentId}) async {
     if (cart.items.isEmpty) return;
     
     setState(() => _isLoading = true);
@@ -88,19 +169,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final double totalWithExtras = _calculateTotal(cart.total);
       final int totalInPaise = totalWithExtras.round();
 
-      await supabase.from('WhatsAppOrder').insert({
+      await supabase.from('Order').insert({
         'id': orderId,
         'orderNumber': orderNumber,
-        'phone': customerPhone,
+        'customerPhone': customerPhone,
         'customerName': widget.customerName ?? 'Guest Customer',
-        'address': widget.address,
+        'address': widget.address ?? 'No Address',
         'deliveryDate': widget.deliveryDate,
-        'deliveryTime': widget.deliveryTime,
+        'deliverySlot': widget.deliveryTime,
         'notes': widget.notes,
         'totalPrice': totalInPaise,
-        'status': 'PENDING',
+        'status': paymentId != null ? 'CONFIRMED' : 'PENDING',
+        'paymentStatus': paymentId != null ? 'PAID' : 'PENDING',
+        'paymentId': paymentId,
+        'source': 'APP',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
+        'isCustom': cart.items.any((item) => item.imageUrl.contains('custom')),
         'customImageUrl': cart.items.isNotEmpty ? cart.items.first.imageUrl : null,
       });
 
@@ -118,17 +203,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
           'id': "ITEM-$orderId-${entry.key}",
           'orderId': orderId,
+          'cakeId': entry.value.cakeId ?? entry.value.id,
           'cakeName': entry.value.name,
           'size': 'Standard',
-          'price': entry.value.price,
+          'price': entry.value.price.round(),
           'quantity': entry.value.quantity,
         }).toList();
         
-        await supabase.from('WhatsAppOrderItem').insert(itemsToInsert);
+        await supabase.from('OrderItem').insert(itemsToInsert);
       } catch (e) {
         // Rollback Order if Items fail
         debugPrint("Items insertion failed, rolling back order $orderId: $e");
-        await supabase.from('WhatsAppOrder').delete().eq('id', orderId);
+        await supabase.from('Order').delete().eq('id', orderId);
         rethrow;
       }
       
@@ -136,20 +222,36 @@ class _PaymentScreenState extends State<PaymentScreen> {
       cart.clear();
       
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _showSuccess = true;
-        });
+        setState(() => _isLoading = false);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => OrderSuccessScreen(
+              orderNumber: orderNumber,
+              totalAmount: totalWithExtras / 100,
+            ),
+          ),
+        );
       }
     } catch (e) {
       debugPrint("CRITICAL ERROR placing order: $e");
       if (mounted) {
         setState(() => _isLoading = false);
+        final String errorMessage = paymentId != null 
+            ? "Payment was successful, but we encountered an error recording your order. Please contact us with Payment ID: $paymentId"
+            : "Payment failed. Please try again later.";
+            
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Payment failed. Please try again later."),
-            backgroundColor: Color(0xFFFF4D8D),
-            duration: Duration(seconds: 8),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: const Color(0xFFFF4D8D),
+            duration: const Duration(seconds: 10),
+            action: paymentId != null ? SnackBarAction(
+              label: "COPY ID",
+              textColor: Colors.white,
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: paymentId));
+              },
+            ) : null,
           ),
         );
       }
@@ -275,6 +377,31 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                       const SizedBox(height: 24),
                       
+                      _buildPaymentMethod(
+                        id: 'Razorpay',
+                        icon: Icons.security,
+                        title: 'Pay Online (Razorpay)',
+                        subtitle: 'Cards, UPI, Netbanking, Wallets',
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.credit_card, size: 16, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.account_balance, size: 16, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.wallet, size: 16, color: Colors.grey),
+                              const SizedBox(width: 12),
+                              Text(
+                                "Secure SSL Payments",
+                                style: GoogleFonts.plusJakartaSans(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                       _buildPaymentMethod(
                         id: 'UPI Scanner',
                         icon: Icons.qr_code_scanner,
@@ -463,7 +590,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         
                         // Confirm Button
                         InkWell(
-                          onTap: _isLoading ? null : () => _placeOrder(cart),
+                          onTap: _isLoading ? null : () {
+                            if (_selectedMethod == 'Razorpay') {
+                              _startRazorpayPayment(cart);
+                            } else {
+                              _placeOrder(cart);
+                            }
+                          },
                           child: Container(
                             width: double.infinity,
                             height: 64,

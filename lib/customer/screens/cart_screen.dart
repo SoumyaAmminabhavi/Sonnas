@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../providers/cart_provider.dart';
+import '../../services/haptic_service.dart';
 import 'checkout_screen.dart';
 import 'self_checkout_screen.dart';
 
@@ -273,6 +274,7 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: 24),
           InkWell(
             onTap: () {
+              HapticService.selection();
               Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()));
             },
             child: Container(
@@ -289,6 +291,7 @@ class CartScreen extends StatelessWidget {
           const SizedBox(height: 12),
           InkWell(
             onTap: () {
+              HapticService.selection();
               Navigator.push(context, MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()));
             },
             child: Container(

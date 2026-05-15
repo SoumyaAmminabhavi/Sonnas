@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import '../providers/favorites_provider.dart';
 import '../../services/supabase_service.dart';
 import 'product_detail_screen.dart';
 
@@ -18,43 +21,99 @@ class _MenuScreenState extends State<MenuScreen> {
   bool _isGridView = true;
 
   String _selectedCategory = "All";
-  List<String> categories = ["All", "General", "Cakes", "Pastries", "Savories", "Macarons"];
+  List<String> categories = ["All"];
+
+  late RealtimeChannel _menuChannel;
 
   @override
   void initState() {
     super.initState();
     _fetchCakes();
+    _subscribeToMenuChanges();
   }
 
-  Future<void> _fetchCakes() async {
+  void _subscribeToMenuChanges() {
+    _menuChannel = Supabase.instance.client
+        .channel('public:Cake')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'Cake',
+          callback: (payload) {
+            debugPrint('Menu change detected: ${payload.toString()}');
+            _fetchCakes(showLoader: false);
+          },
+        )
+        .subscribe();
+  }
+
+  @override
+  void dispose() {
+    Supabase.instance.client.removeChannel(_menuChannel);
+    super.dispose();
+  }
+
+  Future<void> _fetchCakes({bool showLoader = true}) async {
     try {
-      setState(() => _isLoading = true);
+      if (showLoader) setState(() => _isLoading = true);
       
-      // Using the centralized service we just updated
+      // Fetch Categories and Menu Items
+      final cats = await SupabaseService.fetchCategories();
       final data = await SupabaseService.fetchMenu();
       
       if (mounted) {
         setState(() {
+          // Update Categories
+          categories = ["All", ...cats.where((c) => c != "All")];
           menuItems = data.map((cake) {
             final options = cake['options'] as List?;
             double numericPrice = 0.0;
             String priceDisplay = "₹ 0.00";
             
             if (options != null && options.isNotEmpty) {
-              // Prisma stores price as Int (likely paise/cents), so we divide by 100
               final rawPrice = options[0]['price']?.toString() ?? "0";
               numericPrice = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
               priceDisplay = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(numericPrice);
             }
+
+            final String imageName = (cake['image'] as String?) ?? '';
+            String imageUrl = '';
+
+            if (imageName.startsWith('http')) {
+              imageUrl = imageName;
+            } else if (imageName.isNotEmpty) {
+              // 1. Fix bucket name to 'cakes'
+              // 2. Fix 'pngpng' typo if it exists in the DB
+              final cleanPath = imageName
+                .replaceFirst('cakes/', '')
+                .replaceFirst('/cakes/', '')
+                .replaceAll('.pngpng', '.png'); 
+                
+              imageUrl = Supabase.instance.client.storage.from('cakes').getPublicUrl(cleanPath);
+            }
+
+            // If we still don't have a valid URL or it's empty, use a unique Unsplash fallback
+            if (imageUrl.isEmpty || imageUrl.contains('null')) {
+              final String name = (cake['name'] as String?)?.toLowerCase() ?? '';
+              final String id = cake['id']?.toString() ?? '1';
+              // Use a unique seed for each cake so fallbacks are different
+              imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
+            }
+
+            debugPrint('DEBUG: Cake: ${cake['name']}, Image Path: $imageName, Generated URL: $imageUrl');
+
+            // Extract category name from relation
+            final catObj = cake['category'];
+            final String catName = (catObj is Map) ? (catObj['name'] ?? 'General') : 'General';
 
             return {
               'id': cake['id'],
               'title': (cake['name'] as String?) ?? 'Unnamed',
               'price': priceDisplay,
               'numericPrice': numericPrice,
-              'image': (cake['image'] as String?) ?? 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop',
+              'image': imageUrl,
               'description': (cake['description'] as String?) ?? '',
-              'category': (cake['category'] as String?) ?? 'General',
+              'category': catName,
               'options': options ?? const [],
             };
           }).toList();
@@ -330,11 +389,39 @@ class _MenuScreenState extends State<MenuScreen> {
                 onTap: () => _openDetail(item),
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(item['image'], width: 60, height: 60, fit: BoxFit.cover, cacheWidth: 120, cacheHeight: 120),
+                  child: Image.network(
+                  item['image'],
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  cacheWidth: 120,
+                  cacheHeight: 120,
+                  errorBuilder: (_, __, ___) {
+                    final id = item['id']?.toString() ?? item['title'].toString();
+                    return Image.network(
+                      'https://picsum.photos/seed/$id/120/120',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    );
+                  },
+                ),
                 ),
                 title: Text(item['title'], style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
                 subtitle: Text(item['price'], style: GoogleFonts.notoSerif(color: primary, fontWeight: FontWeight.bold)),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: Consumer<FavoritesProvider>(
+                  builder: (context, favorites, _) {
+                    final isFav = favorites.isFavorite(item['id']?.toString(), item['title']);
+                    return IconButton(
+                      onPressed: () => favorites.toggleFavorite(item),
+                      icon: Icon(
+                        isFav ? Icons.favorite : Icons.favorite_border,
+                        color: isFav ? primary : Colors.grey.withOpacity(0.3),
+                        size: 20,
+                      ),
+                    );
+                  },
+                ),
               ),
             );
           },
@@ -349,6 +436,7 @@ class _MenuScreenState extends State<MenuScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => ProductDetailScreen(
+          cakeId: item['id']?.toString(),
           title: item['title'],
           price: item['price'],
           imageUrl: item['image'],
@@ -377,22 +465,61 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(item['image'], fit: BoxFit.cover, cacheWidth: 400),
+                  child: Image.network(
+                    item['image'],
+                    fit: BoxFit.cover,
+                    cacheWidth: 400,
+                    errorBuilder: (_, __, ___) {
+                      final id = item['id']?.toString() ?? item['title'].toString();
+                      return Image.network(
+                        'https://picsum.photos/seed/$id/600/600',
+                        fit: BoxFit.cover,
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          item['title'],
-          style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: onSurface),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        Text(
-          item['price'],
-          style: GoogleFonts.notoSerif(fontSize: 11, fontWeight: FontWeight.w900, color: primary),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item['title'],
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: onSurface),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    item['price'],
+                    style: GoogleFonts.notoSerif(fontSize: 11, fontWeight: FontWeight.w900, color: primary),
+                  ),
+                ],
+              ),
+            ),
+            Consumer<FavoritesProvider>(
+              builder: (context, favorites, _) {
+                final isFav = favorites.isFavorite(item['id']?.toString(), item['title']);
+                return IconButton(
+                  onPressed: () => favorites.toggleFavorite(item),
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? primary : Colors.grey.withOpacity(0.3),
+                    size: 18,
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );

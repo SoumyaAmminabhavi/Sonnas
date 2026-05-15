@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../providers/favorites_provider.dart';
 import '../providers/cart_provider.dart';
 
 class ProductOption {
@@ -18,6 +19,7 @@ class ProductOption {
 }
 
 class ProductDetailScreen extends StatefulWidget {
+  final String? cakeId;
   final String title;
   final String price;
   final String imageUrl;
@@ -25,6 +27,7 @@ class ProductDetailScreen extends StatefulWidget {
 
   ProductDetailScreen({
     super.key,
+    this.cakeId,
     required this.title,
     required this.price,
     required this.imageUrl,
@@ -44,6 +47,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String currentPriceDisplay = "";
   int quantity = 1;
   final TextEditingController _messageController = TextEditingController();
+  
+  // Customizer State
+  String selectedDietary = "Standard";
+  final Map<String, bool> selectedAddons = {
+    "Sparkling Candles": false,
+    "Custom Topper": false,
+    "Gift Card": false,
+  };
+  final Map<String, int> addonPrices = {
+    "Sparkling Candles": 5000, // in paise
+    "Custom Topper": 10000,
+    "Gift Card": 3000,
+  };
 
   @override
   void dispose() {
@@ -57,13 +73,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (widget.options.isNotEmpty) {
       selectedSize = widget.options[0].size;
       currentPriceValue = widget.options[0].price / 100.0;
-      _updatePriceDisplay();
+    } else {
+      // Fallback: parse price string like "₹ 650.00"
+      final cleanPrice = widget.price.replaceAll('₹', '').replaceAll(',', '').trim();
+      currentPriceValue = double.tryParse(cleanPrice) ?? 0.0;
+      selectedSize = "Standard";
     }
+    _updatePriceDisplay();
   }
 
 
   void _updatePriceDisplay() {
-    currentPriceDisplay = "₹${(currentPriceValue * quantity).toStringAsFixed(2)}";
+    double basePrice = currentPriceValue;
+    double addonsTotal = 0.0;
+    
+    selectedAddons.forEach((name, isSelected) {
+      if (isSelected) {
+        addonsTotal += (addonPrices[name] ?? 0) / 100.0;
+      }
+    });
+
+    currentPriceDisplay = "₹${((basePrice + addonsTotal) * quantity).toStringAsFixed(2)}";
   }
 
   @override
@@ -173,7 +203,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                 ),
                               ),
-                              _buildActionBtn(Icons.bookmark_outline),
+                               Consumer<FavoritesProvider>(
+                                builder: (context, favorites, _) {
+                                  final isFav = favorites.isFavorite(null, widget.title);
+                                  return GestureDetector(
+                                    onTap: () => favorites.toggleFavorite({
+                                      'id': null,
+                                      'title': widget.title,
+                                      'price': widget.price,
+                                      'image': widget.imageUrl,
+                                    }),
+                                    child: _buildActionBtn(
+                                      isFav ? Icons.favorite : Icons.favorite_border,
+                                      iconColor: isFav ? primaryColor : Colors.grey.shade600,
+                                    ),
+                                  );
+                                },
+                              ),
                               const SizedBox(width: 12),
                               _buildActionBtn(Icons.reply_outlined),
                             ],
@@ -257,43 +303,97 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           const SizedBox(height: 24),
                           
                           // Custom Message
-                          _buildHeaderRow("Add a custom message (optional)", Icons.info_outline),
+                          _buildHeaderRow("Message on Cake (Optional)", Icons.cake_outlined),
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF1F2F6),
                               borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: primaryColor.withOpacity(0.1)),
                             ),
                             child: Column(
                               children: [
                                 TextField(
                                   controller: _messageController,
-                                  maxLines: 3,
+                                  maxLines: 2,
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 14),
                                   decoration: InputDecoration(
-                                    hintText: "e.g. Happy Birthday Soumya!",
-                                    hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
+                                    hintText: "Handwritten message on cake...",
+                                    hintStyle: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14, 
+                                      color: Colors.grey.shade400,
+                                      fontStyle: FontStyle.italic,
+                                    ),
                                     border: InputBorder.none,
                                   ),
-                                ),
-                                const Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Text("100", style: TextStyle(fontSize: 10, color: Colors.grey)),
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(height: 24),
+
+                          // Dietary Preferences
+                          _buildTitle("DIETARY PREFERENCE"),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: ["Standard", "Eggless", "Less Sugar"].map((diet) {
+                              final isSel = selectedDietary == diet;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: ChoiceChip(
+                                  label: Text(diet, style: TextStyle(
+                                    fontSize: 12, 
+                                    fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                                    color: isSel ? Colors.white : Colors.black87,
+                                  )),
+                                  selected: isSel,
+                                  selectedColor: primaryColor,
+                                  backgroundColor: Colors.white,
+                                  side: BorderSide(color: isSel ? primaryColor : Colors.grey.shade300),
+                                  onSelected: (val) {
+                                    if (val) setState(() => selectedDietary = diet);
+                                  },
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Add-ons
+                          _buildTitle("CELEBRATION ADD-ONS"),
+                          const SizedBox(height: 8),
+                          ...selectedAddons.keys.map((addon) {
+                            final isSel = selectedAddons[addon]!;
+                            return CheckboxListTile(
+                              value: isSel,
+                              title: Text(addon, style: GoogleFonts.plusJakartaSans(fontSize: 14)),
+                              subtitle: Text("+ ₹${(addonPrices[addon]! / 100).toStringAsFixed(2)}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                              activeColor: primaryColor,
+                              contentPadding: EdgeInsets.zero,
+                              onChanged: (val) {
+                                setState(() {
+                                  selectedAddons[addon] = val ?? false;
+                                  _updatePriceDisplay();
+                                });
+                              },
+                            );
+                          }),
                           const SizedBox(height: 12),
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
                               children: [
-                                ...["Happy Birthday", "Eggless", "Less Sugar", "Extra Cream"].map((tag) => Padding(
+                                ...["Happy Birthday", "Happy Anniversary", "Congratulations", "Best Wishes",].map((tag) => Padding(
                                   padding: const EdgeInsets.only(right: 8),
                                   child: ActionChip(
-                                    label: Text(tag, style: const TextStyle(fontSize: 12)),
+                                    label: Text(tag, style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 11,
+                                      color: primaryColor.withOpacity(0.8),
+                                    )),
                                     backgroundColor: Colors.white,
-                                    side: BorderSide(color: Colors.grey.shade200),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                    side: BorderSide(color: primaryColor.withOpacity(0.1)),
                                     onPressed: () => _messageController.text = tag,
                                   ),
                                 )),
@@ -340,15 +440,41 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Expanded(
                           child: InkWell(
                             onTap: () {
-                              final String id = "${widget.title}_${selectedSize}_${_messageController.text}_${DateTime.now().millisecondsSinceEpoch}";
+                              final String message = _messageController.text.trim();
+                              String addonsText = selectedAddons.entries
+                                  .where((e) => e.value)
+                                  .map((e) => e.key)
+                                  .join(", ");
+                              
+                              String fullDescription = "${widget.title} ($selectedSize)";
+                              if (selectedDietary != "Standard") {
+                                fullDescription += " - $selectedDietary";
+                              }
+                              if (message.isNotEmpty) {
+                                fullDescription += "\nMessage: $message";
+                              }
+                              if (addonsText.isNotEmpty) {
+                                fullDescription += "\nAdd-ons: $addonsText";
+                              }
+
+                              double addonsTotal = selectedAddons.entries
+                                  .where((e) => e.value)
+                                  .fold(0.0, (prev, e) => prev + (addonPrices[e.key]! / 100.0));
+
                               context.read<CartProvider>().addItem(
-                                id, 
-                                "${widget.title} ($selectedSize)", 
-                                (currentPriceValue * 100).round().toDouble(), 
+                                "${widget.title}_${DateTime.now().millisecondsSinceEpoch}", 
+                                fullDescription, 
+                                (currentPriceValue + addonsTotal) * 100, 
                                 widget.imageUrl,
                                 quantity: quantity,
+                                cakeId: widget.cakeId,
                               );
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${widget.title} added to bag"), backgroundColor: accentRed, behavior: SnackBarBehavior.floating));
+                              
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text("${widget.title} added with customizations!"), 
+                                backgroundColor: accentRed, 
+                                behavior: SnackBarBehavior.floating
+                              ));
                               Navigator.pop(context);
                             },
                             child: Container(
@@ -372,12 +498,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildActionBtn(IconData icon) {
+  Widget _buildActionBtn(IconData icon, {Color? iconColor}) {
     return Container(
       width: 36,
       height: 36,
       decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), shape: BoxShape.circle),
-      child: Icon(icon, size: 18, color: Colors.grey.shade600),
+      child: Icon(icon, size: 18, color: iconColor ?? Colors.grey.shade600),
     );
   }
 

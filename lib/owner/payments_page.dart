@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -229,48 +230,48 @@ class _PaymentsPageState extends State<PaymentsPage>
   }
 
   Widget _buildPendingGrid(BuildContext context, bool isDesktop) {
-    final pendingItems = [
-      {
-        "id": "#8825",
-        "name": "Madame Dupont",
-        "amount": "₹142",
-        "description": "Custom Macaron Tower (Large)",
-      },
-      {
-        "id": "#8826",
-        "name": "Julian Vane",
-        "amount": "₹54",
-        "description": "Petit Four Selection x 2",
-      },
-      {
-        "id": "#8827",
-        "name": "Sophie Laurent",
-        "amount": "₹90",
-        "description": "Signature Cake & Champagne",
-      },
-    ];
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: Supabase.instance.client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .inFilter('status', ['PENDING', 'CONFIRMED'])
+          .order('createdAt', ascending: false),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final orders = snapshot.data ?? [];
+        if (orders.isEmpty) {
+          return _buildEmptyPaymentsState(context, "No Pending Payments");
+        }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final crossAxisCount = constraints.maxWidth > 1100
-            ? 3
-            : constraints.maxWidth > 700
-            ? 2
-            : 1;
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 24,
-            mainAxisExtent: 320,
-          ),
-          itemCount: pendingItems.length,
-          itemBuilder: (context, index) {
-            final item = pendingItems[index];
-            return _buildPaymentCard(context, item);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth > 1100 ? 3 : constraints.maxWidth > 700 ? 2 : 1;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 24,
+                mainAxisSpacing: 24,
+                mainAxisExtent: 320,
+              ),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                final priceVal = (double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0) / 100.0;
+                
+                return _buildPaymentCard(context, {
+                  "id": "#${order['orderNumber']?.toString().split('-').last ?? '0000'}",
+                  "name": order['customerName'] ?? "Guest",
+                  "amount": "₹${priceVal.toStringAsFixed(0)}",
+                  "description": "Order for ${order['customerPhone'] ?? 'Unknown'}\n${order['address'] ?? 'Self-Pickup'}",
+                  "orderId": order['id'].toString(),
+                });
+              },
+            );
           },
         );
       },
@@ -286,11 +287,7 @@ class _PaymentsPageState extends State<PaymentsPage>
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
+          BoxShadow(color: cs.secondary.withOpacity(0.04), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Column(
@@ -314,36 +311,21 @@ class _PaymentsPageState extends State<PaymentsPage>
                   const SizedBox(height: 4),
                   Text(
                     item['name']!,
-                    style: GoogleFonts.notoSerif(
-                      color: cs.onSurface,
-                      fontSize: 24,
-                    ),
+                    style: GoogleFonts.notoSerif(color: cs.onSurface, fontSize: 24),
                   ),
                 ],
               ),
-              Icon(
-                Icons.receipt_long,
-                color: cs.primaryContainer.withOpacity(0.4),
-              ),
+              Icon(Icons.receipt_long, color: cs.primaryContainer.withOpacity(0.4)),
             ],
           ),
           const Spacer(),
           Text(
             item['amount']!,
-            style: GoogleFonts.notoSerif(
-              color: cs.onSurface,
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              letterSpacing: -1.0,
-            ),
+            style: GoogleFonts.notoSerif(color: cs.onSurface, fontSize: 48, fontWeight: FontWeight.bold, letterSpacing: -1.0),
           ),
           Text(
             item['description']!,
-            style: GoogleFonts.notoSerif(
-              color: cs.secondary.withOpacity(0.6),
-              fontSize: 12,
-              fontStyle: FontStyle.italic,
-            ),
+            style: GoogleFonts.notoSerif(color: cs.secondary.withOpacity(0.6), fontSize: 12, fontStyle: FontStyle.italic),
           ),
           const SizedBox(height: 32),
           Container(
@@ -351,20 +333,19 @@ class _PaymentsPageState extends State<PaymentsPage>
             height: 48,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              gradient: LinearGradient(
-                colors: [cs.primary, cs.primaryContainer],
-              ),
+              gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
             ),
             child: TextButton(
-              onPressed: () {},
+              onPressed: () async {
+                final supabase = Supabase.instance.client;
+                await supabase.from('Order').update({'status': 'CONFIRMED'}).eq('id', item['orderId']!);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Payment marked as received")));
+                }
+              },
               child: Text(
                 "MARK AS PAID",
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.5,
-                ),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 1.5),
               ),
             ),
           ),
@@ -374,19 +355,64 @@ class _PaymentsPageState extends State<PaymentsPage>
   }
 
   Widget _buildCompletedGrid(BuildContext context, bool isDesktop) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: Supabase.instance.client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .inFilter('status', ['DELIVERED', 'COMPLETED'])
+          .order('createdAt', ascending: false),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final orders = snapshot.data ?? [];
+        if (orders.isEmpty) {
+          return _buildEmptyPaymentsState(context, "No Completed Payments");
+        }
+
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth > 1100 ? 3 : constraints.maxWidth > 700 ? 2 : 1;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 24,
+                mainAxisSpacing: 24,
+                mainAxisExtent: 320,
+              ),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                final priceVal = (double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0) / 100.0;
+                
+                return _buildPaymentCard(context, {
+                  "id": "#${order['orderNumber']?.toString().split('-').last ?? '0000'}",
+                  "name": order['customerName'] ?? "Guest",
+                  "amount": "₹${priceVal.toStringAsFixed(0)}",
+                  "description": "${order['customerPhone'] ?? 'Unknown'} • ${order['address'] ?? 'Pickup'}\nCompleted on ${order['deliveryDate'] ?? 'N/A'}",
+                  "orderId": order['id'].toString(),
+                });
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyPaymentsState(BuildContext context, String message) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(64.0),
         child: Column(
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              size: 64,
-              color: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-            ),
+            Icon(Icons.check_circle_outline, size: 64, color: Theme.of(context).colorScheme.secondary.withOpacity(0.2)),
             const SizedBox(height: 16),
             Text(
-              "No Completed Payments for Today",
+              message,
               style: GoogleFonts.plusJakartaSans(
                 color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                 fontSize: 16,

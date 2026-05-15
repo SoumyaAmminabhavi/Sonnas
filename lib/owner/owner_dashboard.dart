@@ -304,10 +304,10 @@ class _MainContent extends StatelessWidget {
           // Orders List
           StreamBuilder<List<Map<String, dynamic>>>(
             stream: Supabase.instance.client
-                .from('WhatsAppOrder')
+                .from('Order')
                 .stream(primaryKey: ['id'])
                 .order('createdAt', ascending: false)
-                .limit(4),
+                .limit(5),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
@@ -362,6 +362,14 @@ class _MainContent extends StatelessWidget {
                   statusText = "NEW ORDER";
                   statusColor = const Color(0xFFFDBF97);
                   statusBg = const Color(0xFFFDBF97).withOpacity(0.1);
+                } else if (status == 'CONFIRMED') {
+                  statusText = "PAID & CONFIRMED";
+                  statusColor = Colors.blue;
+                  statusBg = Colors.blue.withOpacity(0.1);
+                } else if (status == 'CANCELLED') {
+                  statusText = "CANCELLED";
+                  statusColor = Colors.red;
+                  statusBg = Colors.red.withOpacity(0.1);
                 } else if (status == 'DELIVERED' || status == 'SHIPPED') {
                   statusText = "COMPLETED";
                   statusColor = Colors.green;
@@ -375,7 +383,7 @@ class _MainContent extends StatelessWidget {
                   statusColor: statusColor,
                   statusBg: statusBg,
                   title: o['customerName'] ?? "Boutique Order",
-                  customer: "Phone: ${o['phone'] ?? 'Unknown'}",
+                  customer: "Phone: ${o['customerPhone'] ?? 'Unknown'}\nAddr: ${o['address'] ?? 'Self-Pickup'}",
                   imageUrl: o['customImageUrl'] ?? _imgOrder1,
                   isEnabled: hasValidId,
                 );

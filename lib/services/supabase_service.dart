@@ -8,9 +8,9 @@ class SupabaseService {
   static Future<List<Map<String, dynamic>>> fetchOrders() async {
     try {
       final data = await client
-          .from('orders')
+          .from('Order')
           .select()
-          .order('created_at', ascending: false);
+          .order('createdAt', ascending: false);
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
       debugPrint('Error fetching orders: $e');
@@ -23,10 +23,28 @@ class SupabaseService {
     try {
       final data = await client
           .from('Cake')
-          .select('*, options:CakeOption(*)');
+          .select('*, options:CakeOption(*), category:Category(name)');
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
       debugPrint('Error fetching menu: $e');
+      return [];
+    }
+  }
+
+  // Fetching Categories
+  static Future<List<String>> fetchCategories() async {
+    try {
+      final data = await client
+          .from('Category')
+          .select('name');
+      
+      final List<String> cats = List<Map<String, dynamic>>.from(data)
+          .map((item) => item['name'].toString())
+          .toList();
+      
+      return cats;
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
       return [];
     }
   }

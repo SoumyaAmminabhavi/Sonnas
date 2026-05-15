@@ -6,7 +6,11 @@ import 'screens/menu_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/profile_screen.dart';
-
+import 'dart:async';
+import 'providers/favorites_provider.dart';
+import 'providers/cart_provider.dart';
+import '../services/haptic_service.dart';
+import 'package:provider/provider.dart';
 
 class CustomerMainScreen extends StatefulWidget {
   const CustomerMainScreen({super.key});
@@ -19,6 +23,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _currentIndex = 0;
   late final List<Widget> _screens;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  StreamSubscription? _statusSubscription;
+  StreamSubscription? _stockSubscription;
+  Timer? _abandonedCartTimer;
+  final Map<String, bool> _previousStockStatus = {};
 
   @override
   void initState() {
@@ -30,6 +38,106 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       const OrdersScreen(),
       const ProfileScreen(),
     ];
+    _setupStatusListener();
+    _setupStockListener();
+    _setupAbandonedCartListener();
+  }
+
+  @override
+  void dispose() {
+    _statusSubscription?.cancel();
+    _stockSubscription?.cancel();
+    _abandonedCartTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setupStatusListener() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final String phone = user.userMetadata?['phone']?.toString() ?? user.phone ?? "";
+    if (phone.isEmpty) return;
+
+    _statusSubscription = Supabase.instance.client
+        .from('Order')
+        .stream(primaryKey: ['id'])
+        .eq('customerPhone', phone)
+        .listen((List<Map<String, dynamic>> orders) {
+          for (final order in orders) {
+            final String status = order['status'] ?? '';
+            final String orderNum = order['orderNumber'] ?? 'Order';
+            
+            if (status == 'OUT_FOR_DELIVERY') {
+              _showStatusNotification("🚀 $orderNum is out for delivery!");
+            } else if (status == 'DELIVERED') {
+              _showStatusNotification("✨ $orderNum has been delivered! Enjoy!");
+            }
+          }
+        });
+  }
+
+  void _setupStockListener() {
+    _stockSubscription = Supabase.instance.client
+        .from('Cake')
+        .stream(primaryKey: ['id'])
+        .listen((List<Map<String, dynamic>> cakes) {
+          if (!mounted) return;
+          final favoritesProvider = context.read<FavoritesProvider>();
+          
+          for (final cake in cakes) {
+            final bool isAvailable = cake['isAvailable'] ?? true;
+            final String cakeId = cake['id'].toString();
+            final String cakeName = cake['name'] ?? 'A favorite cake';
+
+            // Only notify if it was previously UNAVAILABLE and is now AVAILABLE
+            final bool wasAvailable = _previousStockStatus[cakeId] ?? true; 
+
+            if (isAvailable && !wasAvailable && favoritesProvider.isFavorite(cakeId, cakeName)) {
+              _showStatusNotification("🍰 Good news! $cakeName is back in stock!");
+            }
+            
+            // Update the state for the next update
+            _previousStockStatus[cakeId] = isAvailable;
+          }
+        });
+  }
+
+  void _setupAbandonedCartListener() {
+    // Check every 10 minutes if the cart is abandoned
+    _abandonedCartTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
+      final cart = context.read<CartProvider>();
+      if (cart.items.isNotEmpty && _currentIndex != 2) {
+        _showStatusNotification("🛒 Your bag is waiting! Don't miss out on your treats.");
+      }
+    });
+  }
+
+  String? _lastShownMessage;
+  void _showStatusNotification(String message) {
+    if (!mounted || _lastShownMessage == message) return;
+    
+    _lastShownMessage = message;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: const Color(0xFFFF4D8D),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 4),
+      ),
+    ).closed.then((_) {
+      if (mounted && _lastShownMessage == message) {
+        _lastShownMessage = null;
+      }
+    });
   }
 
   @override
@@ -241,7 +349,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     const Color secondaryColor = Color(0xFF701235);
 
     return InkWell(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        HapticService.selection();
+        setState(() => _currentIndex = index);
+      },
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -288,7 +399,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     const Color secondaryColor = Color(0xFF701235);
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        HapticService.selection();
+        setState(() => _currentIndex = index);
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
