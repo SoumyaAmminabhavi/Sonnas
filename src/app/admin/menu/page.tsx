@@ -375,8 +375,17 @@ export default function AdminMenuPage() {
                             const formDataUpload = new FormData();
                             formDataUpload.append("file", file);
 
+                            // Pass the slug so Supabase stores the image at a
+                            // stable path (e.g. cakes/chocolate-indulgence.jpg).
+                            // The URL never changes on re-upload — the WhatsApp
+                            // bot always fetches the latest image automatically.
+                            const uploadSlug = formData.slug.trim();
+                            const uploadUrl = uploadSlug
+                              ? `/api/upload?slug=${encodeURIComponent(uploadSlug)}`
+                              : "/api/upload";
+
                             try {
-                              const res = await fetch("/api/upload", {
+                              const res = await fetch(uploadUrl, {
                                 method: "POST",
                                 body: formDataUpload,
                               });

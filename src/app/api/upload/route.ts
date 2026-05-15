@@ -46,18 +46,32 @@ export async function POST(request: NextRequest) {
 
     const buffer = await file.arrayBuffer();
 
-    
-    // Create a unique filename 
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_"); // sanitize
-    const finalFilename = `${uniqueSuffix}-${filename}`;
-    
-    // Upload to Supabase Storage
+    // ── Determine stable filename ─────────────────────────────────────────
+    // If a slug is provided (e.g. ?slug=chocolate-indulgence), use it as a
+    // deterministic filename so the Supabase public URL never changes when
+    // the image is replaced. The WhatsApp bot always fetches the latest image
+    // from the same URL automatically.
+    const slug = request.nextUrl.searchParams.get("slug");
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+
+    let finalFilename: string;
+    if (slug) {
+      // Sanitize slug to be safe for storage paths
+      const safeSlug = slug.replace(/[^a-zA-Z0-9-_]/g, "-").toLowerCase();
+      finalFilename = `${safeSlug}.${ext}`;
+    } else {
+      // Fallback: unique suffix (used when adding a new cake before slug is known)
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      finalFilename = `${uniqueSuffix}-${filename}`;
+    }
+
+    // Upload to Supabase Storage (upsert=true replaces existing file at same path)
     const { error } = await supabase.storage
       .from("cakes")
       .upload(finalFilename, buffer, {
         contentType: file.type,
-        upsert: true
+        upsert: true,
       });
 
     if (error) {
@@ -65,14 +79,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to upload to storage" }, { status: 500 });
     }
 
-    // Get Public URL
+    // Get Public URL (same URL every time for slug-based uploads)
     const { data: { publicUrl } } = supabase.storage
       .from("cakes")
       .getPublicUrl(finalFilename);
 
+    console.log(`[Upload] Stored as "${finalFilename}" (${slug ? "stable slug" : "unique"}): ${publicUrl}`);
+
     return NextResponse.json({ 
       success: true, 
-      imageUrl: publicUrl 
+      imageUrl: publicUrl,
     });
   } catch (error) {
     console.error("Upload error:", error);
