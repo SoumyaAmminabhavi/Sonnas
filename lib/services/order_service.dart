@@ -88,8 +88,9 @@ class OrderService {
   }
 
   static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) {
-    // We stream the table and filter in memory to allow matching either ID or OrderNumber
-    // This is more flexible for deep-linking from notifications
+    final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+    final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
+
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
@@ -99,18 +100,15 @@ class OrderService {
               (o) {
                 final String dbId = o['id'].toString();
                 final String dbNum = o['orderNumber']?.toString() ?? '';
-                
-                // Direct ID match
+
                 if (dbId == idOrNumber) return true;
-                
-                // Direct Order Number match
                 if (dbNum == idOrNumber) return true;
-                
-                // Cross-prefix matching (remove common prefixes to compare the core number)
-                final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-)'), '');
-                final cleanDbNum = dbNum.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-)'), '');
-                
-                return cleanInput != "" && cleanInput == cleanDbNum;
+
+                final cleanDbNum = dbNum.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+                if (cleanInput.isNotEmpty && cleanInput == cleanDbNum) return true;
+
+                final dbNumEscaped = dbNum.replaceAll('%', '\\%').replaceAll('_', '\\_');
+                return dbNumEscaped.toLowerCase().contains(escapedInput.toLowerCase());
               },
               orElse: () => <String, dynamic>{},
             );

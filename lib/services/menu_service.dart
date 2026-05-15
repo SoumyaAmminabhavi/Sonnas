@@ -23,17 +23,21 @@ class MenuService {
 
     void handleEvent(_) => refresh();
 
-    subscriptions.add(_client.from('Cake').stream(primaryKey: ['id']).listen(handleEvent));
-    subscriptions.add(_client.from('Category').stream(primaryKey: ['id']).listen(handleEvent));
-    subscriptions.add(_client.from('CakeOption').stream(primaryKey: ['id']).listen(handleEvent));
+    controller.onListen = () {
+      if (subscriptions.isEmpty) {
+        subscriptions.add(_client.from('Cake').stream(primaryKey: ['id']).listen(handleEvent));
+        subscriptions.add(_client.from('Category').stream(primaryKey: ['id']).listen(handleEvent));
+        subscriptions.add(_client.from('CakeOption').stream(primaryKey: ['id']).listen(handleEvent));
+        refresh();
+      }
+    };
 
     controller.onCancel = () {
       for (final sub in subscriptions) {
         sub.cancel();
       }
+      subscriptions.clear();
     };
-
-    refresh();
 
     return controller.stream;
   }

@@ -358,13 +358,45 @@ class KitchenOrderCard extends StatelessWidget {
       );
     }
 
-    final resolvedUrl = (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
-        ? imageUrl
-        : (() {
-            final base = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
-            if (version == null) return base;
-            return base.contains('?') ? '$base&v=$version' : '$base?v=$version';
-          })();
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final bytes = UriData.parse(imageUrl).contentAsBytes();
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            bytes,
+            width: 60,
+            height: 60,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
+            ),
+          ),
+        );
+      } catch (_) {
+        return Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
+        );
+      }
+    }
+
+    final resolvedUrl = (() {
+      final base = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+      if (version == null) return base;
+      return base.contains('?') ? '$base&v=$version' : '$base?v=$version';
+    })();
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),

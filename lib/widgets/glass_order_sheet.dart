@@ -31,6 +31,14 @@ class GlassOrderSheet extends StatefulWidget {
 class _GlassOrderSheetState extends State<GlassOrderSheet> {
   bool _isUpdating = false;
 
+  bool _shouldShowActionArea() {
+    final status = widget.order.status;
+    return status == OrderStatus.pending ||
+        status == OrderStatus.confirmed ||
+        status == OrderStatus.outForDelivery ||
+        status == OrderStatus.delivered;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -62,11 +70,11 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                     _buildItemsList(cs),
                     const SizedBox(height: 32),
                     if (widget.order.notes?.trim().isNotEmpty == true) _buildNotes(cs),
-                    SizedBox(height: widget.showActions ? 120 : 0), // Padding for actions
+                    SizedBox(height: _shouldShowActionArea() ? 120 : 0),
                   ],
                 ),
               ),
-              if (widget.showActions) _buildActionArea(context, cs),
+              if (_shouldShowActionArea()) _buildActionArea(context, cs),
             ],
           ),
         ),
@@ -186,10 +194,12 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                     displayImageUrl = matchingCake['image'] ?? '';
 
                     if (displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) {
-                      if (widget.order.customImageUrl != null && widget.order.customImageUrl!.isNotEmpty) {
-                        displayImageUrl = widget.order.customImageUrl!;
-                      } else if (widget.order.conversationImageUrl != null && widget.order.conversationImageUrl!.isNotEmpty) {
-                        displayImageUrl = widget.order.conversationImageUrl!;
+                      final customTrimmed = widget.order.customImageUrl?.trim();
+                      final conversationTrimmed = widget.order.conversationImageUrl?.trim();
+                      if (customTrimmed != null && customTrimmed.isNotEmpty) {
+                        displayImageUrl = customTrimmed;
+                      } else if (conversationTrimmed != null && conversationTrimmed.isNotEmpty) {
+                        displayImageUrl = conversationTrimmed;
                       }
                     }
 
