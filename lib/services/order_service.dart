@@ -149,9 +149,10 @@ class OrderService {
     try {
       final res = await _client.from('Order').select().order('createdAt', ascending: false);
       return List<Map<String, dynamic>>.from(res).map((o) {
-        // Map source enum to UI 'orderType' for backward compatibility
-        o['orderType'] = o['source']?.toString() ?? 'APP';
-        return o;
+        return {
+          ...o,
+          'orderType': o['source']?.toString() ?? 'APP',
+        };
       }).toList();
     } catch (e) {
       debugPrint('❌ Order Fetch failed: $e');

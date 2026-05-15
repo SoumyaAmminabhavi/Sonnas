@@ -9,20 +9,33 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/dashboard_provider.dart';
 
-class OwnerOrderDetailsView extends ConsumerWidget {
+class OwnerOrderDetailsView extends StatefulWidget {
   final String orderId;
   final ValueChanged<int>? onTabChanged;
 
   const OwnerOrderDetailsView({super.key, required this.orderId, this.onTabChanged});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  State<OwnerOrderDetailsView> createState() => _OwnerOrderDetailsViewState();
+}
+
+class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
+  late Future<Map<String, dynamic>?> _orderFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final cleanId = widget.orderId.replaceAll(RegExp(r'[#]'), '');
+    _orderFuture = OrderService.fetchOrderByIdOrNumber(cleanId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final cleanId = orderId.replaceAll(RegExp(r'[#]'), '');
 
     return FutureBuilder<Map<String, dynamic>?>(
-      future: OrderService.fetchOrderByIdOrNumber(cleanId),
+      future: _orderFuture,
       builder: (context, snapshot) {
         final order = snapshot.data;
         final conversation = order?['WhatsAppConversation'];
@@ -59,7 +72,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
             if (order == null) {
               return Scaffold(
                 backgroundColor: cs.surface,
-                body: Center(child: Text("Order not found: $orderId")),
+                body: Center(child: Text("Order not found: ${widget.orderId}")),
               );
             }
 
@@ -102,7 +115,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                           onTap: (index) {
                             if (!context.mounted) return;
                             Navigator.of(context).popUntil((route) => route.settings.name == 'OwnerDashboard' || route.isFirst);
-                            onTabChanged?.call(index);
+                            widget.onTabChanged?.call(index);
                           },
                         ),
                       Expanded(
@@ -388,28 +401,29 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                               label: label,
                                               cs: cs,
                                               isPrimary: active,
-                                              onPressed: active ? () async {
-                                                try {
-                                                  await OrderService.updateOrderStatus(order['id'], next);
-                                                  if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
-                                                      SnackBar(
-                                                        content: Row(
-                                                          children: [
-                                                            const Icon(Icons.check_circle_outline, color: Colors.white),
-                                                            const SizedBox(width: 12),
-                                                            Expanded(child: Text("Order updated to $next")),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }
-                                                } catch (e) {
-                                                  if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to update order. Please try again.")));
-                                                  }
-                                                }
-                                              } : null,
+                                               onPressed: active ? () async {
+                                                 try {
+                                                   await OrderService.updateOrderStatus(order['id'], next);
+                                                   setState(() => _orderFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), '')));
+                                                   if (context.mounted) {
+                                                     ScaffoldMessenger.of(context).showSnackBar(
+                                                       SnackBar(
+                                                         content: Row(
+                                                           children: [
+                                                             const Icon(Icons.check_circle_outline, color: Colors.white),
+                                                             const SizedBox(width: 12),
+                                                             Expanded(child: Text("Order updated to $next")),
+                                                           ],
+                                                         ),
+                                                       ),
+                                                     );
+                                                   }
+                                                 } catch (e) {
+                                                   if (context.mounted) {
+                                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to update order. Please try again.")));
+                                                   }
+                                                 }
+                                               } : null,
                                             );
                                           }(),
                                         ),

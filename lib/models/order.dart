@@ -26,7 +26,7 @@ extension OrderStatusExtension on OrderStatus {
   }
   
   static OrderStatus fromString(String status) {
-    switch (status.toUpperCase()) {
+    switch (status.trim().toUpperCase()) {
       case 'PENDING': return OrderStatus.pending;
       case 'CONFIRMED': return OrderStatus.confirmed;
       // Legacy statuses — map to closest canonical equivalent

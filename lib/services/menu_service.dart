@@ -9,7 +9,7 @@ class MenuService {
   /// Real-time menu updates
   /// Real-time menu updates with joined data
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
-    final controller = StreamController<List<Map<String, dynamic>>>();
+    final controller = StreamController<List<Map<String, dynamic>>>.broadcast();
     final subscriptions = <StreamSubscription>[];
 
     Future<void> refresh() async {
