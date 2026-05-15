@@ -3,8 +3,7 @@ import {
   cakeCache, 
   categoryCache, 
   lastCacheUpdate, 
-  setCaches,
-  convoCache
+  setCaches
 } from "./cache";
 import { CACHE_TTL, DB_TIMEOUT } from "./constants";
 import { withTimeout } from "./helpers";
@@ -20,7 +19,7 @@ import {
   sendTextMessage
 } from "~/server/whatsapp";
 import { ConversationState } from "../../../../generated/prisma";
-import { updateState, getConversation } from "./session";
+import { updateState } from "./session";
 import { RESET_STATE } from "./constants";
 
 const { JaroWinklerDistance } = natural;
@@ -190,7 +189,7 @@ export async function sendMenu(to: string, offset = 0) {
     // ... existing dynamic grouping logic ...
     const categoriesMap = new Map<string, Cake[]>();
     for (const cake of cakes) {
-      const cat = cake.category || "Our Selection";
+      const cat = cake.category ?? "Our Selection";
       if (!categoriesMap.has(cat)) categoriesMap.set(cat, []);
       categoriesMap.get(cat)!.push(cake);
     }
@@ -218,7 +217,7 @@ export async function sendMenu(to: string, offset = 0) {
     
     let displayCount = 0;
     let hasNext = false;
-    let hasPrev = !isFirstPage;
+    const hasPrev = !isFirstPage;
 
     if (isFirstPage) {
       if (totalCats > PAGE_SIZE) {
@@ -296,7 +295,6 @@ export async function handleCategorySelection(msg: IncomingMessage) {
     return;
   }
 
-  const phone = msg.from;
   const dbCategories = await safeGetCategories();
   const category = dbCategories.find(c => c.id === categoryId);
   const catName = category?.name ?? categoryId;
@@ -324,7 +322,7 @@ export async function handleCategorySelection(msg: IncomingMessage) {
   
   let displayCount = 0;
   let hasNext = false;
-  let hasPrev = !isFirstPage;
+  const hasPrev = !isFirstPage;
 
   if (isFirstPage) {
     if (totalItems > PAGE_SIZE) {
