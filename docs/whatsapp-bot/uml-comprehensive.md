@@ -24,6 +24,10 @@ classDiagram
         +Float basePrice
         +getPublicImageUrl()
     }
+    class WhatsAppSetting {
+        +String key
+        +String value
+    }
     class Order {
         +String orderId
         +OrderStatus status
@@ -40,6 +44,7 @@ classDiagram
     WhatsAppCartItem "*" -- "1" Cake : refers to
     WhatsAppConversation --> WhatsAppService : uses
     Order "1" -- "1" WhatsAppConversation : originated from
+    WhatsAppService ..> WhatsAppSetting : configured by
 ```
 
 ---
@@ -96,7 +101,7 @@ graph LR
 ---
 
 ## 4. Sequence Diagram (Behavioral)
-Detailed time-ordered flow of adding an item to the cart.
+Detailed time-ordered flow of adding an item to the cart, including dynamic setting lookup.
 
 ```mermaid
 sequenceDiagram
@@ -108,6 +113,8 @@ sequenceDiagram
 
     U->>W: Clicks "Select Size: 0.5kg"
     W->>S: handleSizeSelection(msg)
+    S->>D: getWhatsAppSetting("SESSION_TIMEOUT")
+    D-->>S: 60 mins
     S->>D: Create WhatsAppCartItem
     D-->>S: Success
     S->>D: Update ConversationState to SELECTING_QUANTITY
@@ -159,7 +166,7 @@ graph TD
 ---
 
 ## 7. State Machine Diagram (Behavioral)
-The lifecycle of the User Session.
+The lifecycle of the User Session, including Custom Order flows.
 
 ```mermaid
 stateDiagram-v2
@@ -169,6 +176,11 @@ stateDiagram-v2
     SELECTING_SIZE --> SELECTING_QUANTITY: Size Selected
     SELECTING_QUANTITY --> CONFIRMING_ORDER: Quantity Selected
     CONFIRMING_ORDER --> IDLE: Order Placed
+    
+    IDLE --> CUSTOM_ORDER_START: "Design my own cake"
+    CUSTOM_ORDER_START --> CUSTOM_ORDER_IMAGE: Details Provided
+    CUSTOM_ORDER_IMAGE --> CUSTOM_ORDER_DETAILS: Photo Uploaded
+    CUSTOM_ORDER_DETAILS --> CONFIRMING_ORDER: Final Review
     
     state BROWSING_MENU {
         [*] --> ListCategories

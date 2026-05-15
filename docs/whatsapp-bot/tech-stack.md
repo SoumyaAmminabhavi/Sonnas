@@ -24,7 +24,8 @@ The Sonna's Patisserie WhatsApp bot is built with a modern, serverless-first arc
     - Logic: Stable filenames using Database IDs (`{id}.png`) to prevent URL staleness.
 - **Caching**: 
     - `convoCache`: In-memory session tracking.
-    - `cakeCache`: 30-minute TTL cache for the full menu to reduce DB pressure.
+    - `cakeCache`: 1-minute TTL cache (configured in `constants.ts`) for the full menu to reduce DB pressure.
+- **Dynamic Configuration**: `WhatsAppSetting` table stores runtime overrides for Greetings, Delivery Slots, and Maintenance Mode.
 
 ## Intelligence & Utilities
 - **Fuzzy Search**: [Natural](https://www.npmjs.com/package/natural). Implements `JaroWinklerDistance` to handle user typos when typing cake names directly.

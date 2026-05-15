@@ -24,14 +24,20 @@ The bot retrieves the current `WhatsAppConversation` using `getConversation()` i
 
 ### Integrity Checks
 - **Zombie State Protection**: If a user is in a state like `SELECTING_SIZE` but the session has lost the `selectedCakeId` (e.g. manual DB edit), the bot automatically resets to `IDLE` to prevent crashes.
-- **Session Timeout**: If `lastActivityAt` is older than the configured timeout (default 30 mins), the cart is cleared and the user is welcomed back fresh.
+- **Session Timeout**: If `lastActivityAt` is older than the configured timeout (default 60 mins), the cart is cleared and the user is welcomed back fresh.
+- **Dynamic Configuration**: The bot uses a `WhatsAppSetting` table to manage runtime behaviors (Greetings, Delivery Slots, Maintenance Mode) without code changes.
 
-## 4. State Machine Logic
+## 4. Dynamic Configuration Management
+The `getWhatsAppSetting(key, default)` helper in `session.ts` provides a unified interface for database-driven configuration.
+- **JSON Parsing**: Settings like `DELIVERY_SLOTS` are stored as JSON strings and safely parsed into typed objects during message processing.
+- **Fallback Chain**: The bot implements a strict "Database -> Constant -> Default" fallback chain to ensure reliability even if the database is under load.
+
+## 5. State Machine Logic
 Core business logic resides in `src/server/whatsapp/conversation-handler/state-machine.ts`.
 - **`_internalHandleMessage`**: The heart of the bot. It maps the current state + user input to a transition.
 - **NLP Fallback**: If the bot is `IDLE` and doesn't understand the command, it uses `natural` fuzzy matching to check if the user is trying to mention a cake name.
 
-## 5. Output Service (The Meta Bridge)
+## 6. Output Service (The Meta Bridge)
 `src/server/whatsapp.ts` handles the JSON payload construction for the Meta API.
 - **Template Support**: Support for `cta_url` buttons (for Razorpay) and `quick_reply` buttons.
 - **Error Handling**: Silent failures for image fetching to ensure the text-based menus still reach the user even if media servers are slow.

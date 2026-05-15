@@ -15,16 +15,23 @@ We created a dedicated `docs/whatsapp-bot/` folder containing high-level technic
 - **Image Guards**: Implemented a safety check to ensure only valid public URLs are sent to the WhatsApp API, preventing bot crashes on broken links.
 
 ## 3. Advanced Pagination & Dynamic Menu 🍰
-- **Strict Pagination**: Implemented a professional pagination system for the 10-item WhatsApp limit:
-    - **Page 1**: 9 items + "Next Page".
-    - **Middle**: "Prev" + 8 items + "Next".
-    - **Last**: "Prev" + 9 items.
-- **Dynamic Categories**: Removed hardcoded category filters. The bot now dynamically groups cakes into sections based on categories defined in your database.
-- **Oldest First Sorting**: Updated the welcome message to feature the 6 oldest categories, ensuring your original core collections are featured front and center.
+- **Professional Pagination Logic**: Implemented a strict pagination pattern to stay within WhatsApp's 10-item limit while maximizing content visibility:
+    - **Page 1**: Shows 9 items + a "➡️ Next Page" button.
+    - **Middle Pages**: Shows a "⬅️ Previous Page" button + 8 items + a "➡️ Next Page" button.
+    - **Last Page**: Shows a "⬅️ Previous Page" button + up to 9 items.
+- **Dynamic Categories**: Removed all hardcoded category filters. The bot now automatically groups cakes into sections based on your database categories.
+- **Sorting Logic**: Updated category sorting to `createdAt: asc` (Oldest First) to ensure your classic collections are always featured at the top of the welcome message.
 
-## 4. Reliability & Build Stability 🛠️
+## 4. Dynamic Bot Configuration (De-hardcoding) ⚙️
+We have moved core bot behaviors from hardcoded constants to the database (`WhatsAppSetting` table), allowing real-time adjustments without code deployments:
+- **Greetings Triggers**: Commands like "Namaste" or "Hiii" can now be added via the `GREETINGS` setting.
+- **Delivery Slots**: Time windows (e.g., "12 PM - 3 PM") are now managed via the `DELIVERY_SLOTS` JSON setting.
+- **Maintenance Mode**: The maintenance message can be updated instantly via `MAINTENANCE_MESSAGE`.
+- **Session Timeout**: The bot session duration is now managed via `SESSION_TIMEOUT_MINS`.
+
+## 5. Reliability & Build Stability 🛠️
 - **Deduplication**: Fixed an issue where the menu PDF was being sent twice in some scenarios.
-- **Vercel Fixes**: Resolved all TypeScript and ESLint errors that were blocking the production build.
+- **Vercel Fixes**: Resolved all TypeScript and ESLint errors (including unsafe any assignments in JSON parsing) that were blocking the production build.
 - **Concurrency**: Verified that per-user message locking is correctly preventing race conditions during rapid message bursts.
 
 ## Verification Results
