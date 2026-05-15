@@ -214,20 +214,20 @@ The physical nodes where the system is deployed.
 
 ```mermaid
 graph TD
-    subgraph User Device
+    subgraph User_Device ["User Device"]
         WA[WhatsApp App]
     end
     
-    subgraph Meta Infrastructure
+    subgraph Meta_Infra ["Meta Infrastructure"]
         CloudAPI[Meta Cloud API]
     end
     
-    subgraph Vercel (Edge/Serverless)
+    subgraph Vercel_Platform ["Vercel (Edge/Serverless)"]
         NextJS[Next.js App]
         Node[Node.js Runtime]
     end
     
-    subgraph Supabase Cloud
+    subgraph Supabase_Cloud ["Supabase Cloud"]
         PG[(PostgreSQL DB)]
         Storage[Supabase Storage]
     end
