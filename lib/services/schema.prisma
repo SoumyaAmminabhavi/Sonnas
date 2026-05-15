@@ -258,7 +258,7 @@ model WhatsAppCartItem {
   createdAt    DateTime             @default(now())
   conversation WhatsAppConversation @relation(fields: [phone], references: [phone], onDelete: Cascade)
 
-  @@index([phone])
+
   @@index([phone, createdAt])
 }
 

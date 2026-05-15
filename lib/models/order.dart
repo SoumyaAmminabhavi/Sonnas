@@ -11,8 +11,8 @@ enum OrderStatus {
 }
 
 extension OrderStatusExtension on OrderStatus {
-  /// Display name (e.g. 'OUTFORDELIVERY') — for UI labels only.
-  String get displayName => toString().split('.').last.toUpperCase();
+  /// Uppercased enum identifier (e.g. 'OUTFORDELIVERY'). Used for internal labels and DB fallback.
+  String get internalLabel => toString().split('.').last.toUpperCase();
 
   String get humanReadable {
     switch (this) {
@@ -47,7 +47,7 @@ extension OrderStatusExtension on OrderStatus {
   String get dbValue {
     switch (this) {
       case OrderStatus.outForDelivery: return 'OUT_FOR_DELIVERY';
-      default: return displayName;
+      default: return internalLabel;
     }
   }
 }

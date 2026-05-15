@@ -649,6 +649,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     _loadCategories();
   }
 
+  String _sanitizePrice(String value) {
+    return value
+        .replaceAll('/-', '')
+        .replaceAll('₹', '')
+        .replaceAll(',', '')
+        .trim();
+  }
+
   Future<void> _loadCategories() async {
     if (mounted) setState(() => _isLoadingCategories = true);
     try {
@@ -734,6 +742,18 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       final name = _nameController.text;
       final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
       
+      if (slug.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid name that produces a unique identifier.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isUploading = false);
+        return;
+      }
+      
       // Smart search for existing cake with same slug
       String? existingCakeId;
       try {
@@ -803,14 +823,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         if (match.isNotEmpty) {
           categoryId = match['id'].toString();
         } else {
-          // Create new Category record
-          final catSlug = trimmed.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-          categoryId = await MenuService.upsertCategory({
-            'id': 'cat_${DateTime.now().millisecondsSinceEpoch}',
-            'name': trimmed,
-            'slug': catSlug,
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
+          // If selecting a fallback name (when DB was empty or failed),
+          // only create if it's explicitly intended. Otherwise, fail save.
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Collection mismatch. Please re-select the collection.')),
+          );
+          setState(() => _isUploading = false);
+          return;
         }
       } else {
         if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
@@ -822,7 +842,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           return;
         }
         
-        // Resolve selected value (could be ID, legacy name, or fallback name)
+        // Resolve selected value
         final existingCat = _categories.firstWhere(
           (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
           orElse: () => <String, dynamic>{},
@@ -830,23 +850,24 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
         if (existingCat.isNotEmpty) {
           categoryId = existingCat['id'];
-        } else if (_selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
-          // If selecting a fallback name (when DB was empty or failed),
-          // auto-create it to preserve data integrity and satisfy FK constraints.
-          final name = _selectedCategoryId!;
-          final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+        } else if (widget.initialData?['categoryId'] != null) {
+          // Preserve original if unresolved (e.g. still loading or legacy)
+          categoryId = widget.initialData?['categoryId'];
           
-          categoryId = await MenuService.upsertCategory({
-            'id': 'cat_${DateTime.now().millisecondsSinceEpoch}',
-            'name': name,
-            'slug': slug,
-            'updatedAt': DateTime.now().toIso8601String(),
-          });
-          
-          // Refresh local list to include the newly created category
-          _loadCategories();
+          // Validation error to prevent accidental changes to unknown category
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Collection not found in the official list. Please re-select.')),
+          );
+          setState(() => _isUploading = false);
+          return;
         } else {
-          categoryId = null;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Invalid collection selected. Please try again.')),
+          );
+          setState(() => _isUploading = false);
+          return;
         }
       }
 
@@ -864,11 +885,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       final options = widget.initialData?['CakeOption'] as List? ?? [];
       final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
       
-      final normalizedPrice = _priceController.text
-          .replaceAll('/-', '')
-          .replaceAll('₹', '')
-          .replaceAll(',', '')
-          .trim();
+      final normalizedPrice = _sanitizePrice(_priceController.text);
 
       await MenuService.upsertCakeOption({
         'id': firstOption?['id'] ?? 'co${DateTime.now().millisecondsSinceEpoch}',
@@ -1025,7 +1042,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                             controller: _priceController,
                             validator: (v) {
                               if (v == null || v.isEmpty) return "Required";
-                              final clean = v.replaceAll('/-', '').replaceAll('₹', '').trim();
+                              final clean = _sanitizePrice(v);
                               if (double.tryParse(clean) == null) return "Invalid price";
                               return null;
                             },
@@ -1049,7 +1066,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                       controller: _priceController,
                       validator: (v) {
                         if (v == null || v.isEmpty) return "Required";
-                        final clean = v.replaceAll('/-', '').replaceAll('₹', '').trim();
+                        final clean = _sanitizePrice(v);
                         if (double.tryParse(clean) == null) return "Invalid price";
                         return null;
                       },

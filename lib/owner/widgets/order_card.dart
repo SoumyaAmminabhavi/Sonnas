@@ -30,8 +30,10 @@ class OrderCardReactive extends ConsumerWidget {
         if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
           if (items.isNotEmpty && menuAsync.hasValue) {
             final String firstName = items[0]['cakeName'] ?? '';
+            final String? firstCakeId = items[0]['cakeId']?.toString();
             final matchingCake = menuAsync.value!.firstWhere(
-              (c) => (c['name']?.toString().toLowerCase() == firstName.toLowerCase()),
+              (c) => (firstCakeId != null && c['id']?.toString() == firstCakeId) ||
+                     (c['name']?.toString().toLowerCase() == firstName.toLowerCase()),
               orElse: () => <String, dynamic>{},
             );
             imageUrl = matchingCake['image'] ?? '';

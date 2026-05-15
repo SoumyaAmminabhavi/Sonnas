@@ -190,8 +190,16 @@ class OrderService {
       'price': item['price'],
       'size': item['size'] ?? 'Standard',
     }).toList();
-    
-    await _client.from('OrderItem').insert(orderItems);
+
+ 
+    try {
+      await _client.from('OrderItem').insert(orderItems);
+    } catch (e) {
+      // Cleanup: delete the orphaned order record if items failed to save
+      debugPrint('❌ OrderItems failed to save, rolling back Order $orderId: $e');
+      await _client.from('Order').delete().eq('id', orderId);
+      rethrow;
+    }
   }
 
   /// Launch WhatsApp with a message

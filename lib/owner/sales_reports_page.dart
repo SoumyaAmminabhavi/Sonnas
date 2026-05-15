@@ -51,7 +51,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
       final orderIds = _orders.map((o) => o['id'] as String).toList();
       final allItems = await OrderService.fetchBulkOrderItems(orderIds);
-
       if (mounted) {
         setState(() {
           _processItems(allItems, menu);
@@ -66,24 +65,26 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     }
   }
 
+  List<Map<String, dynamic>> get _paidOrders {
+    return _orders.where((order) {
+      final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+      return pStatus == 'PAID';
+    }).toList();
+  }
+
   void _calculateMetrics() {
     _totalRevenue = 0;
-    _totalOrders = _orders.length;
+    final paidOrders = _paidOrders;
+    _totalOrders = paidOrders.length;
 
-    int paidOrdersCount = 0;
-    for (var order in _orders) {
-      // Only count revenue from completed payments (Case-insensitive Enum check)
-      final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
-      if (pStatus != 'PAID') continue;
-
-      paidOrdersCount++;
+    for (var order in paidOrders) {
       final priceStr = order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
       final rawValue = double.tryParse(priceStr) ?? 0.0;
       final total = rawValue / 100.0;
       _totalRevenue += total;
     }
 
-    _avgOrderValue = paidOrdersCount > 0 ? _totalRevenue / paidOrdersCount : 0;
+    _avgOrderValue = _totalOrders > 0 ? _totalRevenue / _totalOrders : 0;
   }
 
   void _processItems(List<Map<String, dynamic>> items, List<Map<String, dynamic>> menu) {
@@ -137,11 +138,16 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     if (menu.isEmpty || orders.isEmpty) return;
     
     // Performance: Only fetch if order IDs have changed
-    final currentIds = orders.map((o) => o['id'].toString()).join(',');
+    final paidOrders = orders.where((order) {
+      final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+      return pStatus == 'PAID';
+    }).toList();
+
+    final currentIds = paidOrders.map((o) => o['id'].toString()).join(',');
     if (currentIds == _lastProcessedIds) return;
     _lastProcessedIds = currentIds;
 
-    OrderService.fetchBulkOrderItems(orders.map((o) => o['id'] as String).toList()).then((items) {
+    OrderService.fetchBulkOrderItems(paidOrders.map((o) => o['id'] as String).toList()).then((items) {
       if (mounted) {
         setState(() {
           _processItems(items, menu);
@@ -199,8 +205,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   List<FlSpot> _generateChartSpots() {
-    if (_orders.isEmpty) return [const FlSpot(0, 0)];
-    final recent = _orders.take(7).toList().reversed.toList();
+    final paidOrders = _paidOrders;
+    if (paidOrders.isEmpty) return [const FlSpot(0, 0)];
+    final recent = paidOrders.take(7).toList().reversed.toList();
     List<FlSpot> spots = [];
     for (int i = 0; i < recent.length; i++) {
       final priceStr = recent[i]['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';

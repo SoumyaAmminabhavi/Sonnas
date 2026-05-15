@@ -49,27 +49,47 @@ class MenuService {
 
   /// Create or update a category
   static Future<String> upsertCategory(Map<String, dynamic> category) async {
-    final res = await _client.from('Category').upsert(category).select().single();
-    return res['id'].toString();
+    try {
+      final res = await _client.from('Category').upsert(category).select().single();
+      return res['id'].toString();
+    } catch (e) {
+      debugPrint('⚠️ Upsert Category Failed: $e');
+      rethrow;
+    }
   }
 
   /// Create or update a menu item (Cake)
   static Future<String> upsertCake(Map<String, dynamic> cake) async {
-    // Remove the legacy 'category' string field if it exists in the payload
-    final data = Map<String, dynamic>.from(cake);
-    data.remove('category');
-    
-    final res = await _client.from('Cake').upsert(data).select().single();
-    return res['id'].toString();
+    try {
+      // Remove the legacy 'category' string field if it exists in the payload
+      final data = Map<String, dynamic>.from(cake);
+      data.remove('category');
+      
+      final res = await _client.from('Cake').upsert(data).select().single();
+      return res['id'].toString();
+    } catch (e) {
+      debugPrint('⚠️ Upsert Cake Failed: $e');
+      rethrow;
+    }
   }
 
   /// Create or update a cake option
   static Future<void> upsertCakeOption(Map<String, dynamic> option) async {
-    await _client.from('CakeOption').upsert(option);
+    try {
+      await _client.from('CakeOption').upsert(option);
+    } catch (e) {
+      debugPrint('⚠️ Upsert CakeOption Failed: $e');
+      rethrow;
+    }
   }
 
   /// Soft delete a cake
   static Future<void> deleteCake(String id) async {
-    await _client.from('Cake').update({'deletedAt': DateTime.now().toIso8601String()}).eq('id', id);
+    try {
+      await _client.from('Cake').update({'deletedAt': DateTime.now().toIso8601String()}).eq('id', id);
+    } catch (e) {
+      debugPrint('⚠️ Delete Cake Failed: $e');
+      rethrow;
+    }
   }
 }
