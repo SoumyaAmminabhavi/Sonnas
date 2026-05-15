@@ -309,6 +309,12 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
+  if (interactiveId.startsWith("morecat_") || interactiveId.startsWith("prevcat_")) {
+    const offset = parseInt(interactiveId.split("_")[1]) || 0;
+    await sendMenu(msg.from, offset);
+    return;
+  }
+
   if (interactiveId.startsWith("more_") || interactiveId.startsWith("prev_")) {
     await handleCategorySelection(msg);
     return;

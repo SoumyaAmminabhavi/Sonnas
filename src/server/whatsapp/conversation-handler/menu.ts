@@ -183,11 +183,11 @@ const cakeRow = (c: Cake) => ({
   description: `From ${formatPrice(c.options?.[0]?.price ?? 75000)}`,
 });
 
-export async function sendMenu(to: string) {
+export async function sendMenu(to: string, offset = 0) {
   const cakes = await safeGetCakes();
 
   if (cakes.length <= 10) {
-    // Group cakes by category dynamically
+    // ... existing dynamic grouping logic ...
     const categoriesMap = new Map<string, Cake[]>();
     for (const cake of cakes) {
       const cat = cake.category || "Our Selection";
@@ -210,21 +210,70 @@ export async function sendMenu(to: string) {
     await updateState(to, ConversationState.BROWSING_MENU);
   } else {
     const dbCategories = await safeGetCategories();
-    await updateState(to, ConversationState.SELECTING_CATEGORY);
+    const totalCats = dbCategories.length;
+    const PAGE_SIZE = 10;
+    
+    const isFirstPage = offset === 0;
+    const catsRemaining = totalCats - offset;
+    
+    let displayCount = 0;
+    let hasNext = false;
+    let hasPrev = !isFirstPage;
+
+    if (isFirstPage) {
+      if (totalCats > PAGE_SIZE) {
+        displayCount = 9;
+        hasNext = true;
+      } else {
+        displayCount = totalCats;
+        hasNext = false;
+      }
+    } else {
+      if (catsRemaining > 9) {
+        displayCount = 8;
+        hasNext = true;
+      } else {
+        displayCount = catsRemaining;
+        hasNext = false;
+      }
+    }
+
+    const currentBatch = dbCategories.slice(offset, offset + displayCount);
+    const rows = currentBatch.map(cat => ({
+      id: `cat_${cat.id}`,
+      title: cat.name.slice(0, 24)
+    }));
+
+    if (hasNext) {
+      const nextOffset = offset + displayCount;
+      rows.push({
+        id: `morecat_${nextOffset}`,
+        title: "➡️ Next Categories",
+        description: `Show categories ${nextOffset + 1} - ${Math.min(nextOffset + 9, totalCats)}`
+      });
+    }
+
+    if (hasPrev) {
+      const prevOffset = offset > 9 ? offset - 8 : 0;
+      rows.unshift({
+        id: `prevcat_${prevOffset}`,
+        title: "⬅️ Previous Categories",
+        description: `Return to categories ${prevOffset + 1} - ${prevOffset + (prevOffset === 0 ? 9 : 8)}`
+      });
+    }
+
+    await updateState(to, ConversationState.SELECTING_CATEGORY, { menuOffset: offset });
     await sendInteractiveList(
       to,
       "🧁 Our Categories",
-      "We have quite a variety today! Please select a category to browse:",
+      offset > 0 
+        ? `Continuing our selection (${offset + 1}-${offset + currentBatch.length} of ${totalCats}):`
+        : "We have quite a variety today! Please select a category to browse:",
       "Select Category",
       [
         {
-          title: "Filter by Type",
-          rows: dbCategories.length > 0 
-            ? dbCategories.slice(0, 10).map((cat) => ({
-                id: `cat_${cat.id}`,
-                title: cat.name.slice(0, 24),
-              }))
-            : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }],
+          title: offset > 0 ? `Categories ${offset + 1} - ${offset + currentBatch.length}` : "Filter by Type",
+          rows,
         },
       ]
     );
