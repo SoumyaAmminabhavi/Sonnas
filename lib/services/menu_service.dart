@@ -104,8 +104,13 @@ class MenuService {
   /// Create or update a cake option
   static Future<void> upsertCakeOption(Map<String, dynamic> option) async {
     try {
-      final String cakeId = option['cakeId'].toString();
-      final String size = option['size'].toString();
+      final cakeIdRaw = option['cakeId'];
+      final sizeRaw = option['size'];
+      if (cakeIdRaw == null || sizeRaw == null) {
+        throw ArgumentError('cakeId and size are required for CakeOption');
+      }
+      final String cakeId = cakeIdRaw.toString();
+      final String size = sizeRaw.toString();
 
       // Safety check: Check for existing option with same size to avoid constraint violations
       final existing = await _client

@@ -74,7 +74,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       }
 
        // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
-       final paidOrderIds = _paidOrders.map((o) => o['id'] as String).toList();
+       final paidOrderIds = _paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
        final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
       if (mounted) {
         setState(() {
@@ -187,7 +187,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     if (currentIds == _lastProcessedIds) return;
     _lastProcessedIds = currentIds;
 
-    OrderService.fetchBulkOrderItems(paidOrders.map((o) => o['id'] as String).toList()).then((items) {
+    OrderService.fetchBulkOrderItems(paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList()).then((items) {
       if (mounted) {
         setState(() {
           _processItems(items, menu);

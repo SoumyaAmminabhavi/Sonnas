@@ -66,7 +66,7 @@ class OrderCardReactive extends ConsumerWidget {
         }
 
         return _OrderCardBase(
-          orderId: data['id'] ?? '',
+          orderId: data['id']?.toString() ?? '',
           id: "#${data['orderNumber'] ?? '---'}",
           status: status,
           statusColor: statusColor,
