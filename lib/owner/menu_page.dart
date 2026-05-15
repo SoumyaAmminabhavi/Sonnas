@@ -130,6 +130,15 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 });
 
               // Filtering logic
+              // Safety: If the currently selected category was deleted/emptied, reset to 'All'
+              final availableCategories = allItems.map((i) => i.category).toSet();
+              if (!_selectedCategories.contains('All')) {
+                final stillExists = _selectedCategories.any((cat) => availableCategories.contains(cat));
+                if (!stillExists) {
+                  _selectedCategories = {'All'};
+                }
+              }
+
               final List<_MenuItem> items = allItems.where((item) {
                 if (_selectedCategories.contains('All')) return true;
                 return _selectedCategories.contains(item.category);
@@ -700,26 +709,78 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     }
   }
 
+  String _generateCmpId() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final randomPart = List.generate(19, (index) => chars[DateTime.now().microsecondsSinceEpoch % chars.length]).join();
+    // This creates exactly 25 chars: cmp57z + 19 random chars
+    return 'cmp57z$randomPart';
+  }
+
   Future<void> _saveItem() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isUploading = true);
 
     try {
+      final String cakeName = _nameController.text.trim();
+      final String slug = cakeName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+
+      // 1. Smart ID Resolution (Check if item already exists by name/slug)
+      Map<String, dynamic> matchedCake = {};
+      try {
+        final existingCakes = await MenuService.fetchMenu(includeArchived: true);
+        matchedCake = existingCakes.firstWhere(
+          (c) => c['slug'] == slug,
+          orElse: () => <String, dynamic>{},
+        );
+      } catch (e) {
+        debugPrint('Smart search failed: $e');
+      }
+
+      final String? existingCakeId = matchedCake.isNotEmpty ? matchedCake['id']?.toString() : null;
+      final String? currentCakeId = widget.initialData?['id']?.toString();
+      
+      // Safety check: Don't allow renaming to something that already exists elsewhere
+      if (existingCakeId != null && currentCakeId != null && existingCakeId != currentCakeId) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('A different item already uses this name.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        setState(() => _isUploading = false);
+        return;
+      }
+
+      // Final ID to use for both Image and Database
+      final String finalCakeId = existingCakeId ?? currentCakeId ?? _generateCmpId();
+
+      if (slug.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid name.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isUploading = false);
+        return;
+      }
+
       String? imagePath = _existingImageUrl;
 
-      // 1. Upload new image if selected
+      // 2. Upload new image if selected
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
-        // Standardize extension for web/mobile compatibility
         String extension = _selectedImage!.name.split('.').last.toLowerCase();
         const validExtensions = {'jpg', 'jpeg', 'png', 'webp', 'gif'};
         if (!validExtensions.contains(extension)) extension = 'jpg';
         
-        final fileName = 'cake_${DateTime.now().millisecondsSinceEpoch}.$extension';
+        final fileName = '$finalCakeId.$extension';
         
         final uploadedPath = await SupabaseService.uploadImage(
-          bucket: 'cakes', // Using the correct bucket in friend's DB
+          bucket: 'cakes',
           path: fileName,
           file: bytes,
         );
@@ -738,111 +799,47 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         imagePath = uploadedPath;
       }
 
-      // 2. Save cake details
-      final name = _nameController.text;
-      final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
-      
-      if (slug.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter a valid name that produces a unique identifier.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        setState(() => _isUploading = false);
-        return;
-      }
-      
-      // Smart search for existing cake with same slug
-      String? existingCakeId;
-      try {
-        final existingCakes = await MenuService.fetchMenu(includeArchived: true);
-        final match = existingCakes.firstWhere(
-          (c) => c['slug'] == slug,
-          orElse: () => <String, dynamic>{},
-        );
-        if (match.isNotEmpty) {
-          existingCakeId = match['id'].toString();
-          
-          // Check if it's archived
-          if (match['deletedAt'] != null) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('This item name is reserved by an archived product. Please use a different name or restore it.'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-            setState(() => _isUploading = false);
-            return;
-          }
-        }
-      } catch (e) {
-        debugPrint('Smart search failed: $e');
-      }
-
-      final newId = 'c${DateTime.now().millisecondsSinceEpoch}';
-      final currentCakeId = widget.initialData?['id']?.toString();
-      
-      // Block if slug already exists for a different cake (prevents rename collisions)
-      if (existingCakeId != null && existingCakeId != currentCakeId) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('A cake with this name already exists. Please use a unique name.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        setState(() => _isUploading = false);
-        return;
-      }
-
-      final finalCakeId = widget.initialData?['id'] ?? newId;
-      
+      // 3. Resolve Categories
       String? categoryId;
 
       if (_showNewCategoryField) {
-        final trimmed = _newCategoryController.text.trim();
-        if (trimmed.isEmpty) {
+        final trimmedCat = _newCategoryController.text.trim();
+        if (trimmedCat.isEmpty) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enter a category name')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a category name')));
           setState(() => _isUploading = false);
           return;
         }
         
-        // First, check if a category with this name already exists
-        final existing = await MenuService.fetchCategories();
-        final match = existing.firstWhere(
-          (c) => c['name'].toString().toLowerCase() == trimmed.toLowerCase(),
+        final existingCats = await MenuService.fetchCategories();
+        final matchCat = existingCats.firstWhere(
+          (c) => c['name'].toString().toLowerCase() == trimmedCat.toLowerCase(),
           orElse: () => <String, dynamic>{},
         );
 
-        if (match.isNotEmpty) {
-          categoryId = match['id'].toString();
+        if (matchCat.isNotEmpty) {
+          categoryId = matchCat['id'].toString();
         } else {
-          // If selecting a fallback name (when DB was empty or failed),
-          // only create if it's explicitly intended. Otherwise, fail save.
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Collection mismatch. Please re-select the collection.')),
-          );
-          setState(() => _isUploading = false);
-          return;
+          final catSlug = trimmedCat.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+          final nextSortOrder = existingCats.isEmpty ? 0 : (existingCats.map((c) => int.tryParse(c['sortOrder']?.toString() ?? '0') ?? 0).reduce((a, b) => a > b ? a : b) + 1);
+          
+          categoryId = await MenuService.upsertCategory({
+            'id': _generateCmpId(),
+            'name': trimmedCat,
+            'slug': catSlug,
+            'sortOrder': nextSortOrder,
+            'updatedAt': DateTime.now().toIso8601String(),
+          });
+          _loadCategories();
         }
       } else {
         if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please select a category')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category')));
           setState(() => _isUploading = false);
           return;
         }
         
-        // Resolve selected value
         final existingCat = _categories.firstWhere(
           (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
           orElse: () => <String, dynamic>{},
@@ -850,75 +847,57 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
         if (existingCat.isNotEmpty) {
           categoryId = existingCat['id'];
-        } else if (widget.initialData?['categoryId'] != null) {
-          // Preserve original if unresolved (e.g. still loading or legacy)
-          categoryId = widget.initialData?['categoryId'];
-          
-          // Validation error to prevent accidental changes to unknown category
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Collection not found in the official list. Please re-select.')),
-          );
-          setState(() => _isUploading = false);
-          return;
         } else {
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid collection selected. Please try again.')),
-          );
-          setState(() => _isUploading = false);
-          return;
+          categoryId = widget.initialData?['categoryId'] ?? _selectedCategoryId;
         }
       }
 
+      // 3. Perform Upsert
       final cakeId = await MenuService.upsertCake({
         'id': finalCakeId,
-        'name': name,
+        'name': cakeName,
         'slug': slug,
         'categoryId': categoryId,
         'description': _descriptionController.text,
         'image': imagePath ?? '',
+        'isAvailable': true,
+        'sortOrder': 0,
+        'deletedAt': null,
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
-      // 3. Save cake options
-      final options = widget.initialData?['CakeOption'] as List? ?? [];
-      final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
+      // 4. Save Options (Handling duplicates)
+      final existingOptions = [
+        ...(widget.initialData?['CakeOption'] as List? ?? []),
+        ...(matchedCake['CakeOption'] as List? ?? []),
+      ];
       
+      final currentSize = _weightController.text;
+      final matchedOption = existingOptions.firstWhere(
+        (o) => o['size']?.toString() == currentSize,
+        orElse: () => existingOptions.isNotEmpty ? existingOptions[0] : null,
+      );
+
       final normalizedPrice = _sanitizePrice(_priceController.text);
 
       await MenuService.upsertCakeOption({
-        'id': firstOption?['id'] ?? 'co${DateTime.now().millisecondsSinceEpoch}',
+        'id': matchedOption?['id'] ?? _generateCmpId(),
         'cakeId': cakeId,
         'price': ((double.tryParse(normalizedPrice) ?? 0) * 100).toInt(),
-        'size': _weightController.text, // Consistently using 'size' as per Prisma schema
+        'size': currentSize,
         'serves': _servesController.text,
         'updatedAt': DateTime.now().toIso8601String(),
       });
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Catalog updated successfully"),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      // Invalidate menu cache to reflect changes immediately
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Catalog updated successfully"), behavior: SnackBarBehavior.floating));
       ref.invalidate(menuProvider);
-
-      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      final cs = Theme.of(context).colorScheme;
       debugPrint('❌ Save item failed: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Failed to save item. Please try again."),
-          backgroundColor: cs.error,
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: const Text("Failed to save item. Please try again."), backgroundColor: Theme.of(context).colorScheme.error, behavior: SnackBarBehavior.floating),
       );
     } finally {
       if (mounted) setState(() => _isUploading = false);

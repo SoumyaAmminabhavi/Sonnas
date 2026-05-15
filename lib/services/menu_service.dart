@@ -36,14 +36,22 @@ class MenuService {
     }
   }
 
-  /// Fetch all categories from the official Category table
+  /// Fetch all categories that have at least one active product
   static Future<List<Map<String, dynamic>>> fetchCategories() async {
     try {
-      final res = await _client.from('Category').select('*').order('sortOrder');
+      // We only want categories that have active cakes.
+      // This automatically "deletes" empty categories from the UI.
+      final res = await _client
+          .from('Category')
+          .select('*, Cake!inner(id)')
+          .isFilter('Cake.deletedAt', null)
+          .order('sortOrder');
+          
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      debugPrint('⚠️ Fetch Categories Failed: $e');
-      rethrow;
+      // If the join fails or returns nothing, we return an empty list
+      debugPrint('ℹ️ Category fetch filtered (might be empty): $e');
+      return [];
     }
   }
 
@@ -83,12 +91,38 @@ class MenuService {
     }
   }
 
-  /// Soft delete a cake
+  /// Permanently delete a product and clean up its category if empty
   static Future<void> deleteCake(String id) async {
     try {
-      await _client.from('Cake').update({'deletedAt': DateTime.now().toIso8601String()}).eq('id', id);
+      // 1. Get the categoryId before we delete the cake
+      final cakeRes = await _client
+          .from('Cake')
+          .select('categoryId')
+          .eq('id', id)
+          .maybeSingle();
+      
+      final String? categoryId = cakeRes?['categoryId'];
+
+      // 2. Perform HARD DELETE (this will also delete CakeOptions due to Cascade)
+      await _client.from('Cake').delete().eq('id', id);
+
+      // 3. Smart Category Cleanup
+      if (categoryId != null) {
+        // Check if any other cakes (active or archived) still use this category
+        final remainingCakes = await _client
+            .from('Cake')
+            .select('id')
+            .eq('categoryId', categoryId)
+            .limit(1);
+
+        if (remainingCakes.isEmpty) {
+          // No more products in this category at all. Delete it too.
+          debugPrint('🧹 Cleaning up empty category: $categoryId');
+          await _client.from('Category').delete().eq('id', categoryId);
+        }
+      }
     } catch (e) {
-      debugPrint('⚠️ Delete Cake Failed: $e');
+      debugPrint('⚠️ Hard Delete Failed: $e');
       rethrow;
     }
   }

@@ -77,9 +77,12 @@ class MenuDetailsPage extends ConsumerWidget {
         );
 
         if (cake.isEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) Navigator.pop(context);
+          });
           return Scaffold(
             backgroundColor: cs.surface,
-            body: Center(child: Text("Item not found: $cakeId")),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
