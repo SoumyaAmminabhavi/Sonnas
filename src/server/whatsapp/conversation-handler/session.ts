@@ -122,12 +122,17 @@ export async function refreshActivity(phone: string) {
 }
 
 export async function getSessionTimeoutMins(): Promise<number> {
+  const val = await getWhatsAppSetting("SESSION_TIMEOUT_MINS", "60");
+  return parseInt(val);
+}
+
+export async function getWhatsAppSetting(key: string, defaultValue: string): Promise<string> {
   try {
     const setting = await db.whatsAppSetting.findUnique({
-      where: { key: "SESSION_TIMEOUT_MINS" }
+      where: { key }
     });
-    return setting ? parseInt(setting.value) : 60;
+    return setting ? setting.value : defaultValue;
   } catch {
-    return 60;
+    return defaultValue;
   }
 }

@@ -128,7 +128,11 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
 
   console.log(`[WhatsApp] Processing from ${msg.from}: ${input || interactiveId} (State: ${state})`);
 
-  if (GREETINGS.includes(input)) {
+  const dbGreetingsRaw = await import("./session").then(m => m.getWhatsAppSetting("GREETINGS", ""));
+  const dbGreetings = dbGreetingsRaw.split(",").map(g => g.trim().toLowerCase()).filter(g => g.length > 0);
+  const effectiveGreetings = dbGreetings.length > 0 ? dbGreetings : GREETINGS.map(g => g.toLowerCase());
+
+  if (effectiveGreetings.includes(input)) {
     if (state === ConversationState.IDLE) {
       await sendWelcome(msg.from, msg.name);
     } else {

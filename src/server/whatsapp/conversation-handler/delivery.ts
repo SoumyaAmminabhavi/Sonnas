@@ -29,16 +29,27 @@ export async function reverseGeocode(lat: number, lon: number): Promise<string |
   }
 }
 
-export function getAvailableSlots() {
+export async function getAvailableSlots() {
+  const { getWhatsAppSetting } = await import("./session");
   const slots: Array<{ id: string; title: string; description: string }> = [];
   const now = new Date();
   const today = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
 
-  const windows = [
+  const defaultWindows = [
     { id: "slot1", title: "12 PM - 3 PM", time: "12 PM - 3 PM", startHour: 12 },
     { id: "slot2", title: "3 PM - 6 PM", time: "3 PM - 6 PM", startHour: 15 },
     { id: "slot3", title: "6 PM - 9 PM", time: "6 PM - 9 PM", startHour: 18 },
   ];
+
+  let windows = defaultWindows;
+  try {
+    const dbWindows = await getWhatsAppSetting("DELIVERY_SLOTS", "");
+    if (dbWindows) {
+      windows = JSON.parse(dbWindows);
+    }
+  } catch (e) {
+    console.error("[WhatsApp] Failed to parse DELIVERY_SLOTS setting:", e);
+  }
 
   for (let i = 0; i < 4; i++) {
     const d = new Date(today);
@@ -59,7 +70,7 @@ export function getAvailableSlots() {
 }
 
 export async function sendDeliverySlotOptions(to: string) {
-  const slots = getAvailableSlots();
+  const slots = await getAvailableSlots();
   await sendInteractiveList(
     to,
     "🕒 Delivery Timing",
