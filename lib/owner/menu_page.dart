@@ -608,6 +608,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   bool _showNewCategoryField = false;
   List<Map<String, dynamic>> _categories = [];
   String? _selectedCategoryId;
+  bool _isLoadingCategories = true;
 
   final _picker = ImagePicker();
   XFile? _selectedImage;
@@ -649,11 +650,13 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   }
 
   Future<void> _loadCategories() async {
+    if (mounted) setState(() => _isLoadingCategories = true);
     try {
       final cats = await MenuService.fetchCategories();
       if (mounted) {
         setState(() {
           _categories = cats;
+          _isLoadingCategories = false;
         });
       }
     } catch (e) {
@@ -661,6 +664,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       if (mounted) {
         setState(() {
           _categories = [];
+          _isLoadingCategories = false;
         });
       }
     }
@@ -759,10 +763,10 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       }
 
       final newId = 'c${DateTime.now().millisecondsSinceEpoch}';
-      final isNewItem = widget.initialData == null;
+      final currentCakeId = widget.initialData?['id']?.toString();
       
-      // If creating a new item but slug already exists, warn the user
-      if (isNewItem && existingCakeId != null) {
+      // Block if slug already exists for a different cake (prevents rename collisions)
+      if (existingCakeId != null && existingCakeId != currentCakeId) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -818,18 +822,32 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           return;
         }
         
-        // Check if selected value is an ID or a Name (for backward compatibility)
-         final existingCat = _categories.firstWhere(
-           (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
-           orElse: () => <String, dynamic>{},
-         );
+        // Resolve selected value (could be ID, legacy name, or fallback name)
+        final existingCat = _categories.firstWhere(
+          (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
+          orElse: () => <String, dynamic>{},
+        );
 
-         if (existingCat.isNotEmpty) {
-           categoryId = existingCat['id'];
-         } else {
-           // If no matching category found, set to null to avoid invalid FK.
-           categoryId = null;
-         }
+        if (existingCat.isNotEmpty) {
+          categoryId = existingCat['id'];
+        } else if (_selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
+          // If selecting a fallback name (when DB was empty or failed),
+          // auto-create it to preserve data integrity and satisfy FK constraints.
+          final name = _selectedCategoryId!;
+          final slug = name.toLowerCase().trim().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+          
+          categoryId = await MenuService.upsertCategory({
+            'id': 'cat_${DateTime.now().millisecondsSinceEpoch}',
+            'name': name,
+            'slug': slug,
+            'updatedAt': DateTime.now().toIso8601String(),
+          });
+          
+          // Refresh local list to include the newly created category
+          _loadCategories();
+        } else {
+          categoryId = null;
+        }
       }
 
       final cakeId = await MenuService.upsertCake({
@@ -846,10 +864,16 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       final options = widget.initialData?['CakeOption'] as List? ?? [];
       final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
       
+      final normalizedPrice = _priceController.text
+          .replaceAll('/-', '')
+          .replaceAll('₹', '')
+          .replaceAll(',', '')
+          .trim();
+
       await MenuService.upsertCakeOption({
         'id': firstOption?['id'] ?? 'co${DateTime.now().millisecondsSinceEpoch}',
         'cakeId': cakeId,
-        'price': ((double.tryParse(_priceController.text.replaceAll('/-', '')) ?? 0) * 100).toInt(),
+        'price': ((double.tryParse(normalizedPrice) ?? 0) * 100).toInt(),
         'size': _weightController.text, // Consistently using 'size' as per Prisma schema
         'serves': _servesController.text,
         'updatedAt': DateTime.now().toIso8601String(),
@@ -1198,7 +1222,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     }
 
     // 2. Add fallback categories if DB is empty or current selection is old string
-    if (_categories.isEmpty) {
+    if (!_isLoadingCategories && _categories.isEmpty) {
       for (var name in fallbackNames) {
         items.add(DropdownMenuItem(value: name, child: Text(name)));
       }
@@ -1227,7 +1251,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
          DropdownButtonFormField<String>(
            initialValue: _selectedCategoryId,
            hint: Text(
-             "Select Collection",
+             _isLoadingCategories ? "Loading collections..." : "Select Collection",
              style: GoogleFonts.plusJakartaSans(
                color: cs.secondary.withValues(alpha: 0.3),
                fontSize: 14,

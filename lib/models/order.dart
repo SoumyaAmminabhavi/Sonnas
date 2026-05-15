@@ -31,7 +31,7 @@ extension OrderStatusExtension on OrderStatus {
       case 'CONFIRMED': return OrderStatus.confirmed;
       // Legacy statuses — map to closest canonical equivalent
       case 'ACCEPTED': return OrderStatus.confirmed;
-      case 'PREPARING':
+      case 'PREPARING': return OrderStatus.confirmed;
       case 'READY': return OrderStatus.outForDelivery;
       case 'OUT_FOR_DELIVERY': return OrderStatus.outForDelivery;
       case 'DELIVERED': return OrderStatus.delivered;

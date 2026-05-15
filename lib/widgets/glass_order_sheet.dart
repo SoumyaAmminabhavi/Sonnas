@@ -169,10 +169,18 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                     final item = OrderItem.fromMap(itemMap);
                     
                     String displayImageUrl = '';
-                    final matchingCake = menu.firstWhere(
-                      (c) => (c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase()),
-                      orElse: () => <String, dynamic>{},
-                    );
+                    final matchingCake = item.cakeId != null
+                        ? menu.firstWhere(
+                            (c) => c['id']?.toString() == item.cakeId,
+                            orElse: () => menu.firstWhere(
+                              (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
+                              orElse: () => <String, dynamic>{},
+                            ),
+                          )
+                        : menu.firstWhere(
+                            (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
+                            orElse: () => <String, dynamic>{},
+                          );
                     displayImageUrl = matchingCake['image'] ?? '';
 
                     if ((displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) && widget.order.customImageUrl != null) {
