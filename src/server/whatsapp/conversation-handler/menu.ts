@@ -340,12 +340,22 @@ export async function handleCakeSelection(msg: IncomingMessage) {
     })
   ];
 
-  if (selectedProduct.image) {
+  // Only send image if it's a publicly accessible HTTPS URL.
+  // WhatsApp Cloud API cannot fetch localhost, relative paths, or blank URLs.
+  const isPublicImageUrl = (url: string | null | undefined): boolean => {
+    if (!url || url.trim().length < 10) return false;
+    const cleaned = url.trim();
+    return cleaned.startsWith("https://") && !cleaned.includes("localhost");
+  };
+
+  if (isPublicImageUrl(selectedProduct.image)) {
     tasks.push(sendImageMessage(
       msg.from,
       selectedProduct.image,
       `*${selectedProduct.name}*\n\n${selectedProduct.description ?? ""}`
     ));
+  } else {
+    console.log(`[WhatsApp] Skipping image for "${selectedProduct.name}" — not a public URL: ${selectedProduct.image}`);
   }
 
   const options = selectedProduct.options ?? [];

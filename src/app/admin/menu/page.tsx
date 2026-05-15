@@ -375,13 +375,14 @@ export default function AdminMenuPage() {
                             const formDataUpload = new FormData();
                             formDataUpload.append("file", file);
 
-                            // Pass the slug so Supabase stores the image at a
-                            // stable path (e.g. cakes/chocolate-indulgence.jpg).
-                            // The URL never changes on re-upload — the WhatsApp
-                            // bot always fetches the latest image automatically.
-                            const uploadSlug = formData.slug.trim();
-                            const uploadUrl = uploadSlug
-                              ? `/api/upload?slug=${encodeURIComponent(uploadSlug)}`
+                            // Pass the cake's DB ID as ?key= so Supabase stores
+                            // the image at a stable path: cakes/{cake-id}.jpg
+                            // The URL NEVER changes — even if the name or slug
+                            // is edited later. Only exists when editing an existing
+                            // cake; new cakes get a unique filename until saved.
+                            const uploadKey = formData.id?.trim();
+                            const uploadUrl = uploadKey
+                              ? `/api/upload?key=${encodeURIComponent(uploadKey)}`
                               : "/api/upload";
 
                             try {

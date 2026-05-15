@@ -1,7 +1,7 @@
 import type { IncomingMessage, WhatsAppConversation } from "./types";
 import { ConversationState } from "../../../../generated/prisma";
 import { GREETINGS, RESET_STATE } from "./constants";
-import { sendWelcome, sendMenu, sendMenuPDF, findCake, handleCakeSelection, handleCategorySelection } from "./menu";
+import { sendWelcome, sendMenu, findCake, handleCakeSelection, handleCategorySelection } from "./menu";
 import { updateState, getConversation, getSessionTimeoutMins } from "./session";
 import { sendTextMessage, sendInteractiveButtons, sendInteractiveList } from "~/server/whatsapp";
 import { formatPrice } from "~/lib/format";
@@ -137,20 +137,18 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
-  if (["restart", "start over", "reset"].includes(input)) {
+  if (["restart", "start over", "reset", "cancel"].includes(input)) {
     await Promise.all([
       clearCart(msg.from),
       updateState(msg.from, ConversationState.IDLE, RESET_STATE),
     ]);
     await sendTextMessage(msg.from, "No worries! Everything's been cleared. ✨\n\nWhenever you're ready, I'm here to help you find the perfect cake. 🌸");
     await sendWelcome(msg.from, msg.name);
-    await sendMenuPDF(msg.from);
     return;
   }
 
   if (input === "help") {
     await sendWelcome(msg.from, msg.name);
-    await sendMenuPDF(msg.from);
     return;
   }
 
@@ -192,7 +190,6 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
         selectedPrice: null,
       }),
       sendMenu(msg.from),
-      sendMenuPDF(msg.from)
     ]);
     return;
   }
@@ -225,7 +222,6 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
       sendTextMessage(msg.from, "✨ *Selection cleared!*"),
     ]);
     await sendMenu(msg.from);
-    await sendMenuPDF(msg.from);
     return;
   }
 
@@ -327,8 +323,8 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
   if (interactiveId.startsWith("cake_")) { await handleCakeSelection(msg); return; }
   if (interactiveId.startsWith("size_")) {
     const { handleSizeSelection } = await import("./menu");
-    await handleSizeSelection(msg, convo); 
-    return; 
+    await handleSizeSelection(msg, convo);
+    return;
   }
   if (interactiveId.startsWith("slot_")) { await handleDeliverySlotSelection(msg, convo); return; }
 
@@ -363,14 +359,14 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
     case ConversationState.BROWSING_MENU: await handleCakeSelection(msg); break;
     case ConversationState.SELECTING_CATEGORY: await handleCategorySelection(msg); break;
     case ConversationState.SELECTING_SIZE: {
-        const { handleSizeSelection } = await import("./menu");
-        await handleSizeSelection(msg, convo); 
-        break;
+      const { handleSizeSelection } = await import("./menu");
+      await handleSizeSelection(msg, convo);
+      break;
     }
     case ConversationState.SELECTING_QUANTITY: {
-        const { handleQuantitySelection } = await import("./menu");
-        await handleQuantitySelection(msg, convo); 
-        break;
+      const { handleQuantitySelection } = await import("./menu");
+      await handleQuantitySelection(msg, convo);
+      break;
     }
     case ConversationState.INPUTTING_ADDRESS: await handleAddressInput(msg, convo); break;
     case ConversationState.ADDING_NOTES: await handleInstructionsInput(msg, convo); break;

@@ -47,20 +47,20 @@ export async function POST(request: NextRequest) {
     const buffer = await file.arrayBuffer();
 
     // ── Determine stable filename ─────────────────────────────────────────
-    // If a slug is provided (e.g. ?slug=chocolate-indulgence), use it as a
-    // deterministic filename so the Supabase public URL never changes when
-    // the image is replaced. The WhatsApp bot always fetches the latest image
-    // from the same URL automatically.
-    const slug = request.nextUrl.searchParams.get("slug");
+    // When a ?key= param is provided (the cake's database ID), use it as the
+    // Supabase filename. The URL becomes cakes/{cake-id}.jpg and NEVER changes
+    // even if the cake name/slug is renamed — this is the stable reference key.
+    // Falls back to a unique suffix for brand-new cakes (no ID yet).
+    const key = request.nextUrl.searchParams.get("key");
     const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
 
     let finalFilename: string;
-    if (slug) {
-      // Sanitize slug to be safe for storage paths
-      const safeSlug = slug.replace(/[^a-zA-Z0-9-_]/g, "-").toLowerCase();
-      finalFilename = `${safeSlug}.${ext}`;
+    if (key) {
+      // Sanitize the key (should already be a CUID, but be safe)
+      const safeKey = key.replace(/[^a-zA-Z0-9-_]/g, "-");
+      finalFilename = `${safeKey}.${ext}`;
     } else {
-      // Fallback: unique suffix (used when adding a new cake before slug is known)
+      // Fallback: unique suffix (used when creating a new cake before it gets an ID)
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       finalFilename = `${uniqueSuffix}-${filename}`;
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       .from("cakes")
       .getPublicUrl(finalFilename);
 
-    console.log(`[Upload] Stored as "${finalFilename}" (${slug ? "stable slug" : "unique"}): ${publicUrl}`);
+    console.log(`[Upload] Stored as "${finalFilename}" (${key ? "stable key" : "unique"}): ${publicUrl}`);
 
     return NextResponse.json({ 
       success: true, 
