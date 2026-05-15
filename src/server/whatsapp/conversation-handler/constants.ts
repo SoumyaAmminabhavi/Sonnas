@@ -1,8 +1,8 @@
 import { ConversationState } from "../../../../generated/prisma";
 
-export const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening"];
+export const GREETINGS = ["hi", "hello", "hey", "hii", "hiii", "hey there", "good morning", "good evening",];
 
-export const CACHE_TTL = 1 * 60 * 1000; // 1 minute (reduced for live testing)
+export const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 export const DB_TIMEOUT = 15000; // 15 seconds
 export const MAX_PROCESSED_IDS = 2000;
 
