@@ -309,13 +309,8 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
-  if (interactiveId.startsWith("more_")) {
-    const [, categoryId, offsetStr] = interactiveId.split("_");
-    if (categoryId && offsetStr) {
-      const newOffset = parseInt(offsetStr, 10);
-      await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: newOffset });
-      await handleCategorySelection({ ...msg, interactiveId: `cat_${categoryId}` });
-    }
+  if (interactiveId.startsWith("more_") || interactiveId.startsWith("prev_")) {
+    await handleCategorySelection(msg);
     return;
   }
 

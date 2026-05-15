@@ -249,17 +249,22 @@ export async function sendMenu(to: string) {
 }
 
 export async function handleCategorySelection(msg: IncomingMessage) {
-  const categoryId = msg.interactiveId?.replace("cat_", "");
+  let categoryId = msg.interactiveId?.replace("cat_", "");
+  let offset = 0;
+
+  if (msg.interactiveId?.startsWith("more_") || msg.interactiveId?.startsWith("prev_")) {
+    const parts = msg.interactiveId.split("_");
+    // ID format: more_{categoryId}_{newOffset} or prev_{categoryId}_{newOffset}
+    categoryId = parts[1];
+    offset = parseInt(parts[2]) || 0;
+  }
+
   if (!categoryId) {
     await sendMenu(msg.from);
     return;
   }
 
   const phone = msg.from;
-  const convo = convoCache.get(phone) ?? (await getConversation(phone));
-  const isPagination = msg.interactiveId?.startsWith("more_");
-  const offset = isPagination ? (convo.menuOffset ?? 0) : 0;
-
   const dbCategories = await safeGetCategories();
   const category = dbCategories.find(c => c.id === categoryId);
   const catName = category?.name ?? categoryId;
@@ -280,31 +285,57 @@ export async function handleCategorySelection(msg: IncomingMessage) {
   }
 
   const PAGE_SIZE = 10;
-  const hasMore = filtered.length > offset + PAGE_SIZE;
-  const currentBatch = filtered.slice(offset, offset + (hasMore ? PAGE_SIZE - 1 : PAGE_SIZE));
-
+  const totalItems = filtered.length;
+  
+  // Decide how many items to show and if we need pagination buttons
+  let start = offset;
+  let end = start + PAGE_SIZE;
+  
+  // Reserved slots for Prev/Next
+  const needsPrev = start > 0;
+  const needsNext = totalItems > end;
+  
+  // If we need both, we only have 8 slots for actual cakes
+  // If we need one, we have 9 slots
+  let displayCount = PAGE_SIZE;
+  if (needsPrev) displayCount--;
+  if (needsNext) displayCount--;
+  
+  const currentBatch = filtered.slice(start, start + displayCount);
   const rows = currentBatch.map(cakeRow);
 
-  if (hasMore) {
+  // Add Pagination Buttons
+  if (needsNext) {
     rows.push({
-      id: `more_${categoryId}_${offset + (PAGE_SIZE - 1)}`,
-      title: "➡️ See More...",
-      description: `Showing ${offset + 1}-${offset + (PAGE_SIZE - 1)} of ${filtered.length}`,
+      id: `more_${categoryId}_${start + displayCount}`,
+      title: "➡️ Next Page",
+      description: `Show items ${start + displayCount + 1} - ${Math.min(start + displayCount + PAGE_SIZE, totalItems)}`
+    });
+  }
+  
+  if (needsPrev) {
+    // To go back, we need to calculate the previous offset. 
+    // Since page sizes vary (8 or 9 or 10), we'll just go back by a fixed amount or to 0.
+    const prevOffset = Math.max(0, start - PAGE_SIZE);
+    rows.unshift({
+      id: `prev_${categoryId}_${prevOffset}`,
+      title: "⬅️ Previous Page",
+      description: `Return to items ${prevOffset + 1} - ${prevOffset + PAGE_SIZE}`
     });
   }
 
-  await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: offset });
+  await updateState(msg.from, ConversationState.BROWSING_MENU, { menuOffset: start });
 
   await sendInteractiveList(
     msg.from,
     title,
-    isPagination
-      ? `Continuing our ${catName.toLowerCase()} selection:`
+    start > 0
+      ? `Continuing our ${catName.toLowerCase()} selection (${start + 1}-${start + currentBatch.length} of ${totalItems}):`
       : `Here are our signature ${catName.toLowerCase()} selections:`,
-    isPagination ? "Next Items" : "Select a Cake",
+    start > 0 ? "Browse Page" : "Select a Cake",
     [
       {
-        title: isPagination ? `Page ${Math.floor(offset / (PAGE_SIZE - 1)) + 1}` : "Choose your favorite",
+        title: start > 0 ? `Page ${Math.floor(start / displayCount) + 1}` : "Available Delights",
         rows,
       },
     ]
