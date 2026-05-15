@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/order_service.dart';
 import 'package:intl/intl.dart';
+import 'expense_reports_page.dart';
+import 'sales_reports_page.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -10,8 +12,7 @@ class PaymentsPage extends StatefulWidget {
   State<PaymentsPage> createState() => _PaymentsPageState();
 }
 
-class _PaymentsPageState extends State<PaymentsPage>
-    with SingleTickerProviderStateMixin {
+class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -60,55 +61,87 @@ class _PaymentsPageState extends State<PaymentsPage>
           }
         }
 
-        return Scaffold(
-          backgroundColor: cs.surface,
-          body: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(
-              horizontal: isDesktop ? 40.0 : 20.0,
-              vertical: 16.0,
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            backgroundColor: cs.surface,
+            appBar: AppBar(
+              backgroundColor: cs.surface,
+              elevation: 0,
+              toolbarHeight: 0,
+              bottom: TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelColor: cs.primary,
+                unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
+                indicatorColor: cs.primary,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                tabs: const [
+                  Tab(text: "PAYMENTS"),
+                  Tab(text: "EXPENSES"),
+                  Tab(text: "SALES REPORTS"),
+                ],
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            body: TabBarView(
               children: [
-                _buildCompactHero(context, isDesktop, weeklyGross, totalPending),
-                const SizedBox(height: 16),
-                if (isDesktop)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildTabs(context),
-                            const SizedBox(height: 24),
-                            _buildPaymentList(context, pendingOrders, completedHistory),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 48),
-                      Expanded(
-                        flex: 2,
-                        child: _buildHistorySection(context, isCompact: true, recentCompleted: completedHistory),
-                      ),
-                    ],
-                  )
-                else
-                  Column(
-                    children: [
-                      _buildTabs(context),
-                      const SizedBox(height: 24),
-                      _buildPaymentList(context, pendingOrders, completedHistory),
-                      const SizedBox(height: 48),
-                      _buildHistorySection(context, isCompact: false, recentCompleted: completedHistory),
-                    ],
-                  ),
+                _buildPaymentsView(context, isDesktop, weeklyGross, totalPending, pendingOrders, completedHistory),
+                const ExpenseReportsPage(),
+                const SalesReportsPage(),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPaymentsView(BuildContext context, bool isDesktop, double weeklyGross, double totalPending, List<Map<String, dynamic>> pendingOrders, List<Map<String, dynamic>> completedHistory) {
+    final cs = Theme.of(context).colorScheme;
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 40.0 : 20.0,
+        vertical: 16.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCompactHero(context, isDesktop, weeklyGross, totalPending),
+          const SizedBox(height: 16),
+          if (isDesktop)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTabs(context),
+                      const SizedBox(height: 24),
+                      _buildPaymentList(context, pendingOrders, completedHistory),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 48),
+                Expanded(
+                  flex: 2,
+                  child: _buildHistorySection(context, isCompact: true, recentCompleted: completedHistory),
+                ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                _buildTabs(context),
+                const SizedBox(height: 24),
+                _buildPaymentList(context, pendingOrders, completedHistory),
+                const SizedBox(height: 48),
+                _buildHistorySection(context, isCompact: false, recentCompleted: completedHistory),
+              ],
+            ),
+        ],
+      ),
     );
   }
 

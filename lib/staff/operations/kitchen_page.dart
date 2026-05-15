@@ -188,7 +188,14 @@ class KitchenOrderCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      _buildKitchenImage(orderMap, cs),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final menuAsync = ref.watch(menuProvider);
+                          final itemsAsync = ref.watch(orderItemsProvider(order.id));
+                          final items = itemsAsync.value ?? [];
+                          return _buildKitchenImage(orderMap, items, menuAsync.value ?? [], cs);
+                        }
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -303,11 +310,28 @@ class KitchenOrderCard extends StatelessWidget {
     }
   }
 
-  Widget _buildKitchenImage(Map<String, dynamic> data, ColorScheme cs) {
-    // Triple-check image resolution logic
+  Widget _buildKitchenImage(Map<String, dynamic> data, List<Map<String, dynamic>> items, List<Map<String, dynamic>> menu, ColorScheme cs) {
+    // 1. Try customImageUrl from the order
     String imageUrl = data['customImageUrl'] ?? '';
     if (imageUrl.isEmpty && data['WhatsAppConversation'] != null) {
       imageUrl = data['WhatsAppConversation']['customImageUrl'] ?? '';
+    }
+
+    String? version;
+
+    // 2. Fallback to Menu Item image if still empty
+    if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+      if (items.isNotEmpty && menu.isNotEmpty) {
+        final String firstName = items[0]['cakeName'] ?? '';
+        final String? firstCakeId = items[0]['cakeId']?.toString();
+        final matchingCake = menu.firstWhere(
+          (c) => (firstCakeId != null && c['id']?.toString() == firstCakeId) ||
+                 (c['name']?.toString().toLowerCase() == firstName.toLowerCase()),
+          orElse: () => <String, dynamic>{},
+        );
+        imageUrl = matchingCake['image'] ?? '';
+        version = matchingCake['updatedAt']?.toString();
+      }
     }
 
     if (imageUrl.isEmpty) {
@@ -324,7 +348,7 @@ class KitchenOrderCard extends StatelessWidget {
 
     final resolvedUrl = (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
         ? imageUrl
-        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes') + (version != null ? "?v=$version" : "");
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),

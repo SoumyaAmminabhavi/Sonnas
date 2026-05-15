@@ -53,6 +53,13 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
       debugPrint("Error loading expense data: $e");
       if (mounted) {
         setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Finance Fetch Error: ${e.toString()}"),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -193,9 +200,25 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                   if (context.mounted) {
                     Navigator.pop(context);
                     _loadData();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Expense logged successfully!"),
+                        backgroundColor: Colors.green,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
                   }
                 } catch (e) {
                   debugPrint("Error: $e");
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Log Failed: ${e.toString()}"),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -225,73 +248,38 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 768;
-
-        return Scaffold(
-          backgroundColor: cs.surface,
-          appBar: AppBar(
-            backgroundColor: cs.surface.withValues(alpha: 0.9),
-            elevation: 0,
-            leading: isDesktop ? null : IconButton(
-              icon: Icon(Icons.arrow_back, color: cs.primary),
-              onPressed: () => Navigator.pop(context),
-            ),
-            title: Text(
-              isDesktop ? "Sonna's Patisserie & Cafe" : "Cost Analytics",
-              style: GoogleFonts.notoSerif(
-                color: cs.primary,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
-            ),
-            actions: [],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: _showAddExpenseDialog,
-            backgroundColor: cs.primary,
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.add),
-            label: const Text("Log Expense"),
-          ),
-          body: Row(
-            children: [
-              if (isDesktop)
-                OwnerSidebar(
-                  currentIndex: 4,
-                  onTap: (index) => Navigator.pop(context, index),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddExpenseDialog,
+        backgroundColor: cs.primary,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text("Log Expense"),
+      ),
+      body: _isLoading
+          ? _buildSkeleton(cs)
+          : CustomScrollView(
+              slivers: [
+                _buildHeader(cs, true),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildMetricsGrid(cs),
+                        const SizedBox(height: 32),
+                        _buildTrendChart(cs, isDark),
+                        const SizedBox(height: 32),
+                        _buildSecondaryStats(cs),
+                        const SizedBox(height: 64),
+                      ],
+                    ),
+                  ),
                 ),
-              Expanded(
-                child: _isLoading
-                    ? _buildSkeleton(cs)
-                    : CustomScrollView(
-                        slivers: [
-                          _buildHeader(cs, isDesktop),
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.all(24.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildMetricsGrid(cs),
-                                  const SizedBox(height: 32),
-                                  _buildTrendChart(cs, isDark),
-                                  const SizedBox(height: 32),
-                                  _buildSecondaryStats(cs),
-                                  const SizedBox(height: 64),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
     );
   }
 

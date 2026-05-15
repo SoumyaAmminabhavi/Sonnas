@@ -22,88 +22,6 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: AppBar(
-        backgroundColor: cs.surface.withValues(alpha: 0.9),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: isDesktop
-            ? null
-            : IconButton(
-                icon: Icon(Icons.arrow_back, color: cs.primary),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-        title: Text(
-          isDesktop ? "Sonna's Patisserie & Cafe" : "Stock Intelligence",
-          style: GoogleFonts.notoSerif(
-            color: cs.primary,
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-          ),
-        ),
-        actions: [],
-      ),
-      body: Row(
-        children: [
-          if (isDesktop)
-            OwnerSidebar(
-              currentIndex: 4,
-              onTap: (index) {
-                Navigator.pop(context, index);
-              },
-            ),
-          Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: InventoryService.getInventoryStream(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _buildSkeleton(cs);
-                }
-
-                final allItems = snapshot.data ?? [];
-                final filteredItems = _selectedCategory == 'All'
-                    ? allItems
-                    : allItems.where((i) => i['category'] == _selectedCategory).toList();
-
-                final lowStockItems = allItems.where((i) {
-                  final current = (i['currentStock'] as num?)?.toDouble() ?? 0.0;
-                  final min = (i['minStock'] as num?)?.toDouble() ?? 0.0;
-                  return current <= min;
-                }).toList();
-
-                return CustomScrollView(
-                  slivers: [
-                    _buildSliverHeader(cs, isDesktop),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildKPIs(cs, allItems.length, lowStockItems.length),
-                            const SizedBox(height: 32),
-                            if (lowStockItems.isNotEmpty) ...[
-                              _buildAlertSection(cs, lowStockItems),
-                              const SizedBox(height: 32),
-                            ],
-                            _buildCategoryFilter(cs),
-                            const SizedBox(height: 24),
-                            if (filteredItems.isEmpty)
-                              _buildEmptyState(cs)
-                            else
-                              _buildInventoryGrid(cs, filteredItems),
-                            const SizedBox(height: 64),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddItemSheet(context, cs),
         backgroundColor: cs.primary,
@@ -113,6 +31,58 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           "ADD ITEM",
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
         ),
+      ),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: InventoryService.getInventoryStream(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildSkeleton(cs);
+          }
+          
+          if (snapshot.hasError) {
+             return Center(child: Text("Stock Fetch Error: ${snapshot.error}"));
+          }
+
+          final allItems = snapshot.data ?? [];
+          final filteredItems = _selectedCategory == 'All'
+              ? allItems
+              : allItems.where((i) => i['category'] == _selectedCategory).toList();
+
+          final lowStockItems = allItems.where((i) {
+            final current = (i['currentStock'] as num?)?.toDouble() ?? 0.0;
+            final min = (i['minStock'] as num?)?.toDouble() ?? 0.0;
+            return current <= min;
+          }).toList();
+
+          return CustomScrollView(
+            slivers: [
+              _buildSliverHeader(cs, true),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildKPIs(cs, allItems.length, lowStockItems.length),
+                      const SizedBox(height: 32),
+                      if (lowStockItems.isNotEmpty) ...[
+                        _buildAlertSection(cs, lowStockItems),
+                        const SizedBox(height: 32),
+                      ],
+                      _buildCategoryFilter(cs),
+                      const SizedBox(height: 24),
+                      if (filteredItems.isEmpty)
+                        _buildEmptyState(cs)
+                      else
+                        _buildInventoryGrid(cs, filteredItems),
+                      const SizedBox(height: 64),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -403,16 +373,38 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                   onPressed: () async {
                     if (nameController.text.isEmpty) return;
                     
-                    await InventoryService.addInventoryItem({
-                      'name': nameController.text,
-                      'category': selectedCategory,
-                      'unit': unitController.text,
-                      'currentStock': double.tryParse(currentController.text) ?? 0.0,
-                      'minStock': double.tryParse(minController.text) ?? 0.0,
-                      'lastRestocked': DateTime.now().toIso8601String(),
-                    });
-                    
-                    if (context.mounted) Navigator.pop(context);
+                    try {
+                      await InventoryService.addInventoryItem({
+                        'name': nameController.text,
+                        'category': selectedCategory,
+                        'unit': unitController.text,
+                        'currentStock': double.tryParse(currentController.text) ?? 0.0,
+                        'minStock': double.tryParse(minController.text) ?? 0.0,
+                        'lastRestocked': DateTime.now().toIso8601String(),
+                      });
+                      
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Inventory item added!"),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Error: $e");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Add Failed: ${e.toString()}"),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: cs.primary,

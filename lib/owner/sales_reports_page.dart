@@ -61,6 +61,13 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       debugPrint("Error loading report data: $e");
       if (mounted) {
         setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Sales Analytics Error: ${e.toString()}"),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -223,113 +230,69 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 768;
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: OrderService.getAllOrdersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
+          return _buildSkeleton(cs);
+        }
 
-        return Scaffold(
-          backgroundColor: cs.surface,
-          appBar: AppBar(
-            backgroundColor: cs.surface.withValues(alpha: 0.9),
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            leading: isDesktop 
-                ? null 
-                : IconButton(
-                    icon: Icon(Icons.arrow_back, color: cs.primary),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-            title: Text(
-              isDesktop ? "Sonna's Patisserie & Cafe" : "Sales Intelligence",
-              style: GoogleFonts.notoSerif(
-                color: cs.primary,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
-            ),
-            actions: [],
-          ),
-          body: Row(
-            children: [
-              if (isDesktop)
-                OwnerSidebar(
-                  currentIndex: 4,
-                  onTap: (index) {
-                    Navigator.pop(context, index);
-                  },
-                ),
-              Expanded(
-                child: StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: OrderService.getAllOrdersStream(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting && _isLoading) {
-                      return _buildSkeleton(cs);
-                    }
+        if (snapshot.hasData) {
+          _orders = snapshot.data!;
+          _calculateMetrics();
+          _processItemsFromOrders(_orders, _cachedMenu);
+        }
 
-                    if (snapshot.hasData) {
-                      _orders = snapshot.data!;
-                      _calculateMetrics();
-                      _processItemsFromOrders(_orders, _cachedMenu);
-                    }
-
-                    return CustomScrollView(
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Sales Intelligence",
-                                  style: GoogleFonts.notoSerif(
-                                    fontSize: isDesktop ? 48 : 36,
-                                    color: cs.secondary,
-                                    height: 1.1,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Performance Overview",
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: cs.primary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                        letterSpacing: 2.0,
-                                      ),
-                                    ),
-                                    _buildExportButton(cs),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
-                                const SizedBox(height: 32),
-                                _buildMetricsGrid(cs),
-                                const SizedBox(height: 32),
-                                _buildRevenueChart(cs, isDark),
-                                const SizedBox(height: 32),
-                                _buildSecondaryStats(cs, isDark),
-                                const SizedBox(height: 64),
-                              ],
-                            ),
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Sales Intelligence",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 48,
+                        color: cs.secondary,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Performance Overview",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            letterSpacing: 2.0,
                           ),
                         ),
+                        _buildExportButton(cs),
                       ],
-                    );
-                  }
+                    ),
+                    const SizedBox(height: 16),
+                    Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
+                    const SizedBox(height: 32),
+                    _buildMetricsGrid(cs),
+                    const SizedBox(height: 32),
+                    _buildRevenueChart(cs, isDark),
+                    const SizedBox(height: 32),
+                    _buildSecondaryStats(cs, isDark),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
   }
-
   Widget _buildMetricsGrid(ColorScheme cs) {
     return LayoutBuilder(builder: (context, constraints) {
       final isMobile = constraints.maxWidth < 600;

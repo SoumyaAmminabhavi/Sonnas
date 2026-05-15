@@ -50,6 +50,25 @@ class OrderService {
 
   /// Real-time stream for a single order
   /// Get a single order by ID or Order Number
+  /// Fetch a single order by ID or Order Number (Direct Fetch)
+  static Future<Map<String, dynamic>?> fetchOrderByIdOrNumber(String idOrNumber) async {
+    try {
+      final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+      
+      // Try ID, then OrderNumber
+      final res = await _client
+          .from('Order')
+          .select('*, WhatsAppConversation(*)')
+          .or('id.eq.$idOrNumber,orderNumber.eq.$idOrNumber,orderNumber.ilike.%$cleanInput%')
+          .maybeSingle();
+      
+      return res;
+    } catch (e) {
+      debugPrint('⚠️ Fetch Order Failed: $e');
+      return null;
+    }
+  }
+
   static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) {
     // We stream the table and filter in memory to allow matching either ID or OrderNumber
     // This is more flexible for deep-linking from notifications

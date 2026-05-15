@@ -14,6 +14,7 @@ import '../services/menu_service.dart';
 import '../services/dashboard_provider.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
+import 'inventory_analytics_page.dart';
 
 // ─────────────────────────────────────────────
 //  MenuPage — the landing page (shows all items)
@@ -32,9 +33,60 @@ class _MenuPageState extends ConsumerState<MenuPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: cs.surface,
+        appBar: AppBar(
+          backgroundColor: cs.surface,
+          elevation: 0,
+          toolbarHeight: 0,
+          bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            labelColor: cs.primary,
+            unselectedLabelColor: cs.secondary.withValues(alpha: 0.5),
+            indicatorColor: cs.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            tabs: const [
+              Tab(text: "PRODUCTS"),
+              Tab(text: "INVENTORY"),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildProductsView(context),
+            const InventoryAnalyticsPage(),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: cs.primary,
+          elevation: 6,
+          shape: const CircleBorder(),
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    AddMenuPage(onTabChanged: widget.onTabChanged),
+              ),
+            );
+            ref.invalidate(menuProvider);
+            ref.invalidate(categoriesProvider);
+            // Reset filter to All so new item is visible
+            setState(() => _selectedCategories = {'All'});
+          },
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductsView(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 768;
         final crossAxisCount = constraints.maxWidth > 1400
             ? 4
             : constraints.maxWidth > 900
@@ -43,266 +95,213 @@ class _MenuPageState extends ConsumerState<MenuPage> {
             ? 2
             : 1;
 
-        return Scaffold(
-          backgroundColor: cs.surface,
-          floatingActionButton: FloatingActionButton(
-            backgroundColor: cs.primary,
-            elevation: 6,
-            shape: const CircleBorder(),
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      AddMenuPage(onTabChanged: widget.onTabChanged),
-                ),
-              );
-              ref.invalidate(menuProvider);
-              ref.invalidate(categoriesProvider);
-              // Reset filter to All so new item is visible
-              setState(() => _selectedCategories = {'All'});
-            },
-            child: const Icon(Icons.add, color: Colors.white, size: 28),
-          ),
-          body: ref.watch(menuProvider).when(
-            loading: () {
-              final cs2 = Theme.of(context).colorScheme;
-              return Shimmer.fromColors(
-                baseColor: cs2.surfaceContainer,
-                highlightColor: cs2.surface,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.75,
-                    ),
-                    itemCount: crossAxisCount * 2,
-                    itemBuilder: (context, index) => Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+        return ref.watch(menuProvider).when(
+          loading: () {
+            final cs2 = Theme.of(context).colorScheme;
+            return Shimmer.fromColors(
+              baseColor: cs2.surfaceContainer,
+              highlightColor: cs2.surface,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: crossAxisCount * 2,
+                  itemBuilder: (context, index) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),
+              ),
+            );
+          },
+          error: (error, _) => _MenuErrorView(
+            cs: cs,
+            error: error.toString(),
+            onRetry: () => ref.invalidate(menuProvider),
+          ),
+          data: (rawCakes) {
+            final catsAsync = ref.watch(categoriesProvider);
+            final List<_MenuItem> allItems = rawCakes.map((data) {
+              final options = data['CakeOption'] as List? ?? [];
+              final basePrice = options.isNotEmpty
+                  ? OrderService.formatPrice(options[0]['price'])
+                  : (data['price'] != null
+                        ? OrderService.formatPrice(data['price'])
+                        : "Price on Request");
+              final baseServes = options.isNotEmpty
+                  ? "Serves ${options[0]['serves']}"
+                  : "";
+
+              final String version = data['updatedAt']?.toString() ?? '1';
+              final String imageUrl = SupabaseService.getPublicUrl(data['image'], bucket: 'cakes') + 
+                                     (data['image'].isNotEmpty ? "?v=$version" : "");
+
+              return _MenuItem(
+                id: data['id'],
+                name: data['name'] ?? 'Untitled Cake',
+                category: data['Category']?['name'] ?? 'General',
+                price: basePrice,
+                description: data['description'] ?? '',
+                serves: baseServes,
+                weight: "Standard",
+                imageUrl: imageUrl,
               );
-            },
-            error: (error, _) => _MenuErrorView(
-              cs: cs,
-              error: error.toString(),
-              onRetry: () => ref.invalidate(menuProvider),
-            ),
-            data: (rawCakes) {
-              final catsAsync = ref.watch(categoriesProvider);
-              final List<_MenuItem> allItems = rawCakes.map((data) {
-                final options = data['CakeOption'] as List? ?? [];
-                final basePrice = options.isNotEmpty
-                    ? OrderService.formatPrice(options[0]['price'])
-                    : (data['price'] != null
-                          ? OrderService.formatPrice(data['price'])
-                          : "Price on Request");
-                final baseServes = options.isNotEmpty
-                    ? "Serves ${options[0]['serves']}"
-                    : "";
+            }).toList();
 
-                return _MenuItem(
-                  id: data['id'],
-                  name: data['name'] ?? 'Untitled Cake',
-                  category: data['Category']?['name'] ?? 'General',
-                  price: basePrice,
-                  description: data['description'] ?? '',
-                  serves: baseServes,
-                  weight: "Standard",
-                  imageUrl: SupabaseService.getPublicUrl(data['image'], bucket: 'cakes') + (data['image'].isNotEmpty ? "?t=${DateTime.now().millisecondsSinceEpoch}" : ""),
-                );
-              }).toList();
-
-              // Dynamic Category Filtering (Only show categories with items)
-              final Set<String> uniqueCategories = {'All'};
-              
-              // Only add categories that have at least one item currently visible
-              final Set<String> activeCategoryNames = allItems.map((i) => i.category).toSet();
-              
-              // 1. Get all categories from DB, but only include them if they have items
-              final dbCategories = catsAsync.value ?? [];
-              for (var c in dbCategories) {
-                final catName = c['name']?.toString() ?? '';
-                if (activeCategoryNames.contains(catName)) {
-                  uniqueCategories.add(catName);
-                }
+            final Set<String> uniqueCategories = {'All'};
+            final Set<String> activeCategoryNames = allItems.map((i) => i.category).toSet();
+            final dbCategories = catsAsync.value ?? [];
+            for (var c in dbCategories) {
+              final catName = c['name']?.toString() ?? '';
+              if (activeCategoryNames.contains(catName)) {
+                uniqueCategories.add(catName);
               }
+            }
+            uniqueCategories.addAll(activeCategoryNames);
 
-              // 2. Safety fallback: categories from items themselves
-              uniqueCategories.addAll(activeCategoryNames);
+            final List<String> categories = uniqueCategories.toList()
+              ..sort((a, b) {
+                if (a == 'All') return -1;
+                if (b == 'All') return 1;
+                return a.compareTo(b);
+              });
 
-              final List<String> categories = uniqueCategories.toList()
-                ..sort((a, b) {
-                  if (a == 'All') return -1;
-                  if (b == 'All') return 1;
-                  return a.compareTo(b);
-                });
-
-              // Filtering logic
-              // Safety: If the currently selected categories are now hidden/empty, fallback to 'All'
-              if (!_selectedCategories.contains('All')) {
-                final validSelection = _selectedCategories.where((cat) => uniqueCategories.contains(cat)).toSet();
-                if (validSelection.isEmpty) {
-                  _selectedCategories = {'All'};
-                } else if (validSelection.length != _selectedCategories.length) {
-                  _selectedCategories = validSelection;
-                }
+            if (!_selectedCategories.contains('All')) {
+              final validSelection = _selectedCategories.where((cat) => uniqueCategories.contains(cat)).toSet();
+              if (validSelection.isEmpty) {
+                _selectedCategories = {'All'};
+              } else if (validSelection.length != _selectedCategories.length) {
+                _selectedCategories = validSelection;
               }
+            }
 
-              final List<_MenuItem> items = allItems.where((item) {
-                if (_selectedCategories.contains('All')) return true;
-                return _selectedCategories.contains(item.category);
-              }).toList();
+            final List<_MenuItem> items = allItems.where((item) {
+              if (_selectedCategories.contains('All')) return true;
+              return _selectedCategories.contains(item.category);
+            }).toList();
 
-              return CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        isDesktop ? 48 : 24,
-                        20,
-                        isDesktop ? 48 : 24,
-                        0,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "OUR MENU",
-                            style: GoogleFonts.plusJakartaSans(
-                              color: cs.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 9,
-                              letterSpacing: 2.0,
-                            ),
+            return CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "OUR MENU",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 9,
+                            letterSpacing: 2.0,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Atelier Collection",
-                            style: GoogleFonts.notoSerif(
-                              color: cs.secondary,
-                              fontSize: isDesktop ? 32 : 24,
-                              fontStyle: FontStyle.italic,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Atelier Collection",
+                          style: GoogleFonts.notoSerif(
+                            color: cs.secondary,
+                            fontSize: 24,
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${items.length} items cataloged",
-                            style: GoogleFonts.plusJakartaSans(
-                              color: cs.secondary.withValues(alpha: 0.4),
-                              fontSize: 12,
-                            ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "${items.length} items cataloged",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.secondary.withValues(alpha: 0.4),
+                            fontSize: 12,
                           ),
-                          const SizedBox(height: 24),
+                        ),
+                        const SizedBox(height: 24),
 
-                          // Category Filter Chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: categories.map((category) {
-                                final isSelected = _selectedCategories.contains(
-                                  category,
-                                );
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: FilterChip(
-                                    selected: isSelected,
-                                    label: Text(
-                                      category.toUpperCase(),
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 10,
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.w600,
-                                        letterSpacing: 1.0,
-                                        color: isSelected
-                                            ? Colors.white
-                                            : cs.secondary,
-                                      ),
-                                    ),
-                                    onSelected: (val) {
-                                      setState(() {
-                                        if (category == 'All') {
-                                          _selectedCategories = {'All'};
-                                        } else {
-                                          _selectedCategories.remove('All');
-                                          if (val) {
-                                            _selectedCategories.add(category);
-                                          } else {
-                                            _selectedCategories.remove(
-                                              category,
-                                            );
-                                          }
-                                          if (_selectedCategories.isEmpty) {
-                                            _selectedCategories = {'All'};
-                                          }
-                                        }
-                                      });
-                                    },
-                                    selectedColor: cs.primary,
-                                    backgroundColor: cs.surfaceContainer,
-                                    checkmarkColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                      side: BorderSide(
-                                        color: isSelected
-                                            ? cs.primary
-                                            : cs.secondary.withValues(
-                                                alpha: 0.1,
-                                              ),
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: categories.map((category) {
+                              final isSelected = _selectedCategories.contains(category);
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: FilterChip(
+                                  selected: isSelected,
+                                  label: Text(
+                                    category.toUpperCase(),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                      letterSpacing: 1.0,
+                                      color: isSelected ? Colors.white : cs.secondary,
                                     ),
                                   ),
-                                );
-                              }).toList(),
-                            ),
+                                  onSelected: (val) {
+                                    setState(() {
+                                      if (category == 'All') {
+                                        _selectedCategories = {'All'};
+                                      } else {
+                                        _selectedCategories.remove('All');
+                                        if (val) {
+                                          _selectedCategories.add(category);
+                                        } else {
+                                          _selectedCategories.remove(category);
+                                        }
+                                        if (_selectedCategories.isEmpty) {
+                                          _selectedCategories = {'All'};
+                                        }
+                                      }
+                                    });
+                                  },
+                                  selectedColor: cs.primary,
+                                  backgroundColor: cs.surfaceContainer,
+                                  checkmarkColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    side: BorderSide(
+                                      color: isSelected ? cs.primary : cs.secondary.withValues(alpha: 0.1),
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                          const SizedBox(height: 16),
-                          Divider(color: cs.secondary.withValues(alpha: 0.05)),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 16),
+                        Divider(color: cs.secondary.withValues(alpha: 0.05)),
+                      ],
                     ),
                   ),
+                ),
 
-                  SliverPadding(
-                    padding: EdgeInsets.fromLTRB(
-                      isDesktop ? 48 : 16,
-                      16,
-                      isDesktop ? 48 : 16,
-                      100,
-                    ),
-                    sliver: SliverGrid(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final item = items[index];
-                        return _MenuItemCard(
-                          item: item,
-                          onTabChanged: widget.onTabChanged,
-                        );
-                      }, childCount: items.length),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        mainAxisExtent: 130,
-                      ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  sliver: SliverGrid(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = items[index];
+                      return _MenuItemCard(
+                        item: item,
+                        onTabChanged: widget.onTabChanged,
+                      );
+                    }, childCount: items.length),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 130,
                     ),
                   ),
-                ],
-              );
-            },
-          ),
+                ),
+              ],
+            );
+          },
         );
       },
     );

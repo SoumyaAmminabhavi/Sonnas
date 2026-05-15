@@ -19,27 +19,15 @@ class OwnerOrderDetailsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final cleanId = orderId.replaceFirst('#', '');
+    final cleanId = orderId.replaceAll(RegExp(r'[#]'), '');
 
-    return StreamBuilder<Map<String, dynamic>?>(
-      stream: OrderService.getSingleOrderStream(cleanId),
-      builder: (context, streamSnapshot) {
-        final streamOrder = streamSnapshot.data;
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: OrderService.fetchOrderByIdOrNumber(cleanId),
+      builder: (context, snapshot) {
+        final order = snapshot.data;
+        final conversation = order?['WhatsAppConversation'];
 
-        return FutureBuilder<Map<String, dynamic>?>(
-          future: streamOrder != null
-              ? SupabaseService.client
-                    .from('Order')
-                    .select('*, WhatsAppConversation(*)')
-                    .eq('id', streamOrder['id'])
-                    .maybeSingle()
-              : Future.value(null),
-          builder: (context, futureSnapshot) {
-            final order = futureSnapshot.data ?? streamOrder;
-            final conversation = order?['WhatsAppConversation'];
-
-            if (streamSnapshot.connectionState == ConnectionState.waiting &&
-                order == null) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 backgroundColor: cs.surface,
                 body: Shimmer.fromColors(
@@ -175,7 +163,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                       const SizedBox(height: 32),
                                       _CustomerInfoCard(
                                         name: order['customerName'] ?? conversation?['name'] ?? 'Guest Customer',
-                                        phone: order['phone'] ?? conversation?['phone'] ?? 'Contact hidden',
+                                        phone: order['customerPhone'] ?? conversation?['phone'] ?? 'Contact hidden',
                                         address: (order['address'] ?? conversation?['address'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
                                       ),
@@ -427,7 +415,7 @@ class OwnerOrderDetailsView extends ConsumerWidget {
                                             cs: cs,
                                             isPrimary: false,
                                             onPressed: () async {
-                                              final phone = order['phone'] ?? conversation?['phone'];
+                                              final phone = order['customerPhone'] ?? conversation?['phone'];
                                               if (phone == null || phone.toString().isEmpty) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -474,8 +462,6 @@ class OwnerOrderDetailsView extends ConsumerWidget {
             );
           },
         );
-      },
-    );
   }
 }
 
