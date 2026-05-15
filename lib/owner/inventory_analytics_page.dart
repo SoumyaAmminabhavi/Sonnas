@@ -39,9 +39,10 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
             return _buildSkeleton(cs);
           }
           
-          if (snapshot.hasError) {
-             return Center(child: Text("Stock Fetch Error: ${snapshot.error}"));
-          }
+           if (snapshot.hasError) {
+              debugPrint("Inventory Stream Error: ${snapshot.error}");
+              return Center(child: Text("Unable to load stock data"));
+           }
 
           final allItems = snapshot.data ?? [];
           final filteredItems = _selectedCategory == 'All'
@@ -394,11 +395,11 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                         );
                       }
                     } catch (e) {
-                      debugPrint("Error: $e");
+                      debugPrint("Add Inventory Item Error: $e");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("Add Failed: ${e.toString()}"),
+                            content: const Text("Failed to add item"),
                             backgroundColor: Colors.red,
                             behavior: SnackBarBehavior.floating,
                           ),

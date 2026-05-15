@@ -208,6 +208,23 @@ class _CardImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final bytes = UriData.parse(imageUrl).contentAsBytes();
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(
+            bytes,
+            width: 90,
+            height: 90,
+            fit: BoxFit.cover,
+          ),
+        );
+      } catch (_) {
+        // Fall through to error placeholder
+      }
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: CachedNetworkImage(

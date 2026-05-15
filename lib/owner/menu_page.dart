@@ -1306,7 +1306,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                     : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
-                        "${SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes')}?t=${DateTime.now().millisecondsSinceEpoch}",
+                        SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
                         fit: BoxFit.cover,
                       )
                     : Column(

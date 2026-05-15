@@ -226,7 +226,8 @@ class OrderService {
         });
   }
 
-  /// Submit a new order from the public customer platform (Unified)
+  /// Submit a public order. Both writes should ideally be atomic via a server-side
+  /// RPC (e.g. create_order_with_items in Supabase). TODO: migrate to single RPC call.
   static Future<void> submitPublicOrder(Map<String, dynamic> data) async {
     final orderData = Map<String, dynamic>.from(data);
     final items = orderData.remove('items') as List<dynamic>;
@@ -234,31 +235,34 @@ class OrderService {
     // Set unified source
     orderData['source'] = 'APP';
     
-    final response = await _client
-        .from('Order')
-        .insert(orderData)
-        .select()
-        .single();
-    
-    final orderId = response['id'];
-    
-    // Insert order items
-    final orderItems = items.map((item) => {
-      'orderId': orderId,
-      'cakeId': item['cakeId'], // Linked if available
-      'cakeName': item['cakeName'],
-      'quantity': item['quantity'],
-      'price': item['price'],
-      'size': item['size'] ?? 'Standard',
-    }).toList();
-
- 
+    String? orderId;
     try {
+      final response = await _client
+          .from('Order')
+          .insert(orderData)
+          .select()
+          .single();
+      
+      orderId = response['id'];
+      
+      // Insert order items
+      final orderItems = items.map((item) => {
+        'orderId': orderId,
+        'cakeId': item['cakeId'], // Linked if available
+        'cakeName': item['cakeName'],
+        'quantity': item['quantity'],
+        'price': item['price'],
+        'size': item['size'] ?? 'Standard',
+      }).toList();
       await _client.from('OrderItem').insert(orderItems);
     } catch (e) {
-      // Cleanup: delete the orphaned order record if items failed to save
-      debugPrint('❌ OrderItems failed to save, rolling back Order $orderId: $e');
-      await _client.from('Order').delete().eq('id', orderId);
+      if (orderId != null) {
+        try {
+          await _client.from('Order').delete().eq('id', orderId);
+        } catch (rollbackError) {
+          debugPrint('⚠️ Rollback of Order $orderId also failed: $rollbackError');
+        }
+      }
       rethrow;
     }
   }

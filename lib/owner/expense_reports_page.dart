@@ -55,7 +55,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Finance Fetch Error: ${e.toString()}"),
+            content: const Text("Unable to fetch finance data. Please try again."),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -209,11 +209,11 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                     );
                   }
                 } catch (e) {
-                  debugPrint("Error: $e");
+                  debugPrint("Expense Log Error: $e");
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text("Log Failed: ${e.toString()}"),
+                        content: const Text("Failed to log expense"),
                         backgroundColor: Colors.red,
                         behavior: SnackBarBehavior.floating,
                       ),

@@ -85,7 +85,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
             customerName: customerName,
             orderNumber: orderNumber,
              onView: () {
-               final String? orderId = order['id'];
+                final String? orderId = order['id']?.toString();
                if (orderId == null || orderId.isEmpty) {
                  if (!mounted) return;
                  ScaffoldMessenger.of(context).showSnackBar(
