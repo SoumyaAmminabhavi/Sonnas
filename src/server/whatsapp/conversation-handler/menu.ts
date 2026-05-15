@@ -1,8 +1,8 @@
 import { db } from "./prisma";
-import { 
-  cakeCache, 
-  categoryCache, 
-  lastCacheUpdate, 
+import {
+  cakeCache,
+  categoryCache,
+  lastCacheUpdate,
   setCaches
 } from "./cache";
 import { CACHE_TTL, DB_TIMEOUT } from "./constants";
@@ -11,9 +11,9 @@ import type { Cake, DBCake, DBCategory, IncomingMessage, WhatsAppConversation } 
 import { products } from "~/data/landing";
 import { formatPrice } from "~/lib/format";
 import natural from "natural";
-import { 
-  sendInteractiveList, 
-  sendInteractiveButtons, 
+import {
+  sendInteractiveList,
+  sendInteractiveButtons,
   sendImageMessage,
   sendDocumentMessage,
   sendTextMessage
@@ -64,14 +64,14 @@ export async function safeGetCakes(): Promise<Cake[]> {
           category: effectiveCategory,
           // Ensure image is a valid URL or placeholder
           image: (dbCake.image && String(dbCake.image).trim().length > 0)
-                 ? (String(dbCake.image).startsWith('http') 
-                    ? dbCake.image 
-                    : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
-                 : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
+            ? (String(dbCake.image).startsWith('http')
+              ? dbCake.image
+              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
+            : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
         } as unknown as Cake;
       })
-      .filter(c => c.isAvailable !== false)
-      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        .filter(c => c.isAvailable !== false)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
       setCaches(cakes, categoryCache, now);
       return cakes;
@@ -146,7 +146,7 @@ export async function sendWelcome(to: string, name?: string) {
   await sendInteractiveList(
     to,
     "Sonna's Patisserie",
-    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all cakes\n• Send *Status* to see order history\n• Send *Cancel* to clear your cart`,
+    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart`,
     "View Menu",
     [
       {
@@ -159,11 +159,11 @@ export async function sendWelcome(to: string, name?: string) {
       },
       {
         title: "📋 Browse by Category",
-        rows: dbCategories.length > 0 
+        rows: dbCategories.length > 0
           ? dbCategories.slice(0, 6).map(cat => ({
-              id: `cat_${cat.id}`,
-              title: cat.name.slice(0, 24)
-            }))
+            id: `cat_${cat.id}`,
+            title: cat.name.slice(0, 24)
+          }))
           : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }]
       },
       {
@@ -213,10 +213,10 @@ export async function sendMenu(to: string, offset = 0) {
     const dbCategories = await safeGetCategories();
     const totalCats = dbCategories.length;
     const PAGE_SIZE = 10;
-    
+
     const isFirstPage = offset === 0;
     const catsRemaining = totalCats - offset;
-    
+
     let displayCount = 0;
     let hasNext = false;
     const hasPrev = !isFirstPage;
@@ -267,7 +267,7 @@ export async function sendMenu(to: string, offset = 0) {
     await sendInteractiveList(
       to,
       "🧁 Our Categories",
-      offset > 0 
+      offset > 0
         ? `Continuing our selection (${offset + 1}-${offset + currentBatch.length} of ${totalCats}):`
         : "We have quite a variety today! Please select a category to browse:",
       "Select Category",
@@ -318,10 +318,10 @@ export async function handleCategorySelection(msg: IncomingMessage) {
 
   const PAGE_SIZE = 10;
   const totalItems = filtered.length;
-  
+
   const isFirstPage = offset === 0;
   const itemsRemainingAfterStart = totalItems - offset;
-  
+
   let displayCount = 0;
   let hasNext = false;
   const hasPrev = !isFirstPage;
@@ -362,7 +362,7 @@ export async function handleCategorySelection(msg: IncomingMessage) {
       description: `Show items ${nextOffset + 1} - ${Math.min(nextOffset + 9, totalItems)}`
     });
   }
-  
+
   if (hasPrev) {
     // To go back, we need to know the offset of the previous page.
     // Page 1 ends at 9. Page 2 starts at 9.
@@ -373,7 +373,7 @@ export async function handleCategorySelection(msg: IncomingMessage) {
     if (offset > 9) {
       prevOffset = offset - 8;
     }
-    
+
     rows.unshift({
       id: `prev_${categoryId}_${prevOffset}`,
       title: "⬅️ Previous Page",
