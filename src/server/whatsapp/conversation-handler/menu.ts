@@ -239,7 +239,7 @@ export async function sendMenu(to: string, offset = 0) {
     }
 
     const currentBatch = dbCategories.slice(offset, offset + displayCount);
-    const rows = currentBatch.map(cat => ({
+    const rows: Array<{ id: string; title: string; description?: string }> = currentBatch.map(cat => ({
       id: `cat_${cat.id}`,
       title: cat.name.slice(0, 24)
     }));
