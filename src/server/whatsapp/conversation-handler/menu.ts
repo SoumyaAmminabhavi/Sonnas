@@ -33,7 +33,7 @@ export async function safeGetCategories(): Promise<DBCategory[]> {
 
   try {
     const result = await db.category.findMany({
-      orderBy: { sortOrder: "asc" }
+      orderBy: { createdAt: "asc" }
     });
     const categories = result as unknown as DBCategory[];
     setCaches(cakeCache, categories, now);
