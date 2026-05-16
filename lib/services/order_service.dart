@@ -129,12 +129,8 @@ class OrderService {
       yield* _client
           .from('Order')
           .stream(primaryKey: ['id'])
-          .map((list) {
-            for (final o in list) {
-              if (o['id']?.toString() == resolvedId) return o;
-            }
-            return null;
-          });
+          .eq('id', resolvedId)
+          .map((list) => list.isEmpty ? null : list.first);
     } catch (e) {
       debugPrint('⚠️ Order Stream Init Failed: $e');
       yield null;
@@ -231,16 +227,17 @@ class OrderService {
   /// Update order status
   static Future<void> updateOrderStatus(String orderId, String status) async {
     final now = DateTime.now().toUtc().toIso8601String();
+    final normalizedStatus = status.toUpperCase();
     final Map<String, dynamic> payload = {
-      'status': status.toUpperCase(),
+      'status': normalizedStatus,
       'updatedAt': now,
     };
     
     // Set specific audit timestamps
-    if (status == 'CONFIRMED') payload['confirmedAt'] = now;
-    if (status == 'DELIVERED') payload['deliveredAt'] = now;
-    if (status == 'COMPLETED') payload['completedAt'] = now;
-    if (status == 'CANCELLED') payload['cancelledAt'] = now;
+    if (normalizedStatus == 'CONFIRMED') payload['confirmedAt'] = now;
+    if (normalizedStatus == 'DELIVERED') payload['deliveredAt'] = now;
+    if (normalizedStatus == 'COMPLETED') payload['completedAt'] = now;
+    if (normalizedStatus == 'CANCELLED') payload['cancelledAt'] = now;
     
     try {
       await _client.from('Order').update(payload).eq('id', orderId);

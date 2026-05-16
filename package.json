@@ -1,4 +1,5 @@
 {
+  "name": "sonna",
   "devDependencies": {
     "prisma": "^7.8.0"
   },

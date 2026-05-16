@@ -1227,7 +1227,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     }
 
     // 2. Add fallback categories if DB is empty or current selection is old string
-    if (!_isLoadingCategories && _categories.isEmpty) {
+    if (_categoriesLoaded && !_isLoadingCategories && _categories.isEmpty) {
       for (var name in fallbackNames) {
         items.add(DropdownMenuItem(value: name, child: Text(name)));
       }

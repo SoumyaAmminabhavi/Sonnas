@@ -221,7 +221,19 @@ class StaffOrderCard extends StatelessWidget {
           ),
         );
       } catch (_) {
-        // Fall through to placeholder
+        return Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(
+            _getStatusIcon(order.status),
+            color: _getStatusColor(order.status, cs).withValues(alpha: 0.7),
+            size: 22,
+          ),
+        );
       }
     }
 

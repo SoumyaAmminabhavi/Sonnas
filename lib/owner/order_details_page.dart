@@ -207,7 +207,12 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                         name: order['customerName'] ?? conversation?['name'] ?? 'Guest Customer',
                                         phone: (() {
                                           final p = order['customerPhone']?.toString().trim();
-                                          return (p != null && p.isNotEmpty) ? p : (conversation?['phone']?.toString() ?? 'Contact hidden');
+                                          final fallbackPhone = conversation?['phone']?.toString().trim();
+                                          return (p != null && p.isNotEmpty)
+                                              ? p
+                                              : ((fallbackPhone != null && fallbackPhone.isNotEmpty)
+                                                  ? fallbackPhone
+                                                  : 'Contact hidden');
                                         })(),
                                         address: (order['address'] ?? conversation?['address'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
@@ -484,9 +489,12 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                             isPrimary: false,
                                             onPressed: () async {
                                               final rawPhone = order['customerPhone']?.toString().trim();
+                                              final fallbackPhone = conversation?['phone']?.toString().trim();
                                               final phone = (rawPhone != null && rawPhone.isNotEmpty)
                                                   ? rawPhone
-                                                  : (conversation?['phone']?.toString() ?? '');
+                                                  : ((fallbackPhone != null && fallbackPhone.isNotEmpty)
+                                                      ? fallbackPhone
+                                                      : '');
                                               if (phone.isEmpty) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(

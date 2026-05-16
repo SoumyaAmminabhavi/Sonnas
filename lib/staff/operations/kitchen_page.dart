@@ -393,6 +393,10 @@ class KitchenOrderCard extends StatelessWidget {
     }
 
     final resolvedUrl = (() {
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        if (version == null) return imageUrl;
+        return imageUrl.contains('?') ? '$imageUrl&v=$version' : '$imageUrl?v=$version';
+      }
       final base = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
       if (version == null) return base;
       return base.contains('?') ? '$base&v=$version' : '$base?v=$version';
