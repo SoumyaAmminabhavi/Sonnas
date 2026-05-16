@@ -19,9 +19,9 @@ class MenuService {
         final data = await fetchMenu();
         if (requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.add(data);
-      } catch (e) {
+      } catch (e, stackTrace) {
         if (requestId != refreshRequestId) return;
-        if (!controller.isClosed) controller.addError(e);
+        if (!controller.isClosed) controller.addError(e, stackTrace);
       }
     }
 

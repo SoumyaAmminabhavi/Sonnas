@@ -68,7 +68,7 @@ class OrderService {
         res = await _client
             .from('Order')
             .select('*, WhatsAppConversation(*)')
-            .eq('orderNumber', idOrNumber)
+            .eq('orderNumber', cleanInput)
             .maybeSingle();
       }
 
@@ -192,11 +192,37 @@ class OrderService {
     return _client.from('Order').stream(primaryKey: ['id']).map((orders) {
       final Map<int, double> chartData = {};
       
+      final now = DateTime.now();
+      DateTime windowStart;
+      DateTime windowEnd;
+      
+      if (range == 'today') {
+        windowStart = DateTime(now.year, now.month, now.day);
+        windowEnd = windowStart.add(const Duration(days: 1));
+      } else if (range == 'weekly') {
+        windowStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+        windowEnd = windowStart.add(const Duration(days: 7));
+      } else if (range == 'monthly') {
+        windowStart = DateTime(now.year, now.month, 1);
+        windowEnd = DateTime(now.year, now.month + 1, 1);
+      } else {
+        final year = targetYear ?? now.year;
+        if (targetMonth != null) {
+          windowStart = DateTime(year, targetMonth, 1);
+          windowEnd = DateTime(year, targetMonth + 1, 1);
+        } else {
+          windowStart = DateTime(year, 1, 1);
+          windowEnd = DateTime(year + 1, 1, 1);
+        }
+      }
+      
       for (final order in orders) {
         final dateStr = order['createdAt']?.toString();
         if (dateStr == null) continue;
         final date = DateTime.tryParse(dateStr);
         if (date == null) continue;
+
+        if (date.isBefore(windowStart) || date.isAtSameMomentAs(windowEnd) || date.isAfter(windowEnd)) continue;
 
         // Apply Month/Year filters if provided
         if (targetMonth != null && date.month != targetMonth) continue;

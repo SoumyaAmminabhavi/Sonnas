@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
@@ -21,6 +23,7 @@ class OwnerOrderDetailsView extends StatefulWidget {
 
 class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
   late Future<Map<String, dynamic>?> _orderFuture;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -223,34 +226,45 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           _SectionTitle(title: "Artisan Selection", cs: cs),
-                                          () {
-                                            String? rawUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
-                                            rawUrl = rawUrl?.trim();
-                                            String? url;
-                                            if (rawUrl != null && rawUrl.isNotEmpty) {
-                                              final lc = rawUrl.toLowerCase();
-                                              url = (lc.startsWith('http') || lc.startsWith('data:'))
-                                                  ? rawUrl
-                                                  : SupabaseService.getPublicUrl(rawUrl, bucket: 'cakes');
-                                            }
-                                            if (url != null && url.isNotEmpty) {
-                                              return IconButton(
-                                                icon: const Icon(Icons.view_in_ar_outlined, size: 20),
-                                                color: cs.primary,
-                                                tooltip: "Holographic 3D View",
-                                                onPressed: () {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) => _HolographicViewer(
-                                                      imageUrl: url!,
-                                                      cs: cs,
-                                                    ),
-                                                  );
-                                                },
-                                              );
-                                            }
-                                            return const SizedBox.shrink();
-                                          }(),
+                                       () {
+                                         String? rawUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                         rawUrl = rawUrl?.trim();
+                                         String? url;
+                                         Uint8List? imageBytes;
+                                         if (rawUrl != null && rawUrl.isNotEmpty) {
+                                           final lc = rawUrl.toLowerCase();
+                                           if (lc.startsWith('data:')) {
+                                             final commaIdx = rawUrl.indexOf(',');
+                                             if (commaIdx != -1) {
+                                               try {
+                                                 imageBytes = base64Decode(rawUrl.substring(commaIdx + 1));
+                                               } catch (_) {}
+                                             }
+                                           } else {
+                                             url = lc.startsWith('http')
+                                                 ? rawUrl
+                                                 : SupabaseService.getPublicUrl(rawUrl, bucket: 'cakes');
+                                           }
+                                         }
+                                         if (url != null || imageBytes != null) {
+                                           return IconButton(
+                                             icon: const Icon(Icons.view_in_ar_outlined, size: 20),
+                                             color: cs.primary,
+                                             tooltip: "Holographic 3D View",
+                                             onPressed: () {
+                                               showDialog(
+                                                 context: context,
+                                                 builder: (context) => _HolographicViewer(
+                                                   imageUrl: url,
+                                                   imageBytes: imageBytes,
+                                                   cs: cs,
+                                                 ),
+                                               );
+                                             },
+                                           );
+                                         }
+                                         return const SizedBox.shrink();
+                                       }(),
                                         ],
                                       ),
                                       const SizedBox(height: 16),
@@ -280,56 +294,72 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
 
                                                 return Column(
                                                   children: [
-                                                    ...items.map<Widget>((item) {
-                                                      String displayImageUrl = '';
-                                                      final String cakeName = item['cakeName'] ?? '';
-                                                      final String? cakeId = item['cakeId']?.toString();
-                                                      // Prefer cakeId match for reliability; fall back to name match
-                                                      final matchingCake = cakeId != null
-                                                          ? menu.firstWhere(
-                                                              (c) => c['id']?.toString() == cakeId,
-                                                              orElse: () => menu.firstWhere(
-                                                                (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
-                                                                orElse: () => <String, dynamic>{},
-                                                              ),
-                                                            )
-                                                          : menu.firstWhere(
-                                                              (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
-                                                              orElse: () => <String, dynamic>{},
-                                                            );
-                                                      displayImageUrl = matchingCake['image'] ?? '';
+                                                     ...items.map<Widget>((item) {
+                                                       String displayImageUrl = '';
+                                                       Uint8List? displayImageBytes;
+                                                       final String cakeName = item['cakeName'] ?? '';
+                                                       final String? cakeId = item['cakeId']?.toString();
+                                                       // Prefer cakeId match for reliability; fall back to name match
+                                                       final matchingCake = cakeId != null
+                                                           ? menu.firstWhere(
+                                                               (c) => c['id']?.toString() == cakeId,
+                                                               orElse: () => menu.firstWhere(
+                                                                 (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
+                                                                 orElse: () => <String, dynamic>{},
+                                                               ),
+                                                             )
+                                                           : menu.firstWhere(
+                                                               (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
+                                                               orElse: () => <String, dynamic>{},
+                                                             );
+                                                       displayImageUrl = matchingCake['image'] ?? '';
 
-                                                      final rawCustomUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
-                                                      String? resolvedCustomUrl;
-                                                      if (rawCustomUrl != null && rawCustomUrl.trim().isNotEmpty) {
-                                                        final trimmed = rawCustomUrl.trim();
-                                                        final lc = trimmed.toLowerCase();
-                                                        resolvedCustomUrl = (lc.startsWith('http') || lc.startsWith('data:'))
-                                                            ? trimmed
-                                                            : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
-                                                      }
-                                                      bool isCustomUrl = false;
-                                                      if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
-                                                          resolvedCustomUrl != null) {
-                                                        displayImageUrl = resolvedCustomUrl;
-                                                        isCustomUrl = true;
-                                                      }
+                                                       final rawCustomUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                                       String? resolvedCustomUrl;
+                                                       Uint8List? resolvedCustomBytes;
+                                                       if (rawCustomUrl != null && rawCustomUrl.trim().isNotEmpty) {
+                                                         final trimmed = rawCustomUrl.trim();
+                                                         final lc = trimmed.toLowerCase();
+                                                         if (lc.startsWith('data:')) {
+                                                           final commaIdx = trimmed.indexOf(',');
+                                                           if (commaIdx != -1) {
+                                                             try {
+                                                               resolvedCustomBytes = base64Decode(trimmed.substring(commaIdx + 1));
+                                                             } catch (_) {}
+                                                           }
+                                                         } else {
+                                                           resolvedCustomUrl = lc.startsWith('http')
+                                                               ? trimmed
+                                                               : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
+                                                         }
+                                                       }
+                                                       bool isCustomUrl = false;
+                                                       if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
+                                                           (resolvedCustomUrl != null || resolvedCustomBytes != null)) {
+                                                         if (resolvedCustomBytes != null) {
+                                                           displayImageBytes = resolvedCustomBytes;
+                                                         } else {
+                                                           displayImageUrl = resolvedCustomUrl!;
+                                                         }
+                                                         isCustomUrl = true;
+                                                       }
 
-                                                      return Padding(
-                                                        padding: const EdgeInsets.only(bottom: 12.0),
-                                                        child: _OrderItemCard(
-                                                          title: cakeName,
-                                                          subtitle: "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
-                                                          price: OrderService.formatPrice(item['price']),
-                                                          imageUrl: displayImageUrl.isEmpty
-                                                              ? ''
-                                                              : (isCustomUrl
-                                                                  ? displayImageUrl
-                                                                  : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes')),
-                                                          cs: cs,
-                                                        ),
-                                                      );
-                                                    }),
+                                                       final finalImageUrl = (displayImageBytes == null && displayImageUrl.isNotEmpty)
+                                                           ? (isCustomUrl ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
+                                                           : '';
+
+                                                       return Padding(
+                                                         padding: const EdgeInsets.only(bottom: 12.0),
+                                                         child: _OrderItemCard(
+                                                           title: cakeName,
+                                                           subtitle: "${item['size'] ?? 'Standard'} • ${item['quantity'] ?? 1} Units",
+                                                           price: OrderService.formatPrice(item['price']),
+                                                           imageUrl: finalImageUrl,
+                                                           imageBytes: displayImageBytes,
+                                                           cs: cs,
+                                                         ),
+                                                       );
+                                                     }),
                                                     const SizedBox(height: 24),
                                                     const Divider(height: 1, thickness: 0.5),
                                                     const SizedBox(height: 24),
@@ -459,7 +489,10 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                               label: label,
                                               cs: cs,
                                               isPrimary: active,
-                                                onPressed: active ? () async {
+                                                onPressed: (active && !_isUpdating) ? () async {
+                                                  setState(() {
+                                                    _isUpdating = true;
+                                                  });
                                                   try {
                                                     await OrderService.updateOrderStatus(order['id'], next);
                                                     if (!context.mounted) return;
@@ -488,6 +521,12 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                           content: Text("Failed to update order. Please try again."),
                                                         ),
                                                       );
+                                                    }
+                                                  } finally {
+                                                    if (mounted) {
+                                                      setState(() {
+                                                        _isUpdating = false;
+                                                      });
                                                     }
                                                   }
                                                 } : null,
@@ -698,8 +737,9 @@ class _OrderItemCard extends StatelessWidget {
   final String subtitle;
   final String price;
   final String imageUrl;
+  final Uint8List? imageBytes;
   final ColorScheme cs;
-  const _OrderItemCard({required this.title, required this.subtitle, required this.price, required this.imageUrl, required this.cs});
+  const _OrderItemCard({required this.title, required this.subtitle, required this.price, required this.imageUrl, this.imageBytes, required this.cs});
 
   @override
   Widget build(BuildContext context) {
@@ -710,12 +750,18 @@ class _OrderItemCard extends StatelessWidget {
           child: SizedBox(
             width: 64,
             height: 64,
-            child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => const _ImagePlaceholder(),
-              errorWidget: (context, url, error) => const _ImagePlaceholder(),
-            ),
+            child: imageBytes != null
+                ? Image.memory(
+                    imageBytes!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => const _ImagePlaceholder(),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const _ImagePlaceholder(),
+                    errorWidget: (context, url, error) => const _ImagePlaceholder(),
+                  ),
           ),
         ),
         const SizedBox(width: 16),
@@ -841,9 +887,10 @@ class _ElegantAction extends StatelessWidget {
 }
 
 class _HolographicViewer extends StatefulWidget {
-  final String imageUrl;
+  final String? imageUrl;
+  final Uint8List? imageBytes;
   final ColorScheme cs;
-  const _HolographicViewer({required this.imageUrl, required this.cs});
+  const _HolographicViewer({this.imageUrl, this.imageBytes, required this.cs});
 
   @override
   State<_HolographicViewer> createState() => _HolographicViewerState();
@@ -883,19 +930,26 @@ class _HolographicViewerState extends State<_HolographicViewer> {
                     alignment: FractionalOffset.center,
                     child: Container(
                       decoration: BoxDecoration(boxShadow: [BoxShadow(color: widget.cs.primary.withValues(alpha: 0.3), blurRadius: 100, spreadRadius: 10)]),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: InteractiveViewer(
-                          maxScale: 5.0,
-                          child: CachedNetworkImage(
-                            imageUrl: widget.imageUrl,
-                            fit: BoxFit.contain,
-                            height: 400,
-                            placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                            errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: InteractiveViewer(
+                            maxScale: 5.0,
+                            child: widget.imageBytes != null
+                                ? Image.memory(
+                                    widget.imageBytes!,
+                                    fit: BoxFit.contain,
+                                    height: 400,
+                                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.white),
+                                  )
+                                : CachedNetworkImage(
+                                    imageUrl: widget.imageUrl ?? '',
+                                    fit: BoxFit.contain,
+                                    height: 400,
+                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
+                                  ),
                           ),
                         ),
-                      ),
                     ),
                   ),
                   const SizedBox(height: 40),

@@ -404,15 +404,27 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
               if (!isCompleted)
                 ElevatedButton(
                   onPressed: () async {
-                    await OrderService.updatePaymentStatus(item['id'].toString(), 'PAID');
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Payment for #${item['orderNumber']} marked as completed"),
-                          backgroundColor: cs.primary,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
+                    try {
+                      await OrderService.updatePaymentStatus(item['id'].toString(), 'PAID');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Payment for #${item['orderNumber']} marked as completed"),
+                            backgroundColor: cs.primary,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Failed to update payment: $e"),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
