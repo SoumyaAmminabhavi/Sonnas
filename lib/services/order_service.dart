@@ -87,36 +87,50 @@ class OrderService {
     }
   }
 
-  static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) {
+  static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) async* {
     final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
     final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
 
-    return _client
-        .from('Order')
-        .stream(primaryKey: ['id'])
-        .map((list) {
-          try {
-            return list.firstWhere(
-              (o) {
-                final String dbId = o['id'].toString();
-                final String dbNum = o['orderNumber']?.toString() ?? '';
+    try {
+      var resolved = await _client
+          .from('Order')
+          .select('id')
+          .eq('id', idOrNumber)
+          .maybeSingle();
 
-                if (dbId == idOrNumber) return true;
-                if (dbNum == idOrNumber) return true;
+      if (resolved == null) {
+        resolved = await _client
+            .from('Order')
+            .select('id')
+            .eq('orderNumber', idOrNumber)
+            .maybeSingle();
+      }
 
-                final cleanDbNum = dbNum.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
-                if (cleanInput.isNotEmpty && cleanInput == cleanDbNum) return true;
+      if (resolved == null) {
+        resolved = await _client
+            .from('Order')
+            .select('id')
+            .ilike('orderNumber', '%$escapedInput%')
+            .maybeSingle();
+      }
 
-                final dbNumEscaped = dbNum.replaceAll('%', '\\%').replaceAll('_', '\\_');
-                return dbNumEscaped.toLowerCase().contains(escapedInput.toLowerCase());
-              },
-              orElse: () => <String, dynamic>{},
-            );
-          } catch (_) {
-            return null;
-          }
-        })
-        .map((order) => (order == null || order.isEmpty) ? null : order);
+      if (resolved == null) {
+        yield null;
+        return;
+      }
+
+      final resolvedId = resolved['id'].toString();
+      yield* _client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .map((list) {
+            final match = list.where((o) => o['id']?.toString() == resolvedId).toList();
+            return match.isNotEmpty ? match.first : null;
+          });
+    } catch (e) {
+      debugPrint('⚠️ Order Stream Init Failed: $e');
+      yield null;
+    }
   }
 
   /// Real-time stream for recent orders

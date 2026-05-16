@@ -183,13 +183,25 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
               onPressed: () => Navigator.pop(context),
               child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
             ),
-            ElevatedButton(
+              ElevatedButton(
               onPressed: () async {
                 if (titleController.text.isEmpty || amountController.text.isEmpty) return;
-                
+                final amount = double.tryParse(amountController.text.trim());
+                if (amount == null || amount < 0) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Enter a valid non-negative amount."),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+
                 final expense = {
                   'title': titleController.text,
-                  'amount': double.tryParse(amountController.text) ?? 0.0,
+                  'amount': amount,
                   'category': selectedCategory,
                   'date': selectedDate.toIso8601String(),
                   'description': descController.text,

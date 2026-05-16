@@ -213,25 +213,31 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                         cs: cs,
                                       ),
                                       const SizedBox(height: 32),
+                                      const SizedBox(height: 32),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           _SectionTitle(title: "Artisan Selection", cs: cs),
-                                          if (order['customImageUrl'] != null)
-                                            IconButton(
-                                              icon: const Icon(Icons.view_in_ar_outlined, size: 20),
-                                              color: cs.primary,
-                                              tooltip: "Holographic 3D View",
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (context) => _HolographicViewer(
-                                                    imageUrl: order['customImageUrl'],
-                                                    cs: cs,
-                                                  ),
-                                                );
-                                              },
-                                            ),
+                                          () {
+                                            final url = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                            if (url != null && url.isNotEmpty) {
+                                              return IconButton(
+                                                icon: const Icon(Icons.view_in_ar_outlined, size: 20),
+                                                color: cs.primary,
+                                                tooltip: "Holographic 3D View",
+                                                onPressed: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => _HolographicViewer(
+                                                      imageUrl: url,
+                                                      cs: cs,
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            }
+                                            return const SizedBox.shrink();
+                                          }(),
                                         ],
                                       ),
                                       const SizedBox(height: 16),
@@ -280,9 +286,12 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                             );
                                                       displayImageUrl = matchingCake['image'] ?? '';
 
+                                                      final customImageUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
                                                       bool isCustomUrl = false;
-                                                      if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) && order['customImageUrl'] != null) {
-                                                        displayImageUrl = order['customImageUrl'];
+                                                      if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
+                                                          customImageUrl != null &&
+                                                          customImageUrl.isNotEmpty) {
+                                                        displayImageUrl = customImageUrl;
                                                         isCustomUrl = true;
                                                       }
 

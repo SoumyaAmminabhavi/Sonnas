@@ -125,7 +125,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       
       // Match with menu to get category and image (Prefer ID, fallback to name)
       final matchingCake = menu.firstWhere(
-        (c) => (cakeId != null && c['id'] == cakeId) || (c['name']?.toString().toLowerCase() == cakeName.toLowerCase()),
+        (c) => (cakeId != null && c['id']?.toString() == cakeId) || (c['name']?.toString().toLowerCase() == cakeName.toLowerCase()),
         orElse: () => <String, dynamic>{},
       );
 

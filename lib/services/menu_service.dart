@@ -14,7 +14,7 @@ class MenuService {
 
     Future<void> refresh() async {
       try {
-        final data = await fetchMenu(includeArchived: false);
+        final data = await fetchMenu();
         if (!controller.isClosed) controller.add(data);
       } catch (e) {
         if (!controller.isClosed) controller.addError(e);
@@ -43,19 +43,12 @@ class MenuService {
   }
 
   /// Fetch all menu items with full category and option data
-  static Future<List<Map<String, dynamic>>> fetchMenu({bool includeArchived = false}) async {
+  static Future<List<Map<String, dynamic>>> fetchMenu() async {
     try {
-      // Fetch active cakes with their categories and options
-      // Note: Join syntax '*, Category(*), CakeOption(*)'
-      var query = _client
+      final res = await _client
           .from('Cake')
-          .select('*, Category(*), CakeOption(*)');
-      
-      if (!includeArchived) {
-        query = query.isFilter('deletedAt', null);
-      }
-      
-      final res = await query.order('name');
+          .select('*, Category(*), CakeOption(*)')
+          .order('name');
       
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {

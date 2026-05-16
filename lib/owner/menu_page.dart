@@ -817,7 +817,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
         
         final existingCat = _categories.firstWhere(
-          (c) => c['id'] == _selectedCategoryId || c['name'] == _selectedCategoryId,
+          (c) => c['id']?.toString() == _selectedCategoryId || c['name'] == _selectedCategoryId,
           orElse: () => <String, dynamic>{},
         );
 
@@ -860,7 +860,6 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         'image': imagePath ?? '',
         'isAvailable': true,
         'sortOrder': 0,
-        'deletedAt': null,
         'updatedAt': DateTime.now().toIso8601String(),
       });
 

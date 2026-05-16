@@ -72,7 +72,7 @@ class MenuDetailsPage extends ConsumerWidget {
       ),
       data: (allCakes) {
         final cake = allCakes.firstWhere(
-          (c) => c['id'] == cakeId,
+          (c) => c['id']?.toString() == cakeId,
           orElse: () => <String, dynamic>{},
         );
 
