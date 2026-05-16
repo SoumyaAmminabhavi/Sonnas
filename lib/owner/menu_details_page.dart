@@ -104,7 +104,9 @@ class MenuDetailsPage extends ConsumerWidget {
         final options = cake['CakeOption'] as List? ?? [];
         final imageField = cake['image']?.toString().trim();
         final String? imageUrl = (imageField != null && imageField.isNotEmpty)
-            ? SupabaseService.getPublicUrl(imageField, bucket: 'cakes')
+            ? (imageField.startsWith('http://') || imageField.startsWith('https://') || imageField.startsWith('data:'))
+                ? imageField
+                : SupabaseService.getPublicUrl(imageField, bucket: 'cakes')
             : null;
 
         return LayoutBuilder(

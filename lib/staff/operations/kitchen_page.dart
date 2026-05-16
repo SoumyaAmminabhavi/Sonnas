@@ -18,6 +18,9 @@ class KitchenPage extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: OrderService.getKitchenOrdersStream(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}", style: GoogleFonts.plusJakartaSans(color: cs.error)));
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -336,6 +339,7 @@ class KitchenOrderCard extends StatelessWidget {
 
     // 2. Fallback to Menu Item image if still empty
     if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://') || imageUrl.toLowerCase() == 'cake_placeholder.png') {
+      imageUrl = ''; // Clear corrupted/unsupported values
       if (items.isNotEmpty && menu.isNotEmpty) {
         final String firstName = items[0]['cakeName'] ?? '';
         final String? firstCakeId = items[0]['cakeId']?.toString();
@@ -347,6 +351,11 @@ class KitchenOrderCard extends StatelessWidget {
         imageUrl = matchingCake['image'] ?? '';
         version = matchingCake['updatedAt']?.toString();
       }
+    }
+
+    // Final check for unsupported URIs before rendering
+    if (imageUrl.startsWith('file://') || imageUrl.startsWith('whatsapp://') || imageUrl.toLowerCase() == 'cake_placeholder.png') {
+      imageUrl = '';
     }
 
     if (imageUrl.isEmpty) {

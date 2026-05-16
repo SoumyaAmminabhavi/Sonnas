@@ -871,7 +871,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         'description': _descriptionController.text,
         'image': imagePath ?? '',
         'isAvailable': widget.initialData?['isAvailable'] ?? true,
-        'sortOrder': 0,
+        'sortOrder': widget.initialData?['sortOrder'] ?? 0,
         'updatedAt': DateTime.now().toIso8601String(),
       };
       final cakeId = await MenuService.upsertCake(savePayload);

@@ -188,7 +188,7 @@ class StaffOrderCard extends StatelessWidget {
         ? customUrl
         : (convoUrl ?? '');
     
-    if (imageUrl.isEmpty) {
+    if (imageUrl.isEmpty || imageUrl.startsWith('file://') || imageUrl.startsWith('whatsapp://')) {
       return Container(
         width: 52,
         height: 52,

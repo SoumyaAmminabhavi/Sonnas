@@ -746,18 +746,20 @@ class _OrderItemCard extends StatelessWidget {
           child: SizedBox(
             width: 64,
             height: 64,
-            child: imageBytes != null
+            child: (imageBytes != null)
                 ? Image.memory(
                     imageBytes!,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const _ImagePlaceholder(),
                   )
-                : CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const _ImagePlaceholder(),
-                    errorWidget: (context, url, error) => const _ImagePlaceholder(),
-                  ),
+                : (imageUrl.isNotEmpty)
+                    ? CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const _ImagePlaceholder(),
+                        errorWidget: (context, url, error) => const _ImagePlaceholder(),
+                      )
+                    : const _ImagePlaceholder(),
           ),
         ),
         const SizedBox(width: 16),

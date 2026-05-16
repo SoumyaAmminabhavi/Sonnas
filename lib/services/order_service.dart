@@ -199,8 +199,11 @@ class OrderService {
         windowStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
         windowEnd = windowStart.add(const Duration(days: 7));
       } else if (range == 'monthly') {
-        windowStart = DateTime(now.year, now.month, 1);
-        windowEnd = DateTime(now.year, now.month + 1, 1);
+        final now = DateTime.now();
+        final year = targetYear ?? now.year;
+        final month = targetMonth ?? now.month;
+        windowStart = DateTime(year, month, 1);
+        windowEnd = DateTime(year, month + 1, 1);
       } else {
         final year = targetYear ?? now.year;
         if (targetMonth != null) {

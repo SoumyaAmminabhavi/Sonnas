@@ -69,18 +69,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
             });
           }
           if (mounted) {
-            _ordersSubscription?.cancel();
-            _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
-              if (mounted) {
-                setState(() {
-                  _orders = orders;
-                  _calculateMetrics();
-                  _processItemsFromOrders(_orders, _cachedMenu);
-                });
-              }
-            }, onError: (error) {
-              debugPrint("Sales reports stream error: $error");
-            });
+            _setupOrdersSubscription();
           }
           return;
         }
@@ -98,18 +87,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         }
 
         if (mounted) {
-          _ordersSubscription?.cancel();
-          _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
-            if (mounted) {
-              setState(() {
-                _orders = orders;
-                _calculateMetrics();
-                _processItemsFromOrders(_orders, _cachedMenu);
-              });
-            }
-          }, onError: (error) {
-            debugPrint("Sales reports stream error: $error");
-          });
+          _setupOrdersSubscription();
         }
     } catch (e) {
       debugPrint("Error loading report data: $e");
@@ -226,13 +204,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
     final ids = paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
     if (ids.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _topItems = [];
-          _categorySales = {};
-          _lastProcessedIds = '';
-        });
-      }
+      _topItems = [];
+      _categorySales = {};
+      _lastProcessedIds = '';
       return;
     }
 
@@ -851,5 +825,20 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         ),
       ),
     );
+  }
+
+  void _setupOrdersSubscription() {
+    _ordersSubscription?.cancel();
+    _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
+      if (mounted) {
+        setState(() {
+          _orders = orders;
+          _calculateMetrics();
+          _processItemsFromOrders(_orders, _cachedMenu);
+        });
+      }
+    }, onError: (error) {
+      debugPrint("Sales reports stream error: $error");
+    });
   }
 }

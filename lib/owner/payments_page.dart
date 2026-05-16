@@ -551,7 +551,8 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
             ),
             child: Column(
               children: historyItems.map((item) {
-                final date = DateTime.tryParse(item['createdAt']?.toString() ?? '');
+                final rawDate = item['paidAt']?.toString() ?? item['createdAt']?.toString() ?? '';
+                final date = DateTime.tryParse(rawDate);
                 final dateStr = date != null ? DateFormat('MMM d, h:mm a').format(date) : 'Recently';
 
                 return Padding(

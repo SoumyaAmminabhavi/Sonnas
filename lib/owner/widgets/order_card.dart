@@ -30,9 +30,9 @@ class OrderCardReactive extends ConsumerWidget {
         String imageUrl = data['customImageUrl']?.toString().trim() ?? '';
         
         // 2. Try to find an image from the associated WhatsApp Conversation if order image is missing
-        if (imageUrl.isEmpty && data['WhatsAppConversation'] != null) {
-          final convo = data['WhatsAppConversation'];
-          imageUrl = convo['customImageUrl']?.toString().trim() ?? '';
+        final rawConversation = data['WhatsAppConversation'];
+        if (imageUrl.isEmpty && rawConversation is Map) {
+          imageUrl = rawConversation['customImageUrl']?.toString().trim() ?? '';
         }
 
         // 3. Fallback to Menu Item image if still empty
@@ -85,9 +85,11 @@ class OrderCardReactive extends ConsumerWidget {
           deliveryTime: data['deliveryTime'],
           orderSubtitle: orderSubtitle,
           onWhatsAppPressed: () async {
+            final rawConversation = data['WhatsAppConversation'];
+            final conversation = rawConversation is Map ? rawConversation : null;
+            final String customerName = data['customerName'] ?? conversation?['name'] ?? 'Guest Customer';
+            final String customerPhone = data['customerPhone']?.toString() ?? conversation?['phone']?.toString() ?? '';
             final String orderId = data['orderNumber'] ?? '---';
-            final String phone = data['phone'] ?? data['customerPhone'] ?? '';
-            final String name = data['customerName'] ?? 'there';
             
             // Get first item name for the message
             String cakeName = 'your order';
@@ -96,8 +98,8 @@ class OrderCardReactive extends ConsumerWidget {
             }
 
             OrderService.launchWhatsApp(
-              phone, 
-              "Hi $name, this is Sonna's Patisserie. Your order #$orderId ($cakeName) is ready for you!"
+              customerPhone, 
+              "Hi $customerName, this is Sonna's Patisserie. Your order #$orderId ($cakeName) is ready for you!"
             );
           },
           onTabChanged: onTabChanged,
