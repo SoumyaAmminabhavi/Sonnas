@@ -196,7 +196,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   void _processItemsFromOrders(List<Map<String, dynamic>> orders, List<Map<String, dynamic>> menu) {
-    if (menu.isEmpty) return;
     if (orders.isEmpty) {
       _topItems = [];
       _categorySales = {};

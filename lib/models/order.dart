@@ -133,7 +133,7 @@ class SonnaOrder {
       notes: map['notes']?.toString(),
       customImageUrl: map['customImageUrl']?.toString(),
       conversationImageUrl: map['WhatsAppConversation'] != null ? map['WhatsAppConversation']['customImageUrl']?.toString() : null,
-      source: map['source']?.toString() ?? 'WHATSAPP',
+      source: map['source']?.toString() ?? 'APP',
       isCustom: map['isCustom'] == true,
     );
   }

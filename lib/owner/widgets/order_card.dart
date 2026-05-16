@@ -37,6 +37,7 @@ class OrderCardReactive extends ConsumerWidget {
 
         // 3. Fallback to Menu Item image if still empty
         if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://')) {
+          imageUrl = '';
           if (items.isNotEmpty && menuAsync.hasValue) {
             final String firstName = items[0]['cakeName'] ?? '';
             final String? firstCakeId = items[0]['cakeId']?.toString();
@@ -75,9 +76,11 @@ class OrderCardReactive extends ConsumerWidget {
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
               : OrderService.formatPrice(calculatedTotal),
-          imageUrl: (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
-              ? imageUrl
-              : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
+          imageUrl: imageUrl.isEmpty
+              ? ''
+              : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
+                  ? imageUrl
+                  : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
           deliveryTime: data['deliveryTime'],
           orderSubtitle: orderSubtitle,
@@ -208,6 +211,19 @@ class _CardImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (imageUrl.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 90,
+          height: 90,
+          color: cs.primary.withValues(alpha: 0.05),
+          child: Icon(Icons.cake_outlined,
+              color: cs.primary.withValues(alpha: 0.2), size: 32),
+        ),
+      );
+    }
+
     if (imageUrl.startsWith('data:')) {
       try {
         final bytes = UriData.parse(imageUrl).contentAsBytes();

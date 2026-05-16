@@ -91,13 +91,13 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Invalid order ID')),
                   );
-                  overlayEntry.remove();
+                  if (overlayEntry.mounted) overlayEntry.remove();
                   return;
                 }
                 Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
-                overlayEntry.remove();
+                if (overlayEntry.mounted) overlayEntry.remove();
              },
-            onClose: () => overlayEntry.remove(),
+            onClose: () { if (overlayEntry.mounted) overlayEntry.remove(); },
           ),
         ),
       ),

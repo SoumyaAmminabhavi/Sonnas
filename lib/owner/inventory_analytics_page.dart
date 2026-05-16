@@ -380,7 +380,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
-                    if (nameController.text.isEmpty) {
+                   if (nameController.text.trim().isEmpty) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

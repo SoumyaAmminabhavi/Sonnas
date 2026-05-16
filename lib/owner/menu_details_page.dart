@@ -77,12 +77,27 @@ class MenuDetailsPage extends ConsumerWidget {
         );
 
         if (cake.isEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) Navigator.pop(context);
-          });
           return Scaffold(
             backgroundColor: cs.surface,
-            body: const Center(child: CircularProgressIndicator()),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.search_off_rounded, color: cs.error, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Menu item not found.",
+                    style: GoogleFonts.notoSerif(fontSize: 18, color: cs.secondary),
+                  ),
+                  const SizedBox(height: 24),
+                  if (Navigator.canPop(context))
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("GO BACK"),
+                    ),
+                ],
+              ),
+            ),
           );
         }
 

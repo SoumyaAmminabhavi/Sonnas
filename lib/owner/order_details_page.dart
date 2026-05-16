@@ -188,10 +188,10 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                               final date = OrderService.parseDate(order['deliveryDate'].toString());
                                               if (date != null) {
                                                 final formattedDate = DateFormat('MMMM d, y').format(date);
-                                                final time = order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : '';
+                                                final time = order['deliverySlot'] != null ? ' at ${order['deliverySlot']}' : '';
                                                 return "Scheduled for $formattedDate$time";
                                               }
-                                              return "Scheduled for ${order['deliveryDate']}${order['deliveryTime'] != null ? ' at ${order['deliveryTime']}' : ''}";
+                                              return "Scheduled for ${order['deliveryDate']}${order['deliverySlot'] != null ? ' at ${order['deliverySlot']}' : ''}";
                                             }(),
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,

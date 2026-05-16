@@ -251,11 +251,16 @@ class OrderService {
   static Future<void> updatePaymentStatus(String orderId, String status) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final normalizedStatus = status.toUpperCase();
-    await _client.from('Order').update({
-      'paymentStatus': normalizedStatus,
-      'updatedAt': now,
-    }).eq('id', orderId);
+    try {
+      await _client.from('Order').update({
+        'paymentStatus': normalizedStatus,
+        'updatedAt': now,
+      }).eq('id', orderId);
+  } catch (e) {
+    debugPrint('❌ Payment Status Update Failed: $e');
+    rethrow;
   }
+ }
 
   /// Format phone number for display
   static String formatPhone(String? phone) {
@@ -282,8 +287,7 @@ class OrderService {
         });
   }
 
-  /// Submit a public order. Both writes should ideally be atomic via a server-side
-  /// RPC (e.g. create_order_with_items in Supabase). TODO: migrate to single RPC call.
+  /// Submit a public order atomically via RPC.
   static Future<void> submitPublicOrder(Map<String, dynamic> data) async {
     final orderData = Map<String, dynamic>.from(data);
     final items = orderData.remove('items') as List<dynamic>;
