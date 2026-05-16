@@ -51,6 +51,25 @@ extension OrderStatusExtension on OrderStatus {
       default: return internalLabel;
     }
   }
+
+  /// Whether the order should be visible in the kitchen management view.
+  bool get isKitchenActionable {
+    // Only CONFIRMED orders are actively being prepared in the kitchen.
+    // PENDING may need confirmation first, and OUT_FOR_DELIVERY is already done.
+    return this == OrderStatus.confirmed;
+  }
+
+  /// Whether the order status can still be changed or cancelled.
+  bool get canCancel {
+    return this == OrderStatus.pending || this == OrderStatus.confirmed;
+  }
+
+  /// Whether the order has reached a terminal state.
+  bool get isFinalized {
+    return this == OrderStatus.delivered || 
+           this == OrderStatus.completed || 
+           this == OrderStatus.cancelled;
+  }
 }
 
 class OrderItem {

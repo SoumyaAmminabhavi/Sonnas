@@ -26,7 +26,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final product = widget.product;
-    final imageUrl = SupabaseService.getPublicUrl(product['image'] ?? '');
+    final imageUrl = SupabaseService.getPublicUrl(product['image'] ?? '', bucket: 'cakes');
 
     return Scaffold(
       backgroundColor: Colors.white,

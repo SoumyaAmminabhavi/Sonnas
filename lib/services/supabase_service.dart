@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io' as io show File if (dart.library.io) 'dart:io';
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
@@ -19,7 +20,7 @@ class SupabaseService {
 
   /// Unified helper to get public URL for a file in Supabase storage
   /// Note: Resize parameters (width/height) are not supported on Supabase Free Tier.
-  static String getPublicUrl(String? path, {String bucket = 'cakes', int? width, int? height}) {
+  static String getPublicUrl(String? path, {required String bucket, int? width, int? height}) {
     // 1. Path guards first
     if (path == null || path.isEmpty || path == 'cake_placeholder.png') return '';
     if (path.startsWith('http')) return path;
@@ -27,7 +28,7 @@ class SupabaseService {
 
     // 2. Validation
     if (width != null || height != null) {
-      throw ArgumentError('Resize parameters (width/height) are not supported on Supabase Free Tier. Use CSS for scaling.');
+      throw UnsupportedError('Image resize parameters (width/height) are no longer supported on Supabase Free Tier. Remove them from the call.');
     }
     
     // 3. Sanitize path: strip leading bucket names or extra slashes if present
@@ -57,22 +58,31 @@ class SupabaseService {
   }
 
   /// Upload an image to Supabase storage. 
-  /// Accepts [Uint8List] (cross-platform compatible).
+  /// Accepts [Uint8List] or [dart:io File] (cross-platform compatible).
   static Future<String?> uploadImage({
     required String bucket,
     required String path,
     required dynamic file,
   }) async {
     // 1. Runtime type check
-    if (file is! Uint8List) {
-      throw ArgumentError('uploadImage: file must be Uint8List for cross-platform compatibility.');
+    if (file is Uint8List) {
+      // Proceed to upload
+    } else if (!kIsWeb && file is io.File) {
+      // Proceed to upload (File will be converted to bytes by the storage client or we can read it)
+    } else {
+      throw ArgumentError('Unsupported file type: ${file.runtimeType}. Expected Uint8List or dart:io File.');
     }
 
     // Use the unified primary client for all storage buckets
     final storageClient = client.storage;
 
     try {
-      await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
+      if (file is Uint8List) {
+        await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
+      } else {
+        // Must be io.File on non-web platform
+        await storageClient.from(bucket).upload(path, file, fileOptions: const FileOptions(upsert: true));
+      }
       return path;
     } catch (e) {
       debugPrint('❌ Storage Upload Error: $e');

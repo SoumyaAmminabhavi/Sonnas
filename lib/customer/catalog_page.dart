@@ -182,7 +182,7 @@ class _ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imageUrl = SupabaseService.getPublicUrl(item['image'] ?? '');
+    final imageUrl = SupabaseService.getPublicUrl(item['image'] ?? '', bucket: 'cakes');
     
     return InkWell(
       onTap: () => Navigator.push(
