@@ -55,34 +55,42 @@ class MenuService {
           .order('name');
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      debugPrint('⚠️ Joined menu fetch failed: $e');
+      debugPrint('⚠️ Joined menu fetch failed, attempting fallback: $e');
+      
+      try {
+        final cakes = List<Map<String, dynamic>>.from(
+          await _client.from('Cake').select('*').order('name'),
+        );
+        final cakeIds = cakes.map((c) => c['id']).whereType<String>().toList();
+        
+        // Parallel fetch for categories and options
+        final results = await Future.wait([
+          _client.from('Category').select('*'),
+          cakeIds.isEmpty 
+              ? Future.value([]) 
+              : _client.from('CakeOption').select('*').inFilter('cakeId', cakeIds),
+        ]);
 
-      final cakes = List<Map<String, dynamic>>.from(
-        await _client.from('Cake').select('*').order('name'),
-      );
-      final cakeIds = cakes.map((c) => c['id']).whereType<String>().toList();
-      final categories = List<Map<String, dynamic>>.from(
-        await _client.from('Category').select('*'),
-      );
-      final options = cakeIds.isEmpty
-          ? <Map<String, dynamic>>[]
-          : List<Map<String, dynamic>>.from(
-              await _client.from('CakeOption').select('*').inFilter('cakeId', cakeIds),
-            );
+        final categories = List<Map<String, dynamic>>.from(results[0]);
+        final options = List<Map<String, dynamic>>.from(results[1]);
 
-      final categoriesById = {
-        for (final c in categories) c['id'].toString(): c,
-      };
-
-      return cakes.map((cake) {
-        final cakeId = cake['id'].toString();
-        final categoryId = cake['categoryId']?.toString();
-        return {
-          ...cake,
-          'Category': categoryId == null ? null : categoriesById[categoryId],
-          'CakeOption': options.where((o) => o['cakeId'].toString() == cakeId).toList(),
+        final categoriesById = {
+          for (final c in categories) c['id'].toString(): c,
         };
-      }).toList();
+
+        return cakes.map((cake) {
+          final cakeId = cake['id'].toString();
+          final categoryId = cake['categoryId']?.toString();
+          return {
+            ...cake,
+            'Category': categoryId == null ? null : categoriesById[categoryId],
+            'CakeOption': options.where((o) => o['cakeId'].toString() == cakeId).toList(),
+          };
+        }).toList();
+      } catch (fallbackError) {
+        debugPrint('❌ Fallback menu fetch failed: $fallbackError');
+        rethrow;
+      }
     }
   }
 

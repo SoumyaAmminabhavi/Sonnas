@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:typed_data';
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
@@ -21,15 +20,17 @@ class SupabaseService {
   /// Unified helper to get public URL for a file in Supabase storage
   /// Note: Resize parameters (width/height) are not supported on Supabase Free Tier.
   static String getPublicUrl(String? path, {String bucket = 'cakes', int? width, int? height}) {
-    if (width != null || height != null) {
-      throw ArgumentError('Resize parameters not supported for public URLs (Supabase Free Tier)');
-    }
-    
+    // 1. Path guards first
     if (path == null || path.isEmpty || path == 'cake_placeholder.png') return '';
     if (path.startsWith('http')) return path;
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
 
-    // Sanitize path: strip leading bucket names or extra slashes if present
+    // 2. Validation
+    if (width != null || height != null) {
+      throw ArgumentError('Resize parameters (width/height) are not supported on Supabase Free Tier. Use CSS for scaling.');
+    }
+    
+    // 3. Sanitize path: strip leading bucket names or extra slashes if present
     String cleanPath = path;
     if (cleanPath.startsWith('/$bucket/')) {
       cleanPath = cleanPath.replaceFirst('/$bucket/', '');
@@ -56,12 +57,17 @@ class SupabaseService {
   }
 
   /// Upload an image to Supabase storage. 
-  /// Accepts [Uint8List] only (cross-platform compatible).
+  /// Accepts [Uint8List] (cross-platform compatible).
   static Future<String?> uploadImage({
     required String bucket,
     required String path,
-    required Uint8List file,
+    required dynamic file,
   }) async {
+    // 1. Runtime type check
+    if (file is! Uint8List) {
+      throw ArgumentError('uploadImage: file must be Uint8List for cross-platform compatibility.');
+    }
+
     // Use the unified primary client for all storage buckets
     final storageClient = client.storage;
 

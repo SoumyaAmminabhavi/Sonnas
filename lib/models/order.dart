@@ -29,15 +29,15 @@ extension OrderStatusExtension on OrderStatus {
     switch (status.trim().toUpperCase()) {
       case 'PENDING': return OrderStatus.pending;
       case 'CONFIRMED': return OrderStatus.confirmed;
-      // Legacy statuses — map to closest canonical equivalent
-      case 'ACCEPTED': return OrderStatus.confirmed;
-      case 'PREPARING': return OrderStatus.confirmed;
-      case 'READY': return OrderStatus.outForDelivery;
       case 'OUT_FOR_DELIVERY':
       case 'OUTFORDELIVERY': return OrderStatus.outForDelivery;
       case 'DELIVERED': return OrderStatus.delivered;
       case 'COMPLETED': return OrderStatus.completed;
       case 'CANCELLED': return OrderStatus.cancelled;
+      // Legacy mappings (deprecated)
+      case 'ACCEPTED': return OrderStatus.confirmed;
+      case 'PREPARING': return OrderStatus.confirmed;
+      case 'READY': return OrderStatus.outForDelivery;
       default:
         debugPrint('⚠️ Unknown OrderStatus: $status — defaulting to pending');
         return OrderStatus.pending;
@@ -117,14 +117,15 @@ class SonnaOrder {
 
   factory SonnaOrder.fromMap(Map<String, dynamic> map) {
     final List<dynamic> rawItems = map['items'] as List<dynamic>? ?? [];
-    final customerPhone = map['customerPhone']?.toString().trim();
+    
+    // Fix: prefer customerPhone, fallback to phone
+    final customerPhone = (map['customerPhone'] ?? map['phone'])?.toString().trim() ?? '';
+    
     return SonnaOrder(
       id: map['id']?.toString() ?? '',
       orderNumber: map['orderNumber']?.toString() ?? '---',
       customerName: map['customerName']?.toString() ?? 'Guest',
-      phone: (customerPhone != null && customerPhone.isNotEmpty)
-          ? customerPhone
-          : map['phone']?.toString() ?? '',
+      phone: customerPhone,
       status: OrderStatusExtension.fromString(map['status']?.toString() ?? 'PENDING'),
       paymentStatus: map['paymentStatus']?.toString() ?? 'PENDING',
       totalPrice: (double.tryParse(map['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0,

@@ -30,10 +30,7 @@ class AuthService {
         return staff;
       }
     } catch (e) {
-      // In case the stored password is not a valid hash (e.g. legacy plain text)
-      if (storedHash == password) {
-        return staff;
-      }
+      debugPrint('❌ Password check failed (possibly invalid hash): $e');
     }
     
     return null;

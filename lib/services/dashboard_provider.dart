@@ -44,7 +44,9 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
         if (pStatus == 'PAID') {
           totalRevenue += price;
         }
-        final rawPhone = order['customerPhone'];
+        
+        // Fix: prefer customerPhone, fallback to phone
+        final rawPhone = order['customerPhone'] ?? order['phone'];
         if (rawPhone != null) {
           final phone = rawPhone.toString().trim();
           if (phone.isNotEmpty) customers.add(phone);
@@ -53,26 +55,30 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
       
       final paidOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase() == 'PAID').toList();
       
-      return {
+      return <String, dynamic>{
         'totalOrders': orders.length,
         'totalRevenue': totalRevenue,
         'activeCustomers': customers.length,
         'avgOrderValue': paidOrders.isEmpty ? 0 : totalRevenue / paidOrders.length,
       };
     },
-    loading: () => ({
-      'totalOrders': 0,
-      'totalRevenue': 0.0,
-      'activeCustomers': 0,
-      'avgOrderValue': 0,
-      'isLoading': true,
-    }),
-    error: (error, stack) => ({
-      'totalOrders': 0,
-      'totalRevenue': 0.0,
-      'activeCustomers': 0,
-      'avgOrderValue': 0,
-      'error': true,
-    }),
+    loading: () {
+      return <String, dynamic>{
+        'totalOrders': 0,
+        'totalRevenue': 0.0,
+        'activeCustomers': 0,
+        'avgOrderValue': 0,
+        'isLoading': true,
+      };
+    },
+    error: (error, stack) {
+      return <String, dynamic>{
+        'totalOrders': 0,
+        'totalRevenue': 0.0,
+        'activeCustomers': 0,
+        'avgOrderValue': 0,
+        'error': true,
+      };
+    },
   );
 });

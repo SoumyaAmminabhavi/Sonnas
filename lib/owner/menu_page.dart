@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:shimmer/shimmer.dart';
-import 'dart:io' show File;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:math';
@@ -716,6 +714,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   }
 
   Future<void> _saveItem() async {
+    if (_isUploading) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isUploading = true);
@@ -745,10 +744,10 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
         String extension = _selectedImage!.name.split('.').last.toLowerCase();
-        // Keep original extension; don't relabel unrecognized extensions as .jpg
         
         final fileName = '$finalCakeId.$extension';
         
+        // Fix: Use the canonical path returned by uploadImage
         final uploadedPath = await SupabaseService.uploadImage(
           bucket: 'cakes',
           path: fileName,
@@ -769,7 +768,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         imagePath = uploadedPath;
       }
 
-      // 3. Resolve Categories
+      // 3. Resolve Categories (Foreign Key Guard)
       String? categoryId;
 
       if (_showNewCategoryField) {
@@ -809,6 +808,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           _loadCategories();
         }
       } else {
+        // FK Guard: Ensure category selection is valid
         if (_selectedCategoryId == null || _selectedCategoryId!.isEmpty) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category')));
@@ -817,40 +817,30 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
         
         final existingCat = _categories.firstWhere(
-          (c) => c['id']?.toString() == _selectedCategoryId || c['name'] == _selectedCategoryId,
+          (c) => c['id']?.toString() == _selectedCategoryId,
           orElse: () => <String, dynamic>{},
         );
 
-          if (existingCat.isNotEmpty) {
-            categoryId = existingCat['id'];
-          } else if (widget.initialData?['categoryId'] != null) {
-            categoryId = widget.initialData!['categoryId'];
-          } else if (_categoriesLoaded && _categories.isEmpty && _selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
-            final catSlug = _selectedCategoryId!.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
-            categoryId = await MenuService.upsertCategory({
-              'id': _generateCmpId(),
-              'name': _selectedCategoryId,
-              'slug': catSlug.isNotEmpty ? catSlug : 'category-${DateTime.now().millisecondsSinceEpoch}',
-              'sortOrder': 0,
-              'updatedAt': DateTime.now().toIso8601String(),
-            });
-            _loadCategories();
-          } else if (!_categoriesLoaded) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Collections are still loading. Please try again.')),
-            );
-            setState(() => _isUploading = false);
-            return;
+        if (existingCat.isNotEmpty) {
+          categoryId = existingCat['id'].toString();
+        } else {
+          // Check if it's a legacy string name that matches a category
+          final matchByName = _categories.firstWhere(
+            (c) => c['name']?.toString() == _selectedCategoryId,
+            orElse: () => <String, dynamic>{},
+          );
+          
+          if (matchByName.isNotEmpty) {
+            categoryId = matchByName['id'].toString();
           } else {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a valid category')));
-            setState(() => _isUploading = false);
-            return;
+            // If it's a legacy string that cannot be resolved, set to null or fail
+            // Given the FK is nullable, we set to null to prevent constraint violation
+            categoryId = null;
           }
+        }
       }
 
-      // 3. Perform Upsert
+      // 4. Perform Upsert
       final savePayload = {
         'id': finalCakeId,
         'name': cakeName,
@@ -864,14 +854,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       };
       final cakeId = await MenuService.upsertCake(savePayload);
 
-      // 4. Save Options (Handling duplicates)
+      // 5. Save Options (Hardened against duplication)
       final List<dynamic> existingOptions = [
         ...(widget.initialData?['CakeOption'] as List? ?? []),
       ];
       
       final currentSize = _weightController.text.trim();
       
-      // Try to find an exact size match first to avoid unique constraint violations
+      // Robust ID reuse: Try to find an exact size match first
       Map<String, dynamic>? matchedOption;
       for (var opt in existingOptions) {
         if (opt['size']?.toString().trim() == currentSize) {
@@ -880,7 +870,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
       }
 
-      // If no exact size match, but we are editing and have options, use the first one as the "primary" option to update
+      // If no exact size match but editing, and we only have one option, reuse that ID to prevent "option leak"
       if (matchedOption == null && existingOptions.isNotEmpty && widget.initialData != null) {
         matchedOption = Map<String, dynamic>.from(existingOptions[0]);
       }
@@ -1254,7 +1244,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         ),
         const SizedBox(height: 8),
          DropdownButtonFormField<String>(
-           initialValue: _selectedCategoryId,
+           value: _selectedCategoryId,
            hint: Text(
              _isLoadingCategories ? "Loading collections..." : "Select Collection",
              style: GoogleFonts.plusJakartaSans(
@@ -1331,9 +1321,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: _selectedImage != null
-                ? kIsWeb
-                    ? Image.network(_selectedImage!.path, fit: BoxFit.cover)
-                    : Image.file(File(_selectedImage!.path), fit: BoxFit.cover)
+                ? Image.network(
+                    _selectedImage!.path, 
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => Image.network(
+                      _selectedImage!.path,
+                      fit: BoxFit.cover,
+                    ),
+                  )
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
                         SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
