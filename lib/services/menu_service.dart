@@ -41,7 +41,7 @@ class MenuService {
         sub.cancel();
       }
       subscriptions.clear();
-      controller.close();
+      // Keep shared controller open for reuse
     };
 
     return controller.stream;

@@ -39,6 +39,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
       stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          debugPrint("❌ Payments load error: ${snapshot.error}");
           return Scaffold(
             backgroundColor: cs.surface,
             body: Center(
@@ -47,9 +48,9 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
                 children: [
                   Icon(Icons.error_outline, size: 48, color: cs.error.withValues(alpha: 0.5)),
                   const SizedBox(height: 16),
-                  Text("FAILED TO LOAD PAYMENTS", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: cs.error.withValues(alpha: 0.7))),
+                  Text("Something went wrong while loading payments", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: cs.error.withValues(alpha: 0.7))),
                   const SizedBox(height: 8),
-                  Text(snapshot.error.toString(), style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.5))),
+                  Text("Please try again later or contact support.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.5))),
                   const SizedBox(height: 24),
                   ElevatedButton(onPressed: () => setState(() {}), child: const Text("RETRY")),
                 ],

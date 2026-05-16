@@ -651,7 +651,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     }
 
     _priceController = TextEditingController(
-      text: displayPrice > 0 ? displayPrice.toStringAsFixed(0) : '',
+      text: displayPrice > 0 ? displayPrice.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '') : '',
     );
     _descriptionController = TextEditingController(text: data?['description']?.toString());
     _weightController = TextEditingController(text: (firstOption?['size'] ?? firstOption?['weight'])?.toString() ?? '');
@@ -845,9 +845,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           if (matchByName.isNotEmpty) {
             categoryId = matchByName['id'].toString();
           } else {
-            // If it's a legacy string that cannot be resolved, set to null or fail
-            // Given the FK is nullable, we set to null to prevent constraint violation
-            categoryId = null;
+            // Check if _selectedCategoryId itself is a valid ID (not just a name)
+            final isId = _selectedCategoryId != null && _selectedCategoryId!.length > 5; // Simple check for UUID/GUID
+            categoryId = isId ? _selectedCategoryId : null;
           }
         }
       }
@@ -892,14 +892,28 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
       final normalizedPrice = _sanitizePrice(_priceController.text);
 
-      await MenuService.upsertCakeOption({
-        'id': matchedOption?['id'] ?? _generateCmpId(),
-        'cakeId': cakeId,
-        'price': ((double.tryParse(normalizedPrice) ?? 0) * 100).toInt(),
-        'size': currentSize,
-        'serves': _servesController.text.trim(),
-        'updatedAt': DateTime.now().toIso8601String(),
-      });
+      try {
+        await MenuService.upsertCakeOption({
+          'id': matchedOption?['id'] ?? _generateCmpId(),
+          'cakeId': cakeId,
+          'price': ((double.tryParse(normalizedPrice) ?? 0) * 100).toInt(),
+          'size': currentSize,
+          'serves': _servesController.text.trim(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        });
+      } catch (optError) {
+        // Compensation: Cleanup if option save fails
+        debugPrint('⚠️ Option save failed, cleaning up cake: $optError');
+        try {
+          await MenuService.deleteCake(cakeId);
+          if (imagePath != null && imagePath.isNotEmpty) {
+             // In a real app, delete the uploaded image from Supabase storage here
+          }
+        } catch (cleanupError) {
+          debugPrint('❌ Cleanup failed: $cleanupError');
+        }
+        rethrow;
+      }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Catalog updated successfully"), behavior: SnackBarBehavior.floating));
@@ -1034,7 +1048,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                             validator: (v) {
                               if (v == null || v.isEmpty) return "Required";
                               final clean = _sanitizePrice(v);
-                              if (double.tryParse(clean) == null) return "Invalid price";
+                              final p = double.tryParse(clean);
+                              if (p == null) return "Invalid price";
+                              if (p < 0) return "Must be non-negative";
                               return null;
                             },
                           ),
@@ -1058,7 +1074,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                       validator: (v) {
                         if (v == null || v.isEmpty) return "Required";
                         final clean = _sanitizePrice(v);
-                        if (double.tryParse(clean) == null) return "Invalid price";
+                        final p = double.tryParse(clean);
+                        if (p == null) return "Invalid price";
+                        if (p < 0) return "Must be non-negative";
                         return null;
                       },
                     ),
@@ -1153,7 +1171,8 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () async {
+                        onPressed: _isUploading ? null : () async {
+                          if (_isUploading) return;
                           final confirmed = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
