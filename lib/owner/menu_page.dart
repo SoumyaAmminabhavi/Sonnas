@@ -29,6 +29,7 @@ class MenuPage extends ConsumerStatefulWidget {
 
 class _MenuPageState extends ConsumerState<MenuPage> {
   Set<String> _selectedCategories = {'All'};
+  bool _isUpdatingCategories = false;
 
   @override
   Widget build(BuildContext context) {
@@ -151,8 +152,9 @@ class _MenuPageState extends ConsumerState<MenuPage> {
               });
 
             // Move validation out of build using a post-frame callback
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted && !_selectedCategories.contains('All')) {
+            if (!_isUpdatingCategories && mounted && !_selectedCategories.contains('All')) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_isUpdatingCategories || !mounted) return;
                 final validSelection = _selectedCategories.where((cat) => uniqueCategories.contains(cat)).toSet();
                 Set<String> newValue;
                 if (validSelection.isEmpty) {
@@ -164,10 +166,12 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 }
                 
                 if (newValue.length != _selectedCategories.length || !newValue.every(_selectedCategories.contains)) {
+                  _isUpdatingCategories = true;
                   setState(() => _selectedCategories = newValue);
+                  _isUpdatingCategories = false;
                 }
-              }
-            });
+              });
+            }
 
             final List<_MenuItem> items = allItems.where((item) {
               if (_selectedCategories.contains('All')) return true;

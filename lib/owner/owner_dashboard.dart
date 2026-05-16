@@ -53,18 +53,6 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
     }
   }
 
-  void _listenForNewOrders() {
-    ref.listen(recentOrdersProvider, (previous, next) {
-      if (next.hasValue && next.value != null) {
-        final orders = next.value!;
-        if (_lastOrderCount != null && orders.length > _lastOrderCount!) {
-          _showNewOrderNotification(orders.first);
-        }
-        _lastOrderCount = orders.length;
-      }
-    });
-  }
-
   void _showNewOrderNotification(Map<String, dynamic> order) {
     final orderNumber = order['orderNumber'] ?? '---';
     final customerName = order['customerName'] ?? 'Guest';
@@ -111,7 +99,15 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    _listenForNewOrders();
+    ref.listen(recentOrdersProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        final orders = next.value!;
+        if (_lastOrderCount != null && orders.length > _lastOrderCount!) {
+          _showNewOrderNotification(orders.first);
+        }
+        _lastOrderCount = orders.length;
+      }
+    });
     final cs = Theme.of(context).colorScheme;
 
     return LayoutBuilder(

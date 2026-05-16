@@ -159,7 +159,7 @@ class DashboardContent extends ConsumerWidget {
               stream: OrderService.getSalesChartStream(range: selectedRange.name, targetMonth: selectedMonth, targetYear: selectedYear),
               builder: (context, snapshot) {
                 final data = snapshot.data ?? {};
-                return _SalesLineChart(data: data, selectedRange: selectedRange, cs: cs);
+                return _SalesLineChart(data: data, selectedRange: selectedRange, cs: cs, selectedMonth: selectedMonth, selectedYear: selectedYear);
               },
             ),
           ),
@@ -333,8 +333,10 @@ class _SalesLineChart extends StatelessWidget {
   final Map<int, double> data;
   final SalesRange selectedRange;
   final ColorScheme cs;
+  final int? selectedMonth;
+  final int? selectedYear;
 
-  const _SalesLineChart({required this.data, required this.selectedRange, required this.cs});
+  const _SalesLineChart({required this.data, required this.selectedRange, required this.cs, this.selectedMonth, this.selectedYear});
 
   @override
   Widget build(BuildContext context) {
@@ -423,7 +425,9 @@ class _SalesLineChart extends StatelessWidget {
       case SalesRange.weekly:
         return 7;
       case SalesRange.monthly:
-        return 31;
+        final m = selectedMonth ?? DateTime.now().month;
+        final y = selectedYear ?? DateTime.now().year;
+        return DateTime(y, m + 1, 0).day.toDouble();
       case SalesRange.yearly:
         return 12;
     }

@@ -136,7 +136,7 @@ class ModernDrawer extends ConsumerWidget {
                             builder: (context) => const OwnerDashboard(),
                           ),
                         );
-                      } else {
+                      } else if (context.mounted) {
                         _showOwnerAuth(context, ref);
                       }
                     },

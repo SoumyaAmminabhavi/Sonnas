@@ -151,6 +151,8 @@ class MenuService {
       final String size = sizeRaw.toString();
 
       final data = Map<String, dynamic>.from(option);
+      data['cakeId'] = cakeId;
+      data['size'] = size;
       data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
 
       try {

@@ -572,7 +572,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
         );
   }
 
-  ({String? url, Uint8List? imageBytes}) decodeDataUrlToBytes(String? rawUrl) {
+  static ({String? url, Uint8List? imageBytes}) decodeDataUrlToBytes(String? rawUrl) {
     if (rawUrl == null || rawUrl.trim().isEmpty) return (url: null, imageBytes: null);
     final trimmed = rawUrl.trim();
     if (trimmed.toLowerCase().startsWith('data:')) {

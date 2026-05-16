@@ -176,11 +176,9 @@ class _DashboardContent extends StatelessWidget {
 
   String? _getActionLabel(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return 'Accept Order';
-      case 'confirmed':
-      case 'accepted': return 'Start Prep';
-      case 'preparing': return 'Mark Ready';
-      case 'ready': return 'Complete';
+      case 'pending': return 'Confirm Order';
+      case 'confirmed': return 'Send Out for Delivery';
+      case 'out_for_delivery': return 'Mark Delivered';
       default: return null;
     }
   }
@@ -188,10 +186,8 @@ class _DashboardContent extends StatelessWidget {
   String? _getNextStatus(String status) {
     switch (status.toLowerCase()) {
       case 'pending': return 'confirmed';
-      case 'confirmed':
-      case 'accepted': return 'preparing';
-      case 'preparing': return 'ready';
-      case 'ready': return 'delivered';
+      case 'confirmed': return 'out_for_delivery';
+      case 'out_for_delivery': return 'delivered';
       default: return null;
     }
   }

@@ -22,6 +22,7 @@ class SalesReportsPage extends ConsumerStatefulWidget {
 
 class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   bool _isLoading = true;
+  bool _isLoadingData = false;
   List<Map<String, dynamic>> _orders = [];
   double _totalRevenue = 0;
   int _totalOrders = 0;
@@ -31,6 +32,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   List<Map<String, dynamic>> _cachedMenu = [];
   String _lastProcessedIds = "";
   StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
+  int _pendingFetchVersion = 0;
 
   @override
   void initState() {
@@ -45,6 +47,8 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   Future<void> _loadData() async {
+    if (_isLoadingData) return;
+    _isLoadingData = true;
     try {
       final orders = await OrderService.fetchOrders();
       final menu = await MenuService.fetchMenu();
@@ -101,6 +105,8 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           ),
         );
       }
+    } finally {
+      _isLoadingData = false;
     }
   }
 
@@ -210,8 +216,10 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       return;
     }
 
+    final fetchVersion = ++_pendingFetchVersion;
+
     OrderService.fetchBulkOrderItems(ids).then((items) {
-      if (mounted) {
+      if (mounted && fetchVersion == _pendingFetchVersion) {
         setState(() {
           _processItems(items, menu);
         });

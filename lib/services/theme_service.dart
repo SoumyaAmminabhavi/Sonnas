@@ -19,11 +19,11 @@ class ThemeService {
   static Future<ThemeMode> getThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final modeName = prefs.getString(_themeKey);
-    if (modeName == null) return ThemeMode.light;
+    if (modeName == null) return ThemeMode.system;
     
     return ThemeMode.values.firstWhere(
       (e) => e.name == modeName,
-      orElse: () => ThemeMode.light,
+      orElse: () => ThemeMode.system,
     );
   }
 }

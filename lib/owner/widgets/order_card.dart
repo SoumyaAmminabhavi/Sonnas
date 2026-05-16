@@ -13,6 +13,20 @@ class OrderCardReactive extends ConsumerWidget {
 
   const OrderCardReactive({super.key, required this.data, this.onTabChanged});
 
+  static double _normalizePrice(dynamic raw) {
+    if (raw == null) return 0.0;
+    if (raw is num) return raw.toDouble() / 100.0;
+    final clean = raw.toString()
+        .replaceAll('₹', '')
+        .replaceAll('INR', '')
+        .replaceAll('/-', '')
+        .replaceAll(',', '')
+        .trim();
+    if (clean.isEmpty) return 0.0;
+    final parsed = double.tryParse(clean) ?? 0.0;
+    return parsed > 100 ? parsed / 100.0 : parsed;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
@@ -60,7 +74,7 @@ class OrderCardReactive extends ConsumerWidget {
         double calculatedTotal = 0.0;
         if (items.isNotEmpty) {
           calculatedTotal = items.fold(0.0, (sum, item) {
-            final p = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+            final p = _normalizePrice(item['price']);
             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
             return sum + (p * q);
           });
@@ -89,7 +103,16 @@ class OrderCardReactive extends ConsumerWidget {
             final conversation = rawConversation is Map ? rawConversation : null;
             final String customerName = data['customerName'] ?? conversation?['name'] ?? 'Guest Customer';
             final String customerPhone = data['customerPhone']?.toString() ?? conversation?['phone']?.toString() ?? '';
-            final String orderId = data['orderNumber'] ?? '---';
+            final String orderId = data['orderNumber']?.toString() ?? '---';
+            
+            if (customerPhone.isEmpty) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No phone number available for this customer.')),
+                );
+              }
+              return;
+            }
             
             // Get first item name for the message
             String cakeName = 'your order';

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,7 +23,9 @@ void main() async {
     await SupabaseService.initialize();
     
     // Pre-warm owner authentication (fetches PIN hash early for instant login)
-    unawaited(AuthService.prewarmOwnerAuth());
+    AuthService.prewarmOwnerAuth().catchError((e) {
+      debugPrint('⚠️ Prewarm Owner Auth failed: $e');
+    });
     
     // Load saved theme
     try {

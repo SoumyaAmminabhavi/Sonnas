@@ -9,6 +9,12 @@ class SupabaseService {
   static final String supabaseAnonKey = (dotenv.env['SUPABASE_ANON_KEY'] ?? '').trim();
   
   static Future<void> initialize() async {
+    if (supabaseUrl.isEmpty) {
+      throw StateError('SUPABASE_URL is not set in .env. Add your Supabase project URL before running the app.');
+    }
+    if (supabaseAnonKey.isEmpty) {
+      throw StateError('SUPABASE_ANON_KEY is not set in .env. Add your Supabase anon/public key before running the app.');
+    }
     // Initialize Primary Supabase
     await Supabase.initialize(
       url: supabaseUrl,

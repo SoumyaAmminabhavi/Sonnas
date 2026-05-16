@@ -122,6 +122,8 @@ flutter build apk --release
 
 ## 📂 Project Structure
 
+```text
+lib/
 ```
 lib/
 ├── main.dart                 # App entry — theme, routing, Riverpod providers
@@ -157,7 +159,7 @@ lib/
 - **Passwords / PINs** are stored as bcrypt hashes (`dbcrypt`); plaintext is never persisted.
 - **Sensitive tokens** are stored in `flutter_secure_storage` (Android Keystore / iOS Keychain).
 - **Row-Level Security (RLS)** is enabled on all Supabase tables.
-- **`.env`** is bundled as a Flutter asset for local development; rotate keys before production and move to a secrets manager for CI/CD.
+- **`.env`** is used for local development only; never bundle secrets or private keys in app assets. Store server-only secrets in a secrets manager or CI/CD vault for production.
 
 ---
 

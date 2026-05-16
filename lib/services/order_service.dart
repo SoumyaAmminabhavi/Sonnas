@@ -199,7 +199,6 @@ class OrderService {
         windowStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
         windowEnd = windowStart.add(const Duration(days: 7));
       } else if (range == 'monthly') {
-        final now = DateTime.now();
         final year = targetYear ?? now.year;
         final month = targetMonth ?? now.month;
         windowStart = DateTime(year, month, 1);
@@ -283,6 +282,8 @@ class OrderService {
     
     if (normalizedStatus == 'PAID') {
       payload['paidAt'] = now;
+    } else {
+      payload['paidAt'] = null;
     }
     
     try {
@@ -321,12 +322,20 @@ class OrderService {
   /// Submit a public order atomically via RPC.
   static Future<void> submitPublicOrder(Map<String, dynamic> data) async {
     final orderData = Map<String, dynamic>.from(data);
-    final items = orderData.remove('items') as List<dynamic>;
     
     // Set unified source
     orderData['source'] = 'APP';
     
     try {
+      final rawItems = orderData.remove('items');
+      if (rawItems is! List) {
+        throw ArgumentError('items must be a List');
+      }
+      final items = rawItems.map((e) {
+        if (e is! Map) throw ArgumentError('Each item must be a Map');
+        return Map<String, dynamic>.from(e);
+      }).toList();
+      
       await _client.rpc(
         'create_order_with_items',
         params: {

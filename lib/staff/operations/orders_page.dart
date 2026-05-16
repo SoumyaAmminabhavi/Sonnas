@@ -19,6 +19,9 @@ class StaffOrdersPage extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: OrderService.getRecentOrdersStream(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}", style: GoogleFonts.plusJakartaSans(color: cs.error)));
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -125,11 +128,11 @@ class StaffOrderCard extends StatelessWidget {
                           ),
                         ),
                         error: (err, stack) => Text(
-                          "#${order.orderNumber} • 0 items",
+                          "#${order.orderNumber} • — items",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: cs.secondary.withValues(alpha: 0.4),
+                            color: cs.secondary.withValues(alpha: 0.2),
                           ),
                         ),
                       );
