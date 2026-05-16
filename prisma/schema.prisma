@@ -65,7 +65,6 @@ model Cake {
   sortOrder   Int                    @default(0)
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
-  deletedAt   DateTime?
   category    Category?              @relation(fields: [categoryId], references: [id])
   options     CakeOption[]
   orderItems  OrderItem[]
@@ -125,7 +124,6 @@ model Order {
   customImageUrl  String?
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
-  deletedAt       DateTime?
   confirmedAt     DateTime?
   deliveredAt     DateTime?
   cancelledAt     DateTime?
