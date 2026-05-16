@@ -185,7 +185,17 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
             ),
               ElevatedButton(
               onPressed: () async {
-                if (titleController.text.isEmpty || amountController.text.isEmpty) return;
+                if (titleController.text.trim().isEmpty || amountController.text.trim().isEmpty) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Title and amount are required."),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
                 final amount = double.tryParse(amountController.text.trim());
                 if (amount == null || amount < 0) {
                   if (!context.mounted) return;

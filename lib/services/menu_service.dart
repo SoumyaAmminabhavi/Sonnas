@@ -11,12 +11,16 @@ class MenuService {
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
     final controller = StreamController<List<Map<String, dynamic>>>.broadcast();
     final subscriptions = <StreamSubscription>[];
+    var refreshRequestId = 0;
 
     Future<void> refresh() async {
+      final requestId = ++refreshRequestId;
       try {
         final data = await fetchMenu();
+        if (requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.add(data);
       } catch (e) {
+        if (requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.addError(e);
       }
     }
@@ -49,11 +53,36 @@ class MenuService {
           .from('Cake')
           .select('*, Category(*), CakeOption(*)')
           .order('name');
-      
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
-      debugPrint('⚠️ Menu Fetch Failed: $e');
-      rethrow;
+      debugPrint('⚠️ Joined menu fetch failed: $e');
+
+      final cakes = List<Map<String, dynamic>>.from(
+        await _client.from('Cake').select('*').order('name'),
+      );
+      final cakeIds = cakes.map((c) => c['id']).whereType<String>().toList();
+      final categories = List<Map<String, dynamic>>.from(
+        await _client.from('Category').select('*'),
+      );
+      final options = cakeIds.isEmpty
+          ? <Map<String, dynamic>>[]
+          : List<Map<String, dynamic>>.from(
+              await _client.from('CakeOption').select('*').inFilter('cakeId', cakeIds),
+            );
+
+      final categoriesById = {
+        for (final c in categories) c['id'].toString(): c,
+      };
+
+      return cakes.map((cake) {
+        final cakeId = cake['id'].toString();
+        final categoryId = cake['categoryId']?.toString();
+        return {
+          ...cake,
+          'Category': categoryId == null ? null : categoriesById[categoryId],
+          'CakeOption': options.where((o) => o['cakeId'].toString() == cakeId).toList(),
+        };
+      }).toList();
     }
   }
 

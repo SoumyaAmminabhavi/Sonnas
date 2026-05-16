@@ -249,8 +249,12 @@ class OrderService {
 
   /// Update payment status
   static Future<void> updatePaymentStatus(String orderId, String status) async {
-    // Note: status should be one of PaymentStatus Enum (e.g. 'PAID', 'FAILED')
-    await _client.from('Order').update({'paymentStatus': status}).eq('id', orderId);
+    final now = DateTime.now().toUtc().toIso8601String();
+    final normalizedStatus = status.toUpperCase();
+    await _client.from('Order').update({
+      'paymentStatus': normalizedStatus,
+      'updatedAt': now,
+    }).eq('id', orderId);
   }
 
   /// Format phone number for display

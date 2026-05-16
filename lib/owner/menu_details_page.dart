@@ -87,10 +87,10 @@ class MenuDetailsPage extends ConsumerWidget {
         }
 
         final options = cake['CakeOption'] as List? ?? [];
-        final String imageField = cake['image']?.toString() ?? '';
-        final imageUrl = imageField.isEmpty
-            ? ''
-            : SupabaseService.getPublicUrl(imageField, bucket: 'cakes');
+        final imageField = cake['image']?.toString().trim();
+        final String? imageUrl = (imageField != null && imageField.isNotEmpty)
+            ? SupabaseService.getPublicUrl(imageField, bucket: 'cakes')
+            : null;
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -153,18 +153,26 @@ class MenuDetailsPage extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(24),
                                   boxShadow: [BoxShadow(color: cs.secondary.withValues(alpha: 0.1), blurRadius: 30, offset: const Offset(0, 15))],
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: CachedNetworkImage(
-                                    imageUrl: imageUrl,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                    errorWidget: (context, url, error) => Container(
-                                      color: cs.surfaceContainer,
+                                child: imageUrl != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                                        errorWidget: (context, url, error) => Container(
+                                          color: cs.surfaceContainer,
+                                          child: Icon(Icons.restaurant, color: cs.primary, size: 48),
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        color: cs.surfaceContainer,
+                                        borderRadius: BorderRadius.circular(24),
+                                      ),
                                       child: Icon(Icons.restaurant, color: cs.primary, size: 48),
                                     ),
-                                  ),
-                                ),
                               ),
                               const SizedBox(height: 48),
                               Text(
