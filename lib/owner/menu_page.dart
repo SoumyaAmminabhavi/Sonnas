@@ -148,14 +148,24 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                 return a.compareTo(b);
               });
 
-            if (!_selectedCategories.contains('All')) {
-              final validSelection = _selectedCategories.where((cat) => uniqueCategories.contains(cat)).toSet();
-              if (validSelection.isEmpty) {
-                _selectedCategories = {'All'};
-              } else if (validSelection.length != _selectedCategories.length) {
-                _selectedCategories = validSelection;
+            // Move validation out of build using a post-frame callback
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && !_selectedCategories.contains('All')) {
+                final validSelection = _selectedCategories.where((cat) => uniqueCategories.contains(cat)).toSet();
+                Set<String> newValue;
+                if (validSelection.isEmpty) {
+                  newValue = {'All'};
+                } else if (validSelection.length != _selectedCategories.length) {
+                  newValue = validSelection;
+                } else {
+                  return; // No change needed
+                }
+                
+                if (newValue.length != _selectedCategories.length || !newValue.every(_selectedCategories.contains)) {
+                  setState(() => _selectedCategories = newValue);
+                }
               }
-            }
+            });
 
             final List<_MenuItem> items = allItems.where((item) {
               if (_selectedCategories.contains('All')) return true;
@@ -870,9 +880,12 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
       }
 
-      // If no exact size match but editing, and we only have one option, reuse that ID to prevent "option leak"
+      // If no exact size match but editing, create a fresh option instead of cloning the first option's ID
       if (matchedOption == null && existingOptions.isNotEmpty && widget.initialData != null) {
-        matchedOption = Map<String, dynamic>.from(existingOptions[0]);
+        matchedOption = {
+          'cakeId': cakeId,
+          'size': currentSize,
+        };
       }
 
       final normalizedPrice = _sanitizePrice(_priceController.text);
@@ -1324,9 +1337,11 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                 ? Image.network(
                     _selectedImage!.path, 
                     fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => Image.network(
-                      _selectedImage!.path,
-                      fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => Container(
+                      color: cs.primary.withValues(alpha: 0.05),
+                      child: Center(
+                        child: Icon(Icons.broken_image_outlined, color: cs.primary.withValues(alpha: 0.2), size: 40),
+                      ),
                     ),
                   )
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)

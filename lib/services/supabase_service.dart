@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:io' as io show File if (dart.library.io) 'dart:io';
+import 'dart:io' if (dart.library.html) 'platform_file_stub.dart' as io show File;
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {

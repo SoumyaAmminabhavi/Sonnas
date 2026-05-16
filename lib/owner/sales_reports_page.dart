@@ -84,12 +84,19 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           }
           return;
         }
-        final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
-      if (mounted) {
-        setState(() {
-          _processItems(allItems, menu);
-          _isLoading = false;
-        });
+        try {
+          final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
+          if (mounted) {
+            setState(() {
+              _processItems(allItems, menu);
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          debugPrint("❌ Failed to fetch bulk items: $e");
+          if (mounted) setState(() => _isLoading = false);
+        }
+
         if (mounted) {
           _ordersSubscription?.cancel();
           _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
@@ -104,7 +111,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
             debugPrint("Sales reports stream error: $error");
           });
         }
-      }
     } catch (e) {
       debugPrint("Error loading report data: $e");
       if (mounted) {

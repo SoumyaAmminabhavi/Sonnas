@@ -5,7 +5,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // Note: 'url' is managed via prisma.config.js (Prisma 7.x requirement)
+  url      = env("DATABASE_URL")
+  // Note: 'url' is also managed via prisma.config.js for specific environments
 }
 
 // ─── Authentication Models ──────────────────────────────────────────────────

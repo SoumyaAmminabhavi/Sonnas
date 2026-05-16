@@ -105,7 +105,7 @@ class OrderService {
         resolved = await _client
             .from('Order')
             .select('id')
-            .eq('orderNumber', idOrNumber)
+            .eq('orderNumber', cleanInput)
             .maybeSingle();
       }
 
@@ -282,10 +282,10 @@ class OrderService {
         'paymentStatus': normalizedStatus,
         'updatedAt': now,
       }).eq('id', orderId);
-  } catch (e) {
-    debugPrint('❌ Payment Status Update Failed: $e');
-    rethrow;
-  }
+    } catch (e) {
+      debugPrint('❌ Payment Status Update Failed: $e');
+      rethrow;
+    }
  }
 
   /// Format phone number for display

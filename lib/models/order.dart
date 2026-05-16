@@ -66,8 +66,7 @@ extension OrderStatusExtension on OrderStatus {
 
   /// Whether the order has reached a terminal state.
   bool get isFinalized {
-    return this == OrderStatus.delivered || 
-           this == OrderStatus.completed || 
+    return this == OrderStatus.completed || 
            this == OrderStatus.cancelled;
   }
 }
@@ -137,8 +136,8 @@ class SonnaOrder {
   factory SonnaOrder.fromMap(Map<String, dynamic> map) {
     final List<dynamic> rawItems = map['items'] as List<dynamic>? ?? [];
     
-    // Fix: prefer customerPhone, fallback to phone
-    final customerPhone = (map['customerPhone'] ?? map['phone'])?.toString().trim() ?? '';
+    // Fix: prefer customerPhone, fallback to phone or WhatsAppConversation.phone
+    final customerPhone = (map['customerPhone'] ?? map['phone'] ?? map['WhatsAppConversation']?['phone'])?.toString().trim() ?? '';
     
     return SonnaOrder(
       id: map['id']?.toString() ?? '',

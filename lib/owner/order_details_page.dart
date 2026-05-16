@@ -345,7 +345,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                        }
 
                                                        final finalImageUrl = (displayImageBytes == null && displayImageUrl.isNotEmpty)
-                                                           ? (isCustomUrl ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
+                                                           ? ((isCustomUrl || displayImageUrl.startsWith('http')) ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
                                                            : '';
 
                                                        return Padding(
@@ -632,6 +632,10 @@ class _SlimProgressIndicator extends StatelessWidget {
       progress = 1.0;
       statusText = "COMPLETED";
       poeticNote = "The order is complete. Thank you for choosing Sonna's Patisserie.";
+    } else if (normalizedStatus == 'CANCELLED') {
+      progress = 0.0;
+      statusText = "CANCELLED";
+      poeticNote = "The order has been cancelled.";
     }
 
     return Column(

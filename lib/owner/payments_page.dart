@@ -416,10 +416,11 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
                         );
                       }
                     } catch (e) {
+                      debugPrint("❌ Failed to update payment status: $e");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Failed to update payment: $e"),
+                          const SnackBar(
+                            content: Text("Failed to update payment. Please try again."),
                             backgroundColor: Colors.red,
                             behavior: SnackBarBehavior.floating,
                           ),

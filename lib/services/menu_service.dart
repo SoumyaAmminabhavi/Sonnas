@@ -41,6 +41,7 @@ class MenuService {
         sub.cancel();
       }
       subscriptions.clear();
+      controller.close();
     };
 
     return controller.stream;
