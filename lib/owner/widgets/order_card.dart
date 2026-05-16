@@ -36,7 +36,7 @@ class OrderCardReactive extends ConsumerWidget {
         }
 
         // 3. Fallback to Menu Item image if still empty
-        if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://')) {
+        if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://')) {
           if (items.isNotEmpty && menuAsync.hasValue) {
             final String firstName = items[0]['cakeName'] ?? '';
             final String? firstCakeId = items[0]['cakeId']?.toString();

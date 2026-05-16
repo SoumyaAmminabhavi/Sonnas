@@ -60,19 +60,19 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
         'avgOrderValue': paidOrders.isEmpty ? 0 : totalRevenue / paidOrders.length,
       };
     },
-    loading: () => {
+    loading: () => ({
       'totalOrders': 0,
       'totalRevenue': 0.0,
       'activeCustomers': 0,
       'avgOrderValue': 0,
       'isLoading': true,
-    },
-    error: (error, stack) => {
+    }),
+    error: (error, stack) => ({
       'totalOrders': 0,
       'totalRevenue': 0.0,
       'activeCustomers': 0,
       'avgOrderValue': 0,
       'error': true,
-    },
+    }),
   );
 });

@@ -24,7 +24,7 @@ class KitchenPage extends StatelessWidget {
         
         final allOrders = snapshot.data ?? [];
         final activeOrders = allOrders.where((o) {
-          final s = o['status']?.toString().toUpperCase() ?? 'PENDING';
+          final s = o['status']?.toString().trim().toUpperCase() ?? '';
           return s == 'PENDING' || s == 'CONFIRMED';
         }).toList();
 
@@ -260,11 +260,13 @@ class KitchenOrderCard extends StatelessWidget {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () async {
-                    String nextStatus = 'CONFIRMED';
+                    String? nextStatus;
                     if (status == 'PENDING') {
                       nextStatus = 'CONFIRMED';
                     } else if (status == 'CONFIRMED') {
                       nextStatus = 'OUT_FOR_DELIVERY';
+                    } else {
+                      return;
                     }
                     
                     try {

@@ -58,8 +58,30 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       }
 
        // Performance Fix: Use bulk fetch instead of a loop (N+1 fix)
-       final paidOrderIds = _paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
-       final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
+        final paidOrderIds = _paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+        if (paidOrderIds.isEmpty) {
+          if (mounted) {
+            setState(() {
+              _topItems = [];
+              _categorySales = {};
+              _lastProcessedIds = '';
+              _isLoading = false;
+            });
+          }
+          _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
+            if (mounted) {
+              setState(() {
+                _orders = orders;
+                _calculateMetrics();
+                _processItemsFromOrders(_orders, _cachedMenu);
+              });
+            }
+          }, onError: (error) {
+            debugPrint("Sales reports stream error: $error");
+          });
+          return;
+        }
+        final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
       if (mounted) {
         setState(() {
           _processItems(allItems, menu);
@@ -182,7 +204,19 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     if (currentIds == _lastProcessedIds) return;
     _lastProcessedIds = currentIds;
 
-    OrderService.fetchBulkOrderItems(paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList()).then((items) {
+    final ids = paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    if (ids.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _topItems = [];
+          _categorySales = {};
+          _lastProcessedIds = '';
+        });
+      }
+      return;
+    }
+
+    OrderService.fetchBulkOrderItems(ids).then((items) {
       if (mounted) {
         setState(() {
           _processItems(items, menu);

@@ -75,7 +75,9 @@ class MenuService {
   /// Create or update a category
   static Future<String> upsertCategory(Map<String, dynamic> category) async {
     try {
-      final res = await _client.from('Category').upsert(category).select().single();
+      final data = Map<String, dynamic>.from(category);
+      data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
+      final res = await _client.from('Category').upsert(data).select().single();
       return res['id'].toString();
     } catch (e) {
       debugPrint('⚠️ Upsert Category Failed: $e');
@@ -89,6 +91,7 @@ class MenuService {
       // Remove the legacy 'category' string field if it exists in the payload
       final data = Map<String, dynamic>.from(cake);
       data.remove('category');
+      data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
       
       final res = await _client.from('Cake').upsert(data).select().single();
       return res['id'].toString();
@@ -121,6 +124,7 @@ class MenuService {
       if (existing != null) {
         data['id'] = existing['id']; // Force update existing row
       }
+      data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
 
       await _client.from('CakeOption').upsert(data);
     } catch (e) {
