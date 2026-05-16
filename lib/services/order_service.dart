@@ -64,13 +64,11 @@ class OrderService {
           .eq('id', idOrNumber)
           .maybeSingle();
 
-      if (res == null) {
-        res = await _client
-            .from('Order')
-            .select('*, WhatsAppConversation(*)')
-            .eq('orderNumber', cleanInput)
-            .maybeSingle();
-      }
+      res ??= await _client
+          .from('Order')
+          .select('*, WhatsAppConversation(*)')
+          .eq('orderNumber', cleanInput)
+          .maybeSingle();
 
       if (res == null) {
         final matches = List<Map<String, dynamic>>.from(await _client
@@ -101,13 +99,11 @@ class OrderService {
           .eq('id', idOrNumber)
           .maybeSingle();
 
-      if (resolved == null) {
-        resolved = await _client
-            .from('Order')
-            .select('id')
-            .eq('orderNumber', cleanInput)
-            .maybeSingle();
-      }
+      resolved ??= await _client
+          .from('Order')
+          .select('id')
+          .eq('orderNumber', cleanInput)
+          .maybeSingle();
 
       if (resolved == null) {
         final matches = List<Map<String, dynamic>>.from(await _client
@@ -286,7 +282,7 @@ class OrderService {
       debugPrint('❌ Payment Status Update Failed: $e');
       rethrow;
     }
- }
+  }
 
   /// Format phone number for display
   static String formatPhone(String? phone) {

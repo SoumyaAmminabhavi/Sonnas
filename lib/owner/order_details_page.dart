@@ -227,26 +227,10 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                         children: [
                                           _SectionTitle(title: "Artisan Selection", cs: cs),
                                        () {
-                                         String? rawUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
-                                         rawUrl = rawUrl?.trim();
-                                         String? url;
-                                         Uint8List? imageBytes;
-                                         if (rawUrl != null && rawUrl.isNotEmpty) {
-                                           final lc = rawUrl.toLowerCase();
-                                           if (lc.startsWith('data:')) {
-                                             final commaIdx = rawUrl.indexOf(',');
-                                             if (commaIdx != -1) {
-                                               try {
-                                                 imageBytes = base64Decode(rawUrl.substring(commaIdx + 1));
-                                               } catch (_) {}
-                                             }
-                                           } else {
-                                             url = lc.startsWith('http')
-                                                 ? rawUrl
-                                                 : SupabaseService.getPublicUrl(rawUrl, bucket: 'cakes');
-                                           }
-                                         }
-                                         if (url != null || imageBytes != null) {
+                                         final String? rawUrl = (order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString())?.trim();
+                                         final decoded = decodeDataUrlToBytes(rawUrl);
+                                         
+                                         if (decoded.imageBytes != null || decoded.url != null) {
                                            return IconButton(
                                              icon: const Icon(Icons.view_in_ar_outlined, size: 20),
                                              color: cs.primary,
@@ -255,8 +239,8 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                showDialog(
                                                  context: context,
                                                  builder: (context) => _HolographicViewer(
-                                                   imageUrl: url,
-                                                   imageBytes: imageBytes,
+                                                   imageUrl: decoded.url,
+                                                   imageBytes: decoded.imageBytes,
                                                    cs: cs,
                                                  ),
                                                );
@@ -315,24 +299,9 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                        displayImageUrl = matchingCake['image'] ?? '';
 
                                                        final rawCustomUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
-                                                       String? resolvedCustomUrl;
-                                                       Uint8List? resolvedCustomBytes;
-                                                       if (rawCustomUrl != null && rawCustomUrl.trim().isNotEmpty) {
-                                                         final trimmed = rawCustomUrl.trim();
-                                                         final lc = trimmed.toLowerCase();
-                                                         if (lc.startsWith('data:')) {
-                                                           final commaIdx = trimmed.indexOf(',');
-                                                           if (commaIdx != -1) {
-                                                             try {
-                                                               resolvedCustomBytes = base64Decode(trimmed.substring(commaIdx + 1));
-                                                             } catch (_) {}
-                                                           }
-                                                         } else {
-                                                           resolvedCustomUrl = lc.startsWith('http')
-                                                               ? trimmed
-                                                               : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
-                                                         }
-                                                       }
+                                                       final decodedCustom = decodeDataUrlToBytes(rawCustomUrl);
+                                                       final resolvedCustomUrl = decodedCustom.url;
+                                                       final resolvedCustomBytes = decodedCustom.imageBytes;
                                                        bool isCustomUrl = false;
                                                        if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
                                                            (resolvedCustomUrl != null || resolvedCustomBytes != null)) {
@@ -601,6 +570,24 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
             );
           },
         );
+  }
+
+  ({String? url, Uint8List? imageBytes}) decodeDataUrlToBytes(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) return (url: null, imageBytes: null);
+    final trimmed = rawUrl.trim();
+    if (trimmed.toLowerCase().startsWith('data:')) {
+      final commaIdx = trimmed.indexOf(',');
+      if (commaIdx != -1) {
+        try {
+          return (url: null, imageBytes: base64Decode(trimmed.substring(commaIdx + 1)));
+        } catch (_) {}
+      }
+      return (url: null, imageBytes: null);
+    }
+    final url = trimmed.toLowerCase().startsWith('http')
+        ? trimmed
+        : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
+    return (url: url, imageBytes: null);
   }
 }
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1257,7 +1259,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         ),
         const SizedBox(height: 8),
          DropdownButtonFormField<String>(
-           value: _selectedCategoryId,
+           initialValue: _selectedCategoryId,
            hint: Text(
              _isLoadingCategories ? "Loading collections..." : "Select Collection",
              style: GoogleFonts.plusJakartaSans(
@@ -1334,16 +1336,17 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: _selectedImage != null
-                ? Image.network(
-                    _selectedImage!.path, 
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, err, stack) => Container(
-                      color: cs.primary.withValues(alpha: 0.05),
-                      child: Center(
-                        child: Icon(Icons.broken_image_outlined, color: cs.primary.withValues(alpha: 0.2), size: 40),
-                      ),
-                    ),
-                  )
+                ? (kIsWeb 
+                    ? Image.network(
+                        _selectedImage!.path, 
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
+                      )
+                    : Image.file(
+                        File(_selectedImage!.path),
+                        fit: BoxFit.cover,
+                        errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
+                      ))
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
                         SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
@@ -1371,6 +1374,15 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                       ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder(ColorScheme cs) {
+    return Container(
+      color: cs.primary.withValues(alpha: 0.05),
+      child: Center(
+        child: Icon(Icons.broken_image_outlined, color: cs.primary.withValues(alpha: 0.2), size: 40),
       ),
     );
   }

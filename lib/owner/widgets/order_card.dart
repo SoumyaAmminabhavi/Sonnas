@@ -237,7 +237,16 @@ class _CardImage extends StatelessWidget {
           ),
         );
       } catch (_) {
-        // Fall through to error placeholder
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 90,
+            height: 90,
+            color: cs.primary.withValues(alpha: 0.05),
+            child: Icon(Icons.cake_outlined,
+                color: cs.primary.withValues(alpha: 0.2), size: 32),
+          ),
+        );
       }
     }
 

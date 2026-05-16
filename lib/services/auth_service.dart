@@ -53,11 +53,11 @@ class AuthService {
   static Future<bool> registerStaff(String id, String password) async {
     try {
       final hashedSub = DBCrypt().hashpw(password, DBCrypt().gensalt());
-      await _client.from('Staff').update({
+      final res = await _client.from('Staff').update({
         'password': hashedSub,
         'isActivated': true,
-      }).eq('id', id);
-      return true;
+      }).eq('id', id).select('id').maybeSingle();
+      return res != null;
     } catch (e) {
       return false;
     }
@@ -103,8 +103,26 @@ class AuthService {
       }
       
       if (hash == null) return false;
+      bool isCorrect = DBCrypt().checkpw(pin, hash);
 
-      return DBCrypt().checkpw(pin, hash);
+      // Defensive retry: if it fails, the PIN might have changed. Refresh cache and try once more.
+      if (!isCorrect) {
+        final res = await _client
+            .from('SystemSetting')
+            .select('value')
+            .eq('key', 'owner_pin_hash')
+            .maybeSingle();
+        
+        if (res != null) {
+          final freshHash = res['value']?.toString();
+          if (freshHash != null && freshHash != hash) {
+            _cachedOwnerPinHash = freshHash;
+            isCorrect = DBCrypt().checkpw(pin, freshHash);
+          }
+        }
+      }
+
+      return isCorrect;
     } catch (e) {
       debugPrint('⚠️ PIN Verification Error: $e');
       return false;

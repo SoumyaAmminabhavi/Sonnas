@@ -228,28 +228,39 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
                         }
                       } else {
                         // Use raw URL for absolute paths, Supabase public URL for storage paths
-                        final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://'))
-                            ? displayImageUrl
-                            : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
-                        imageWidget = ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                          imageUrl: resolvedUrl,
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: cs.primary.withValues(alpha: 0.05),
-                            child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary))),
-                          ),
-                          errorWidget: (context, url, error) => Container(
+                        final bool isLocalScheme = displayImageUrl.startsWith('file://') || displayImageUrl.startsWith('whatsapp://');
+                        
+                        if (isLocalScheme) {
+                          imageWidget = Container(
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
                             child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
-                          ),
-                        ),
-                        );
+                          );
+                        } else {
+                          final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://'))
+                              ? displayImageUrl
+                              : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
+                          imageWidget = ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: resolvedUrl,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: cs.primary.withValues(alpha: 0.05),
+                                child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary))),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                                child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+                              ),
+                            ),
+                          );
+                        }
                       }
                     } else {
                       imageWidget = Container(

@@ -3,5 +3,5 @@ class File {
   final String path;
   File(this.path);
 
-  Future<List<int>> readAsBytes() async => [];
+  Future<List<int>> readAsBytes() async => throw UnsupportedError("PlatformFileStub.readAsBytes is not implemented for the current platform.");
 }

@@ -150,30 +150,19 @@ class MenuService {
       final String cakeId = cakeIdRaw.toString();
       final String size = sizeRaw.toString();
 
-      // Safety check: Check for existing option with same size to avoid constraint violations
-      final existing = await _client
-          .from('CakeOption')
-          .select('id')
-          .eq('cakeId', cakeId)
-          .eq('size', size)
-          .maybeSingle();
-      
       final data = Map<String, dynamic>.from(option);
-      final callerProvidedId = option.containsKey('id') ? option['id']?.toString() : null;
-
-      if (existing != null) {
-        if (callerProvidedId == null) {
-          // Create path: a row already exists for this (cakeId, size) — treat as conflict
-          throw StateError('CakeOption for cakeId=$cakeId size=$size already exists (id=${existing['id']}). Provide the existing id to update it.');
-        } else if (existing['id'].toString() != callerProvidedId) {
-          // Update path: caller's id doesn't match the found row — refuse to retarget
-          throw StateError('CakeOption id mismatch: caller provided $callerProvidedId but existing row for cakeId=$cakeId size=$size has id=${existing['id']}.');
-        }
-        // Update path: ids match — allow the upsert to proceed normally
-      }
       data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
 
-      await _client.from('CakeOption').upsert(data);
+      try {
+        await _client.from('CakeOption').upsert(data);
+      } catch (dbError) {
+        final errStr = dbError.toString();
+        if (errStr.contains('23505') || errStr.toLowerCase().contains('unique constraint')) {
+           throw StateError('A CakeOption for cakeId=$cakeId and size=$size already exists. Please provide the correct ID to update the existing record.');
+        }
+        debugPrint('⚠️ Upsert CakeOption Failed: $dbError');
+        rethrow;
+      }
     } catch (e) {
       debugPrint('⚠️ Upsert CakeOption Failed: $e');
       rethrow;

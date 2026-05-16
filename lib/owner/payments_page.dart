@@ -38,19 +38,47 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
       child: StreamBuilder<List<Map<String, dynamic>>>(
       stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: cs.surface,
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: cs.error.withValues(alpha: 0.5)),
+                  const SizedBox(height: 16),
+                  Text("FAILED TO LOAD PAYMENTS", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: cs.error.withValues(alpha: 0.7))),
+                  const SizedBox(height: 8),
+                  Text(snapshot.error.toString(), style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.5))),
+                  const SizedBox(height: 24),
+                  ElevatedButton(onPressed: () => setState(() {}), child: const Text("RETRY")),
+                ],
+              ),
+            ),
+          );
+        }
+
         final orders = snapshot.data ?? [];
         String paymentStatusOf(Map<String, dynamic> o) =>
             (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+        
+        DateTime? getPaymentDate(Map<String, dynamic> o) {
+          final raw = o['paidAt']?.toString() ?? o['paymentUpdatedAt']?.toString() ?? o['createdAt']?.toString() ?? '';
+          return DateTime.tryParse(raw);
+        }
+
         final pendingOrders = orders.where((o) => paymentStatusOf(o) == 'PENDING').toList();
+        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+
         final completedHistory = orders.where((o) {
           if (paymentStatusOf(o) != 'PAID') return false;
-          final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+          final date = getPaymentDate(o);
           if (date == null) return false;
-          return date.isAfter(DateTime.now().subtract(const Duration(days: 7)));
+          return date.isAfter(sevenDaysAgo);
         }).toList()
           ..sort((a, b) {
-            final da = DateTime.tryParse(a['createdAt']?.toString() ?? '');
-            final db = DateTime.tryParse(b['createdAt']?.toString() ?? '');
+            final da = getPaymentDate(a);
+            final db = getPaymentDate(b);
             if (da == null && db == null) return 0;
             if (da == null) return 1;
             if (db == null) return -1;
@@ -63,10 +91,9 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
         }
 
         double weeklyGross = 0;
-        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
         for (var o in orders) {
           if (paymentStatusOf(o) == 'PAID') {
-            final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+            final date = getPaymentDate(o);
             if (date != null && date.isAfter(sevenDaysAgo)) {
               weeklyGross += (double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0) / 100.0;
             }
