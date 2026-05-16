@@ -133,7 +133,7 @@ class OrderService {
           .map((list) => list.isEmpty ? null : list.first);
     } catch (e) {
       debugPrint('⚠️ Order Stream Init Failed: $e');
-      yield null;
+      rethrow;
     }
   }
 

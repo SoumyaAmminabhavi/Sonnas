@@ -68,6 +68,30 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
               _isLoading = false;
             });
           }
+          if (mounted) {
+            _ordersSubscription?.cancel();
+            _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
+              if (mounted) {
+                setState(() {
+                  _orders = orders;
+                  _calculateMetrics();
+                  _processItemsFromOrders(_orders, _cachedMenu);
+                });
+              }
+            }, onError: (error) {
+              debugPrint("Sales reports stream error: $error");
+            });
+          }
+          return;
+        }
+        final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
+      if (mounted) {
+        setState(() {
+          _processItems(allItems, menu);
+          _isLoading = false;
+        });
+        if (mounted) {
+          _ordersSubscription?.cancel();
           _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
             if (mounted) {
               setState(() {
@@ -79,25 +103,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           }, onError: (error) {
             debugPrint("Sales reports stream error: $error");
           });
-          return;
         }
-        final allItems = await OrderService.fetchBulkOrderItems(paidOrderIds);
-      if (mounted) {
-        setState(() {
-          _processItems(allItems, menu);
-          _isLoading = false;
-        });
-        _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
-          if (mounted) {
-            setState(() {
-              _orders = orders;
-              _calculateMetrics();
-              _processItemsFromOrders(_orders, _cachedMenu);
-            });
-          }
-        }, onError: (error) {
-          debugPrint("Sales reports stream error: $error");
-        });
       }
     } catch (e) {
       debugPrint("Error loading report data: $e");
@@ -173,10 +179,14 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       
       _topItems = sortedItems.take(5).map((e) {
         final details = itemDetails[e.key] ?? {};
+        final rawImage = details['image']?.toString();
+        final resolvedImage = (rawImage != null && rawImage.isNotEmpty)
+            ? SupabaseService.getPublicUrl(rawImage, bucket: 'cakes')
+            : null;
         return {
           'name': e.key,
           'count': e.value,
-          'image': SupabaseService.getPublicUrl(details['image']?.toString(), bucket: 'cakes'),
+          'image': resolvedImage,
           'category': details['category']?.toString() ?? 'Delicacy',
         };
       }).toList();
@@ -606,27 +616,37 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
             padding: const EdgeInsets.only(bottom: 20.0),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: item['image'] ?? '',
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      width: 48,
-                      height: 48,
-                      color: cs.primary.withValues(alpha: 0.05),
-                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                    ),
-                    errorWidget: (c, e, s) => Container(
-                      width: 48,
-                      height: 48,
-                      color: cs.primary.withValues(alpha: 0.1),
-                      child: Icon(Icons.cake, color: cs.primary, size: 20),
-                    ),
-                  ),
-                ),
+                item['image'] != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: item['image'],
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 48,
+                            height: 48,
+                            color: cs.primary.withValues(alpha: 0.05),
+                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          ),
+                          errorWidget: (c, e, s) => Container(
+                            width: 48,
+                            height: 48,
+                            color: cs.primary.withValues(alpha: 0.1),
+                            child: Icon(Icons.cake, color: cs.primary, size: 20),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: cs.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.cake, color: cs.primary, size: 20),
+                      ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(

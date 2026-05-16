@@ -47,7 +47,15 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
           final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
           if (date == null) return false;
           return date.isAfter(DateTime.now().subtract(const Duration(days: 7)));
-        }).toList();
+        }).toList()
+          ..sort((a, b) {
+            final da = DateTime.tryParse(a['createdAt']?.toString() ?? '');
+            final db = DateTime.tryParse(b['createdAt']?.toString() ?? '');
+            if (da == null && db == null) return 0;
+            if (da == null) return 1;
+            if (db == null) return -1;
+            return db.compareTo(da); // newest first
+          });
 
         double totalPending = 0;
         for (var o in pendingOrders) {

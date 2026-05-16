@@ -224,7 +224,15 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                         children: [
                                           _SectionTitle(title: "Artisan Selection", cs: cs),
                                           () {
-                                            final url = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                            String? rawUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                            rawUrl = rawUrl?.trim();
+                                            String? url;
+                                            if (rawUrl != null && rawUrl.isNotEmpty) {
+                                              final lc = rawUrl.toLowerCase();
+                                              url = (lc.startsWith('http') || lc.startsWith('data:'))
+                                                  ? rawUrl
+                                                  : SupabaseService.getPublicUrl(rawUrl, bucket: 'cakes');
+                                            }
                                             if (url != null && url.isNotEmpty) {
                                               return IconButton(
                                                 icon: const Icon(Icons.view_in_ar_outlined, size: 20),
@@ -234,7 +242,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                   showDialog(
                                                     context: context,
                                                     builder: (context) => _HolographicViewer(
-                                                      imageUrl: url,
+                                                      imageUrl: url!,
                                                       cs: cs,
                                                     ),
                                                   );
@@ -291,12 +299,19 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                             );
                                                       displayImageUrl = matchingCake['image'] ?? '';
 
-                                                      final customImageUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                                      final rawCustomUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
+                                                      String? resolvedCustomUrl;
+                                                      if (rawCustomUrl != null && rawCustomUrl.trim().isNotEmpty) {
+                                                        final trimmed = rawCustomUrl.trim();
+                                                        final lc = trimmed.toLowerCase();
+                                                        resolvedCustomUrl = (lc.startsWith('http') || lc.startsWith('data:'))
+                                                            ? trimmed
+                                                            : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
+                                                      }
                                                       bool isCustomUrl = false;
                                                       if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
-                                                          customImageUrl != null &&
-                                                          customImageUrl.isNotEmpty) {
-                                                        displayImageUrl = customImageUrl;
+                                                          resolvedCustomUrl != null) {
+                                                        displayImageUrl = resolvedCustomUrl;
                                                         isCustomUrl = true;
                                                       }
 

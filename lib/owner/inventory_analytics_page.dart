@@ -380,7 +380,17 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () async {
-                    if (nameController.text.isEmpty) return;
+                    if (nameController.text.isEmpty) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Item name cannot be empty."),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      return;
+                    }
                     
                     final currentStock = double.tryParse(currentController.text);
                     final minStock = double.tryParse(minController.text);

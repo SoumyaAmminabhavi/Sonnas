@@ -150,8 +150,17 @@ class MenuService {
           .maybeSingle();
       
       final data = Map<String, dynamic>.from(option);
+      final callerProvidedId = option.containsKey('id') ? option['id']?.toString() : null;
+
       if (existing != null) {
-        data['id'] = existing['id']; // Force update existing row
+        if (callerProvidedId == null) {
+          // Create path: a row already exists for this (cakeId, size) — treat as conflict
+          throw StateError('CakeOption for cakeId=$cakeId size=$size already exists (id=${existing['id']}). Provide the existing id to update it.');
+        } else if (existing['id'].toString() != callerProvidedId) {
+          // Update path: caller's id doesn't match the found row — refuse to retarget
+          throw StateError('CakeOption id mismatch: caller provided $callerProvidedId but existing row for cakeId=$cakeId size=$size has id=${existing['id']}.');
+        }
+        // Update path: ids match — allow the upsert to proceed normally
       }
       data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
 
