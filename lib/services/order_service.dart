@@ -73,17 +73,20 @@ class OrderService {
       }
 
       if (res == null) {
-        res = await _client
+        final matches = List<Map<String, dynamic>>.from(await _client
             .from('Order')
             .select('*, WhatsAppConversation(*)')
             .ilike('orderNumber', '%$escapedInput%')
-            .maybeSingle();
+            .limit(2));
+        if (matches.length == 1) {
+          res = matches.first;
+        }
       }
       
       return res;
     } catch (e) {
       debugPrint('⚠️ Fetch Order Failed: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -107,11 +110,14 @@ class OrderService {
       }
 
       if (resolved == null) {
-        resolved = await _client
+        final matches = List<Map<String, dynamic>>.from(await _client
             .from('Order')
             .select('id')
             .ilike('orderNumber', '%$escapedInput%')
-            .maybeSingle();
+            .limit(2));
+        if (matches.length == 1) {
+          resolved = matches.first;
+        }
       }
 
       if (resolved == null) {
@@ -124,8 +130,10 @@ class OrderService {
           .from('Order')
           .stream(primaryKey: ['id'])
           .map((list) {
-            final match = list.where((o) => o['id']?.toString() == resolvedId).toList();
-            return match.isNotEmpty ? match.first : null;
+            for (final o in list) {
+              if (o['id']?.toString() == resolvedId) return o;
+            }
+            return null;
           });
     } catch (e) {
       debugPrint('⚠️ Order Stream Init Failed: $e');

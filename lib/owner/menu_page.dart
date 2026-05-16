@@ -851,17 +851,18 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       }
 
       // 3. Perform Upsert
-      final cakeId = await MenuService.upsertCake({
+      final savePayload = {
         'id': finalCakeId,
         'name': cakeName,
         'slug': slug,
         'categoryId': categoryId,
         'description': _descriptionController.text,
         'image': imagePath ?? '',
-        'isAvailable': true,
+        'isAvailable': widget.initialData?['isAvailable'] ?? true,
         'sortOrder': 0,
         'updatedAt': DateTime.now().toIso8601String(),
-      });
+      };
+      final cakeId = await MenuService.upsertCake(savePayload);
 
       // 4. Save Options (Handling duplicates)
       final List<dynamic> existingOptions = [

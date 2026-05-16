@@ -262,15 +262,10 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
-      canPop: false,
+      canPop: widget.onClose == null,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          final close = widget.onClose;
-          if (close != null) {
-            close();
-          } else {
-            Navigator.of(context).pop();
-          }
+          widget.onClose?.call();
         }
       },
       child: Scaffold(

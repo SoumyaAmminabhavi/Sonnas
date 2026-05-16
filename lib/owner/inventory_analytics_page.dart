@@ -21,15 +21,10 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
     final isDesktop = MediaQuery.sizeOf(context).width > 1100;
 
     return PopScope(
-      canPop: false,
+      canPop: widget.onClose == null,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) {
-          final close = widget.onClose;
-          if (close != null) {
-            close();
-          } else {
-            Navigator.of(context).pop();
-          }
+          widget.onClose?.call();
         }
       },
       child: Scaffold(

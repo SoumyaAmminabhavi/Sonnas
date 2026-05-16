@@ -324,9 +324,9 @@ class KitchenOrderCard extends StatelessWidget {
 
   Widget _buildKitchenImage(Map<String, dynamic> data, List<Map<String, dynamic>> items, List<Map<String, dynamic>> menu, ColorScheme cs) {
     // 1. Try customImageUrl from the order
-    String imageUrl = data['customImageUrl'] ?? '';
+    String imageUrl = data['customImageUrl']?.toString().trim() ?? '';
     if (imageUrl.isEmpty && data['WhatsAppConversation'] != null) {
-      imageUrl = data['WhatsAppConversation']['customImageUrl'] ?? '';
+      imageUrl = data['WhatsAppConversation']['customImageUrl']?.toString().trim() ?? '';
     }
 
     String? version;

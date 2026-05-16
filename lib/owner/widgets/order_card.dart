@@ -27,12 +27,12 @@ class OrderCardReactive extends ConsumerWidget {
         Color statusColor = status == 'COMPLETED' ? cs.secondary : cs.primary;
 
         // 1. Try customImageUrl from the order
-        String imageUrl = data['customImageUrl'] ?? '';
+        String imageUrl = data['customImageUrl']?.toString().trim() ?? '';
         
         // 2. Try to find an image from the associated WhatsApp Conversation if order image is missing
         if (imageUrl.isEmpty && data['WhatsAppConversation'] != null) {
           final convo = data['WhatsAppConversation'];
-          imageUrl = convo['customImageUrl'] ?? '';
+          imageUrl = convo['customImageUrl']?.toString().trim() ?? '';
         }
 
         // 3. Fallback to Menu Item image if still empty

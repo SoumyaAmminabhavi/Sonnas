@@ -460,9 +460,14 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                         ),
                                                       );
                                                     }
-                                                  } catch (e) {
+                                                  } catch (e, st) {
+                                                    debugPrint('Order status update failed: $e\n$st');
                                                     if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text("Failed to update order. Please try again."),
+                                                        ),
+                                                      );
                                                     }
                                                   }
                                                 } : null,

@@ -203,9 +203,13 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
             await ReportService.downloadCSV(_paidOrders, _totalRevenue, _totalOrders);
           }
         } catch (e) {
+          debugPrint("Export failed: $e");
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Export failed: $e")),
+              const SnackBar(
+                content: Text("Export failed. Please try again."),
+                behavior: SnackBarBehavior.floating,
+              ),
             );
           }
         }
