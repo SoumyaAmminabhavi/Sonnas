@@ -210,13 +210,22 @@ class OrderService {
   static Future<void> updateOrderStatus(String orderId, String status) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final Map<String, dynamic> payload = {
-      'status': status,
+      'status': status.toUpperCase(),
+      'updatedAt': now,
     };
+    
+    // Set specific audit timestamps
     if (status == 'CONFIRMED') payload['confirmedAt'] = now;
     if (status == 'DELIVERED') payload['deliveredAt'] = now;
     if (status == 'COMPLETED') payload['completedAt'] = now;
     if (status == 'CANCELLED') payload['cancelledAt'] = now;
-    await _client.from('Order').update(payload).eq('id', orderId);
+    
+    try {
+      await _client.from('Order').update(payload).eq('id', orderId);
+    } catch (e) {
+      debugPrint('❌ Order Status Update Failed: $e');
+      rethrow;
+    }
   }
 
   /// Update payment status
@@ -259,34 +268,16 @@ class OrderService {
     // Set unified source
     orderData['source'] = 'APP';
     
-    String? orderId;
     try {
-      final response = await _client
-          .from('Order')
-          .insert(orderData)
-          .select()
-          .single();
-      
-      orderId = response['id'];
-      
-      // Insert order items
-      final orderItems = items.map((item) => {
-        'orderId': orderId,
-        'cakeId': item['cakeId'], // Linked if available
-        'cakeName': item['cakeName'],
-        'quantity': item['quantity'],
-        'price': item['price'],
-        'size': item['size'] ?? 'Standard',
-      }).toList();
-      await _client.from('OrderItem').insert(orderItems);
+      await _client.rpc(
+        'create_order_with_items',
+        params: {
+          'p_order_data': orderData,
+          'p_items_data': items,
+        },
+      );
     } catch (e) {
-      if (orderId != null) {
-        try {
-          await _client.from('Order').delete().eq('id', orderId);
-        } catch (rollbackError) {
-          debugPrint('⚠️ Rollback of Order $orderId also failed: $rollbackError');
-        }
-      }
+      debugPrint('❌ Submit Order failed: $e');
       rethrow;
     }
   }

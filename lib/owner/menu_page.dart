@@ -611,6 +611,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   List<Map<String, dynamic>> _categories = [];
   String? _selectedCategoryId;
   bool _isLoadingCategories = true;
+  bool _categoriesLoaded = false;
 
   final _picker = ImagePicker();
   XFile? _selectedImage;
@@ -667,6 +668,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         setState(() {
           _categories = cats;
           _isLoadingCategories = false;
+          _categoriesLoaded = true;
         });
       }
     } catch (e) {
@@ -674,6 +676,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       if (mounted) {
         setState(() {
           _isLoadingCategories = false;
+          _categoriesLoaded = false;
         });
       }
     }
@@ -822,7 +825,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
             categoryId = existingCat['id'];
           } else if (widget.initialData?['categoryId'] != null) {
             categoryId = widget.initialData!['categoryId'];
-          } else if (_categories.isEmpty && _selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
+          } else if (_categoriesLoaded && _categories.isEmpty && _selectedCategoryId != null && _selectedCategoryId!.isNotEmpty) {
             final catSlug = _selectedCategoryId!.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
             categoryId = await MenuService.upsertCategory({
               'id': _generateCmpId(),
@@ -832,6 +835,13 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
               'updatedAt': DateTime.now().toIso8601String(),
             });
             _loadCategories();
+          } else if (!_categoriesLoaded) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Collections are still loading. Please try again.')),
+            );
+            setState(() => _isUploading = false);
+            return;
           } else {
             if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a valid category')));
@@ -1143,7 +1153,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text("Delete Item?"),
-                              content: const Text("This will move the item to the archive. You can't undo this action from the app."),
+                              content: const Text("This will permanently delete this item. This action cannot be undone."),
                               actions: [
                                 TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("CANCEL")),
                                 TextButton(

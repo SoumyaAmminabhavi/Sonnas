@@ -83,7 +83,12 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                       ),
                       const SizedBox(height: 24),
                       TextButton.icon(
-                        onPressed: () => setState(() => _orderFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''))),
+                        onPressed: () {
+                          final newFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''));
+                          setState(() {
+                            _orderFuture = newFuture;
+                          });
+                        },
                         icon: const Icon(Icons.refresh),
                         label: const Text("Retry"),
                       ),
@@ -429,7 +434,10 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                   try {
                                                     await OrderService.updateOrderStatus(order['id'], next);
                                                     if (!context.mounted) return;
-                                                    setState(() => _orderFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), '')));
+                                                    final newFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''));
+                                                    setState(() {
+                                                      _orderFuture = newFuture;
+                                                    });
                                                     if (context.mounted) {
                                                       ScaffoldMessenger.of(context).showSnackBar(
                                                         SnackBar(
@@ -445,17 +453,17 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                     }
                                                   } catch (e) {
                                                     if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Failed to update order. Please try again.")));
+                                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Update failed: $e")));
                                                     }
                                                   }
                                                 } : null,
                                             );
                                           }(),
                                         ),
-                                         const SizedBox(width: 12),
-                                         Expanded(
-                                           flex: 2,
-                                           child: _ElegantAction(
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          flex: 2,
+                                          child: _ElegantAction(
                                             icon: Icons.chat_bubble_outline,
                                             label: "CONTACT",
                                             cs: cs,

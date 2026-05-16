@@ -178,7 +178,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       return pStatus == 'PAID';
     }).toList();
 
-    final currentIds = paidOrders.map((o) => o['id'].toString()).join(',');
+    final currentIds = paidOrders.map((o) => o['id']?.toString() ?? '').join(',');
     if (currentIds == _lastProcessedIds) return;
     _lastProcessedIds = currentIds;
 

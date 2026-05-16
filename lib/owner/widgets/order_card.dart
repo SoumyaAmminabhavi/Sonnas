@@ -70,7 +70,7 @@ class OrderCardReactive extends ConsumerWidget {
           id: "#${data['orderNumber'] ?? '---'}",
           status: status,
           statusColor: statusColor,
-          paymentStatus: data['paymentStatus'] ?? 'PENDING',
+          paymentStatus: (data['paymentStatus'] ?? 'PENDING').toString().toUpperCase(),
           customerName: data['customerName'] ?? 'Guest Customer',
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])

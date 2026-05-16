@@ -39,9 +39,11 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
       stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
         final orders = snapshot.data ?? [];
-        final pendingOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING') == 'PENDING').toList();
+        String paymentStatusOf(Map<String, dynamic> o) =>
+            (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+        final pendingOrders = orders.where((o) => paymentStatusOf(o) == 'PENDING').toList();
         final completedHistory = orders.where((o) {
-          if ((o['paymentStatus'] ?? 'PENDING') != 'PAID') return false;
+          if (paymentStatusOf(o) != 'PAID') return false;
           final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
           if (date == null) return false;
           return date.isAfter(DateTime.now().subtract(const Duration(days: 7)));
@@ -55,7 +57,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
         double weeklyGross = 0;
         final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
         for (var o in orders) {
-          if ((o['paymentStatus'] ?? 'PENDING') == 'PAID') {
+          if (paymentStatusOf(o) == 'PAID') {
             final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
             if (date != null && date.isAfter(sevenDaysAgo)) {
               weeklyGross += (double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0) / 100.0;
@@ -336,7 +338,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
 
   Widget _buildCompactCard(BuildContext context, Map<String, dynamic> item) {
     final cs = Theme.of(context).colorScheme;
-    final String status = item['paymentStatus'] ?? 'PENDING';
+    final String status = (item['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
     final isCompleted = status == 'PAID';
 
     return Container(

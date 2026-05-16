@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ─── Authentication Models ──────────────────────────────────────────────────
@@ -171,6 +170,7 @@ model Order {
   deletedAt       DateTime?
   confirmedAt     DateTime?
   deliveredAt     DateTime?
+  completedAt     DateTime?
   cancelledAt     DateTime?
   
   items           OrderItem[]
