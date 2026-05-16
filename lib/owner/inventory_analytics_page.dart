@@ -392,8 +392,11 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       return;
                     }
                     
-                    final currentStock = double.tryParse(currentController.text);
-                    final minStock = double.tryParse(minController.text);
+                    final name = nameController.text.trim();
+                    final unit = unitController.text.trim();
+                    final currentStock = double.tryParse(currentController.text.trim());
+                    final minStock = double.tryParse(minController.text.trim());
+                    
                     if (currentStock == null || minStock == null || currentStock < 0 || minStock < 0) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -408,9 +411,9 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                     
                     try {
                       await InventoryService.addInventoryItem({
-                        'name': nameController.text,
+                        'name': name,
                         'category': selectedCategory,
-                        'unit': unitController.text,
+                        'unit': unit,
                         'currentStock': currentStock,
                         'minStock': minStock,
                         'lastRestocked': DateTime.now().toIso8601String(),

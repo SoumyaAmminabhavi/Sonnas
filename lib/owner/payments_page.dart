@@ -64,7 +64,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
             (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
         
         DateTime? getPaymentDate(Map<String, dynamic> o) {
-          final raw = o['paidAt']?.toString() ?? o['paymentUpdatedAt']?.toString() ?? o['createdAt']?.toString() ?? '';
+          final raw = o['paidAt']?.toString() ?? o['createdAt']?.toString() ?? '';
           return DateTime.tryParse(raw);
         }
 

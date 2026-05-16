@@ -584,7 +584,12 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
       }
       return (url: null, imageBytes: null);
     }
-    final url = trimmed.toLowerCase().startsWith('http')
+    final lower = trimmed.toLowerCase();
+    if (lower.contains('://') && !lower.startsWith('http')) {
+      return (url: null, imageBytes: null);
+    }
+    
+    final url = lower.startsWith('http')
         ? trimmed
         : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
     return (url: url, imageBytes: null);

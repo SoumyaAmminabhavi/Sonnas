@@ -845,10 +845,20 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           if (matchByName.isNotEmpty) {
             categoryId = matchByName['id'].toString();
           } else {
-            // Check if _selectedCategoryId itself is a valid ID (not just a name)
-            final isId = _selectedCategoryId != null && _selectedCategoryId!.length > 5; // Simple check for UUID/GUID
-            categoryId = isId ? _selectedCategoryId : null;
+            // Revert: Labels are not IDs. If it's a fallback string (e.g. "Slices"), 
+            // set to null to avoid FK violations.
+            categoryId = null;
           }
+        }
+        
+        // Final guard: Fallback names like "Slices" are not real categories yet
+        if (categoryId == null) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Selected category is a placeholder. Please select or create a real category.'))
+          );
+          setState(() => _isUploading = false);
+          return;
         }
       }
 
@@ -892,6 +902,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
       final normalizedPrice = _sanitizePrice(_priceController.text);
 
+      final isNewCake = widget.initialData == null;
       try {
         await MenuService.upsertCakeOption({
           'id': matchedOption?['id'] ?? _generateCmpId(),
@@ -905,8 +916,10 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         // Compensation: Cleanup if option save fails
         debugPrint('⚠️ Option save failed, cleaning up cake: $optError');
         try {
-          await MenuService.deleteCake(cakeId);
-          if (imagePath != null && imagePath.isNotEmpty) {
+          if (isNewCake) {
+            await MenuService.deleteCake(cakeId);
+          }
+          if (imagePath != null && imagePath.isNotEmpty && isNewCake) {
              // In a real app, delete the uploaded image from Supabase storage here
           }
         } catch (cleanupError) {

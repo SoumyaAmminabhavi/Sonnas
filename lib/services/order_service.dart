@@ -273,11 +273,17 @@ class OrderService {
   static Future<void> updatePaymentStatus(String orderId, String status) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final normalizedStatus = status.toUpperCase();
+    final Map<String, dynamic> payload = {
+      'paymentStatus': normalizedStatus,
+      'updatedAt': now,
+    };
+    
+    if (normalizedStatus == 'PAID') {
+      payload['paidAt'] = now;
+    }
+    
     try {
-      await _client.from('Order').update({
-        'paymentStatus': normalizedStatus,
-        'updatedAt': now,
-      }).eq('id', orderId);
+      await _client.from('Order').update(payload).eq('id', orderId);
     } catch (e) {
       debugPrint('❌ Payment Status Update Failed: $e');
       rethrow;
