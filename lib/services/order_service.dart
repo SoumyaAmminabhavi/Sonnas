@@ -54,6 +54,7 @@ class OrderService {
   static Future<Map<String, dynamic>?> fetchOrderByIdOrNumber(String idOrNumber) async {
     try {
       final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+      if (cleanInput.isEmpty) return null;
       
       final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
       
@@ -90,6 +91,10 @@ class OrderService {
 
   static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) async* {
     final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+    if (cleanInput.isEmpty) {
+      yield null;
+      return;
+    }
     final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
 
     try {

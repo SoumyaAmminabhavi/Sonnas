@@ -15,6 +15,23 @@ class PaymentsPage extends StatefulWidget {
 class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  double _normalizePrice(dynamic raw) {
+    if (raw == null) return 0.0;
+    final str = raw.toString();
+    final hasDecimal = str.contains('.');
+    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
+    final clean = str
+        .replaceAll('₹', '')
+        .replaceAll('INR', '')
+        .replaceAll('/-', '')
+        .replaceAll(',', '')
+        .trim();
+    if (clean.isEmpty) return 0.0;
+    final parsed = double.tryParse(clean) ?? 0.0;
+    if (hasDecimal || hasCurrency) return parsed;
+    return parsed / 100.0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +105,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
 
         double totalPending = 0;
         for (var o in pendingOrders) {
-          totalPending += (double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0) / 100.0;
+          totalPending += _normalizePrice(o['totalPrice']);
         }
 
         double weeklyGross = 0;
@@ -96,7 +113,7 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
           if (paymentStatusOf(o) == 'PAID') {
             final date = getPaymentDate(o);
             if (date != null && date.isAfter(sevenDaysAgo)) {
-              weeklyGross += (double.tryParse(o['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0) / 100.0;
+              weeklyGross += _normalizePrice(o['totalPrice']);
             }
           }
         }

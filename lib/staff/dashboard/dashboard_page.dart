@@ -207,6 +207,39 @@ class _DashboardContent extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: OrderService.getRecentOrdersStream(),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline_rounded, color: cs.error, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Failed to load dashboard data",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.error,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.error.toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.secondary.withValues(alpha: 0.6),
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         
         final allOrders = snapshot.data ?? [];
