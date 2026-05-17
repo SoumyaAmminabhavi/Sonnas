@@ -186,11 +186,8 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
   static String _formatPrice(dynamic price) {
     if (price == null) return '0';
     final int priceInt = price is int ? price : int.tryParse(price.toString()) ?? 0;
-    if (priceInt > 999) {
-      final rupees = priceInt / 100;
-      return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
-    }
-    return priceInt.toString();
+    final double rupees = priceInt / 100.0;
+    return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
   }
 
   static String _getCategoryName(Map<String, dynamic> product) {
