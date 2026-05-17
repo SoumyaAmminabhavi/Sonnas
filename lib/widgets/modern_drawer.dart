@@ -128,17 +128,18 @@ class ModernDrawer extends ConsumerWidget {
                     label:
                         isAuthenticated ? "Go to Dashboard" : "Login as Owner",
                     onTap: () {
+                      final navigator = Navigator.of(context, rootNavigator: true);
                       Navigator.of(context).pop();
-                      if (isAuthenticated && context.mounted) {
-                        Navigator.of(context).push(
+                      if (isAuthenticated) {
+                        navigator.push(
                           MaterialPageRoute(
                             settings:
                                 const RouteSettings(name: 'OwnerDashboard'),
                             builder: (context) => const OwnerDashboard(),
                           ),
                         );
-                      } else if (context.mounted) {
-                        _showOwnerAuth(context, ref);
+                      } else {
+                        _showOwnerAuth(navigator.context, ref);
                       }
                     },
                   );
@@ -148,14 +149,13 @@ class ModernDrawer extends ConsumerWidget {
                 icon: Icons.badge_outlined,
                 label: "Login as Staff",
                 onTap: () {
+                  final navigator = Navigator.of(context, rootNavigator: true);
                   Navigator.of(context).pop();
-                  if (context.mounted) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const StaffLoginPage(),
-                      ),
-                    );
-                  }
+                  navigator.push(
+                    MaterialPageRoute(
+                      builder: (context) => const StaffLoginPage(),
+                    ),
+                  );
                 },
               ),
               Padding(
