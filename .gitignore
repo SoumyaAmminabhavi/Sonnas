@@ -23,10 +23,12 @@ app.*.map.json
 /android/app/release/
 
 # ── Environment & Secrets ─────────────────────
-# Keep .env.example (template); ignore all real env files
+# Keep .env.example templates; ignore all real env files
 .env
-.env.*
+.env.local
+.env.production
 !.env.example
+!.env.*.example
 *.secret
 *.pem
 *.p12
