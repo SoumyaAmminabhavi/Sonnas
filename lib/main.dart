@@ -10,14 +10,21 @@ import 'widgets/modern_drawer.dart';
 import 'widgets/glass_bottom_nav.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
+import 'services/cart_provider.dart';
+import 'customer/checkout_page.dart';
 
 
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     
-    // Load environment variables
-    await dotenv.load(fileName: ".env");
+    // Load environment variables from .env file (development only)
+    // Production builds should use --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      debugPrint('⚠️ .env file not found — using --dart-define values for production build');
+    }
     
     // Initialize Supabase
     await SupabaseService.initialize();
@@ -153,14 +160,14 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
   }
 }
 
-class AppNavigation extends StatefulWidget {
+class AppNavigation extends ConsumerStatefulWidget {
   const AppNavigation({super.key});
 
   @override
-  State<AppNavigation> createState() => _AppNavigationState();
+  ConsumerState<AppNavigation> createState() => _AppNavigationState();
 }
 
-class _AppNavigationState extends State<AppNavigation> {
+class _AppNavigationState extends ConsumerState<AppNavigation> {
   int _currentIndex = 0;
 
   void _onTabSelected(int index) {
@@ -169,9 +176,21 @@ class _AppNavigationState extends State<AppNavigation> {
     });
   }
 
+  void _openCheckout() {
+    final cart = ref.read(cartProvider);
+    if (cart.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Your cart is empty")),
+      );
+      return;
+    }
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerCheckoutPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final cart = ref.watch(cartProvider);
     
     return Scaffold(
       extendBody: true,
@@ -183,9 +202,31 @@ class _AppNavigationState extends State<AppNavigation> {
         iconTheme: IconThemeData(color: cs.primary),
         title: const Text(" "),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined),
-            onPressed: () {},
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_bag_outlined),
+                onPressed: _openCheckout,
+              ),
+              if (cart.itemCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: cs.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      cart.itemCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 8),
         ],

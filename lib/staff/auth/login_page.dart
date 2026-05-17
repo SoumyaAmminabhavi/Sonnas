@@ -118,6 +118,16 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       return;
     }
 
+    if (AuthService.isStaffCodeLockedOut(phone)) {
+      final remaining = AuthService.getStaffCodeLockoutRemaining(phone);
+      if (remaining != null) {
+        _showError("Too many failed attempts. Try again in ${remaining.inMinutes}m ${remaining.inSeconds.remainder(60)}s.");
+      } else {
+        _showError("Too many failed attempts. Please try again later.");
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final staff = await AuthService.verifyStaffCode(phone, code);
@@ -131,7 +141,17 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
         _errorMessage = null;
       });
     } else {
-      _showError("Invalid code or mobile number. Make sure the code hasn't been used yet.");
+      final remaining = AuthService.getStaffCodeAttemptsRemaining(phone);
+      if (remaining == 0) {
+        final lockout = AuthService.getStaffCodeLockoutRemaining(phone);
+        if (lockout != null) {
+          _showError("Account locked. Try again in ${lockout.inMinutes}m ${lockout.inSeconds.remainder(60)}s.");
+        } else {
+          _showError("Too many failed attempts. Please try again later.");
+        }
+      } else {
+        _showError("Invalid code or mobile number. $remaining attempt(s) remaining.");
+      }
     }
   }
 

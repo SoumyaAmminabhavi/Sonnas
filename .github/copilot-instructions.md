@@ -4,7 +4,7 @@ This is a Flutter app for a luxury artisan bakery (Sonna's Patisserie & Cafe).
 
 ## Project Structure
 
-```
+```text
 lib/
 ├── main.dart                 # App entry — theme, routing, Riverpod providers
 ├── models/                   # Shared data models (Order, etc.)

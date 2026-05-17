@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -125,26 +126,46 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
         TextFormField(
           controller: _nameController,
           decoration: _inputDecoration("Full Name", Icons.person_outline),
-          validator: (v) => v == null || v.isEmpty ? "Required" : null,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return "Required";
+            if (v.trim().length < 2) return "Name is too short";
+            if (!RegExp(r"^[a-zA-Z\s.'\-]+$").hasMatch(v.trim())) return "Name contains invalid characters";
+            return null;
+          },
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           decoration: _inputDecoration("WhatsApp Number", Icons.phone_outlined),
-          validator: (v) => v == null || v.length < 10 ? "Invalid number" : null,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return "Required";
+            final digits = v.replaceAll(RegExp(r'\D'), '');
+            if (digits.length < 10) return "Enter a valid 10-digit number";
+            if (digits.length > 12) return "Number is too long";
+            return null;
+          },
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _addressController,
           maxLines: 3,
           decoration: _inputDecoration("Delivery Address", Icons.location_on_outlined),
-          validator: (v) => v == null || v.isEmpty ? "Required for delivery" : null,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return "Required for delivery";
+            if (v.trim().length < 10) return "Address is too short";
+            return null;
+          },
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _notesController,
+          maxLines: 2,
           decoration: _inputDecoration("Notes for Chef (Optional)", Icons.edit_note),
+          validator: (v) {
+            if (v != null && v.length > 500) return "Notes are too long (max 500 characters)";
+            return null;
+          },
         ),
       ],
     );
@@ -185,20 +206,22 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
     setState(() => _isSubmitting = true);
 
     try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final randomSuffix = Random().nextInt(10000).toString().padLeft(4, '0');
       final orderData = {
-        'orderNumber': 'SONNA-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-        'customerName': _nameController.text,
-        'phone': _phoneController.text,
-        'address': _addressController.text,
-        'notes': _notesController.text,
-        'totalPrice': cart.subtotal,
+        'orderNumber': 'SONNA-$timestamp-$randomSuffix',
+        'customerName': _nameController.text.trim(),
+        'phone': _phoneController.text.replaceAll(RegExp(r'\D'), ''),
+        'address': _addressController.text.trim(),
+        'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        'totalPrice': (cart.subtotal * 100).round(),
         'status': 'PENDING',
         'paymentStatus': 'PENDING',
         'createdAt': DateTime.now().toIso8601String(),
         'items': cart.items.map((i) => {
           'cakeName': i.product['name'],
           'quantity': i.quantity,
-          'price': i.product['price'],
+          'price': ((double.tryParse(i.product['price']?.toString() ?? '0') ?? 0.0) * 100).round(),
         }).toList(),
       };
 

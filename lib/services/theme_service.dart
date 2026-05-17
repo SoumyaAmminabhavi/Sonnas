@@ -3,10 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeService {
   static const String _themeKey = 'theme_mode';
+  static SharedPreferences? _cachedPrefs;
 
-  /// Save the theme preference to local storage
+  static Future<SharedPreferences> get _prefs async {
+    _cachedPrefs ??= await SharedPreferences.getInstance();
+    return _cachedPrefs!;
+  }
+
   static Future<void> saveThemeMode(ThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     final success = await prefs.setString(_themeKey, mode.name);
     if (!success) {
       throw StateError(
@@ -15,9 +20,8 @@ class ThemeService {
     }
   }
 
-  /// Retrieve the theme preference from local storage
   static Future<ThemeMode> getThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await _prefs;
     final modeName = prefs.getString(_themeKey);
     if (modeName == null) return ThemeMode.system;
     

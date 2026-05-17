@@ -2,15 +2,69 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dbcrypt/dbcrypt.dart';
 import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
+import 'constants.dart';
 
 class AuthService {
-  static SupabaseClient get _client => SupabaseService.client; // Use unified client
+  static SupabaseClient get _client => SupabaseService.client;
+
+  static final Map<String, _AttemptTracker> _staffCodeAttempts = {};
+
+  static bool isStaffCodeLockedOut(String phone) {
+    final normalizedPhone = _normalizePhone(phone);
+    final tracker = _staffCodeAttempts[normalizedPhone];
+    if (tracker == null) return false;
+    if (tracker.lockoutUntil != null && DateTime.now().isBefore(tracker.lockoutUntil!)) {
+      return true;
+    }
+    if (tracker.lockoutUntil != null && DateTime.now().isAfter(tracker.lockoutUntil!)) {
+      _staffCodeAttempts.remove(normalizedPhone);
+      return false;
+    }
+    return false;
+  }
+
+  static int getStaffCodeAttemptsRemaining(String phone) {
+    final normalizedPhone = _normalizePhone(phone);
+    final tracker = _staffCodeAttempts[normalizedPhone];
+    if (tracker == null) return AuthConstants.maxStaffCodeAttempts;
+    if (tracker.lockoutUntil != null && DateTime.now().isBefore(tracker.lockoutUntil!)) {
+      return 0;
+    }
+    return (AuthConstants.maxStaffCodeAttempts - tracker.count).clamp(0, AuthConstants.maxStaffCodeAttempts);
+  }
+
+  static Duration? getStaffCodeLockoutRemaining(String phone) {
+    final normalizedPhone = _normalizePhone(phone);
+    final tracker = _staffCodeAttempts[normalizedPhone];
+    if (tracker == null || tracker.lockoutUntil == null) return null;
+    final remaining = tracker.lockoutUntil!.difference(DateTime.now());
+    return remaining.isNegative ? null : remaining;
+  }
+
+  static void _recordStaffCodeFailure(String phone) {
+    final normalizedPhone = _normalizePhone(phone);
+    final tracker = _staffCodeAttempts[normalizedPhone] ?? _AttemptTracker();
+    tracker.count++;
+    if (tracker.count >= AuthConstants.maxStaffCodeAttempts) {
+      tracker.lockoutUntil = DateTime.now().add(AuthConstants.staffCodeLockoutDuration);
+    }
+    _staffCodeAttempts[normalizedPhone] = tracker;
+  }
+
+  static void resetStaffCodeAttempts(String phone) {
+    final normalizedPhone = _normalizePhone(phone);
+    _staffCodeAttempts.remove(normalizedPhone);
+  }
+
+  static String _normalizePhone(String phone) {
+    return phone.length > AuthConstants.phoneDigits
+        ? phone.substring(phone.length - AuthConstants.phoneDigits)
+        : phone;
+  }
 
   static Future<Map<String, dynamic>?> loginStaff(String phone, String password) async {
-    // Normalize phone to last 10 digits
-    final normalizedPhone = phone.length > 10 ? phone.substring(phone.length - 10) : phone;
+    final normalizedPhone = _normalizePhone(phone);
 
-    // 1. Fetch staff member by phone (must be activated)
     final staff = await _client
         .from('Staff')
         .select()
@@ -20,7 +74,6 @@ class AuthService {
 
     if (staff == null) return null;
 
-    // 2. Verify password hash using dbcrypt
     final storedHash = staff['password'] as String?;
     if (storedHash == null) return null;
 
@@ -37,8 +90,12 @@ class AuthService {
   }
 
   static Future<Map<String, dynamic>?> verifyStaffCode(String phone, String code) async {
-    // Normalize phone to last 10 digits
-    final normalizedPhone = phone.length > 10 ? phone.substring(phone.length - 10) : phone;
+    final normalizedPhone = _normalizePhone(phone);
+
+    if (isStaffCodeLockedOut(normalizedPhone)) {
+      debugPrint('⚠️ Staff code verification locked out for $normalizedPhone');
+      return null;
+    }
 
     final res = await _client
         .from('Staff')
@@ -47,6 +104,13 @@ class AuthService {
         .eq('joiningCode', code)
         .eq('isActivated', false)
         .maybeSingle();
+
+    if (res == null) {
+      _recordStaffCodeFailure(normalizedPhone);
+    } else {
+      resetStaffCodeAttempts(normalizedPhone);
+    }
+
     return res;
   }
 
@@ -128,4 +192,9 @@ class AuthService {
       return false;
     }
   }
+}
+
+class _AttemptTracker {
+  int count = 0;
+  DateTime? lockoutUntil;
 }

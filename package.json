@@ -2,10 +2,10 @@
   "name": "sonna",
   "description": "Sonna Patisserie — Prisma schema for Supabase PostgreSQL. The Flutter app connects directly to Supabase; Prisma is used only for schema definition and migrations.",
   "scripts": {
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:generate": "prisma generate --schema lib/services/schema.prisma",
+    "db:push": "prisma db push --schema lib/services/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema lib/services/schema.prisma",
+    "db:studio": "prisma studio --schema lib/services/schema.prisma"
   },
   "devDependencies": {
     "prisma": "^7.8.0"

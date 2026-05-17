@@ -1,35 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'menu_service.dart';
 import 'order_service.dart';
+import 'constants.dart';
 
 /// Cached provider for the bakery menu.
-/// Solves the "Infinite Query Loop" by caching the menu data.
-final menuProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final menuProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   return await MenuService.fetchMenu();
 });
 
 /// Provider for all categories (including those without cakes).
-final categoriesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final categoriesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   return await MenuService.fetchCategories();
 });
 
 /// Provider for specific order items, cached by orderId.
-final orderItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, orderId) async {
+final orderItemsProvider = FutureProvider.autoDispose.family<List<Map<String, dynamic>>, String>((ref, orderId) async {
   return await OrderService.fetchOrderItems(orderId);
 });
 
-/// Real-time stream of all orders.
-final ordersStreamProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+/// Real-time stream of all orders (limited to recent 90 days).
+final ordersStreamProvider = StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   return OrderService.getAllOrdersStream();
 });
 
 /// Real-time stream of recent orders (with items).
-final recentOrdersProvider = StreamProvider<List<Map<String, dynamic>>>((ref) {
+final recentOrdersProvider = StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
   return OrderService.getRecentOrdersStream();
 });
 
 /// Reactive dashboard stats computed locally from the orders stream.
-/// This avoids redundant "stats" network calls.
 final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
   final ordersAsync = ref.watch(ordersStreamProvider);
   
@@ -37,15 +36,21 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
     data: (orders) {
       double totalRevenue = 0;
       final Set<String> customers = {};
+      int paidOrderCount = 0;
       
       for (var order in orders) {
-        final price = (double.tryParse(order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0;
+        final rawPrice = order['totalPrice'];
+        final price = (rawPrice is num
+            ? rawPrice.toDouble()
+            : double.tryParse(rawPrice?.toString().replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '') ?? '0') ?? 0.0)
+            / PriceConstants.minorUnitsPerMajor;
+            
         final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
         if (pStatus == 'PAID') {
           totalRevenue += price;
+          paidOrderCount++;
         }
         
-        // Fix: prefer customerPhone, fallback to phone
         final rawPhone = order['customerPhone'] ?? order['phone'];
         if (rawPhone != null) {
           final phone = rawPhone.toString().trim();
@@ -53,32 +58,26 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
         }
       }
       
-      final paidOrders = orders.where((o) => (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase() == 'PAID').toList();
-      
       return <String, dynamic>{
         'totalOrders': orders.length,
         'totalRevenue': totalRevenue,
         'activeCustomers': customers.length,
-        'avgOrderValue': paidOrders.isEmpty ? 0 : totalRevenue / paidOrders.length,
+        'avgOrderValue': paidOrderCount == 0 ? 0.0 : totalRevenue / paidOrderCount,
       };
     },
-    loading: () {
-      return <String, dynamic>{
-        'totalOrders': 0,
-        'totalRevenue': 0.0,
-        'activeCustomers': 0,
-        'avgOrderValue': 0,
-        'isLoading': true,
-      };
+    loading: () => <String, dynamic>{
+      'totalOrders': 0,
+      'totalRevenue': 0.0,
+      'activeCustomers': 0,
+      'avgOrderValue': 0.0,
+      'isLoading': true,
     },
-    error: (error, stack) {
-      return <String, dynamic>{
-        'totalOrders': 0,
-        'totalRevenue': 0.0,
-        'activeCustomers': 0,
-        'avgOrderValue': 0,
-        'error': true,
-      };
+    error: (error, _) => <String, dynamic>{
+      'totalOrders': 0,
+      'totalRevenue': 0.0,
+      'activeCustomers': 0,
+      'avgOrderValue': 0.0,
+      'error': true,
     },
   );
 });

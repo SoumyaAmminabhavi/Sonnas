@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 import '../services/staff_service.dart';
-
+import '../services/constants.dart';
 
 
 import '../staff/shared/staff_roles.dart';
@@ -26,16 +26,8 @@ class _AddStaffPageState extends State<AddStaffPage> {
   StaffRole _selectedRole = StaffRole.chef;
   SubRole _selectedSubRole = SubRole.none;
   StaffShift _selectedShift = StaffShift.fullDay;
-  Map<String, bool> _permissions = {
-    'Manage Orders': true,
-    'Access Inventory': true,
-    'Staff Management': false,
-    'Hygiene & Maintenance': false,
-    'Menu & Pricing': false,
-    'Sales Intelligence': false,
-    'Handle Payments': false,
-  };
-  final List<String> _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  late Map<String, bool> _permissions;
+  late List<String> _workingDays;
 
   final List<String> _allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   
@@ -65,6 +57,14 @@ class _AddStaffPageState extends State<AddStaffPage> {
     
     if (image != null) {
       final bytes = await image.readAsBytes();
+      if (bytes.length > AuthConstants.maxImageSizeBytes) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Image too large. Maximum size is ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB")),
+          );
+        }
+        return;
+      }
       setState(() {
         _pickedImage = image;
         _imageBytes = bytes;
@@ -75,6 +75,16 @@ class _AddStaffPageState extends State<AddStaffPage> {
   @override
   void initState() {
     super.initState();
+    _permissions = {
+      'Manage Orders': true,
+      'Access Inventory': true,
+      'Staff Management': false,
+      'Hygiene & Maintenance': false,
+      'Menu & Pricing': false,
+      'Sales Intelligence': false,
+      'Handle Payments': false,
+    };
+    _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
     if (widget.staff != null) {
       final s = widget.staff!;
       _nameController.text = s['name'] ?? '';
@@ -106,8 +116,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       _endTimeController.text = s['shiftEnd'] ?? '04:00 PM';
       
       if (s['workingDays'] != null) {
-        _workingDays.clear();
-        _workingDays.addAll(List<String>.from(s['workingDays']));
+        _workingDays = List<String>.from(s['workingDays']);
       }
     }
   }
@@ -736,11 +745,15 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
 
 
-  String _generateJoiningCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No confusing 0, O, 1, I
+  Future<String> _generateUniqueJoiningCode() async {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random.secure();
-    return String.fromCharCodes(Iterable.generate(
-        5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+    for (int i = 0; i < AuthConstants.maxJoiningCodeRetries; i++) {
+      final code = String.fromCharCodes(Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+      final isTaken = await StaffService.isJoiningCodeTaken(code);
+      if (!isTaken) return code;
+    }
+    throw StateError('Failed to generate a unique joining code after ${AuthConstants.maxJoiningCodeRetries} attempts');
   }
 
   Future<void> _saveStaff() async {
@@ -773,7 +786,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
       String? joiningCode;
       if (!isEdit) {
-        joiningCode = _generateJoiningCode();
+        joiningCode = await _generateUniqueJoiningCode();
       }
 
       final staff = {
@@ -1110,7 +1123,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
               ),
             );
           }).toList(),
-          onChanged: (val) => setState(() => _selectedBloodGroup = val),
+          onChanged: widget.isReadOnly ? null : (val) => setState(() => _selectedBloodGroup = val),
         ),
       ],
     );

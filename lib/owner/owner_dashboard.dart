@@ -28,6 +28,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
   late PageController _pageController;
   int? _lastOrderCount;
   int _settingsResetCounter = 0;
+  String? _lastNotifiedOrderId;
 
   @override
   void initState() {
@@ -102,8 +103,12 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
     ref.listen(recentOrdersProvider, (previous, next) {
       if (next.hasValue && next.value != null) {
         final orders = next.value!;
-        if (_lastOrderCount != null && orders.length > _lastOrderCount!) {
-          _showNewOrderNotification(orders.first);
+        if (orders.isNotEmpty) {
+          final latestOrderId = orders.first['id']?.toString();
+          if (latestOrderId != null && latestOrderId != _lastNotifiedOrderId && (_lastOrderCount == null || orders.length > _lastOrderCount!)) {
+            _showNewOrderNotification(orders.first);
+            _lastNotifiedOrderId = latestOrderId;
+          }
         }
         _lastOrderCount = orders.length;
       }

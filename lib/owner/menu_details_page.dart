@@ -315,7 +315,10 @@ class _OptionCard extends StatelessWidget {
             children: [
               Text("SIZE / SERVINGS", style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: cs.secondary.withValues(alpha: 0.4), letterSpacing: 1.0)),
               const SizedBox(height: 4),
-              Text("Serves ${opt['serves']?.toString() ?? 'N/A'}", style: GoogleFonts.notoSerif(fontSize: 15, fontWeight: FontWeight.bold, color: cs.secondary)),
+              Text(
+                "${opt['size']?.toString() ?? 'N/A'} • Serves ${opt['serves']?.toString() ?? 'N/A'}",
+                style: GoogleFonts.notoSerif(fontSize: 15, fontWeight: FontWeight.bold, color: cs.secondary),
+              ),
             ],
           ),
           Text(OrderService.formatPrice(opt['price']), style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.bold, color: cs.primary)),

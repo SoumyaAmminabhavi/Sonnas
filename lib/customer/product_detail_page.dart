@@ -96,7 +96,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
               ),
             ),
             Text(
-              "₹${product['price']}",
+              "₹${_formatPrice(product['price'])}",
               style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w800, color: cs.primary),
             ),
           ],
@@ -106,7 +106,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(99)),
           child: Text(
-            product['category']?.toString().toUpperCase() ?? 'BOUTIQUE',
+            _getCategoryName(product),
             style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: cs.primary, letterSpacing: 1.0),
           ),
         ),
@@ -165,7 +165,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
                 ref.read(cartProvider.notifier).addItem(product, quantity: _quantity);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Added to cart! 🍰"), behavior: SnackBarBehavior.floating),
+                  SnackBar(content: Text("Added to cart!"), behavior: SnackBarBehavior.floating),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -181,5 +181,21 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
         ],
       ),
     );
+  }
+
+  static String _formatPrice(dynamic price) {
+    if (price == null) return '0';
+    final int priceInt = price is int ? price : int.tryParse(price.toString()) ?? 0;
+    if (priceInt > 999) {
+      final rupees = priceInt / 100;
+      return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
+    }
+    return priceInt.toString();
+  }
+
+  static String _getCategoryName(Map<String, dynamic> product) {
+    final cat = product['Category'];
+    if (cat is Map) return (cat['name'] ?? 'BOUTIQUE').toString().toUpperCase();
+    return (cat ?? 'BOUTIQUE').toString().toUpperCase();
   }
 }

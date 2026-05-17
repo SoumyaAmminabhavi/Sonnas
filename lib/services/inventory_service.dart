@@ -9,6 +9,12 @@ class InventoryService {
     return _client.from('InventoryItem').stream(primaryKey: ['id']).order('name');
   }
 
+  /// One-time fetch for inventory items (useful for dialogs to avoid nested stream subscriptions)
+  static Future<List<Map<String, dynamic>>> fetchInventory() async {
+    final res = await _client.from('InventoryItem').select().order('name');
+    return List<Map<String, dynamic>>.from(res);
+  }
+
   /// Add a new inventory item
   static Future<void> addInventoryItem(Map<String, dynamic> item) async {
     await _client.from('InventoryItem').insert(item);

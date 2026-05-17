@@ -212,10 +212,16 @@ class StaffInventoryPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (preselectedItem == null)
-                StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: InventoryService.getInventoryStream(),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: InventoryService.fetchInventory(),
                   builder: (context, snapshot) {
                     final items = snapshot.data ?? [];
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox(
+                        height: 48,
+                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      );
+                    }
                     return DropdownButtonFormField<String>(
                       initialValue: selectedItem?['id'],
                       decoration: InputDecoration(
@@ -287,7 +293,7 @@ class StaffInventoryPage extends StatelessWidget {
                       SnackBar(
                         content: Text(isConsumption 
                           ? "Recorded consumption of $qty ${selectedItem!['unit']} ${selectedItem!['name']}"
-                          : "Stock updated for ${selectedItem!['name']}! 📦"),
+                          : "Stock updated for ${selectedItem!['name']}!"),
                         backgroundColor: isConsumption ? cs.error : Colors.green.shade700,
                       ),
                     );

@@ -297,8 +297,17 @@ class _StaffCard extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
-              await StaffService.deleteStaff(staff['id']);
-              if (ctx.mounted) Navigator.pop(ctx);
+              try {
+                await StaffService.deleteStaff(staff['id']);
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (e) {
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Failed to delete staff: $e")),
+                  );
+                }
+              }
             }, 
             child: const Text("Delete", style: TextStyle(color: Colors.redAccent))
           ),

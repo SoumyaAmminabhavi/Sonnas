@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
+import 'constants.dart';
 
 class StaffService {
   static SupabaseClient get _client => SupabaseService.client;
@@ -31,11 +32,28 @@ class StaffService {
   }
 
   static Future<String> uploadStaffImage(String fileName, List<int> bytes) async {
+    final uint8Bytes = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+    if (uint8Bytes.length > AuthConstants.maxImageSizeBytes) {
+      throw ArgumentError('Image size exceeds ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB limit');
+    }
     await _client.storage.from('staff_photos').uploadBinary(
       fileName, 
-      Uint8List.fromList(bytes),
+      uint8Bytes,
       fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
     );
     return fileName;
+  }
+
+  static Future<bool> isJoiningCodeTaken(String code) async {
+    try {
+      final res = await _client
+          .from('Staff')
+          .select('id')
+          .eq('joiningCode', code)
+          .maybeSingle();
+      return res != null;
+    } catch (e) {
+      return false;
+    }
   }
 }

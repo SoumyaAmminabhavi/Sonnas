@@ -1,14 +1,68 @@
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'constants.dart';
 
 class OrderService {
   static SupabaseClient get _client => SupabaseService.client;
 
-  /// Real-time stream for ALL orders
-  static Stream<List<Map<String, dynamic>>> getAllOrdersStream() {
-    return _client.from('Order').stream(primaryKey: ['id']).order('createdAt', ascending: false);
+  static Stream<T> _debounceStream<T>(Stream<T> source, Duration duration) {
+    Timer? debounceTimer;
+    final controller = StreamController<T>.broadcast();
+
+    source.listen(
+      (data) {
+        debounceTimer?.cancel();
+        debounceTimer = Timer(duration, () {
+          if (!controller.isClosed) controller.add(data);
+        });
+      },
+      onError: (e, st) {
+        debounceTimer?.cancel();
+        if (!controller.isClosed) controller.addError(e, st);
+      },
+    );
+
+    return controller.stream;
+  }
+
+  static Stream<R> _switchMapAsync<T, R>(Stream<T> source, Future<R> Function(T) mapper) {
+    final controller = StreamController<R>.broadcast();
+    int latestRequestId = 0;
+
+    source.listen(
+      (data) async {
+        final requestId = ++latestRequestId;
+        try {
+          final result = await mapper(data);
+          if (requestId == latestRequestId && !controller.isClosed) {
+            controller.add(result);
+          }
+        } catch (e, st) {
+          if (requestId == latestRequestId && !controller.isClosed) {
+            controller.addError(e, st);
+          }
+        }
+      },
+      onError: (e, st) {
+        if (!controller.isClosed) controller.addError(e, st);
+      },
+    );
+
+    return controller.stream;
+  }
+
+  /// Real-time stream for orders (limited to recent 90 days to prevent memory bloat)
+  static Stream<List<Map<String, dynamic>>> getAllOrdersStream({int limit = OrderConstants.defaultOrderLimit}) {
+    final cutoff = DateTime.now().subtract(OrderConstants.orderHistoryWindow).toIso8601String();
+    return _client
+        .from('Order')
+        .stream(primaryKey: ['id'])
+        .gte('createdAt', cutoff)
+        .order('createdAt', ascending: false)
+        .limit(limit);
   }
 
   /// Launch Google Maps for a delivery address
@@ -22,29 +76,29 @@ class OrderService {
 
   /// Format price with currency symbol (converts minor units to major)
   static String formatPrice(dynamic price) {
-    if (price == null) return "₹0";
+    if (price == null) return "${PriceConstants.currencySymbol}0";
     try {
       double p;
       if (price is num) {
-        p = price.toDouble() / 100.0;
+        p = price.toDouble() / PriceConstants.minorUnitsPerMajor;
       } else {
         String clean = price.toString()
-            .replaceAll('₹', '')
-            .replaceAll('INR', '')
+            .replaceAll(PriceConstants.currencySymbol, '')
+            .replaceAll(PriceConstants.currencyCode, '')
             .replaceAll('/-', '')
             .replaceAll(',', '')
             .trim();
             
-        if (clean.isEmpty) return "₹0";
-        p = double.parse(clean) / 100.0;
+        if (clean.isEmpty) return "${PriceConstants.currencySymbol}0";
+        p = double.parse(clean) / PriceConstants.minorUnitsPerMajor;
       }
       
       if (p == p.toInt().toDouble()) {
-        return "₹${p.toInt()}";
+        return "${PriceConstants.currencySymbol}${p.toInt()}";
       }
       return "₹${p.toStringAsFixed(2)}";
     } catch (e) {
-      return "₹$price";
+      return "${PriceConstants.currencySymbol}$price";
     }
   }
 
@@ -138,20 +192,25 @@ class OrderService {
     }
   }
 
-  /// Real-time stream for recent orders
-  /// Real-time stream for recent orders with joined data
+  /// Real-time stream for recent orders with joined data (debounced to prevent query storms)
   static Stream<List<Map<String, dynamic>>> getRecentOrdersStream() {
-    return _client
+    final rawStream = _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .asyncMap((_) async {
-          final res = await _client
-              .from('Order')
-              .select('*, WhatsAppConversation(*)')
-              .order('createdAt', ascending: false)
-              .limit(50);
-          return List<Map<String, dynamic>>.from(res);
-        });
+        .order('createdAt', ascending: false)
+        .limit(1);
+
+    return _switchMapAsync(
+      _debounceStream(rawStream, OrderConstants.streamDebounce),
+      (_) async {
+        final res = await _client
+            .from('Order')
+            .select('*, WhatsAppConversation(*)')
+            .order('createdAt', ascending: false)
+            .limit(OrderConstants.recentOrdersLimit);
+        return List<Map<String, dynamic>>.from(res);
+      },
+    );
   }
 
   /// Bulk fetch items for multiple orders
@@ -259,10 +318,8 @@ class OrderService {
     final normalizedStatus = status.toUpperCase();
     final Map<String, dynamic> payload = {
       'status': normalizedStatus,
-      'updatedAt': now,
     };
     
-    // Set specific audit timestamps
     if (normalizedStatus == 'CONFIRMED') payload['confirmedAt'] = now;
     if (normalizedStatus == 'DELIVERED') payload['deliveredAt'] = now;
     if (normalizedStatus == 'COMPLETED') payload['completedAt'] = now;
@@ -282,7 +339,6 @@ class OrderService {
     final normalizedStatus = status.toUpperCase();
     final Map<String, dynamic> payload = {
       'paymentStatus': normalizedStatus,
-      'updatedAt': now,
     };
     
     if (normalizedStatus == 'PAID') {
@@ -308,28 +364,32 @@ class OrderService {
     return phone;
   }
 
-  /// Real-time stream for kitchen
-  /// Real-time stream for kitchen with joined data
+  /// Real-time stream for kitchen with joined data (debounced to prevent query storms)
   static Stream<List<Map<String, dynamic>>> getKitchenOrdersStream() {
-    return _client
+    final rawStream = _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .asyncMap((_) async {
-          final res = await _client
-              .from('Order')
-              .select('*, WhatsAppConversation(*)')
-              .inFilter('status', ['PENDING', 'CONFIRMED'])
-              .order('createdAt', ascending: true);
-          return List<Map<String, dynamic>>.from(res);
-        });
+        .inFilter('status', ['PENDING', 'CONFIRMED'])
+        .limit(1);
+
+    return _switchMapAsync(
+      _debounceStream(rawStream, OrderConstants.streamDebounce),
+      (_) async {
+        final res = await _client
+            .from('Order')
+            .select('*, WhatsAppConversation(*)')
+            .inFilter('status', ['PENDING', 'CONFIRMED'])
+            .order('createdAt', ascending: true);
+        return List<Map<String, dynamic>>.from(res);
+      },
+    );
   }
 
   /// Submit a public order atomically via RPC.
   static Future<void> submitPublicOrder(Map<String, dynamic> data) async {
     final orderData = Map<String, dynamic>.from(data);
     
-    // Set unified source
-    orderData['source'] = 'APP';
+    orderData['source'] = OrderConstants.defaultSource;
     
     try {
       final rawItems = orderData.remove('items');

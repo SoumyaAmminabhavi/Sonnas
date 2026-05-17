@@ -6,29 +6,40 @@ import 'supabase_service.dart';
 class MenuService {
   static SupabaseClient get _client => SupabaseService.client;
 
-  /// Real-time menu updates
   /// Real-time menu updates with joined data
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
     final controller = StreamController<List<Map<String, dynamic>>>.broadcast();
     final subscriptions = <StreamSubscription>[];
     var refreshRequestId = 0;
+    bool isDisposed = false;
 
     Future<void> refresh() async {
+      if (isDisposed) return;
       final requestId = ++refreshRequestId;
       try {
         final data = await fetchMenu();
-        if (requestId != refreshRequestId) return;
+        if (isDisposed || requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.add(data);
       } catch (e, stackTrace) {
-        if (requestId != refreshRequestId) return;
+        if (isDisposed || requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.addError(e, stackTrace);
       }
     }
 
     void handleEvent(_) => refresh();
 
+    void cleanup() {
+      if (isDisposed) return;
+      isDisposed = true;
+      for (final sub in subscriptions) {
+        sub.cancel();
+      }
+      subscriptions.clear();
+      if (!controller.isClosed) controller.close();
+    }
+
     controller.onListen = () {
-      if (subscriptions.isEmpty) {
+      if (subscriptions.isEmpty && !isDisposed) {
         subscriptions.add(_client.from('Cake').stream(primaryKey: ['id']).listen(handleEvent));
         subscriptions.add(_client.from('Category').stream(primaryKey: ['id']).listen(handleEvent));
         subscriptions.add(_client.from('CakeOption').stream(primaryKey: ['id']).listen(handleEvent));
@@ -36,13 +47,7 @@ class MenuService {
       }
     };
 
-    controller.onCancel = () {
-      for (final sub in subscriptions) {
-        sub.cancel();
-      }
-      subscriptions.clear();
-      // Keep shared controller open for reuse
-    };
+    controller.onCancel = cleanup;
 
     return controller.stream;
   }
@@ -112,64 +117,48 @@ class MenuService {
 
   /// Create or update a category
   static Future<String> upsertCategory(Map<String, dynamic> category) async {
-    try {
-      final data = Map<String, dynamic>.from(category);
-      data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
-      final res = await _client.from('Category').upsert(data).select().single();
-      return res['id'].toString();
-    } catch (e) {
-      debugPrint('⚠️ Upsert Category Failed: $e');
-      rethrow;
-    }
+    final data = Map<String, dynamic>.from(category);
+    data.remove('updatedAt');
+    final res = await _client.from('Category').upsert(data).select().single();
+    return res['id'].toString();
   }
 
   /// Create or update a menu item (Cake)
   static Future<String> upsertCake(Map<String, dynamic> cake) async {
-    try {
-      // Remove the legacy 'category' string field if it exists in the payload
-      final data = Map<String, dynamic>.from(cake);
-      data.remove('category');
-      data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
-      
-      final res = await _client.from('Cake').upsert(data).select().single();
-      return res['id'].toString();
-    } catch (e) {
-      debugPrint('⚠️ Upsert Cake Failed: $e');
-      rethrow;
-    }
+    final data = Map<String, dynamic>.from(cake);
+    data.remove('category');
+    data.remove('updatedAt');
+    
+    final res = await _client.from('Cake').upsert(data).select().single();
+    return res['id'].toString();
   }
 
   /// Create or update a cake option
   static Future<void> upsertCakeOption(Map<String, dynamic> option) async {
+    final cakeIdRaw = option['cakeId'];
+    final sizeRaw = option['size'];
+    if (cakeIdRaw == null || sizeRaw == null) {
+      throw ArgumentError('cakeId and size are required for CakeOption');
+    }
+    final String cakeId = cakeIdRaw.toString();
+    final String size = sizeRaw.toString().trim();
+    if (size.isEmpty) {
+      throw ArgumentError('size must not be empty or whitespace-only');
+    }
+
+    final data = Map<String, dynamic>.from(option);
+    data['cakeId'] = cakeId;
+    data['size'] = size;
+    data.remove('updatedAt');
+
     try {
-      final cakeIdRaw = option['cakeId'];
-      final sizeRaw = option['size'];
-      if (cakeIdRaw == null || sizeRaw == null) {
-        throw ArgumentError('cakeId and size are required for CakeOption');
+      await _client.from('CakeOption').upsert(data);
+    } catch (dbError) {
+      final errStr = dbError.toString();
+      if (errStr.contains('23505') || errStr.toLowerCase().contains('unique constraint')) {
+         throw StateError('A CakeOption for cakeId=$cakeId and size=$size already exists. Please provide the correct ID to update the existing record.');
       }
-      final String cakeId = cakeIdRaw.toString();
-      final String size = sizeRaw.toString().trim();
-      if (size.isEmpty) {
-        throw ArgumentError('size must not be empty or whitespace-only');
-      }
-
-      final data = Map<String, dynamic>.from(option);
-      data['cakeId'] = cakeId;
-      data['size'] = size;
-      data['updatedAt'] = DateTime.now().toUtc().toIso8601String();
-
-      try {
-        await _client.from('CakeOption').upsert(data);
-      } catch (dbError) {
-        final errStr = dbError.toString();
-        if (errStr.contains('23505') || errStr.toLowerCase().contains('unique constraint')) {
-           throw StateError('A CakeOption for cakeId=$cakeId and size=$size already exists. Please provide the correct ID to update the existing record.');
-        }
-        debugPrint('⚠️ Upsert CakeOption Failed: $dbError');
-        rethrow;
-      }
-    } catch (e) {
-      debugPrint('⚠️ Upsert CakeOption Failed: $e');
+      debugPrint('⚠️ Upsert CakeOption Failed: $dbError');
       rethrow;
     }
   }

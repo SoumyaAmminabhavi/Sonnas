@@ -32,12 +32,21 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCF9F7),
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(cs, cart.itemCount),
-          _buildCategoryFilter(cs),
-          _buildProductGrid(cs),
-        ],
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _menuFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final menuData = snapshot.data ?? [];
+          return CustomScrollView(
+            slivers: [
+              _buildAppBar(cs, cart.itemCount),
+              _buildCategoryFilter(cs, menuData),
+              _buildProductGrid(cs, menuData),
+            ],
+          );
+        },
       ),
       floatingActionButton: cart.items.isNotEmpty
           ? _buildCartFab(cs, cart)
@@ -77,79 +86,78 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
     );
   }
 
-  Widget _buildCategoryFilter(ColorScheme cs) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _menuFuture,
-      builder: (context, snapshot) {
-        final categories = {'ALL', ...snapshot.data?.map((e) => e['category']?.toString().toUpperCase() ?? 'OTHER') ?? {}};
-        
-        return SliverToBoxAdapter(
-          child: SizedBox(
-            height: 60,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: categories.map((cat) {
-                final isSelected = _selectedCategory == cat;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ChoiceChip(
-                    label: Text(cat),
-                    selected: isSelected,
-                    onSelected: (val) => setState(() => _selectedCategory = cat),
-                    backgroundColor: Colors.white,
-                    selectedColor: cs.primary,
-                    labelStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : cs.secondary.withValues(alpha: 0.6),
-                      letterSpacing: 1.0,
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
-                    side: BorderSide(color: isSelected ? Colors.transparent : cs.secondary.withValues(alpha: 0.1)),
-                    showCheckmark: false,
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        );
-      },
+  Widget _buildCategoryFilter(ColorScheme cs, List<Map<String, dynamic>> menuData) {
+    final categories = {'ALL', ...menuData.map((e) {
+      final cat = e['Category'];
+      if (cat is Map) return (cat['name'] ?? 'OTHER').toString().toUpperCase();
+      return (cat ?? 'OTHER').toString().toUpperCase();
+    })};
+    
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 60,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          children: categories.map((cat) {
+            final isSelected = _selectedCategory == cat;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: ChoiceChip(
+                label: Text(cat),
+                selected: isSelected,
+                onSelected: (val) => setState(() => _selectedCategory = cat),
+                backgroundColor: Colors.white,
+                selectedColor: cs.primary,
+                labelStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : cs.secondary.withValues(alpha: 0.6),
+                  letterSpacing: 1.0,
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(99)),
+                side: BorderSide(color: isSelected ? Colors.transparent : cs.secondary.withValues(alpha: 0.1)),
+                showCheckmark: false,
+              ),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 
-  Widget _buildProductGrid(ColorScheme cs) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _menuFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
-        }
+  Widget _buildProductGrid(ColorScheme cs, List<Map<String, dynamic>> menuData) {
+    final allItems = menuData;
+    final filteredItems = _selectedCategory == 'ALL' 
+        ? allItems 
+        : allItems.where((i) {
+            final cat = i['Category'];
+            String catName;
+            if (cat is Map) {
+              catName = (cat['name'] ?? 'OTHER').toString().toUpperCase();
+            } else {
+              catName = (cat ?? 'OTHER').toString().toUpperCase();
+            }
+            return catName == _selectedCategory;
+          }).toList();
 
-        final allItems = snapshot.data ?? [];
-        final filteredItems = _selectedCategory == 'ALL' 
-            ? allItems 
-            : allItems.where((i) => i['category']?.toString().toUpperCase() == _selectedCategory).toList();
-
-        return SliverPadding(
-          padding: const EdgeInsets.all(24),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 24,
-              mainAxisExtent: 280,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = filteredItems[index];
-                return _ProductCard(item: item, cs: cs, index: index);
-              },
-              childCount: filteredItems.length,
-            ),
-          ),
-        );
-      },
+    return SliverPadding(
+      padding: const EdgeInsets.all(24),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 24,
+          mainAxisExtent: 280,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final item = filteredItems[index];
+            return _ProductCard(item: item, cs: cs, index: index);
+          },
+          childCount: filteredItems.length,
+        ),
+      ),
     );
   }
 
@@ -237,7 +245,7 @@ class _ProductCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          "₹${item['price'] ?? '0'}",
+                          "₹${_formatPrice(item['price'])}",
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
@@ -316,5 +324,15 @@ class _ProductCard extends ConsumerWidget {
       color: cs.primary.withValues(alpha: 0.05),
       child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
     );
+  }
+
+  static String _formatPrice(dynamic price) {
+    if (price == null) return '0';
+    final int priceInt = price is int ? price : int.tryParse(price.toString()) ?? 0;
+    if (priceInt > 999) {
+      final rupees = priceInt / 100;
+      return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
+    }
+    return priceInt.toString();
   }
 }

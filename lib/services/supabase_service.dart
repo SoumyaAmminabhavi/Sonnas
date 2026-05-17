@@ -5,17 +5,34 @@ import 'dart:io' if (dart.library.html) 'platform_file_stub.dart' as io show Fil
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
-  static final String supabaseUrl = (dotenv.env['SUPABASE_URL'] ?? '').trim();
-  static final String supabaseAnonKey = (dotenv.env['SUPABASE_ANON_KEY'] ?? '').trim();
+  static String get _supabaseUrlFromDefine => const String.fromEnvironment('SUPABASE_URL');
+  static String get _supabaseAnonKeyFromDefine => const String.fromEnvironment('SUPABASE_ANON_KEY');
+
+  static late final String supabaseUrl;
+  static late final String supabaseAnonKey;
+
+  static String? _safeDotenv(String key) {
+    try {
+      return dotenv.isInitialized ? dotenv.env[key] : null;
+    } catch (_) {
+      return null;
+    }
+  }
   
   static Future<void> initialize() async {
+    supabaseUrl = (_supabaseUrlFromDefine.isNotEmpty
+        ? _supabaseUrlFromDefine
+        : (_safeDotenv('SUPABASE_URL') ?? '')).trim();
+    supabaseAnonKey = (_supabaseAnonKeyFromDefine.isNotEmpty
+        ? _supabaseAnonKeyFromDefine
+        : (_safeDotenv('SUPABASE_ANON_KEY') ?? '')).trim();
+
     if (supabaseUrl.isEmpty) {
-      throw StateError('SUPABASE_URL is not set in .env. Add your Supabase project URL before running the app.');
+      throw StateError('SUPABASE_URL is not set. Provide via --dart-define=SUPABASE_URL=... or .env file.');
     }
     if (supabaseAnonKey.isEmpty) {
-      throw StateError('SUPABASE_ANON_KEY is not set in .env. Add your Supabase anon/public key before running the app.');
+      throw StateError('SUPABASE_ANON_KEY is not set. Provide via --dart-define=SUPABASE_ANON_KEY=... or .env file.');
     }
-    // Initialize Primary Supabase
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
