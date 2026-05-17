@@ -249,15 +249,17 @@ class _ProductCard extends ConsumerWidget {
                       child: Hero(
                         tag: 'product_${item['id']}',
                         child: imageUrl.isNotEmpty
-                            ? CachedNetworkImage(
-                                imageUrl: imageUrl,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: cs.primary.withValues(alpha: 0.05),
-                                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                ),
-                                errorWidget: (context, url, error) => _placeholder(cs),
-                              )
+                            ? (imageUrl.startsWith('data:')
+                                ? _buildDataImage(imageUrl, cs)
+                                : CachedNetworkImage(
+                                    imageUrl: imageUrl,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: cs.primary.withValues(alpha: 0.05),
+                                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    ),
+                                    errorWidget: (context, url, error) => _placeholder(cs),
+                                  ))
                             : _placeholder(cs),
                       ),
                     ),
@@ -343,6 +345,18 @@ class _ProductCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static Widget _buildDataImage(String dataUrl, ColorScheme cs) {
+    try {
+      final uriData = UriData.parse(dataUrl);
+      return Image.memory(
+        uriData.contentAsBytes(),
+        fit: BoxFit.cover,
+      );
+    } catch (e) {
+      return _placeholder(cs);
+    }
   }
 
   static Widget _placeholder(ColorScheme cs) {

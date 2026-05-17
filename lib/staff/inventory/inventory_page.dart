@@ -92,7 +92,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                   Row(
                     children: [
                       OutlinedButton.icon(
-                        onPressed: () => _showAddStockDialog(context, isConsumption: true),
+                        onPressed: () => _showAddStockDialog(context, isConsumption: true, fallbackItems: items),
                         icon: const Icon(Icons.remove_shopping_cart_rounded),
                         label: const Text("Usage Entry"),
                         style: OutlinedButton.styleFrom(
@@ -103,7 +103,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                       ),
                       const SizedBox(width: 16),
                       ElevatedButton.icon(
-                        onPressed: () => _showAddStockDialog(context),
+                        onPressed: () => _showAddStockDialog(context, fallbackItems: items),
                         icon: const Icon(Icons.add_shopping_cart_rounded),
                         label: const Text("Purchase Entry"),
                         style: ElevatedButton.styleFrom(
@@ -157,7 +157,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                 return _InventoryCard(
                   item: item, 
                   cs: widget.cs,
-                  onAddStock: (item) => _showAddStockDialog(context, preselectedItem: item),
+                  onAddStock: (item) => _showAddStockDialog(context, preselectedItem: item, fallbackItems: items),
                 );
               },
             ),
@@ -214,10 +214,12 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
     );
   }
 
-  void _showAddStockDialog(BuildContext context, {Map<String, dynamic>? preselectedItem, bool isConsumption = false}) {
+  void _showAddStockDialog(BuildContext context, {Map<String, dynamic>? preselectedItem, bool isConsumption = false, List<Map<String, dynamic>> fallbackItems = const []}) {
     final TextEditingController quantityController = TextEditingController();
     Map<String, dynamic>? selectedItem = preselectedItem;
     bool isSubmitting = false;
+    bool isManualSelection = false;
+    Future<List<Map<String, dynamic>>> dialogInventoryFuture = _inventoryFuture;
 
     showDialog(
       context: context,
@@ -231,39 +233,86 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (preselectedItem == null)
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _inventoryFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasError) {
-                      return Column(
-                        children: [
-                          Text("Failed to load ingredients", style: TextStyle(color: widget.cs.error, fontSize: 12)),
-                          const SizedBox(height: 8),
-                          Text("Select an item manually or retry", style: TextStyle(color: widget.cs.secondary.withValues(alpha: 0.5), fontSize: 10)),
-                        ],
+                StatefulBuilder(
+                  builder: (context, setFieldState) {
+                    if (isManualSelection) {
+                      return DropdownButtonFormField<String>(
+                        initialValue: selectedItem?['id'],
+                        decoration: InputDecoration(
+                          labelText: "Select Ingredient (Manual)",
+                          labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
+                        ),
+                        items: fallbackItems.map((item) => DropdownMenuItem(
+                          value: item['id'] as String,
+                          child: Text(item['name'] ?? ''),
+                        )).toList(),
+                        onChanged: (val) {
+                          final newItem = fallbackItems.firstWhere((i) => i['id'] == val);
+                          setDialogState(() => selectedItem = newItem);
+                          setFieldState(() {});
+                        },
                       );
                     }
-                    if (!snapshot.hasData) {
-                      return const SizedBox(
-                        height: 48,
-                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                      );
-                    }
-                    final items = snapshot.data!;
-                    return DropdownButtonFormField<String>(
-                      initialValue: selectedItem?['id'],
-                      decoration: InputDecoration(
-                        labelText: "Select Ingredient",
-                        labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
-                      ),
-                      items: items.map((item) => DropdownMenuItem(
-                        value: item['id'] as String,
-                        child: Text(item['name'] ?? ''),
-                      )).toList(),
-                      onChanged: (val) {
-                        final newItem = items.firstWhere((i) => i['id'] == val);
-                        setDialogState(() => selectedItem = newItem);
-                      },
+
+                    return FutureBuilder<List<Map<String, dynamic>>>(
+                      future: dialogInventoryFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return Column(
+                            children: [
+                              Text("Failed to load ingredients", style: TextStyle(color: widget.cs.error, fontSize: 12)),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        dialogInventoryFuture = InventoryService.fetchInventory();
+                                      });
+                                      setFieldState(() {});
+                                    },
+                                    icon: const Icon(Icons.refresh, size: 14),
+                                    label: const Text("Retry", style: TextStyle(fontSize: 12)),
+                                  ),
+                                  if (fallbackItems.isNotEmpty)
+                                    TextButton.icon(
+                                      onPressed: () {
+                                        setFieldState(() {
+                                          isManualSelection = true;
+                                        });
+                                      },
+                                      icon: const Icon(Icons.edit, size: 14),
+                                      label: const Text("Select manually", style: TextStyle(fontSize: 12)),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          );
+                        }
+                        if (!snapshot.hasData) {
+                          return const SizedBox(
+                            height: 48,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          );
+                        }
+                        final items = snapshot.data!;
+                        return DropdownButtonFormField<String>(
+                          initialValue: selectedItem?['id'],
+                          decoration: InputDecoration(
+                            labelText: "Select Ingredient",
+                            labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
+                          ),
+                          items: items.map((item) => DropdownMenuItem(
+                            value: item['id'] as String,
+                            child: Text(item['name'] ?? ''),
+                          )).toList(),
+                          onChanged: (val) {
+                            final newItem = items.firstWhere((i) => i['id'] == val);
+                            setDialogState(() => selectedItem = newItem);
+                          },
+                        );
+                      }
                     );
                   }
                 )

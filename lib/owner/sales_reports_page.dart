@@ -117,15 +117,27 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     }).toList();
   }
 
+  double _parsePrice(dynamic value) {
+    if (value == null) return 0.0;
+    final str = value.toString().trim();
+    if (str.isEmpty) return 0.0;
+    final hasCurrency = str.contains('₹') || str.contains(r'$') || str.toLowerCase().contains('rs');
+    final hasDecimal = str.contains('.');
+    final cleanStr = str.replaceAll('₹', '').replaceAll(r'$', '').replaceAll(',', '').trim();
+    final parsed = double.tryParse(cleanStr) ?? 0.0;
+    if (hasCurrency || hasDecimal) {
+      return parsed;
+    }
+    return parsed / 100.0;
+  }
+
   void _calculateMetrics() {
     _totalRevenue = 0;
     final paidOrders = _paidOrders;
     _totalOrders = paidOrders.length;
 
     for (var order in paidOrders) {
-      final priceStr = order['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
-      final rawValue = double.tryParse(priceStr) ?? 0.0;
-      final total = rawValue / 100.0;
+      final total = _parsePrice(order['totalPrice']);
       _totalRevenue += total;
     }
 
@@ -148,8 +160,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       );
 
       final category = matchingCake['Category']?['name'] ?? 'Custom';
-      final priceStr = item['price']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
-      final itemPrice = (double.tryParse(priceStr) ?? 0.0) / 100.0;
+      final itemPrice = _parsePrice(item['price']);
       final qty = (item['quantity'] as num?)?.toInt() ?? 1;
       final subtotal = itemPrice * qty;
 
@@ -285,8 +296,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     final recent = paidOrders.take(7).toList().reversed.toList();
     List<FlSpot> spots = [];
     for (int i = 0; i < recent.length; i++) {
-      final priceStr = recent[i]['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0';
-      final amount = (double.tryParse(priceStr) ?? 0.0) / 100.0;
+      final amount = _parsePrice(recent[i]['totalPrice']);
       spots.add(FlSpot(i.toDouble(), amount));
     }
     if (spots.isEmpty) return [const FlSpot(0, 0)];

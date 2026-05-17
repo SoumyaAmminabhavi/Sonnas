@@ -94,7 +94,10 @@ class AuthService {
     final normalizedPhone = _normalizePhone(phone);
 
     if (isStaffCodeLockedOut(normalizedPhone)) {
-      debugPrint('⚠️ Staff code verification locked out for $normalizedPhone');
+      final masked = normalizedPhone.length >= 4 
+          ? '******${normalizedPhone.substring(normalizedPhone.length - 4)}' 
+          : '******';
+      debugPrint('⚠️ Staff code verification locked out for $masked');
       return null;
     }
 

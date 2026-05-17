@@ -66,43 +66,110 @@ CREATE POLICY "Cake options can be modified by authenticated users"
 
 ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone to read orders (needed for order tracking)
-CREATE POLICY "Orders are viewable by authenticated users"
+-- Allow owners to read their own orders
+CREATE POLICY "Orders are viewable by order owners"
   ON "Order" FOR SELECT
-  USING (auth.uid() IS NOT NULL);
+  USING (auth.uid()::text = "userId");
+
+-- Allow authenticated staff/owner to view all orders
+CREATE POLICY "Orders are viewable by operational staff"
+  ON "Order" FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
+    )
+  );
 
 -- Allow order creation via direct insert (should move to Edge Function in production)
 CREATE POLICY "Orders can be created by anyone"
   ON "Order" FOR INSERT
   WITH CHECK (true);
 
--- Block direct updates from anon key (prevent payment/status tampering)
--- In production, only allow authenticated staff/owner to update
-CREATE POLICY "Orders can be updated by authenticated users"
+-- Allow customers to update their own orders (if not finalized)
+CREATE POLICY "Orders can be updated by owners"
   ON "Order" FOR UPDATE
-  USING (auth.role() = 'authenticated');
+  USING (auth.uid()::text = "userId");
 
--- Block direct deletion
-CREATE POLICY "Orders can be deleted by authenticated users"
+-- Allow staff/owner to update any order status/details
+CREATE POLICY "Orders can be updated by operational staff"
+  ON "Order" FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
+    )
+  );
+
+-- Block direct deletion (only staff/owner can do administrative deletions)
+CREATE POLICY "Orders can be deleted by operational staff"
   ON "Order" FOR DELETE
-  USING (auth.role() = 'authenticated');
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
+    )
+  );
 
 
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Order items are viewable by authenticated users"
+-- Allow owners to view their own order items
+CREATE POLICY "Order items are viewable by order owners"
   ON "OrderItem" FOR SELECT
-  USING (auth.uid() IS NOT NULL);
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Order" o
+      WHERE o.id = "orderId" AND o."userId" = auth.uid()::text
+    )
+  );
+
+-- Allow staff/owner to view all order items
+CREATE POLICY "Order items are viewable by operational staff"
+  ON "OrderItem" FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
+    )
+  );
 
 -- Order items should only be created alongside orders (via RPC or trigger)
-CREATE POLICY "Order items can be created by authenticated users"
+CREATE POLICY "Order items can be created by order owners"
   ON "OrderItem" FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL);
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM "Order" o
+      WHERE o.id = "orderId" AND o."userId" = auth.uid()::text
+    )
+  );
 
-CREATE POLICY "Order items can be modified by authenticated users"
+CREATE POLICY "Order items can be created by operational staff"
+  ON "OrderItem" FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
+    )
+  );
+
+CREATE POLICY "Order items can be modified by order owners"
   ON "OrderItem" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Order" o
+      WHERE o.id = "orderId" AND o."userId" = auth.uid()::text
+    )
+  );
+
+CREATE POLICY "Order items can be modified by operational staff"
+  ON "OrderItem" FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
+    )
+  );
 
 
 -- ─── Staff Table (Restricted) ───────────────────────────────────────────────
