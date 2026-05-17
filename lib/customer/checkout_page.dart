@@ -129,7 +129,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
           validator: (v) {
             if (v == null || v.trim().isEmpty) return "Required";
             if (v.trim().length < 2) return "Name is too short";
-            if (!RegExp(r"^[a-zA-Z\s.'\-]+$").hasMatch(v.trim())) return "Name contains invalid characters";
+            if (!RegExp(r"^[\p{L}\p{M}\s.'\-\u2019]+$", unicode: true).hasMatch(v.trim())) return "Name contains invalid characters";
             return null;
           },
         ),

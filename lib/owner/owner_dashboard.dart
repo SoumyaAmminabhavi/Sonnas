@@ -103,9 +103,16 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
     ref.listen(recentOrdersProvider, (previous, next) {
       if (next.hasValue && next.value != null) {
         final orders = next.value!;
+        if (_lastOrderCount == null) {
+          _lastOrderCount = orders.length;
+          if (orders.isNotEmpty) {
+            _lastNotifiedOrderId = orders.first['id']?.toString();
+          }
+          return;
+        }
         if (orders.isNotEmpty) {
           final latestOrderId = orders.first['id']?.toString();
-          if (latestOrderId != null && latestOrderId != _lastNotifiedOrderId && (_lastOrderCount == null || orders.length > _lastOrderCount!)) {
+          if (latestOrderId != null && latestOrderId != _lastNotifiedOrderId && orders.length > _lastOrderCount!) {
             _showNewOrderNotification(orders.first);
             _lastNotifiedOrderId = latestOrderId;
           }

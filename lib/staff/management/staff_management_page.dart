@@ -300,13 +300,14 @@ class _StaffCard extends StatelessWidget {
               try {
                 await StaffService.deleteStaff(staff['id']);
                 if (ctx.mounted) Navigator.pop(ctx);
-              } catch (e) {
+              } catch (e, st) {
                 if (ctx.mounted) {
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Failed to delete staff: $e")),
+                    const SnackBar(content: Text("Failed to delete staff, please try again")),
                   );
                 }
+                debugPrint('Failed to delete staff: $e\n$st');
               }
             }, 
             child: const Text("Delete", style: TextStyle(color: Colors.redAccent))

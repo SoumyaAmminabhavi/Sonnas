@@ -57,9 +57,10 @@ class AuthService {
   }
 
   static String _normalizePhone(String phone) {
-    return phone.length > AuthConstants.phoneDigits
-        ? phone.substring(phone.length - AuthConstants.phoneDigits)
-        : phone;
+    final digitsOnly = phone.replaceAll(RegExp(r'\D'), '');
+    return digitsOnly.length > AuthConstants.phoneDigits
+        ? digitsOnly.substring(digitsOnly.length - AuthConstants.phoneDigits)
+        : digitsOnly;
   }
 
   static Future<Map<String, dynamic>?> loginStaff(String phone, String password) async {

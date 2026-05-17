@@ -23,10 +23,8 @@ app.*.map.json
 /android/app/release/
 
 # ── Environment & Secrets ─────────────────────
-# Keep .env.example templates; ignore all real env files
-.env
-.env.local
-.env.production
+# Ignore all .env files; whitelist only example/template files
+.env*
 !.env.example
 !.env.*.example
 *.secret

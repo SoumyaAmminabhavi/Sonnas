@@ -837,10 +837,19 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
   void _setupOrdersSubscription() {
     _ordersSubscription?.cancel();
-    _ordersSubscription = OrderService.getAllOrdersStream().listen((orders) {
+    _ordersSubscription = OrderService.getAllOrdersStream().listen((streamOrders) {
       if (mounted) {
         setState(() {
-          _orders = orders;
+          final orderMap = <String, Map<String, dynamic>>{};
+          for (final o in _orders) {
+            final id = o['id']?.toString();
+            if (id != null) orderMap[id] = o;
+          }
+          for (final o in streamOrders) {
+            final id = o['id']?.toString();
+            if (id != null) orderMap[id] = o;
+          }
+          _orders = orderMap.values.toList();
           _calculateMetrics();
           _processItemsFromOrders(_orders, _cachedMenu);
         });

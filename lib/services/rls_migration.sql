@@ -67,10 +67,9 @@ CREATE POLICY "Cake options can be modified by authenticated users"
 ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone to read orders (needed for order tracking)
--- In production, restrict to: USING (auth.uid() = userId OR auth.role() = 'authenticated')
-CREATE POLICY "Orders are viewable by everyone"
+CREATE POLICY "Orders are viewable by authenticated users"
   ON "Order" FOR SELECT
-  USING (true);
+  USING (auth.uid() IS NOT NULL);
 
 -- Allow order creation via direct insert (should move to Edge Function in production)
 CREATE POLICY "Orders can be created by anyone"
@@ -91,14 +90,14 @@ CREATE POLICY "Orders can be deleted by authenticated users"
 
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Order items are viewable by everyone"
+CREATE POLICY "Order items are viewable by authenticated users"
   ON "OrderItem" FOR SELECT
-  USING (true);
+  USING (auth.uid() IS NOT NULL);
 
 -- Order items should only be created alongside orders (via RPC or trigger)
-CREATE POLICY "Order items can be created by anyone"
+CREATE POLICY "Order items can be created by authenticated users"
   ON "OrderItem" FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 CREATE POLICY "Order items can be modified by authenticated users"
   ON "OrderItem" FOR ALL
@@ -113,8 +112,7 @@ CREATE POLICY "Order items can be modified by authenticated users"
 ALTER TABLE "Staff" ENABLE ROW LEVEL SECURITY;
 
 -- Block all anon access to staff table
--- In production, use Edge Functions for staff verification
-CREATE POLICY "Staff data accessible by authenticated users"
+CREATE POLICY "Staff data accessible by owner role"
   ON "Staff" FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
@@ -125,7 +123,7 @@ CREATE POLICY "Staff data accessible by authenticated users"
 
 ALTER TABLE "Expense" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Expenses accessible by authenticated users"
+CREATE POLICY "Expenses accessible by owner role"
   ON "Expense" FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
@@ -136,7 +134,7 @@ CREATE POLICY "Expenses accessible by authenticated users"
 
 ALTER TABLE "InventoryItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Inventory accessible by authenticated users"
+CREATE POLICY "Inventory accessible by owner role"
   ON "InventoryItem" FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
@@ -147,7 +145,7 @@ CREATE POLICY "Inventory accessible by authenticated users"
 
 ALTER TABLE "SystemSetting" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "System settings accessible by authenticated users"
+CREATE POLICY "System settings accessible by owner role"
   ON "SystemSetting" FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
@@ -158,7 +156,7 @@ CREATE POLICY "System settings accessible by authenticated users"
 
 ALTER TABLE "WhatsAppConversation" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "WhatsApp conversations accessible by authenticated users"
+CREATE POLICY "WhatsApp conversations accessible by owner role"
   ON "WhatsAppConversation" FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
@@ -166,7 +164,7 @@ CREATE POLICY "WhatsApp conversations accessible by authenticated users"
 
 ALTER TABLE "WhatsAppCartItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "WhatsApp cart items accessible by authenticated users"
+CREATE POLICY "WhatsApp cart items accessible by owner role"
   ON "WhatsAppCartItem" FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
@@ -180,33 +178,59 @@ ALTER TABLE "Session" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "VerificationToken" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Auth tables accessible by authenticated users"
-  ON "Account" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+-- Auth tables should only be accessible by the service role (backend), not client-side.
+-- These policies restrict access to service_role only.
 
-CREATE POLICY "Auth tables accessible by authenticated users"
-  ON "Session" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+    ON "Account" FOR ALL
+    USING (auth.role() = ''service_role'')
+    WITH CHECK (auth.role() = ''service_role'')';
+END $$;
 
-CREATE POLICY "Auth tables accessible by authenticated users"
-  ON "User" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+    ON "Session" FOR ALL
+    USING (auth.role() = ''service_role'')
+    WITH CHECK (auth.role() = ''service_role'')';
+END $$;
 
-CREATE POLICY "Auth tables accessible by authenticated users"
-  ON "VerificationToken" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+DO $$
+BEGIN
+  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+    ON "User" FOR ALL
+    USING (auth.role() = ''service_role'')
+    WITH CHECK (auth.role() = ''service_role'')';
+END $$;
+
+DO $$
+BEGIN
+  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+    ON "VerificationToken" FOR ALL
+    USING (auth.role() = ''service_role'')
+    WITH CHECK (auth.role() = ''service_role'')';
+END $$;
 
 
 -- ─── RPC Function Security ──────────────────────────────────────────────────
 -- Ensure the create_order_with_items function runs with SECURITY DEFINER
 -- so it can insert into restricted tables on behalf of anon users.
 
--- Run this if the function exists:
--- ALTER FUNCTION create_order_with_items(jsonb, jsonb) SECURITY DEFINER;
+-- Run this if the function exists (migration-safe):
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON p.pronamespace = n.oid
+    WHERE p.proname = 'create_order_with_items'
+    AND n.nspname = 'public'
+    AND p.pronargs = 2
+  ) THEN
+    EXECUTE 'ALTER FUNCTION create_order_with_items(jsonb, jsonb) SECURITY DEFINER';
+  END IF;
+END $$;
 
 
 -- ─── Database Triggers for updatedAt ────────────────────────────────────────

@@ -45,15 +45,11 @@ class StaffService {
   }
 
   static Future<bool> isJoiningCodeTaken(String code) async {
-    try {
-      final res = await _client
-          .from('Staff')
-          .select('id')
-          .eq('joiningCode', code)
-          .maybeSingle();
-      return res != null;
-    } catch (e) {
-      return false;
-    }
+    final res = await _client
+        .from('Staff')
+        .select('id')
+        .eq('joiningCode', code)
+        .maybeSingle();
+    return res != null;
   }
 }

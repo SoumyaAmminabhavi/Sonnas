@@ -13,6 +13,7 @@ class InventoryAnalyticsPage extends StatefulWidget {
 
 class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
   String _selectedCategory = 'All';
+  bool _isSaving = false;
   final List<String> _categories = ['All', 'Ingredients', 'Packaging', 'Equipment', 'Other'];
 
   @override
@@ -409,6 +410,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       return;
                     }
                     
+                    setState(() => _isSaving = true);
                     try {
                       await InventoryService.addInventoryItem({
                         'name': name,
@@ -441,6 +443,8 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                           ),
                         );
                       }
+                    } finally {
+                      if (context.mounted) setState(() => _isSaving = false);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -448,7 +452,9 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text("SAVE ITEM"),
+                  child: _isSaving
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text("SAVE ITEM"),
                 ),
               ),
               const SizedBox(height: 32),

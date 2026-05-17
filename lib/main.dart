@@ -13,6 +13,14 @@ import 'services/theme_service.dart';
 import 'services/cart_provider.dart';
 import 'customer/checkout_page.dart';
 
+final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
+
+class ThemeNotifier extends Notifier<ThemeMode> {
+  @override
+  ThemeMode build() => ThemeMode.light;
+  void setTheme(ThemeMode mode) => state = mode;
+}
+
 
 void main() async {
   try {
@@ -37,10 +45,11 @@ void main() async {
     // Load saved theme
     try {
       final savedTheme = await ThemeService.getThemeMode();
-      themeController.value = savedTheme;
+      // Will be set via themeProvider after app starts
+      _initialThemeMode = savedTheme;
     } catch (e) {
       debugPrint('Theme Loading Error: $e');
-      themeController.value = ThemeMode.system;
+      _initialThemeMode = ThemeMode.system;
     }
     
     runApp(
@@ -58,8 +67,7 @@ void main() async {
   }
 }
 
-// Global theme notifier
-final themeController = ValueNotifier<ThemeMode>(ThemeMode.light);
+ThemeMode _initialThemeMode = ThemeMode.light;
 
 class PatisserieApp extends ConsumerStatefulWidget {
   const PatisserieApp({super.key});
@@ -69,29 +77,21 @@ class PatisserieApp extends ConsumerStatefulWidget {
 }
 
 class _PatisserieAppState extends ConsumerState<PatisserieApp> {
-  late final VoidCallback _themeListener;
-
   @override
   void initState() {
     super.initState();
-    _themeListener = () {
-      if (mounted) setState(() {});
-    };
-    themeController.addListener(_themeListener);
-  }
-
-  @override
-  void dispose() {
-    themeController.removeListener(_themeListener);
-    super.dispose();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(themeProvider.notifier).setTheme(_initialThemeMode);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeProvider);
     return MaterialApp(
       title: 'Sonna\'s Patisserie & Cafe',
       debugShowCheckedModeBanner: false,
-      themeMode: themeController.value,
+      themeMode: themeMode,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.light(

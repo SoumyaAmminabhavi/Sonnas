@@ -208,6 +208,7 @@ class _DashboardContent extends StatelessWidget {
       stream: OrderService.getRecentOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          debugPrint("Dashboard error: ${snapshot.error}\n${snapshot.stackTrace}");
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24.0),
@@ -217,20 +218,11 @@ class _DashboardContent extends StatelessWidget {
                   Icon(Icons.error_outline_rounded, color: cs.error, size: 48),
                   const SizedBox(height: 16),
                   Text(
-                    "Failed to load dashboard data",
+                    "Unable to load dashboard data. Please try again.",
                     style: GoogleFonts.plusJakartaSans(
                       color: cs.error,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    snapshot.error.toString(),
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary.withValues(alpha: 0.6),
-                      fontSize: 12,
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -38,6 +38,25 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: cs.error),
+                  const SizedBox(height: 16),
+                  Text("Failed to load menu", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: cs.error)),
+                  const SizedBox(height: 8),
+                  Text("Please check your connection and try again.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.5))),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => setState(() => _menuFuture = MenuService.fetchMenu()),
+                    child: const Text("RETRY"),
+                  ),
+                ],
+              ),
+            );
+          }
           final menuData = snapshot.data ?? [];
           return CustomScrollView(
             slivers: [
@@ -191,7 +210,14 @@ class _ProductCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final imagePath = item['image']?.toString() ?? '';
-    final imageUrl = imagePath.isNotEmpty ? SupabaseService.getPublicUrl(imagePath, bucket: 'cakes') : '';
+    String imageUrl;
+    if (imagePath.isEmpty) {
+      imageUrl = '';
+    } else if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
+      imageUrl = imagePath;
+    } else {
+      imageUrl = SupabaseService.getPublicUrl(imagePath, bucket: 'cakes');
+    }
     
     return InkWell(
       onTap: () => Navigator.push(

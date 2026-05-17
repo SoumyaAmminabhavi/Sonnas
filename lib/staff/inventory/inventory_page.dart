@@ -215,13 +215,22 @@ class StaffInventoryPage extends StatelessWidget {
                 FutureBuilder<List<Map<String, dynamic>>>(
                   future: InventoryService.fetchInventory(),
                   builder: (context, snapshot) {
-                    final items = snapshot.data ?? [];
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.hasError) {
+                      return Column(
+                        children: [
+                          Text("Failed to load ingredients", style: TextStyle(color: cs.error, fontSize: 12)),
+                          const SizedBox(height: 8),
+                          Text("Select an item manually or retry", style: TextStyle(color: cs.secondary.withValues(alpha: 0.5), fontSize: 10)),
+                        ],
+                      );
+                    }
+                    if (!snapshot.hasData) {
                       return const SizedBox(
                         height: 48,
                         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
                       );
                     }
+                    final items = snapshot.data!;
                     return DropdownButtonFormField<String>(
                       initialValue: selectedItem?['id'],
                       decoration: InputDecoration(

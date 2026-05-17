@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../main.dart';
 import 'add_staff_page.dart';
@@ -31,26 +32,24 @@ class OwnerSettingsPage extends StatelessWidget {
   }
 }
 
-class _SettingsContent extends StatefulWidget {
+class _SettingsContent extends ConsumerStatefulWidget {
   final bool isDesktop;
   final ValueChanged<int>? onTabChanged;
 
   const _SettingsContent({required this.isDesktop, this.onTabChanged});
 
   @override
-  State<_SettingsContent> createState() => _SettingsContentState();
+  ConsumerState<_SettingsContent> createState() => _SettingsContentState();
 }
 
-class _SettingsContentState extends State<_SettingsContent> {
+class _SettingsContentState extends ConsumerState<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
-  late bool _isDarkMode;
   Widget? _activeSubPage;
 
   @override
   void initState() {
     super.initState();
-    _isDarkMode = themeController.value == ThemeMode.dark;
   }
 
 
@@ -214,24 +213,17 @@ class _SettingsContentState extends State<_SettingsContent> {
             cs,
             "Dark Mode",
             "Toggle between light and dark aesthetics",
-            _isDarkMode,
+            ref.watch(themeProvider) == ThemeMode.dark,
             (val) async {
-              final prevIsDark = _isDarkMode;
-              final prevTheme = themeController.value;
+              final prevTheme = ref.read(themeProvider);
               final mode = val ? ThemeMode.dark : ThemeMode.light;
-              setState(() {
-                _isDarkMode = val;
-                themeController.value = mode;
-              });
+              ref.read(themeProvider.notifier).setTheme(mode);
               try {
                 await ThemeService.saveThemeMode(mode);
               } catch (e) {
                 debugPrint("Theme Persistence Error: $e");
                 if (!mounted) return;
-                setState(() {
-                  _isDarkMode = prevIsDark;
-                  themeController.value = prevTheme;
-                });
+                ref.read(themeProvider.notifier).setTheme(prevTheme);
               }
             },
           ),

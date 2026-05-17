@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/biometric_service.dart';
 import '../../services/staff_service.dart';
@@ -7,7 +8,7 @@ import '../../services/theme_service.dart';
 import '../../main.dart';
 import '../shared/staff_roles.dart';
 
-class StaffProfilePage extends StatefulWidget {
+class StaffProfilePage extends ConsumerStatefulWidget {
   final ColorScheme cs;
   final bool isDesktop;
   final StaffRole role;
@@ -21,23 +22,21 @@ class StaffProfilePage extends StatefulWidget {
     required this.isDesktop,
     required this.role,
     required this.staffId,
-    this.currentBiometricStatus = false,
+    required this.currentBiometricStatus,
     this.staffData,
   });
 
   @override
-  State<StaffProfilePage> createState() => _StaffProfilePageState();
+  ConsumerState<StaffProfilePage> createState() => _StaffProfilePageState();
 }
 
-class _StaffProfilePageState extends State<StaffProfilePage> {
+class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   late bool _biometricEnabled;
-  late bool _isDarkMode;
 
   @override
   void initState() {
     super.initState();
     _biometricEnabled = widget.currentBiometricStatus;
-    _isDarkMode = themeController.value == ThemeMode.dark;
   }
 
   String get _displayName {
@@ -373,7 +372,7 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            _isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                            ref.watch(themeProvider) == ThemeMode.dark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                             color: widget.cs.primary,
                           ),
                         ),
@@ -392,25 +391,18 @@ class _StaffProfilePageState extends State<StaffProfilePage> {
                           ),
                         ),
                         trailing: Switch(
-                          value: _isDarkMode,
+                          value: ref.watch(themeProvider) == ThemeMode.dark,
                           activeThumbColor: widget.cs.primary,
                           onChanged: (val) async {
-                            final prevIsDark = _isDarkMode;
-                            final prevTheme = themeController.value;
+                            final prevTheme = ref.read(themeProvider);
                             final mode = val ? ThemeMode.dark : ThemeMode.light;
-                            setState(() {
-                              _isDarkMode = val;
-                              themeController.value = mode;
-                            });
+                            ref.read(themeProvider.notifier).setTheme(mode);
                             try {
                               await ThemeService.saveThemeMode(mode);
                             } catch (e) {
                               debugPrint("Theme Persistence Error: $e");
                               if (!mounted) return;
-                              setState(() {
-                                _isDarkMode = prevIsDark;
-                                themeController.value = prevTheme;
-                              });
+                              ref.read(themeProvider.notifier).setTheme(prevTheme);
                             }
                           },
                         ),

@@ -111,6 +111,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     final descController = TextEditingController();
     String selectedCategory = _categories.first;
     DateTime selectedDate = DateTime.now();
+    bool isSaving = false;
 
     showDialog(
       context: context,
@@ -184,7 +185,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
               child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
             ),
               ElevatedButton(
-              onPressed: () async {
+              onPressed: isSaving ? null : () async {
                 if (titleController.text.trim().isEmpty || amountController.text.trim().isEmpty) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -196,7 +197,11 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                   );
                   return;
                 }
-                final amount = double.tryParse(amountController.text.trim());
+                final rawAmount = amountController.text.trim()
+                    .replaceAll('₹', '')
+                    .replaceAll(',', '')
+                    .replaceAll(' ', '');
+                final amount = double.tryParse(rawAmount);
                 if (amount == null || amount < 0) {
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -217,6 +222,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                   'description': descController.text,
                 };
 
+                  setDialogState(() => isSaving = true);
                   try {
                     await FinanceService.addExpense(expense);
                     if (context.mounted) {
@@ -242,6 +248,8 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                       ),
                     );
                   }
+                } finally {
+                  if (context.mounted) setDialogState(() => isSaving = false);
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -249,7 +257,9 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text("Save Expense"),
+              child: isSaving
+                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text("Save Expense"),
             ),
           ],
         ),

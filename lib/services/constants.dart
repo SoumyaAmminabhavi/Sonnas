@@ -6,7 +6,7 @@ class PriceConstants {
 
 class AuthConstants {
   static const int maxOwnerPinAttempts = 3;
-  static const Duration ownerPinLockoutDuration = Duration(seconds: 30);
+  static const Duration ownerPinLockoutDuration = Duration(minutes: 5);
   static const int maxStaffCodeAttempts = 5;
   static const Duration staffCodeLockoutDuration = Duration(minutes: 5);
   static const int phoneDigits = 10;

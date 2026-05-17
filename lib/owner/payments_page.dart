@@ -12,113 +12,15 @@ class PaymentsPage extends StatefulWidget {
   State<PaymentsPage> createState() => _PaymentsPageState();
 }
 
-class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  double _normalizePrice(dynamic raw) {
-    if (raw == null) return 0.0;
-    final str = raw.toString();
-    final hasDecimal = str.contains('.');
-    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
-    final clean = str
-        .replaceAll('₹', '')
-        .replaceAll('INR', '')
-        .replaceAll('/-', '')
-        .replaceAll(',', '')
-        .trim();
-    if (clean.isEmpty) return 0.0;
-    final parsed = double.tryParse(clean) ?? 0.0;
-    if (hasDecimal || hasCurrency) return parsed;
-    return parsed / 100.0;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class _PaymentsPageState extends State<PaymentsPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return DefaultTabController(
       length: 3,
-      child: StreamBuilder<List<Map<String, dynamic>>>(
-      stream: OrderService.getAllOrdersStream(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          debugPrint("❌ Payments load error: ${snapshot.error}");
-          return Scaffold(
-            backgroundColor: cs.surface,
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 48, color: cs.error.withValues(alpha: 0.5)),
-                  const SizedBox(height: 16),
-                  Text("Something went wrong while loading payments", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: cs.error.withValues(alpha: 0.7))),
-                  const SizedBox(height: 8),
-                  Text("Please try again later or contact support.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.secondary.withValues(alpha: 0.5))),
-                  const SizedBox(height: 24),
-                  ElevatedButton(onPressed: () => setState(() {}), child: const Text("RETRY")),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final orders = snapshot.data ?? [];
-        String paymentStatusOf(Map<String, dynamic> o) =>
-            (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
-        
-        DateTime? getPaymentDate(Map<String, dynamic> o) {
-          final raw = o['paidAt']?.toString() ?? o['createdAt']?.toString() ?? '';
-          return DateTime.tryParse(raw);
-        }
-
-        final pendingOrders = orders.where((o) => paymentStatusOf(o) == 'PENDING').toList();
-        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-
-        final completedHistory = orders.where((o) {
-          if (paymentStatusOf(o) != 'PAID') return false;
-          final date = getPaymentDate(o);
-          if (date == null) return false;
-          return date.isAfter(sevenDaysAgo);
-        }).toList()
-          ..sort((a, b) {
-            final da = getPaymentDate(a);
-            final db = getPaymentDate(b);
-            if (da == null && db == null) return 0;
-            if (da == null) return 1;
-            if (db == null) return -1;
-            return db.compareTo(da); // newest first
-          });
-
-        double totalPending = 0;
-        for (var o in pendingOrders) {
-          totalPending += _normalizePrice(o['totalPrice']);
-        }
-
-        double weeklyGross = 0;
-        for (var o in orders) {
-          if (paymentStatusOf(o) == 'PAID') {
-            final date = getPaymentDate(o);
-            if (date != null && date.isAfter(sevenDaysAgo)) {
-              weeklyGross += _normalizePrice(o['totalPrice']);
-            }
-          }
-        }
-
-        return Scaffold(
+      child: Scaffold(
             backgroundColor: cs.surface,
             appBar: AppBar(
               backgroundColor: cs.surface,
@@ -150,14 +52,125 @@ class _PaymentsPageState extends State<PaymentsPage> with SingleTickerProviderSt
             ),
             body: TabBarView(
               children: [
-                _buildPaymentsView(context, isDesktop, weeklyGross, totalPending, pendingOrders, completedHistory),
+                _PaymentsTab(cs: cs),
                 const ExpenseReportsPage(),
                 const SalesReportsPage(),
               ],
             ),
-        );
+        ),
+    );
+  }
+}
+
+class _PaymentsTab extends StatefulWidget {
+  final ColorScheme cs;
+  const _PaymentsTab({required this.cs});
+
+  @override
+  State<_PaymentsTab> createState() => _PaymentsTabState();
+}
+
+class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  double _normalizePrice(dynamic raw) {
+    if (raw == null) return 0.0;
+    final str = raw.toString();
+    final hasDecimal = str.contains('.');
+    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
+    final clean = str
+        .replaceAll('₹', '')
+        .replaceAll('INR', '')
+        .replaceAll('/-', '')
+        .replaceAll(',', '')
+        .trim();
+    if (clean.isEmpty) return 0.0;
+    final parsed = double.tryParse(clean) ?? 0.0;
+    if (hasDecimal || hasCurrency) return parsed;
+    return parsed / 100.0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: OrderService.getAllOrdersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint("❌ Payments load error: ${snapshot.error}");
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: widget.cs.error.withValues(alpha: 0.5)),
+                const SizedBox(height: 16),
+                Text("Something went wrong while loading payments", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: widget.cs.error.withValues(alpha: 0.7))),
+                const SizedBox(height: 8),
+                Text("Please try again later or contact support.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: widget.cs.secondary.withValues(alpha: 0.5))),
+                const SizedBox(height: 24),
+                ElevatedButton(onPressed: () {}, child: const Text("RETRY")),
+              ],
+            ),
+          );
+        }
+
+        final orders = snapshot.data ?? [];
+        String paymentStatusOf(Map<String, dynamic> o) =>
+            (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+        
+        DateTime? getPaymentDate(Map<String, dynamic> o) {
+          final raw = o['paidAt']?.toString() ?? o['createdAt']?.toString() ?? '';
+          return DateTime.tryParse(raw);
+        }
+
+        final pendingOrders = orders.where((o) => paymentStatusOf(o) == 'PENDING').toList();
+        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+
+        final completedHistory = orders.where((o) {
+          if (paymentStatusOf(o) != 'PAID') return false;
+          final date = getPaymentDate(o);
+          if (date == null) return false;
+          return date.isAfter(sevenDaysAgo);
+        }).toList()
+          ..sort((a, b) {
+            final da = getPaymentDate(a);
+            final db = getPaymentDate(b);
+            if (da == null && db == null) return 0;
+            if (da == null) return 1;
+            if (db == null) return -1;
+            return db.compareTo(da);
+          });
+
+        double totalPending = 0;
+        for (var o in pendingOrders) {
+          totalPending += _normalizePrice(o['totalPrice']);
+        }
+
+        double weeklyGross = 0;
+        for (var o in orders) {
+          if (paymentStatusOf(o) == 'PAID') {
+            final date = getPaymentDate(o);
+            if (date != null && date.isAfter(sevenDaysAgo)) {
+              weeklyGross += _normalizePrice(o['totalPrice']);
+            }
+          }
+        }
+
+        final isDesktop = MediaQuery.of(context).size.width >= 1100;
+        return _buildPaymentsView(context, isDesktop, weeklyGross, totalPending, pendingOrders, completedHistory);
       },
-    ));
+    );
   }
 
   Widget _buildPaymentsView(BuildContext context, bool isDesktop, double weeklyGross, double totalPending, List<Map<String, dynamic>> pendingOrders, List<Map<String, dynamic>> completedHistory) {

@@ -19,7 +19,8 @@ class KitchenPage extends StatelessWidget {
       stream: OrderService.getKitchenOrdersStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text("Error: ${snapshot.error}", style: GoogleFonts.plusJakartaSans(color: cs.error)));
+          debugPrint("Kitchen page error: ${snapshot.error}\n${snapshot.stackTrace}");
+          return Center(child: Text("Something went wrong", style: GoogleFonts.plusJakartaSans(color: cs.error)));
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

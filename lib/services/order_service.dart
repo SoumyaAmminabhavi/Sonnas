@@ -197,8 +197,7 @@ class OrderService {
     final rawStream = _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .order('createdAt', ascending: false)
-        .limit(1);
+        .order('createdAt', ascending: false);
 
     return _switchMapAsync(
       _debounceStream(rawStream, OrderConstants.streamDebounce),
@@ -369,8 +368,7 @@ class OrderService {
     final rawStream = _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .inFilter('status', ['PENDING', 'CONFIRMED'])
-        .limit(1);
+        .inFilter('status', ['PENDING', 'CONFIRMED']);
 
     return _switchMapAsync(
       _debounceStream(rawStream, OrderConstants.streamDebounce),

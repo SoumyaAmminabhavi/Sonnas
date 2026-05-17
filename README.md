@@ -143,8 +143,6 @@ flutter build apk --release
 
 ```text
 lib/
-```
-lib/
 ├── main.dart                 # App entry — theme, routing, Riverpod providers
 ├── models/                   # Shared data models
 ├── services/
