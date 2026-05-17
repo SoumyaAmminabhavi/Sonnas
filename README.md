@@ -81,7 +81,7 @@ The database schema is defined in `lib/services/schema.prisma` using Prisma synt
 - Running migrations (`npm run db:migrate`)
 - Generating a TypeScript client for any future Node.js/Next.js backend
 
-To apply schema changes:
+To apply schema changes (requires privileged `DATABASE_URL` located in your server-only env template `.env.server.example`):
 
 ```bash
 npm install          # install prisma + @prisma/client

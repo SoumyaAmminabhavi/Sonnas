@@ -33,7 +33,7 @@ void main() async {
       themeController.value = savedTheme;
     } catch (e) {
       debugPrint('Theme Loading Error: $e');
-      themeController.value = ThemeMode.light;
+      themeController.value = ThemeMode.system;
     }
     
     runApp(

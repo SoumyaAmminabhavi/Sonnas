@@ -265,7 +265,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
         title: Text("Adjust Stock: ${item['name']}", style: GoogleFonts.notoSerif()),
         content: TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             labelText: "Current quantity (${item['unit']})",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -369,11 +369,11 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 children: [
                   Expanded(child: _buildSheetInput(cs, "UNIT", "e.g. KG, LTR, BOX", unitController)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildSheetInput(cs, "MIN STOCK", "Alert below", minController, isNumber: true)),
+                  Expanded(child: _buildSheetInput(cs, "MIN STOCK", "Alert below", minController, isNumber: true, allowDecimal: true)),
                 ],
               ),
               const SizedBox(height: 16),
-              _buildSheetInput(cs, "INITIAL STOCK", "Current quantity", currentController, isNumber: true),
+              _buildSheetInput(cs, "INITIAL STOCK", "Current quantity", currentController, isNumber: true, allowDecimal: true),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -459,7 +459,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
     );
   }
 
-  Widget _buildSheetInput(ColorScheme cs, String label, String hint, TextEditingController controller, {bool isNumber = false}) {
+  Widget _buildSheetInput(ColorScheme cs, String label, String hint, TextEditingController controller, {bool isNumber = false, bool allowDecimal = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -475,7 +475,9 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          keyboardType: isNumber
+              ? TextInputType.numberWithOptions(decimal: allowDecimal)
+              : TextInputType.text,
           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,

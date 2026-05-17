@@ -23,6 +23,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Sourced from server-only environment variables (see .env.server.example)
   url      = env("DATABASE_URL")
   // Note: 'url' is also managed via prisma.config.js for specific environments
 }

@@ -70,7 +70,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
       ),
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
-          tag: widget.heroTag ?? 'product_${widget.product['id']}',
+          tag: widget.heroTag ?? 'product_${widget.product['id'] ?? widget.product.hashCode}',
           child: CachedNetworkImage(
             imageUrl: imageUrl,
             fit: BoxFit.cover,
