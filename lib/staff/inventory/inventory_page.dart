@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/inventory_service.dart';
 
-class StaffInventoryPage extends StatelessWidget {
+class StaffInventoryPage extends StatefulWidget {
   final ColorScheme cs;
   final bool isDesktop;
 
   const StaffInventoryPage({super.key, required this.cs, required this.isDesktop});
+
+  @override
+  State<StaffInventoryPage> createState() => _StaffInventoryPageState();
+}
+
+class _StaffInventoryPageState extends State<StaffInventoryPage> {
+  late Future<List<Map<String, dynamic>>> _inventoryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _inventoryFuture = InventoryService.fetchInventory();
+  }
+
+  void _refreshInventoryFuture() {
+    setState(() {
+      _inventoryFuture = InventoryService.fetchInventory();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +43,11 @@ class StaffInventoryPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inventory_2_outlined, size: 64, color: cs.primary.withValues(alpha: 0.2)),
+                Icon(Icons.inventory_2_outlined, size: 64, color: widget.cs.primary.withValues(alpha: 0.2)),
                 const SizedBox(height: 16),
                 Text(
                   "No inventory items found",
-                  style: GoogleFonts.plusJakartaSans(color: cs.onSurfaceVariant),
+                  style: GoogleFonts.plusJakartaSans(color: widget.cs.onSurfaceVariant),
                 ),
               ],
             ),
@@ -37,7 +56,7 @@ class StaffInventoryPage extends StatelessWidget {
 
         return ListView(
           padding: EdgeInsets.symmetric(
-            horizontal: isDesktop ? 48 : 24,
+            horizontal: widget.isDesktop ? 48 : 24,
             vertical: 32,
           ),
           children: [
@@ -52,7 +71,7 @@ class StaffInventoryPage extends StatelessWidget {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: cs.primary,
+                        color: widget.cs.primary,
                         letterSpacing: 2.0,
                       ),
                     ),
@@ -60,16 +79,16 @@ class StaffInventoryPage extends StatelessWidget {
                     Text(
                       "Inventory",
                       style: GoogleFonts.notoSerif(
-                        fontSize: isDesktop ? 48 : 36,
-                        color: cs.secondary,
+                        fontSize: widget.isDesktop ? 48 : 36,
+                        color: widget.cs.secondary,
                         height: 1.1,
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
+                    Container(height: 1, color: widget.cs.secondary.withValues(alpha: 0.3)),
                   ],
                 ),
-                if (isDesktop)
+                if (widget.isDesktop)
                   Row(
                     children: [
                       OutlinedButton.icon(
@@ -77,8 +96,8 @@ class StaffInventoryPage extends StatelessWidget {
                         icon: const Icon(Icons.remove_shopping_cart_rounded),
                         label: const Text("Usage Entry"),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: cs.error,
-                          side: BorderSide(color: cs.error.withValues(alpha: 0.2)),
+                          foregroundColor: widget.cs.error,
+                          side: BorderSide(color: widget.cs.error.withValues(alpha: 0.2)),
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         ),
                       ),
@@ -88,7 +107,7 @@ class StaffInventoryPage extends StatelessWidget {
                         icon: const Icon(Icons.add_shopping_cart_rounded),
                         label: const Text("Purchase Entry"),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: cs.primary,
+                          backgroundColor: widget.cs.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         ),
@@ -107,7 +126,7 @@ class StaffInventoryPage extends StatelessWidget {
                   "Total Items", 
                   items.length.toString(), 
                   Icons.category_outlined,
-                  cs.surfaceContainerLow,
+                  widget.cs.surfaceContainerLow,
                 ),
                 const SizedBox(width: 16),
                 _buildQuickStat(
@@ -115,8 +134,8 @@ class StaffInventoryPage extends StatelessWidget {
                   "Low Stock", 
                   items.where((i) => (i['currentStock'] ?? 0) <= (i['minStock'] ?? 0)).length.toString(), 
                   Icons.warning_amber_rounded,
-                  cs.primary.withValues(alpha: 0.05),
-                  iconColor: cs.error,
+                  widget.cs.primary.withValues(alpha: 0.05),
+                  iconColor: widget.cs.error,
                 ),
               ],
             ),
@@ -127,7 +146,7 @@ class StaffInventoryPage extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: isDesktop ? 3 : 1,
+                crossAxisCount: widget.isDesktop ? 3 : 1,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
                 mainAxisExtent: 180,
@@ -137,7 +156,7 @@ class StaffInventoryPage extends StatelessWidget {
                 final item = items[index];
                 return _InventoryCard(
                   item: item, 
-                  cs: cs,
+                  cs: widget.cs,
                   onAddStock: (item) => _showAddStockDialog(context, preselectedItem: item),
                 );
               },
@@ -157,7 +176,7 @@ class StaffInventoryPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: cs.primary.withValues(alpha: 0.05),
+              color: widget.cs.primary.withValues(alpha: 0.05),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),
@@ -165,7 +184,7 @@ class StaffInventoryPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: iconColor ?? cs.primary, size: 24),
+            Icon(icon, color: iconColor ?? widget.cs.primary, size: 24),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,7 +194,7 @@ class StaffInventoryPage extends StatelessWidget {
                   style: GoogleFonts.notoSerif(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: cs.secondary,
+                    color: widget.cs.secondary,
                   ),
                 ),
                 Text(
@@ -183,7 +202,7 @@ class StaffInventoryPage extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: cs.secondary.withValues(alpha: 0.5),
+                    color: widget.cs.secondary.withValues(alpha: 0.5),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -206,21 +225,21 @@ class StaffInventoryPage extends StatelessWidget {
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
             isConsumption ? "Record Usage" : (preselectedItem != null ? "Update Stock" : "Purchase Entry"),
-            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, color: isConsumption ? cs.error : cs.secondary),
+            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, color: isConsumption ? widget.cs.error : widget.cs.secondary),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (preselectedItem == null)
                 FutureBuilder<List<Map<String, dynamic>>>(
-                  future: InventoryService.fetchInventory(),
+                  future: _inventoryFuture,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Column(
                         children: [
-                          Text("Failed to load ingredients", style: TextStyle(color: cs.error, fontSize: 12)),
+                          Text("Failed to load ingredients", style: TextStyle(color: widget.cs.error, fontSize: 12)),
                           const SizedBox(height: 8),
-                          Text("Select an item manually or retry", style: TextStyle(color: cs.secondary.withValues(alpha: 0.5), fontSize: 10)),
+                          Text("Select an item manually or retry", style: TextStyle(color: widget.cs.secondary.withValues(alpha: 0.5), fontSize: 10)),
                         ],
                       );
                     }
@@ -253,7 +272,7 @@ class StaffInventoryPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(
                     children: [
-                      Icon(Icons.inventory_2_outlined, size: 16, color: cs.primary),
+                      Icon(Icons.inventory_2_outlined, size: 16, color: widget.cs.primary),
                       const SizedBox(width: 8),
                       Text(
                         "${preselectedItem['name']}",
@@ -278,7 +297,7 @@ class StaffInventoryPage extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text("Cancel", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5))),
+              child: Text("Cancel", style: GoogleFonts.plusJakartaSans(color: widget.cs.secondary.withValues(alpha: 0.5))),
             ),
             ElevatedButton(
               onPressed: isSubmitting ? null : () async {
@@ -295,6 +314,7 @@ class StaffInventoryPage extends StatelessWidget {
                   } else {
                     await InventoryService.updateInventoryStock(selectedItem!['id'], qty);
                   }
+                  _refreshInventoryFuture();
                   
                   if (context.mounted) {
                     Navigator.pop(context);
@@ -303,7 +323,7 @@ class StaffInventoryPage extends StatelessWidget {
                         content: Text(isConsumption 
                           ? "Recorded consumption of $qty ${selectedItem!['unit']} ${selectedItem!['name']}"
                           : "Stock updated for ${selectedItem!['name']}!"),
-                        backgroundColor: isConsumption ? cs.error : Colors.green.shade700,
+                        backgroundColor: isConsumption ? widget.cs.error : Colors.green.shade700,
                       ),
                     );
                   }
@@ -318,7 +338,7 @@ class StaffInventoryPage extends StatelessWidget {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isConsumption ? cs.error : cs.primary, 
+                backgroundColor: isConsumption ? widget.cs.error : widget.cs.primary, 
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

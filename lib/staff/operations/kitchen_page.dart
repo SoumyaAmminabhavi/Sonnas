@@ -247,7 +247,7 @@ class KitchenOrderCard extends StatelessWidget {
                           ],
                         ),
                         loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                        error: (err, stack) => Text("Error: ${err.toString().split(':').last.trim()}", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.error.withValues(alpha: 0.7))),
+                        error: (err, stack) => Text("Unable to load kitchen tasks. Please try again.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.error.withValues(alpha: 0.7))),
                       );
                     },
                   ),

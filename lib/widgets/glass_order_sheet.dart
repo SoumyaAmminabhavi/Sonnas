@@ -165,143 +165,51 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
           builder: (context, ref, child) {
             final itemsAsync = ref.watch(orderItemsProvider(widget.order.id));
             final menuAsync = ref.watch(menuProvider);
+            final menu = menuAsync.value ?? [];
+
             return itemsAsync.when(
               data: (items) {
                 if (items.isEmpty) {
+                  if (widget.order.items.isNotEmpty) {
+                    return Column(
+                      children: widget.order.items.map((item) => _buildOrderItemRow(item, menu, cs)).toList(),
+                    );
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: Text("No items found.", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5))),
                   );
                 }
-                final menu = menuAsync.value ?? [];
                 
                 return Column(
                   children: items.map((itemMap) {
                     final item = OrderItem.fromMap(itemMap);
-                    
-                    String displayImageUrl = '';
-                    final matchingCake = item.cakeId != null
-                        ? menu.firstWhere(
-                            (c) => c['id']?.toString() == item.cakeId,
-                            orElse: () => menu.firstWhere(
-                              (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
-                              orElse: () => <String, dynamic>{},
-                            ),
-                          )
-                        : menu.firstWhere(
-                            (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
-                            orElse: () => <String, dynamic>{},
-                          );
-                    displayImageUrl = matchingCake['image'] ?? '';
-
-                    if (displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) {
-                      final customTrimmed = widget.order.customImageUrl?.trim();
-                      final conversationTrimmed = widget.order.conversationImageUrl?.trim();
-                      if (customTrimmed != null && customTrimmed.isNotEmpty) {
-                        displayImageUrl = customTrimmed;
-                      } else if (conversationTrimmed != null && conversationTrimmed.isNotEmpty) {
-                        displayImageUrl = conversationTrimmed;
-                      }
-                    }
-
-                     Widget imageWidget;
-                    if (displayImageUrl.isNotEmpty) {
-                      if (displayImageUrl.startsWith('data:')) {
-                        try {
-                          final bytes = UriData.parse(displayImageUrl).contentAsBytes();
-                          imageWidget = ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.memory(
-                              bytes,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                            ),
-                          );
-                        } catch (_) {
-                          imageWidget = Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                            child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
-                          );
-                        }
-                      } else {
-                        // Use raw URL for absolute paths, Supabase public URL for storage paths
-                        final bool isLocalScheme = displayImageUrl.startsWith('file://') || displayImageUrl.startsWith('whatsapp://');
-                        
-                        if (isLocalScheme) {
-                          imageWidget = Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                            child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
-                          );
-                        } else {
-                          final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://'))
-                              ? displayImageUrl
-                              : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
-                          imageWidget = ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: CachedNetworkImage(
-                              imageUrl: resolvedUrl,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: cs.primary.withValues(alpha: 0.05),
-                                child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary))),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                                child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                    } else {
-                      imageWidget = Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                        child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
-                      );
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Row(
-                        children: [
-                          imageWidget,
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.cakeName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
-                                if (item.options != null && item.options!.isNotEmpty) 
-                                  Text(item.options!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
-                              ],
-                            ),
-                          ),
-                          Text("x${item.quantity}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    );
+                    return _buildOrderItemRow(item, menu, cs);
                   }).toList(),
                 );
               },
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (err, stack) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text("Error loading items.", style: GoogleFonts.plusJakartaSans(color: cs.error)),
-              ),
+              loading: () {
+                if (widget.order.items.isNotEmpty) {
+                  return Column(
+                    children: widget.order.items.map((item) => _buildOrderItemRow(item, menu, cs)).toList(),
+                  );
+                }
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              },
+              error: (err, stack) {
+                if (widget.order.items.isNotEmpty) {
+                  return Column(
+                    children: widget.order.items.map((item) => _buildOrderItemRow(item, menu, cs)).toList(),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text("Error loading items.", style: GoogleFonts.plusJakartaSans(color: cs.error)),
+                );
+              },
             );
           },
         ),
@@ -314,6 +222,121 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildOrderItemRow(OrderItem item, List<Map<String, dynamic>> menu, ColorScheme cs) {
+    String displayImageUrl = '';
+    final matchingCake = item.cakeId != null
+        ? menu.firstWhere(
+            (c) => c['id']?.toString() == item.cakeId,
+            orElse: () => menu.firstWhere(
+              (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
+              orElse: () => <String, dynamic>{},
+            ),
+          )
+        : menu.firstWhere(
+            (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
+            orElse: () => <String, dynamic>{},
+          );
+    displayImageUrl = matchingCake['image'] ?? '';
+
+    if (displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) {
+      final customTrimmed = widget.order.customImageUrl?.trim();
+      final conversationTrimmed = widget.order.conversationImageUrl?.trim();
+      if (customTrimmed != null && customTrimmed.isNotEmpty) {
+        displayImageUrl = customTrimmed;
+      } else if (conversationTrimmed != null && conversationTrimmed.isNotEmpty) {
+        displayImageUrl = conversationTrimmed;
+      }
+    }
+
+    Widget imageWidget;
+    if (displayImageUrl.isNotEmpty) {
+      if (displayImageUrl.startsWith('data:')) {
+        try {
+          final bytes = UriData.parse(displayImageUrl).contentAsBytes();
+          imageWidget = ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.memory(
+              bytes,
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+            ),
+          );
+        } catch (_) {
+          imageWidget = Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+            child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+          );
+        }
+      } else {
+        // Use raw URL for absolute paths, Supabase public URL for storage paths
+        final bool isLocalScheme = displayImageUrl.startsWith('file://') || displayImageUrl.startsWith('whatsapp://');
+        
+        if (isLocalScheme) {
+          imageWidget = Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+            child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+          );
+        } else {
+          final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://'))
+              ? displayImageUrl
+              : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
+          imageWidget = ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: resolvedUrl,
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: cs.primary.withValues(alpha: 0.05),
+                child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary))),
+              ),
+              errorWidget: (context, url, error) => Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+              ),
+            ),
+          );
+        }
+      }
+    } else {
+      imageWidget = Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+        child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          imageWidget,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.cakeName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                if (item.options != null && item.options!.isNotEmpty) 
+                  Text(item.options!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
+              ],
+            ),
+          ),
+          Text("x${item.quantity}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 

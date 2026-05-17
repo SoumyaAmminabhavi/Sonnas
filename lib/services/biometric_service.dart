@@ -21,11 +21,10 @@ class BiometricService {
   static Future<bool> authenticate() async {
     if (kIsWeb) return false;
     try {
-      // In version 3.0.1, authenticate takes parameters directly
       return await _auth.authenticate(
         localizedReason: 'Scan your fingerprint or face to log in',
         biometricOnly: true,
-        persistAcrossBackgrounding: true, // This is 'stickyAuth'
+        persistAcrossBackgrounding: true,
       );
     } catch (e) {
       debugPrint("Biometric auth failed: $e");

@@ -849,7 +849,13 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
             final id = o['id']?.toString();
             if (id != null) orderMap[id] = o;
           }
-          _orders = orderMap.values.toList();
+          final sortedOrders = orderMap.values.toList();
+          sortedOrders.sort((a, b) {
+            final aTime = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bTime = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bTime.compareTo(aTime);
+          });
+          _orders = sortedOrders;
           _calculateMetrics();
           _processItemsFromOrders(_orders, _cachedMenu);
         });
