@@ -120,9 +120,27 @@ cp .env.example .env
 # .env
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_ANON_KEY=<your-anon-key>
+NEXT_PUBLIC_WHATSAPP_NUMBER=91...
+NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED=+91 ...
 ```
 
 > **Never commit `.env`.** It is listed in `.gitignore`.
+
+For server-side operations (webhooks, Edge Functions), also configure:
+
+```bash
+cp .env.server.example .env.server
+```
+
+```dotenv
+# .env.server (server-only secrets)
+DATABASE_URL=postgresql://postgres:...
+WHATSAPP_VERIFY_TOKEN=your-webhook-verify-token
+WHATSAPP_TOKEN=your-permanent-access-token
+RAZORPAY_KEY_SECRET=your-secret
+```
+
+> **Server-only secrets** like `WHATSAPP_VERIFY_TOKEN` should NEVER be bundled in client builds.
 
 ### 3 — Run
 

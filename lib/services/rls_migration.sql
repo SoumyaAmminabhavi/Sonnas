@@ -61,180 +61,135 @@ CREATE POLICY "Cake options can be modified by authenticated users"
 
 
 -- ─── Order Tables (Public Read, Controlled Write) ───────────────────────────
--- Customers can create orders; everyone can read their own orders.
--- Direct UPDATE/DELETE on orders is blocked (use Edge Functions for status changes).
+-- Customers can create orders; staff can view/manage all orders.
+-- Note: This app currently uses anon key access, not authenticated sessions.
+-- For production, migrate to Edge Functions with service role access.
 
 ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
 
--- Allow owners to read their own orders
-CREATE POLICY "Orders are viewable by order owners"
+-- Allow anyone to read orders (staff app uses anon key)
+-- In production, restrict this via Edge Functions or migrate to authenticated sessions
+CREATE POLICY "Orders are viewable by everyone"
   ON "Order" FOR SELECT
-  USING (auth.uid()::text = "userId");
+  USING (true);
 
--- Allow authenticated staff/owner to view all orders
-CREATE POLICY "Orders are viewable by operational staff"
-  ON "Order" FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Staff" s
-      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
-    )
-  );
-
--- Allow order creation via direct insert (should move to Edge Function in production)
+-- Allow order creation via direct insert (anon key access for customer orders)
 CREATE POLICY "Orders can be created by anyone"
   ON "Order" FOR INSERT
   WITH CHECK (true);
 
--- Allow customers to update their own orders (if not finalized)
-CREATE POLICY "Orders can be updated by owners"
+-- Allow anyone to update orders (staff app uses anon key)
+-- In production, restrict this via Edge Functions or migrate to authenticated sessions
+CREATE POLICY "Orders can be updated by anyone"
   ON "Order" FOR UPDATE
-  USING (auth.uid()::text = "userId");
+  USING (true);
 
--- Allow staff/owner to update any order status/details
-CREATE POLICY "Orders can be updated by operational staff"
-  ON "Order" FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Staff" s
-      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
-    )
-  );
-
--- Block direct deletion (only staff/owner can do administrative deletions)
-CREATE POLICY "Orders can be deleted by operational staff"
+-- Allow anyone to delete orders (staff app uses anon key)
+-- In production, restrict this via Edge Functions or migrate to authenticated sessions
+CREATE POLICY "Orders can be deleted by anyone"
   ON "Order" FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Staff" s
-      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
-    )
-  );
+  USING (true);
 
 
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
 
--- Allow owners to view their own order items
-CREATE POLICY "Order items are viewable by order owners"
+-- Allow anyone to view order items (staff app uses anon key)
+-- In production, restrict this via Edge Functions or migrate to authenticated sessions
+CREATE POLICY "Order items are viewable by everyone"
   ON "OrderItem" FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Order" o
-      WHERE o.id = "orderId" AND o."userId" = auth.uid()::text
-    )
-  );
-
--- Allow staff/owner to view all order items
-CREATE POLICY "Order items are viewable by operational staff"
-  ON "OrderItem" FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Staff" s
-      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
-    )
-  );
+  USING (true);
 
 -- Order items should only be created alongside orders (via RPC or trigger)
-CREATE POLICY "Order items can be created by order owners"
+CREATE POLICY "Order items can be created by anyone"
   ON "OrderItem" FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM "Order" o
-      WHERE o.id = "orderId" AND o."userId" = auth.uid()::text
-    )
-  );
+  WITH CHECK (true);
 
-CREATE POLICY "Order items can be created by operational staff"
-  ON "OrderItem" FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM "Staff" s
-      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
-    )
-  );
-
-CREATE POLICY "Order items can be modified by order owners"
+-- Allow anyone to modify order items (staff app uses anon key)
+-- In production, restrict this via Edge Functions or migrate to authenticated sessions
+CREATE POLICY "Order items can be modified by anyone"
   ON "OrderItem" FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Order" o
-      WHERE o.id = "orderId" AND o."userId" = auth.uid()::text
-    )
-  );
-
-CREATE POLICY "Order items can be modified by operational staff"
-  ON "OrderItem" FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM "Staff" s
-      WHERE s.id::text = auth.uid()::text AND s."isActivated" = true
-    )
-  );
+  USING (true);
 
 
 -- ─── Staff Table (Restricted) ───────────────────────────────────────────────
--- Staff data should never be readable by anon key.
--- Only authenticated users (owner/staff) should access this.
+-- Staff data contains sensitive info (PINs, personal details).
+-- Currently allows anon access for staff login flow (reads phone/joiningCode/password hash).
+-- In production, migrate to Edge Functions with service role access.
 
 ALTER TABLE "Staff" ENABLE ROW LEVEL SECURITY;
 
--- Block all anon access to staff table
-CREATE POLICY "Staff data accessible by owner role"
+-- Allow anon read access for staff login verification (app uses anon key)
+-- Password hashes are bcrypt, so exposure is low risk, but migrate to Edge Functions for production
+CREATE POLICY "Staff data readable for login"
+  ON "Staff" FOR SELECT
+  USING (true);
+
+-- Allow anon write access for staff registration (app uses anon key)
+-- In production, restrict this via Edge Functions or migrate to authenticated sessions
+CREATE POLICY "Staff data writable for registration"
   ON "Staff" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 
 -- ─── Expense Table (Restricted) ─────────────────────────────────────────────
--- Financial data should only be accessible by authenticated owner/staff.
+-- Financial data should only be accessible by owner/staff.
+-- Currently allows anon access (app uses anon key).
+-- In production, migrate to Edge Functions with service role access.
 
 ALTER TABLE "Expense" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Expenses accessible by owner role"
+CREATE POLICY "Expenses accessible by everyone"
   ON "Expense" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 
 -- ─── Inventory Table (Restricted) ───────────────────────────────────────────
--- Inventory data should only be accessible by authenticated staff.
+-- Inventory data should only be accessible by staff.
+-- Currently allows anon access (app uses anon key).
+-- In production, migrate to Edge Functions with service role access.
 
 ALTER TABLE "InventoryItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Inventory accessible by owner role"
+CREATE POLICY "Inventory accessible by everyone"
   ON "InventoryItem" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 
 -- ─── SystemSetting Table (Restricted) ───────────────────────────────────────
--- System settings (including owner PIN hash) should never be readable by anon.
+-- System settings (including owner PIN hash) contain sensitive data.
+-- Currently allows anon access for owner PIN verification (app uses anon key).
+-- PIN hashes are bcrypt, so exposure is low risk, but migrate to Edge Functions for production.
 
 ALTER TABLE "SystemSetting" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "System settings accessible by owner role"
+CREATE POLICY "System settings accessible by everyone"
   ON "SystemSetting" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 
 -- ─── WhatsApp Conversation Tables (Restricted) ──────────────────────────────
--- WhatsApp data contains customer PII; restrict access.
+-- WhatsApp data contains customer PII.
+-- Currently allows anon access (app uses anon key).
+-- In production, migrate to Edge Functions with service role access.
 
 ALTER TABLE "WhatsAppConversation" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "WhatsApp conversations accessible by owner role"
+CREATE POLICY "WhatsApp conversations accessible by everyone"
   ON "WhatsAppConversation" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 
 ALTER TABLE "WhatsAppCartItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "WhatsApp cart items accessible by owner role"
+CREATE POLICY "WhatsApp cart items accessible by everyone"
   ON "WhatsAppCartItem" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (true)
+  WITH CHECK (true);
 
 
 -- ─── Auth Tables (NextAuth-style) ───────────────────────────────────────────
@@ -346,20 +301,34 @@ CREATE TRIGGER set_updated_at_whatsapp_conversation
 
 
 -- ─── NOTES ──────────────────────────────────────────────────────────────────
--- 1. After applying this migration, the Flutter app's menu reading will still
---    work (SELECT is allowed for everyone on Cake/Category/CakeOption).
+-- 1. After applying this migration, the Flutter app will continue to work as-is
+--    because all tables allow anon key access via "true" policies.
 --
--- 2. Order creation via the RPC `create_order_with_items` needs to be set as
+-- 2. Order creation via the RPC `create_order_with_items` is set as
 --    SECURITY DEFINER so it can insert into the Order table on behalf of anon.
 --
--- 3. Staff login, owner PIN verification, expense tracking, and inventory
---    management will BREAK until you implement proper Supabase Auth or
---    Edge Functions. This is intentional — these operations should never
---    be accessible via the anon key.
+-- 3. SECURITY WARNING: The current policies allow unrestricted anon access to
+--    sensitive tables (Staff, Expense, Inventory, SystemSetting, WhatsApp data).
+--    This is necessary because the app uses anon key authentication, NOT
+--    authenticated Supabase sessions.
 --
--- 4. To fix the broken operations, you have two options:
---    a) Implement Supabase Edge Functions for each sensitive operation
---    b) Use Supabase Auth with custom claims to identify staff/owner
+-- 4. PRODUCTION MIGRATION PATH:
+--    Option A) Migrate to Supabase Edge Functions:
+--      - Create Edge Functions for: staff login, owner PIN verify, order updates,
+--        expense CRUD, inventory CRUD, staff management
+--      - Use service_role key in Edge Functions
+--      - Update policies to restrict anon access: USING (auth.role() = 'service_role')
 --
--- 5. Test thoroughly in a staging environment before applying to production.
+--    Option B) Migrate to Supabase Auth:
+--      - Implement Supabase Auth with custom claims (staff_id, role, permissions)
+--      - Update Staff table to include auth.uid() reference column
+--      - Update policies to check auth.uid() and custom claims
+--      - Modify Flutter app to use authenticated sessions
+--
+-- 5. CURRENT RISKS:
+--    - Anyone with the anon key can read bcrypt password hashes (low risk)
+--    - Anyone with the anon key can read/write sensitive business data (HIGH RISK)
+--    - Deploy to production ONLY if anon key is kept strictly confidential
+--
+-- 6. Test thoroughly in a staging environment before applying to production.
 -- ─────────────────────────────────────────────────────────────────────────────

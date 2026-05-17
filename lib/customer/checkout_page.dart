@@ -95,7 +95,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                       ],
                     ),
                   ),
-                  Text("₹${item.totalPrice.toStringAsFixed(0)}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+                  Text(_formatPrice(item.totalPrice), style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline, size: 20),
                     onPressed: () => ref.read(cartProvider.notifier).updateQuantity(idx, -1),
@@ -109,7 +109,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("TOTAL", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-              Text("₹${cart.subtotal.toStringAsFixed(0)}", style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.w900, color: cs.primary)),
+              Text(_formatPrice(cart.subtotal), style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.w900, color: cs.primary)),
             ],
           ),
         ],
@@ -214,14 +214,14 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
         'phone': _phoneController.text.replaceAll(RegExp(r'\D'), ''),
         'address': _addressController.text.trim(),
         'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-        'totalPrice': (cart.subtotal * 100).round(),
+        'totalPrice': cart.subtotal.round(),
         'status': 'PENDING',
         'paymentStatus': 'PENDING',
         'createdAt': DateTime.now().toIso8601String(),
         'items': cart.items.map((i) => {
           'cakeName': i.product['name'],
           'quantity': i.quantity,
-          'price': ((double.tryParse(i.product['price']?.toString() ?? '0') ?? 0.0) * 100).round(),
+          'price': (double.tryParse(i.product['price']?.toString() ?? '0') ?? 0.0).round(),
         }).toList(),
       };
 
@@ -258,5 +258,10 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
         ],
       ),
     );
+  }
+
+  String _formatPrice(double priceInCents) {
+    final rupees = priceInCents / 100.0;
+    return "₹${rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2)}";
   }
 }
