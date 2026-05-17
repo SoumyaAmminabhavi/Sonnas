@@ -33,6 +33,17 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
   }
 
   @override
+  void didUpdateWidget(covariant OwnerOrderDetailsView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.orderId != widget.orderId) {
+      final cleanId = widget.orderId.replaceAll(RegExp(r'[#]'), '');
+      setState(() {
+        _orderFuture = OrderService.fetchOrderByIdOrNumber(cleanId);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;

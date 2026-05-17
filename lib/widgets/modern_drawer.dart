@@ -60,8 +60,9 @@ class ModernDrawer extends ConsumerWidget {
                               .read(authProvider.notifier)
                               .verifyOwnerPin(pinController.text);
                           if (isValid && context.mounted) {
+                            final navigator = Navigator.of(context, rootNavigator: true);
                             Navigator.pop(context);
-                            Navigator.of(context).push(
+                            navigator.push(
                               MaterialPageRoute(
                                 settings:
                                     const RouteSettings(name: 'OwnerDashboard'),
@@ -128,7 +129,7 @@ class ModernDrawer extends ConsumerWidget {
                         isAuthenticated ? "Go to Dashboard" : "Login as Owner",
                     onTap: () {
                       Navigator.of(context).pop();
-                      if (isAuthenticated) {
+                      if (isAuthenticated && context.mounted) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             settings:
@@ -148,11 +149,13 @@ class ModernDrawer extends ConsumerWidget {
                 label: "Login as Staff",
                 onTap: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const StaffLoginPage(),
-                    ),
-                  );
+                  if (context.mounted) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const StaffLoginPage(),
+                      ),
+                    );
+                  }
                 },
               ),
               Padding(

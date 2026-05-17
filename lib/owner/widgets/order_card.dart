@@ -16,7 +16,10 @@ class OrderCardReactive extends ConsumerWidget {
   static double _normalizePrice(dynamic raw) {
     if (raw == null) return 0.0;
     if (raw is num) return raw.toDouble() / 100.0;
-    final clean = raw.toString()
+    final str = raw.toString();
+    final hasDecimal = str.contains('.');
+    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
+    final clean = str
         .replaceAll('₹', '')
         .replaceAll('INR', '')
         .replaceAll('/-', '')
@@ -24,7 +27,8 @@ class OrderCardReactive extends ConsumerWidget {
         .trim();
     if (clean.isEmpty) return 0.0;
     final parsed = double.tryParse(clean) ?? 0.0;
-    return parsed > 100 ? parsed / 100.0 : parsed;
+    if (hasDecimal || hasCurrency) return parsed;
+    return parsed / 100.0;
   }
 
   @override

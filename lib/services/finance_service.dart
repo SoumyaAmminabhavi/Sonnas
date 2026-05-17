@@ -16,7 +16,6 @@ class FinanceService {
 
   static Future<void> addExpense(Map<String, dynamic> data) async {
     final payload = Map<String, dynamic>.from(data);
-    payload['updatedAt'] = DateTime.now().toUtc().toIso8601String();
     await _client.from('Expense').insert(payload);
   }
 

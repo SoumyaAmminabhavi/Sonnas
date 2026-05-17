@@ -173,15 +173,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                 child: imageUrl != null
                                   ? ClipRRect(
                                       borderRadius: BorderRadius.circular(24),
-                                      child: CachedNetworkImage(
-                                        imageUrl: imageUrl,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                        errorWidget: (context, url, error) => Container(
-                                          color: cs.surfaceContainer,
-                                          child: Icon(Icons.restaurant, color: cs.primary, size: 48),
-                                        ),
-                                      ),
+                                      child: MenuDetailsPage._buildMenuImage(imageUrl, cs),
                                     )
                                   : Container(
                                       decoration: BoxDecoration(
@@ -247,6 +239,34 @@ class MenuDetailsPage extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+
+  static Widget _buildMenuImage(String imageUrl, ColorScheme cs) {
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final bytes = UriData.parse(imageUrl).contentAsBytes();
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _imagePlaceholder(cs),
+        );
+      } catch (_) {
+        return _imagePlaceholder(cs);
+      }
+    }
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+      errorWidget: (context, url, error) => _imagePlaceholder(cs),
+    );
+  }
+
+  static Widget _imagePlaceholder(ColorScheme cs) {
+    return Container(
+      color: cs.surfaceContainer,
+      child: Icon(Icons.restaurant, color: cs.primary, size: 48),
     );
   }
 }

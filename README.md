@@ -62,6 +62,7 @@ A production-ready, full-stack Flutter application for a luxury artisan bakery. 
 | Framework        | Flutter (Dart `^3.6.0`, Material 3)                    |
 | State Management | `flutter_riverpod`                                     |
 | Backend          | Supabase (Postgres + Auth + Storage + RLS)               |
+| Schema Tooling   | Prisma (schema definition & migrations only — not used at runtime by Flutter) |
 | Hosting (Web)    | Vercel                                                   |
 | Auth             | PIN (bcrypt via `dbcrypt`) + `local_auth` biometrics |
 | Charts           | `fl_chart`                                             |
@@ -70,6 +71,24 @@ A production-ready, full-stack Flutter application for a luxury artisan bakery. 
 | Storage          | `flutter_secure_storage`, `shared_preferences`       |
 | Images           | `image_picker`, `cached_network_image`               |
 | Config           | `flutter_dotenv` (`.env` file)                       |
+
+---
+
+## 🗄️ Database Schema
+
+The database schema is defined in `lib/services/schema.prisma` using Prisma syntax. This file serves as the **single source of truth** for the Supabase PostgreSQL schema. The Flutter app connects directly to Supabase via `supabase_flutter` — Prisma is **not** used at runtime by the app. It is used only for:
+- Schema documentation and modeling
+- Running migrations (`npm run db:migrate`)
+- Generating a TypeScript client for any future Node.js/Next.js backend
+
+To apply schema changes:
+
+```bash
+npm install          # install prisma + @prisma/client
+npm run db:migrate   # or: npx prisma migrate dev
+```
+
+The `vercel.json` configures SPA routing for the Flutter web build only. There is no Node.js backend in this repository.
 
 ---
 

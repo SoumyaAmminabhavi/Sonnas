@@ -1,3 +1,21 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  Sonna Patisserie — Database Schema (Prisma)
+// ─────────────────────────────────────────────────────────────────────────────
+//  This file defines the Supabase PostgreSQL schema using Prisma syntax.
+//  It is NOT used by the Flutter app at runtime — the app connects directly
+//  to Supabase via supabase_flutter. Prisma is used only for:
+//    • Schema documentation and type-safe modeling
+//    • Running migrations (prisma migrate dev / prisma db push)
+//    • Generating a TypeScript client for any future Node.js backend
+//
+//  To apply schema changes:
+//    1. Edit this file
+//    2. Run: npm run db:migrate   (or: npx prisma migrate dev)
+//    3. The migration SQL is applied to your Supabase PostgreSQL database
+//
+//  The Flutter app does NOT depend on Prisma at runtime.
+// ─────────────────────────────────────────────────────────────────────────────
+
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"

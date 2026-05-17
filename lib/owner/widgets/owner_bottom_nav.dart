@@ -20,9 +20,9 @@ class OwnerBottomNav extends StatelessWidget {
       selectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
       unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 0.5),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: "Dashboard"),
-        BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Orders"),
-        BottomNavigationBarItem(icon: Icon(Icons.payments), label: "Finance"),
+        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Dashboard"),
+        BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Orders"),
+        BottomNavigationBarItem(icon: Icon(Icons.analytics), label: "Finance"),
         BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Menu"),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
       ],

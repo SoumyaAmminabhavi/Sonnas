@@ -148,7 +148,10 @@ class MenuService {
         throw ArgumentError('cakeId and size are required for CakeOption');
       }
       final String cakeId = cakeIdRaw.toString();
-      final String size = sizeRaw.toString();
+      final String size = sizeRaw.toString().trim();
+      if (size.isEmpty) {
+        throw ArgumentError('size must not be empty or whitespace-only');
+      }
 
       final data = Map<String, dynamic>.from(option);
       data['cakeId'] = cakeId;
@@ -174,6 +177,7 @@ class MenuService {
   /// Permanently delete a product and its options
   static Future<void> deleteCake(String id) async {
     try {
+      await _client.from('CakeOption').delete().eq('cakeId', id);
       await _client.from('Cake').delete().eq('id', id);
     } catch (e) {
       debugPrint('⚠️ Delete Failed: $e');
