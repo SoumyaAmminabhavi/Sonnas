@@ -31,7 +31,7 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
     final cart = ref.watch(cartProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCF9F7), // Soft cream boutique background
+      backgroundColor: const Color(0xFFFCF9F7),
       body: CustomScrollView(
         slivers: [
           _buildAppBar(cs, cart.itemCount),
@@ -68,7 +68,7 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
           icon: const Icon(Icons.search_rounded),
           onPressed: () {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Search feature coming soon! 🔍")),
+              const SnackBar(content: Text("Search feature coming soon!")),
             );
           },
         ),
@@ -182,12 +182,13 @@ class _ProductCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final imageUrl = SupabaseService.getPublicUrl(item['image'] ?? '', bucket: 'cakes');
+    final imagePath = item['image']?.toString() ?? '';
+    final imageUrl = imagePath.isNotEmpty ? SupabaseService.getPublicUrl(imagePath, bucket: 'cakes') : '';
     
     return InkWell(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item, heroTag: 'product_${item['id']}_$index')),
+                        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item, heroTag: 'product_${item['id']}')),
       ),
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -212,20 +213,18 @@ class _ProductCard extends ConsumerWidget {
                   children: [
                     Positioned.fill(
                       child: Hero(
-                        tag: 'product_${item['id']}_$index',
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: cs.primary.withValues(alpha: 0.05),
-                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: cs.primary.withValues(alpha: 0.05),
-                            child: Icon(Icons.cake_outlined,
-                                color: cs.primary.withValues(alpha: 0.2)),
-                          ),
-                        ),
+                        tag: 'product_${item['id']}',
+                        child: imageUrl.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: imageUrl,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  color: cs.primary.withValues(alpha: 0.05),
+                                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                ),
+                                errorWidget: (context, url, error) => _placeholder(cs),
+                              )
+                            : _placeholder(cs),
                       ),
                     ),
                     Positioned(
@@ -238,7 +237,7 @@ class _ProductCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          "₹${item['price']}",
+                          "₹${item['price'] ?? '0'}",
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
@@ -284,7 +283,7 @@ class _ProductCard extends ConsumerWidget {
                         ref.read(cartProvider.notifier).addItem(item);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("Added ${item['name']} to cart! 🍰"),
+                            content: Text("Added ${item['name']} to cart!"),
                             duration: const Duration(seconds: 1),
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -309,6 +308,13 @@ class _ProductCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  static Widget _placeholder(ColorScheme cs) {
+    return Container(
+      color: cs.primary.withValues(alpha: 0.05),
+      child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
     );
   }
 }
