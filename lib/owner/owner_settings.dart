@@ -59,7 +59,7 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     if (_activeSubPage != null) {
       return PopScope(
         canPop: false,
-        onPopInvokedWithResult: (didPop, result) {
+        onPopInvoked: (didPop) {
           if (didPop) return;
           setState(() => _activeSubPage = null);
         },

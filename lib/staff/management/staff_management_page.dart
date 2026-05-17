@@ -301,12 +301,11 @@ class _StaffCard extends StatelessWidget {
                 await StaffService.deleteStaff(staff['id']);
                 if (ctx.mounted) Navigator.pop(ctx);
               } catch (e, st) {
-                if (ctx.mounted) {
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Failed to delete staff, please try again")),
-                  );
-                }
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to delete staff, please try again")),
+                );
                 debugPrint('Failed to delete staff: $e\n$st');
               }
             }, 

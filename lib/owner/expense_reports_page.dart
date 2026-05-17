@@ -283,7 +283,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
 
     return PopScope(
       canPop: widget.onClose == null,
-      onPopInvokedWithResult: (didPop, _) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           widget.onClose?.call();
         }

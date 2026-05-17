@@ -13,7 +13,6 @@ class InventoryAnalyticsPage extends StatefulWidget {
 
 class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
   String _selectedCategory = 'All';
-  bool _isSaving = false;
   final List<String> _categories = ['All', 'Ingredients', 'Packaging', 'Equipment', 'Other'];
 
   @override
@@ -23,7 +22,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
     return PopScope(
       canPop: widget.onClose == null,
-      onPopInvokedWithResult: (didPop, _) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           widget.onClose?.call();
         }
@@ -311,6 +310,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
     final currentController = TextEditingController();
     final minController = TextEditingController();
     String selectedCategory = _categories[1]; // Default to Ingredients
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -380,7 +380,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: isSaving ? null : () async {
                    if (nameController.text.trim().isEmpty) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -410,7 +410,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       return;
                     }
                     
-                    setState(() => _isSaving = true);
+                    setSheetState(() => isSaving = true);
                     try {
                       await InventoryService.addInventoryItem({
                         'name': name,
@@ -444,7 +444,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                         );
                       }
                     } finally {
-                      if (context.mounted) setState(() => _isSaving = false);
+                      if (context.mounted) setSheetState(() => isSaving = false);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -452,7 +452,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: _isSaving
+                  child: isSaving
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Text("SAVE ITEM"),
                 ),
