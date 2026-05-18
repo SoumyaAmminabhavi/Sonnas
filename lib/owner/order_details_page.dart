@@ -244,7 +244,6 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         cs: cs,
                                       ),
                                       const SizedBox(height: 32),
-                                      const SizedBox(height: 32),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
@@ -364,10 +363,10 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                     _SummaryRow(
                                                       label: "Subtotal",
                                                       value: OrderService.formatPrice(items.fold<double>(0.0, (sum, item) {
-                                                        final p = _normalizePrice(item['price']);
+                                                        final rawPrice = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
                                                         final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
-                                                        return sum + (p * q);
-                                                      }) * 100),
+                                                        return sum + (rawPrice * q);
+                                                      })),
                                                       cs: cs,
                                                     ),
                                                     const SizedBox(height: 12),
@@ -383,10 +382,10 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                       value: order['totalPrice'] != null
                                                         ? OrderService.formatPrice(order['totalPrice'])
                                                         : OrderService.formatPrice(items.fold<double>(0.0, (sum, item) {
-                                                            final p = _normalizePrice(item['price']);
+                                                            final rawPrice = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
                                                             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
-                                                            return sum + (p * q);
-                                                          }) * 100),
+                                                            return sum + (rawPrice * q);
+                                                          })),
                                                       cs: cs,
                                                       isTotal: true,
                                                     ),
@@ -594,24 +593,6 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                 );
               },
             );
-  }
-
-  static double _normalizePrice(dynamic raw) {
-    if (raw == null) return 0.0;
-    if (raw is num) return raw.toDouble() / 100.0;
-    final str = raw.toString();
-    final hasDecimal = str.contains('.');
-    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
-    final clean = str
-        .replaceAll('₹', '')
-        .replaceAll('INR', '')
-        .replaceAll('/-', '')
-        .replaceAll(',', '')
-        .trim();
-    if (clean.isEmpty) return 0.0;
-    final parsed = double.tryParse(clean) ?? 0.0;
-    if (hasDecimal || hasCurrency) return parsed;
-    return parsed / 100.0;
   }
 
   static ({String? url, Uint8List? imageBytes}) decodeDataUrlToBytes(String? rawUrl) {

@@ -6,6 +6,7 @@ import '../services/dashboard_provider.dart';
 import 'package:intl/intl.dart';
 import 'expense_reports_page.dart';
 import 'sales_reports_page.dart';
+import '../services/constants.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage({super.key});
@@ -100,9 +101,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
     if (raw == null) return 0.0;
     final str = raw.toString();
     final hasDecimal = str.contains('.');
-    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
+    final hasCurrency = str.contains(PriceConstants.currencySymbol) || str.toUpperCase().contains('INR');
     final clean = str
-        .replaceAll('₹', '')
+        .replaceAll(PriceConstants.currencySymbol, '')
         .replaceAll(RegExp(r'INR', caseSensitive: false), '')
         .replaceAll('/-', '')
         .replaceAll(',', '')

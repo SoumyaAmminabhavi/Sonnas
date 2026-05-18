@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../services/dashboard_provider.dart';
+import '../../services/order_service.dart';
+import '../../services/constants.dart';
 import '../../widgets/skeleton.dart';
 import 'order_card.dart';
 
@@ -101,7 +103,7 @@ class DashboardContent extends ConsumerWidget {
       children: [
         _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
         const SizedBox(width: 8),
-        _StatCard(title: "TOTAL REVENUE", value: "₹${stats['totalRevenue'].toInt()}", icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
+        _StatCard(title: "TOTAL REVENUE", value: OrderService.formatPrice((stats['totalRevenue'] as double) * PriceConstants.minorUnitsPerMajor), icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
         const SizedBox(width: 8),
         _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
       ],

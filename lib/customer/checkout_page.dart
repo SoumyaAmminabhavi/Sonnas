@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/cart_provider.dart';
 import '../services/order_service.dart';
+import '../services/constants.dart';
 
 class CustomerCheckoutPage extends ConsumerStatefulWidget {
   const CustomerCheckoutPage({super.key});
@@ -262,6 +263,6 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
 
   String _formatPrice(double priceInCents) {
     final rupees = priceInCents / 100.0;
-    return "₹${rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2)}";
+    return "${PriceConstants.currencySymbol}${rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2)}";
   }
 }

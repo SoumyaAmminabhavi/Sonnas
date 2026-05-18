@@ -116,9 +116,7 @@ class OrderService {
     }
   }
 
-  /// Real-time stream for a single order
-  /// Get a single order by ID or Order Number
-  /// Fetch a single order by ID or Order Number (Direct Fetch)
+  /// Fetch a single order by ID or Order Number.
   static Future<Map<String, dynamic>?> fetchOrderByIdOrNumber(String idOrNumber) async {
     try {
       final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
@@ -306,7 +304,7 @@ class OrderService {
         // Only count PAID orders in revenue
         if ((order['paymentStatus']?.toString().toUpperCase()) != 'PAID') continue;
 
-        final amount = (double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0) / 100.0;
+        final amount = (double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0) / PriceConstants.minorUnitsPerMajor;
 
         int key;
         if (range == 'today') {

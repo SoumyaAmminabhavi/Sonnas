@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import '../services/constants.dart';
 
 enum OrderStatus {
   pending,
@@ -94,7 +95,7 @@ class OrderItem {
       cakeId: map['cakeId']?.toString(),
       cakeName: map['cakeName']?.toString() ?? 'Unknown Cake',
       quantity: int.tryParse(map['quantity']?.toString() ?? '1') ?? 1,
-      price: (double.tryParse(map['price']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0,
+      price: (double.tryParse(map['price']?.toString().replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '') ?? '0') ?? 0.0) / PriceConstants.minorUnitsPerMajor,
       options: map['options']?.toString(),
     );
   }
@@ -151,8 +152,8 @@ class SonnaOrder {
         if (raw == null) return 0.0;
         final str = raw.toString();
         final hasDecimal = str.contains('.');
-        final hasCurrency = str.contains('₹') || str.contains('INR');
-        final clean = str.replaceAll('₹', '').replaceAll('INR', '').replaceAll(',', '').trim();
+        final hasCurrency = str.contains(PriceConstants.currencySymbol) || str.contains('INR');
+        final clean = str.replaceAll(PriceConstants.currencySymbol, '').replaceAll('INR', '').replaceAll(',', '').trim();
         if (clean.isEmpty) return 0.0;
         final parsed = double.tryParse(clean) ?? 0.0;
         if (hasDecimal || hasCurrency) return parsed;

@@ -12,10 +12,11 @@ class StaffService {
   }
 
   static Future<void> addStaff(Map<String, dynamic> data) async {
+    final mutableData = Map<String, dynamic>.from(data);
     int attempts = 0;
     while (attempts < AuthConstants.maxJoiningCodeRetries) {
       try {
-        await _client.from('Staff').insert(data);
+        await _client.from('Staff').insert(mutableData);
         return; // Success
       } catch (e) {
         final errorStr = e.toString();
@@ -27,7 +28,7 @@ class StaffService {
             throw StateError('Failed to insert staff after ${AuthConstants.maxJoiningCodeRetries} attempts due to duplicate joining codes');
           }
           // Generate a new joining code and retry
-          data['joiningCode'] = _generateJoiningCode();
+          mutableData['joiningCode'] = _generateJoiningCode();
         } else {
           rethrow; // Different error, propagate it
         }

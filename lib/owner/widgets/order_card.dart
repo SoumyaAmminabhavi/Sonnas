@@ -13,24 +13,6 @@ class OrderCardReactive extends ConsumerWidget {
 
   const OrderCardReactive({super.key, required this.data, this.onTabChanged});
 
-  static double _normalizePrice(dynamic raw) {
-    if (raw == null) return 0.0;
-    if (raw is num) return raw.toDouble() / 100.0;
-    final str = raw.toString();
-    final hasDecimal = str.contains('.');
-    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
-    final clean = str
-        .replaceAll('₹', '')
-        .replaceAll(RegExp('INR', caseSensitive: false), '')
-        .replaceAll('/-', '')
-        .replaceAll(',', '')
-        .trim();
-    if (clean.isEmpty) return 0.0;
-    final parsed = double.tryParse(clean) ?? 0.0;
-    if (hasDecimal || hasCurrency) return parsed;
-    return parsed / 100.0;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
@@ -78,9 +60,9 @@ class OrderCardReactive extends ConsumerWidget {
         double calculatedTotal = 0.0;
         if (items.isNotEmpty) {
           calculatedTotal = items.fold<double>(0.0, (sum, item) {
-            final p = _normalizePrice(item['price']);
+            final rawPrice = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
-            return sum + (p * q);
+            return sum + (rawPrice * q);
           });
         }
 
@@ -93,7 +75,7 @@ class OrderCardReactive extends ConsumerWidget {
           customerName: data['customerName'] ?? 'Guest Customer',
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
-              : OrderService.formatPrice(calculatedTotal * 100),
+              : OrderService.formatPrice(calculatedTotal),
           imageUrl: imageUrl.isEmpty
               ? ''
               : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
