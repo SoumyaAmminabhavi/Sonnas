@@ -346,7 +346,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                     _SummaryRow(
                                                       label: "Subtotal",
                                                       value: OrderService.formatPrice(items.fold(0.0, (sum, item) {
-                                                        final p = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+                                                        final p = _normalizePrice(item['price']);
                                                         final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
                                                         return sum + (p * q);
                                                       })),
@@ -362,10 +362,10 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                     const SizedBox(height: 20),
                                                     _SummaryRow(
                                                       label: "Total",
-                                                      value: order['totalPrice'] != null 
+                                                      value: order['totalPrice'] != null
                                                         ? OrderService.formatPrice(order['totalPrice'])
                                                         : OrderService.formatPrice(items.fold(0.0, (sum, item) {
-                                                            final p = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+                                                            final p = _normalizePrice(item['price']);
                                                             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
                                                             return sum + (p * q);
                                                           })),
@@ -583,6 +583,24 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
         );
   }
 
+  static double _normalizePrice(dynamic raw) {
+    if (raw == null) return 0.0;
+    if (raw is num) return raw.toDouble() / 100.0;
+    final str = raw.toString();
+    final hasDecimal = str.contains('.');
+    final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
+    final clean = str
+        .replaceAll('₹', '')
+        .replaceAll('INR', '')
+        .replaceAll('/-', '')
+        .replaceAll(',', '')
+        .trim();
+    if (clean.isEmpty) return 0.0;
+    final parsed = double.tryParse(clean) ?? 0.0;
+    if (hasDecimal || hasCurrency) return parsed;
+    return parsed / 100.0;
+  }
+
   static ({String? url, Uint8List? imageBytes}) decodeDataUrlToBytes(String? rawUrl) {
     if (rawUrl == null || rawUrl.trim().isEmpty) return (url: null, imageBytes: null);
     final trimmed = rawUrl.trim();
@@ -599,7 +617,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
     if (lower.contains('://') && !lower.startsWith('http')) {
       return (url: null, imageBytes: null);
     }
-    
+
     final url = lower.startsWith('http')
         ? trimmed
         : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');

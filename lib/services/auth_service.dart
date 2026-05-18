@@ -7,6 +7,17 @@ import 'constants.dart';
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
 
+  // ⚠️ WARNING: CLIENT-SIDE LOCKOUT VULNERABILITY ⚠️
+  // The following lockout mechanism (_staffCodeAttempts map and associated methods)
+  // is implemented in-memory on the client side and can be easily bypassed by:
+  // 1. Restarting the app (clears the in-memory map)
+  // 2. Modifying the app code or using a modified client
+  // 3. Making direct API calls to the backend
+  //
+  // TODO: This MUST be moved to server-side enforcement (e.g., Supabase Edge Function
+  // or RPC) to provide real security. The server should track failed attempts by phone
+  // number in the database and enforce rate limiting there. This client-side check
+  // only provides a basic UX deterrent, not actual security protection.
   static final Map<String, _AttemptTracker> _staffCodeAttempts = {};
 
   static bool isStaffCodeLockedOut(String phone) {
