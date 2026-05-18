@@ -146,7 +146,7 @@ export async function sendWelcome(to: string, name?: string) {
     // 1. Try to fetch dynamic template layout from PostgreSQL via our template-service
     const template = await getWhatsAppTemplate("WELCOME_MESSAGE", "en");
 
-    if (template && template.activeVersion) {
+    if (template?.activeVersion) {
       const activeVersion = template.activeVersion;
       const context = { customer_name: customerName };
 

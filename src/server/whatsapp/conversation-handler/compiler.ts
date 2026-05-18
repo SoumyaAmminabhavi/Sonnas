@@ -4,9 +4,9 @@ import { formatPrice } from "~/lib/format";
  * High-performance, safe regex template compiler for WhatsApp dynamic messages.
  * Replaces {{variable_name}} with contextual state data and handles currency/date formatting.
  */
-export function compileTemplate(templateStr: string, context: Record<string, any>): string {
+export function compileTemplate(templateStr: string, context: Record<string, unknown>): string {
   if (!templateStr) return "";
-  return templateStr.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, variableName) => {
+  return templateStr.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match: string, variableName: string): string => {
     if (variableName in context) {
       const val = context[variableName];
       if (val === null || val === undefined) return "";
@@ -30,7 +30,9 @@ export function compileTemplate(templateStr: string, context: Record<string, any
         });
       }
 
-      return String(val);
+      if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+        return String(val);
+      }
     }
     return ""; // Fallback: replace missing variables with empty string
   });
