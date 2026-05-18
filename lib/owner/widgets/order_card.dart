@@ -77,7 +77,7 @@ class OrderCardReactive extends ConsumerWidget {
         // Calculate actual total if totalPrice is null
         double calculatedTotal = 0.0;
         if (items.isNotEmpty) {
-          calculatedTotal = items.fold(0.0, (sum, item) {
+          calculatedTotal = items.fold<double>(0.0, (sum, item) {
             final p = _normalizePrice(item['price']);
             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
             return sum + (p * q);

@@ -351,7 +351,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                     const SizedBox(height: 24),
                                                     _SummaryRow(
                                                       label: "Subtotal",
-                                                      value: OrderService.formatPrice(items.fold(0.0, (sum, item) {
+                                                      value: OrderService.formatPrice(items.fold<double>(0.0, (sum, item) {
                                                         final p = _normalizePrice(item['price']);
                                                         final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
                                                         return sum + (p * q);
@@ -370,7 +370,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                       label: "Total",
                                                       value: order['totalPrice'] != null
                                                         ? OrderService.formatPrice(order['totalPrice'])
-                                                        : OrderService.formatPrice(items.fold(0.0, (sum, item) {
+                                                        : OrderService.formatPrice(items.fold<double>(0.0, (sum, item) {
                                                             final p = _normalizePrice(item['price']);
                                                             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
                                                             return sum + (p * q);
