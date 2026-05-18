@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
+import 'constants.dart';
 
 class ReportService {
   static Future<void> downloadCSV(List<Map<String, dynamic>> orders, double totalRevenue, int totalOrders) async {
@@ -22,7 +23,7 @@ class ReportService {
       String dateStr = dt != null ? DateFormat('dd-MM-yyyy HH:mm').format(dt) : 'N/A';
 
       final rawPrice = order['totalPrice']?.toString() ?? '0';
-      final cleanPrice = rawPrice.replaceAll('₹', '').replaceAll(',', '');
+      final cleanPrice = rawPrice.replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '');
 
       rows.add([
         order['orderNumber']?.toString() ?? 'N/A',
@@ -122,7 +123,7 @@ class ReportService {
               headers: ["Order #", "Customer", "Status", "Amount"],
               data: orders.take(20).map((o) {
                 final rawPrice = o['totalPrice']?.toString() ?? '0';
-                final cleanPrice = rawPrice.replaceAll('₹', '').replaceAll(',', '');
+                final cleanPrice = rawPrice.replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '');
                 return [
                   o['orderNumber']?.toString() ?? 'N/A',
                   o['customerName']?.toString() ?? 'Guest',

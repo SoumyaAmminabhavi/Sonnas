@@ -248,29 +248,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
                                           _SectionTitle(title: "Artisan Selection", cs: cs),
-                                       () {
-                                         final String? rawUrl = (order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString())?.trim();
-                                         final decoded = decodeDataUrlToBytes(rawUrl);
-                                         
-                                         if (decoded.imageBytes != null || decoded.url != null) {
-                                           return IconButton(
-                                             icon: const Icon(Icons.view_in_ar_outlined, size: 20),
-                                             color: cs.primary,
-                                             tooltip: "Holographic 3D View",
-                                             onPressed: () {
-                                               showDialog(
-                                                 context: context,
-                                                 builder: (context) => _HolographicViewer(
-                                                   imageUrl: decoded.url,
-                                                   imageBytes: decoded.imageBytes,
-                                                   cs: cs,
-                                                 ),
-                                               );
-                                             },
-                                           );
-                                         }
-                                         return const SizedBox.shrink();
-                                       }(),
+                                          _buildViewImageButton(cs, order, conversation),
                                         ],
                                       ),
                                       const SizedBox(height: 16),
@@ -454,79 +432,8 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                       children: [
                                           Expanded(
                                             flex: 3,
-                                            child: () {
-                                            final status = (order['status'] ?? 'PENDING').toString().toUpperCase();
-                                            String label = "CONFIRM";
-                                            String next = "CONFIRMED";
-                                            IconData icon = Icons.check_circle_outline;
-                                            bool active = true;
-
-                                            if (status == 'PENDING') {
-                                              label = "CONFIRM ORDER";
-                                              next = "CONFIRMED";
-                                            } else if (status == 'CONFIRMED') {
-                                              label = "DISPATCH ORDER";
-                                              next = "OUT_FOR_DELIVERY";
-                                              icon = Icons.local_shipping_outlined;
-                                            } else if (status == 'OUT_FOR_DELIVERY') {
-                                              label = "MARK DELIVERED";
-                                              next = "DELIVERED";
-                                              icon = Icons.check_circle_outline;
-                                            } else if (status == 'DELIVERED') {
-                                              label = "COMPLETE ORDER";
-                                              next = "COMPLETED";
-                                              icon = Icons.done_all;
-                                            } else {
-                                              label = status;
-                                              active = false;
-                                            }
-
-                                            return _ElegantAction(
-                                              icon: icon,
-                                              label: label,
-                                              cs: cs,
-                                              isPrimary: active,
-                                                onPressed: (active && !_isUpdating) ? () async {
-                                                  setState(() {
-                                                    _isUpdating = true;
-                                                  });
-                                                  try {
-                                                    await OrderService.updateOrderStatus(order['id'], next);
-                                                    if (!context.mounted) return;
-                                                    ref.invalidate(orderNotifierProvider(widget.orderId));
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: Row(
-                                                            children: [
-                                                              const Icon(Icons.check_circle_outline, color: Colors.white),
-                                                              const SizedBox(width: 12),
-                                                              Expanded(child: Text("Order updated to $next")),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                  } catch (e, st) {
-                                                    debugPrint('Order status update failed: $e\n$st');
-                                                    if (context.mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text("Failed to update order. Please try again."),
-                                                        ),
-                                                      );
-                                                    }
-                                                  } finally {
-                                                    if (mounted) {
-                                                      setState(() {
-                                                        _isUpdating = false;
-                                                      });
-                                                    }
-                                                  }
-                                                } : null,
-                                            );
-                                          }(),
-                                        ),
+                                            child: _buildStatusActionButton(cs, order, ref),
+                                          ),
                                         const SizedBox(width: 12),
                                         Expanded(
                                           flex: 2,
@@ -616,6 +523,98 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
         ? trimmed
         : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
     return (url: url, imageBytes: null);
+  }
+
+  Widget _buildViewImageButton(ColorScheme cs, Map<String, dynamic> order, dynamic conversation) {
+    final String? rawUrl = (order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString())?.trim();
+    final decoded = decodeDataUrlToBytes(rawUrl);
+
+    if (decoded.imageBytes != null || decoded.url != null) {
+      return IconButton(
+        icon: const Icon(Icons.view_in_ar_outlined, size: 20),
+        color: cs.primary,
+        tooltip: "Holographic 3D View",
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => _HolographicViewer(
+              imageUrl: decoded.url,
+              imageBytes: decoded.imageBytes,
+              cs: cs,
+            ),
+          );
+        },
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildStatusActionButton(ColorScheme cs, Map<String, dynamic> order, WidgetRef ref) {
+    final status = (order['status'] ?? 'PENDING').toString().toUpperCase();
+    String label = "CONFIRM";
+    String next = "CONFIRMED";
+    IconData icon = Icons.check_circle_outline;
+    bool active = true;
+
+    if (status == 'PENDING') {
+      label = "CONFIRM ORDER";
+      next = "CONFIRMED";
+    } else if (status == 'CONFIRMED') {
+      label = "DISPATCH ORDER";
+      next = "OUT_FOR_DELIVERY";
+      icon = Icons.local_shipping_outlined;
+    } else if (status == 'OUT_FOR_DELIVERY') {
+      label = "MARK DELIVERED";
+      next = "DELIVERED";
+      icon = Icons.check_circle_outline;
+    } else if (status == 'DELIVERED') {
+      label = "COMPLETE ORDER";
+      next = "COMPLETED";
+      icon = Icons.done_all;
+    } else {
+      label = status;
+      active = false;
+    }
+
+    return _ElegantAction(
+      icon: icon,
+      label: label,
+      cs: cs,
+      isPrimary: active,
+      onPressed: (active && !_isUpdating) ? () async {
+        setState(() => _isUpdating = true);
+        try {
+          await OrderService.updateOrderStatus(order['id'], next);
+          ref.invalidate(orderNotifierProvider(widget.orderId));
+          final currentContext = context;
+          if (!currentContext.mounted) return;
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text("Order updated to $next")),
+                ],
+              ),
+            ),
+          );
+        } catch (e, st) {
+          debugPrint('Order status update failed: $e\n$st');
+          final currentContext = context;
+          if (!currentContext.mounted) return;
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            const SnackBar(
+              content: Text("Failed to update order. Please try again."),
+            ),
+          );
+        } finally {
+          if (mounted) {
+            setState(() => _isUpdating = false);
+          }
+        }
+      } : null,
+    );
   }
 }
 

@@ -136,7 +136,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
             backgroundColor: cs.surface.withValues(alpha: 0.9),
             elevation: 0,
             scrolledUnderElevation: 0,
-            leading: IconButton(icon: Icon(Icons.arrow_back, color: cs.primary), onPressed: () => Navigator.of(context).pop()),
+            leading: isDesktop ? null : IconButton(icon: Icon(Icons.arrow_back, color: cs.primary), onPressed: () => Navigator.of(context).pop()),
             title: Text("Sonna's Patisserie & Cafe", style: GoogleFonts.notoSerif(color: cs.primary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
           ),
           bottomNavigationBar: isDesktop ? null : OwnerBottomNav(currentIndex: _selectedIndex, onTap: _handleNavigation),

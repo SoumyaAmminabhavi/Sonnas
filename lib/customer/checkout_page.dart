@@ -262,7 +262,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
   }
 
   String _formatPrice(double priceInCents) {
-    final rupees = priceInCents / 100.0;
+    final rupees = priceInCents / PriceConstants.minorUnitsPerMajor;
     return "${PriceConstants.currencySymbol}${rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2)}";
   }
 }

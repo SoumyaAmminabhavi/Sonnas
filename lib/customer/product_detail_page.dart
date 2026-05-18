@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/cart_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/supabase_service.dart';
+import '../services/constants.dart';
 
 class CustomerProductDetailPage extends ConsumerStatefulWidget {
   final Map<String, dynamic> product;
@@ -236,7 +237,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
   static String _formatPrice(dynamic price) {
     if (price == null) return '0';
     final double priceNum = price is num ? price.toDouble() : double.tryParse(price.toString()) ?? 0.0;
-    final double rupees = priceNum / 100.0;
+    final double rupees = priceNum / PriceConstants.minorUnitsPerMajor;
     return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
   }
 

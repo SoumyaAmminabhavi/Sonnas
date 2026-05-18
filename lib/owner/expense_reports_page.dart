@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/finance_service.dart';
 import '../services/report_service.dart';
+import '../services/constants.dart';
 
 class ExpenseReportsPage extends StatefulWidget {
   final VoidCallback? onClose;
@@ -203,7 +204,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                       return;
                     }
                     final rawAmount = amountController.text.trim()
-                        .replaceAll('₹', '')
+                        .replaceAll(PriceConstants.currencySymbol, '')
                         .replaceAll(',', '')
                         .replaceAll(' ', '');
                     final amount = double.tryParse(rawAmount);

@@ -329,8 +329,6 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(item.cakeName, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
-                if (item.options != null && item.options!.isNotEmpty) 
-                  Text(item.options!, style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
               ],
             ),
           ),

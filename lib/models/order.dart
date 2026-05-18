@@ -78,7 +78,6 @@ class OrderItem {
   final String cakeName;
   final int quantity;
   final double price;
-  final String? options;
 
   OrderItem({
     required this.id,
@@ -86,7 +85,6 @@ class OrderItem {
     required this.cakeName,
     required this.quantity,
     required this.price,
-    this.options,
   });
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
@@ -96,7 +94,6 @@ class OrderItem {
       cakeName: map['cakeName']?.toString() ?? 'Unknown Cake',
       quantity: int.tryParse(map['quantity']?.toString() ?? '1') ?? 1,
       price: (double.tryParse(map['price']?.toString().replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '') ?? '0') ?? 0.0) / PriceConstants.minorUnitsPerMajor,
-      options: map['options']?.toString(),
     );
   }
 }
@@ -157,7 +154,7 @@ class SonnaOrder {
         if (clean.isEmpty) return 0.0;
         final parsed = double.tryParse(clean) ?? 0.0;
         if (hasDecimal || hasCurrency) return parsed;
-        return parsed / 100.0;
+        return parsed / PriceConstants.minorUnitsPerMajor;
       })(),
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
       items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i))).toList(),
@@ -171,7 +168,7 @@ class SonnaOrder {
 
   String get formattedPrice {
     final fmt = NumberFormat('#,##,###.##');
-    return "₹${fmt.format(totalPrice)}";
+    return "${PriceConstants.currencySymbol}${fmt.format(totalPrice)}";
   }
   
 }

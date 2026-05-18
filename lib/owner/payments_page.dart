@@ -111,7 +111,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
     if (clean.isEmpty) return 0.0;
     final parsed = double.tryParse(clean) ?? 0.0;
     if (hasDecimal || hasCurrency) return parsed;
-    return parsed / 100.0;
+    return parsed / PriceConstants.minorUnitsPerMajor;
   }
 
   @override

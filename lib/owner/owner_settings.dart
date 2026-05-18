@@ -6,6 +6,7 @@ import 'add_staff_page.dart';
 import 'inventory_analytics_page.dart';
 import 'sales_reports_page.dart';
 import 'expense_reports_page.dart';
+import 'whatsapp_settings_page.dart';
 
 import '../services/staff_service.dart';
 import '../widgets/skeleton.dart';
@@ -380,6 +381,18 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             "Stock trends",
             onTap: () => setState(
               () => _activeSubPage = InventoryAnalyticsPage(
+                onClose: () => setState(() => _activeSubPage = null),
+              ),
+            ),
+          ),
+
+          _buildActionRow(
+            cs,
+            "WhatsApp Templates",
+            Icons.message_outlined,
+            "Configure notification engine",
+            onTap: () => setState(
+              () => _activeSubPage = WhatsAppSettingsPage(
                 onClose: () => setState(() => _activeSubPage = null),
               ),
             ),

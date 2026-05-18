@@ -1,3 +1,21 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  Sonna Patisserie — Database Schema (Prisma)
+// ─────────────────────────────────────────────────────────────────────────────
+//  This file defines the Supabase PostgreSQL schema using Prisma syntax.
+//  It is NOT used by the Flutter app at runtime — the app connects directly
+//  to Supabase via supabase_flutter. Prisma is used only for:
+//    • Schema documentation and type-safe modeling
+//    • Running migrations (prisma migrate dev / prisma db push)
+//    • Generating a TypeScript client for any future Node.js backend
+//
+//  To apply schema changes:
+//    1. Edit this file
+//    2. Run: npm run db:migrate   (or: npx prisma migrate dev)
+//    3. The migration SQL is applied to your Supabase PostgreSQL database
+//
+//  The Flutter app does NOT depend on Prisma at runtime.
+// ─────────────────────────────────────────────────────────────────────────────
+
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -7,8 +25,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-// ─── Authentication Models ──────────────────────────────────────────────────
 
 model Account {
   id                       String  @id @default(cuid())
@@ -27,6 +43,7 @@ model Account {
   user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -35,6 +52,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model User {
@@ -44,8 +63,8 @@ model User {
   emailVerified DateTime?
   image         String?
   accounts      Account[]
-  sessions      Session[]
   orders        Order[]
+  sessions      Session[]
 }
 
 model VerificationToken {
@@ -56,8 +75,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ─── Menu Models ────────────────────────────────────────────────────────────
-
 model Cake {
   id          String                 @id @default(cuid())
   name        String
@@ -65,12 +82,11 @@ model Cake {
   description String?
   image       String
   categoryId  String?
-  category    Category?              @relation(fields: [categoryId], references: [id])
   isAvailable Boolean                @default(true)
   sortOrder   Int                    @default(0)
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
-  deletedAt   DateTime?
+  category    Category?              @relation(fields: [categoryId], references: [id])
   options     CakeOption[]
   orderItems  OrderItem[]
   selectedBy  WhatsAppConversation[]
@@ -86,11 +102,11 @@ model CakeOption {
   serves      String
   price       Int
   isAvailable Boolean  @default(true)
-  stock       Int?
   cakeId      String
-  cake        Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  stock       Int?
+  cake        Cake     @relation(fields: [cakeId], references: [id], onDelete: Cascade)
 
   @@unique([cakeId, size])
   @@index([cakeId])
@@ -102,12 +118,180 @@ model Category {
   slug      String   @unique
   image     String?
   sortOrder Int      @default(0)
-  cakes     Cake[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cakes     Cake[]
 }
 
-// ─── Order Models ───────────────────────────────────────────────────────────
+model Order {
+  id              String                @id @default(cuid())
+  orderNumber     String                @unique
+  source          OrderSource           @default(APP)
+  userId          String?
+  whatsappPhone   String?
+  customerName    String
+  customerEmail   String?
+  customerPhone   String
+  totalPrice      Int
+  address         String
+  notes           String?
+  status          OrderStatus           @default(PENDING)
+  paymentStatus   PaymentStatus         @default(PENDING)
+  razorpayOrderId String?
+  paymentId       String?
+  paymentLink     String?
+  deliveryDate    DateTime?
+  isCustom        Boolean               @default(false)
+  customImageUrl  String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  confirmedAt     DateTime?
+  deliveredAt     DateTime?
+  cancelledAt     DateTime?
+  deliverySlot    String?
+  user            User?                 @relation(fields: [userId], references: [id])
+  conversation    WhatsAppConversation? @relation(fields: [whatsappPhone], references: [phone], onDelete: SetNull)
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([whatsappPhone])
+  @@index([customerPhone])
+  @@index([status])
+  @@index([createdAt])
+  @@index([source])
+  @@index([status, createdAt])
+  @@index([paymentStatus])
+  @@index([deliveryDate])
+  @@index([updatedAt])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  cakeId    String?
+  cakeName  String
+  size      String
+  price     Int
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  cake      Cake?    @relation(fields: [cakeId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([cakeId])
+}
+
+model WhatsAppConversation {
+  id                   String             @id @default(cuid())
+  phone                String             @unique
+  name                 String?
+  state                ConversationState  @default(IDLE)
+  selectedCakeId       String?
+  selectedSize         String?
+  selectedPrice        Int?
+  selectedAddress      String?
+  selectedNotes        String?
+  selectedQuantity     Int?               @default(1)
+  customImageUrl       String?
+  selectedDeliveryDate DateTime?
+  messages             Json               @default("[]")
+  menuOffset           Int?               @default(0)
+  lastMessageAt        DateTime           @default(now())
+  lastActivityAt       DateTime           @default(now())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  selectedDeliverySlot String?
+  orders               Order[]
+  cart                 WhatsAppCartItem[]
+  selectedCake         Cake?              @relation(fields: [selectedCakeId], references: [id])
+
+  @@index([lastActivityAt])
+  @@index([selectedCakeId])
+}
+
+model WhatsAppCartItem {
+  id           String               @id @default(cuid())
+  phone        String
+  cakeName     String
+  size         String
+  price        Int
+  quantity     Int                  @default(1)
+  createdAt    DateTime             @default(now())
+  conversation WhatsAppConversation @relation(fields: [phone], references: [phone], onDelete: Cascade)
+
+  @@index([phone])
+  @@index([phone, createdAt])
+}
+
+model WhatsAppSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  title       String
+  amount      Decimal   @db.Decimal(12, 2)
+  category    String
+  date        DateTime? @default(now()) @db.Timestamptz(6)
+  description String?
+  createdAt   DateTime? @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([date])
+  @@index([category])
+}
+
+model Staff {
+  id               String    @id @default(cuid())
+  name             String
+  phone            String    @unique
+  email            String?   @unique
+  imageUrl         String?
+  address          String?
+  dob              String?
+  bloodGroup       String?
+  emergencyName    String?
+  emergencyPhone   String?
+  role             String
+  sub_role         String?   @default("NONE")
+  shift            String?   @default("FULL_DAY")
+  permissions      Json      @default("{}")
+  shiftStart       String
+  shiftEnd         String
+  workingDays      Json      @default("[]")
+  password         String?
+  joiningCode      String?   @unique
+  isActivated      Boolean?  @default(false)
+  biometricEnabled Boolean?  @default(false)
+  createdAt        DateTime? @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([role])
+  @@index([isActivated])
+}
+
+model InventoryItem {
+  id            String    @id @default(cuid())
+  name          String
+  category      String
+  unit          String
+  currentStock  Decimal?  @default(0) @db.Decimal(12, 2)
+  minStock      Decimal?  @default(0) @db.Decimal(12, 2)
+  lastRestocked DateTime? @default(now()) @db.Timestamptz(6)
+  createdAt     DateTime? @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([category])
+  @@index([currentStock])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model SystemSetting {
+  key   String @id
+  value String
+}
 
 enum OrderSource {
   WHATSAPP
@@ -130,80 +314,6 @@ enum PaymentStatus {
   REFUNDED
 }
 
-model Order {
-  id          String      @id @default(cuid())
-  orderNumber String      @unique
-  source      OrderSource @default(APP)
-
-  // Relations
-  userId        String?
-  user          User?                 @relation(fields: [userId], references: [id])
-  whatsappPhone String?
-  conversation  WhatsAppConversation? @relation(fields: [whatsappPhone], references: [phone], onDelete: SetNull)
-
-  // Customer Info
-  customerName  String
-  customerEmail String?
-  customerPhone String
-
-  // Order Details
-  totalPrice    Int
-  address       String
-  notes         String?
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-
-  // Payment Info
-  razorpayOrderId String?
-  paymentId       String?
-  paymentLink     String?
-
-  // Logistics
-  deliveryDate DateTime?
-  deliverySlot String?
-
-  // Custom Cake Info
-  isCustom       Boolean @default(false)
-  customImageUrl String?
-
-  // Audit & Timelines
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-  confirmedAt DateTime?
-  deliveredAt DateTime?
-  cancelledAt DateTime?
-
-  items OrderItem[]
-
-  @@index([customerPhone])
-  @@index([whatsappPhone])
-  @@index([status])
-  @@index([createdAt])
-  @@index([source])
-  @@index([status, createdAt])
-  @@index([paymentStatus])
-  @@index([deliveryDate])
-  @@index([updatedAt])
-}
-
-model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  cakeId    String?
-  cake      Cake?    @relation(fields: [cakeId], references: [id], onDelete: SetNull)
-  cakeName  String
-  size      String
-  price     Int
-  quantity  Int      @default(1)
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@index([orderId])
-}
-
-// ─── WhatsApp Interaction Models ───────────────────────────────────────────
-
 enum ConversationState {
   IDLE
   START
@@ -211,109 +321,140 @@ enum ConversationState {
   BROWSING_MENU
   SELECTING_CAKE
   SELECTING_SIZE
-  SELECTING_QUANTITY
   ADDING_NOTES
   INPUTTING_ADDRESS
-  ASKING_DELIVERY_DATE
   CONFIRMING_ORDER
   CHECKOUT
   CUSTOM_ORDER_START
   CUSTOM_ORDER_IMAGE
   CUSTOM_ORDER_DETAILS
+  SELECTING_QUANTITY
+  ASKING_DELIVERY_DATE
 }
 
-model WhatsAppConversation {
-  id                   String             @id @default(cuid())
-  phone                String             @unique
-  name                 String?
-  state                ConversationState  @default(IDLE)
-  selectedCakeId       String?
-  selectedCake         Cake?              @relation(fields: [selectedCakeId], references: [id], onDelete: SetNull)
-  selectedSize         String?
-  selectedPrice        Int?
-  selectedAddress      String?
-  selectedNotes        String?
-  selectedQuantity     Int?               @default(1)
-  customImageUrl       String?
-  selectedDeliveryDate DateTime?
-  selectedDeliverySlot String?
-  messages             Json               @default("[]")
-  menuOffset           Int?               @default(0)
-  lastMessageAt        DateTime           @default(now())
-  lastActivityAt       DateTime           @default(now())
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  cart                 WhatsAppCartItem[]
-  orders               Order[]
+// ==========================================
+// WhatsApp Dynamic Template Engine Models
+// ==========================================
 
-  @@index([lastActivityAt])
-  @@index([selectedCakeId])
+model WhatsAppTemplate {
+  id              String           @id @default(cuid())
+  code            String // e.g. "WELCOME_MESSAGE", "CART_EMPTY"
+  language        String           @default("en") // e.g. "en", "hi", "mr"
+  description     String?
+  category        TemplateCategory @default(GENERAL)
+  isActive        Boolean          @default(true)
+  activeVersionId String?          @unique // Links directly to current published version
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  versions      WhatsAppTemplateVersion[] @relation("TemplateToVersions")
+  activeVersion WhatsAppTemplateVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id], onDelete: SetNull)
+
+  @@unique([code, language])
+  @@index([code])
+  @@index([isActive])
 }
 
-model WhatsAppCartItem {
-  id           String               @id @default(cuid())
-  phone        String
-  cakeName     String
-  size         String
-  price        Int
-  quantity     Int                  @default(1)
-  createdAt    DateTime             @default(now())
-  conversation WhatsAppConversation @relation(fields: [phone], references: [phone], onDelete: Cascade)
+model WhatsAppTemplateVersion {
+  id              String                  @id @default(cuid())
+  templateId      String
+  versionNumber   Int                     @default(1)
+  bodyText        String                  @db.Text
+  headerText      String?                 @db.Text
+  footerText      String?                 @db.Text
+  mediaUrl        String?
+  mediaType       WhatsAppMediaType?
+  interactiveType WhatsAppInteractiveType @default(NONE)
+  ctaButtonTitle  String?
+  ctaButtonUrl    String?
+  listButtonTitle String?
+  listTitle       String?
+  changeLog       String?
+  createdBy       String?
+  createdAt       DateTime                @default(now())
 
-  @@index([phone, createdAt])
+  template     WhatsAppTemplate      @relation("TemplateToVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  buttons      WhatsAppButton[]
+  listSections WhatsAppListSection[]
+  activeFor    WhatsAppTemplate?     @relation("ActiveVersion")
+
+  @@unique([templateId, versionNumber])
+  @@index([templateId])
 }
 
-model SystemSetting {
-  id    String @id @default(cuid())
-  key   String @unique
-  value String
+model WhatsAppButton {
+  id        String @id @default(cuid())
+  versionId String
+  sortOrder Int    @default(0)
+  buttonId  String
+  title     String
+
+  version WhatsAppTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
 }
 
-model Expense {
-  id          String   @id @default(cuid())
+model WhatsAppListSection {
+  id         String            @id @default(cuid())
+  versionId  String
+  sortOrder  Int               @default(0)
+  title      String
+  dataSource SectionDataSource @default(STATIC)
+
+  rows    WhatsAppListRow[]
+  version WhatsAppTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+}
+
+model WhatsAppListRow {
+  id          String  @id @default(cuid())
+  sectionId   String
+  sortOrder   Int     @default(0)
+  rowId       String
   title       String
-  amount      Decimal  @db.Decimal(12, 2)
-  category    String
-  date        DateTime @default(now())
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+
+  section WhatsAppListSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
 }
 
-model Staff {
-  id               String   @id @default(cuid())
-  name             String
-  phone            String   @unique
-  email            String?  @unique
-  imageUrl         String?
-  address          String?
-  dob              String?
-  bloodGroup       String?
-  emergencyName    String?
-  emergencyPhone   String?
-  role             String
-  sub_role         String?  @default("NONE")
-  shift            String   @default("FULL_DAY")
-  permissions      Json
-  shiftStart       String
-  shiftEnd         String
-  workingDays      Json
-  password         String?
-  joiningCode      String?
-  isActivated      Boolean  @default(false)
-  biometricEnabled Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+// ==========================================
+// Enums for WhatsApp Template System
+// ==========================================
+
+enum TemplateCategory {
+  GREETING
+  MENU
+  CATEGORY
+  PRODUCT
+  ORDER
+  PAYMENT
+  DELIVERY
+  ERROR
+  GENERAL
 }
 
-model InventoryItem {
-  id            String   @id @default(cuid())
-  name          String
-  category      String
-  unit          String
-  currentStock  Decimal  @default(0) @db.Decimal(12, 2)
-  minStock      Decimal  @default(0) @db.Decimal(12, 2)
-  lastRestocked DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+enum WhatsAppMediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  NONE
+}
+
+enum WhatsAppInteractiveType {
+  NONE
+  BUTTONS
+  LIST
+  CTA_URL
+}
+
+enum SectionDataSource {
+  STATIC
+  CATEGORIES
+  TOP_FAVORITES
+  PRODUCT_LIST
+  CURRENT_CART
+  ACTIVE_ORDERS
 }

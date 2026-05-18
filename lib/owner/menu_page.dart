@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' if (dart.library.html) '../services/platform_file_stub.dart' as io show File;
+import 'dart:io' show File;
 
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +12,7 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/menu_service.dart';
 import '../services/dashboard_provider.dart';
+import '../services/constants.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
 
@@ -901,9 +902,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     final priceValue = firstOption?['price'];
     double displayPrice = 0;
     if (priceValue is num) {
-      displayPrice = priceValue.toDouble() / 100.0;
+      displayPrice = priceValue.toDouble() / PriceConstants.minorUnitsPerMajor;
     } else if (priceValue != null) {
-      displayPrice = (double.tryParse(priceValue.toString()) ?? 0) / 100.0;
+      displayPrice = (double.tryParse(priceValue.toString()) ?? 0) / PriceConstants.minorUnitsPerMajor;
     }
 
     _nameController = TextEditingController(text: data?['name']?.toString());
@@ -928,7 +929,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
   String _sanitizePrice(String value) {
     return value
         .replaceAll('/-', '')
-        .replaceAll('₹', '')
+        .replaceAll(PriceConstants.currencySymbol, '')
         .replaceAll(',', '')
         .trim();
   }
@@ -979,7 +980,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
   String _generateCmpId() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    final random = Random();
+    final random = Random.secure();
     final randomPart = List.generate(
       19,
       (index) => chars[random.nextInt(chars.length)],
@@ -1186,7 +1187,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         await MenuService.upsertCakeOption({
           'id': matchedOption?['id'] ?? _generateCmpId(),
           'cakeId': cakeId,
-          'price': ((double.tryParse(normalizedPrice) ?? 0) * 100).toInt(),
+          'price': ((double.tryParse(normalizedPrice) ?? 0) * PriceConstants.minorUnitsPerMajor).toInt(),
           'size': currentSize,
           'serves': _servesController.text.trim(),
           'updatedAt': DateTime.now().toIso8601String(),
@@ -1657,7 +1658,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                         errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
                       )
                     : Image.file(
-                        io.File(_selectedImage!.path),
+                        File(_selectedImage!.path),
                         fit: BoxFit.cover,
                         errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
                       ))

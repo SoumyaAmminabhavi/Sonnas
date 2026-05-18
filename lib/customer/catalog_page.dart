@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/menu_service.dart';
 import '../services/cart_provider.dart';
 import '../services/supabase_service.dart';
+import '../services/constants.dart';
 import 'checkout_page.dart';
 import 'product_detail_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -371,7 +372,7 @@ class _ProductCard extends ConsumerWidget {
   static String _formatPrice(dynamic price) {
     if (price == null) return '0';
     final double priceNum = price is num ? price.toDouble() : double.tryParse(price.toString()) ?? 0.0;
-    final double rupees = priceNum / 100.0;
+    final double rupees = priceNum / PriceConstants.minorUnitsPerMajor;
     return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
   }
 }

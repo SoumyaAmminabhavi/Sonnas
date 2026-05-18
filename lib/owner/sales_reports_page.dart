@@ -8,6 +8,7 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/menu_service.dart';
 import '../services/report_service.dart';
+import '../services/constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -132,7 +133,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     if (hasDecimal) {
       return parsed;
     }
-    return parsed / 100.0;
+    return parsed / PriceConstants.minorUnitsPerMajor;
   }
 
   void _calculateMetrics() {
@@ -393,7 +394,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           _buildMetricCard(
             cs,
             "Total Revenue",
-            NumberFormat.currency(symbol: "₹", decimalDigits: 0).format(_totalRevenue),
+            NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(_totalRevenue),
             Icons.account_balance_wallet_outlined,
             const Color(0xFFFF4D8D),
           ),
@@ -407,7 +408,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           _buildMetricCard(
             cs,
             "Avg. Order",
-            NumberFormat.currency(symbol: "₹", decimalDigits: 0).format(_avgOrderValue),
+            NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(_avgOrderValue),
             Icons.analytics_outlined,
             Colors.blueGrey,
           ),
@@ -751,7 +752,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                 ),
                 const Spacer(),
                 Text(
-                  NumberFormat.currency(symbol: "₹", decimalDigits: 0).format(e.value),
+                  NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(e.value),
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
