@@ -65,6 +65,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         }
         return;
       }
+      if (!mounted) return;
       setState(() {
         _pickedImage = image;
         _imageBytes = bytes;

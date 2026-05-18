@@ -228,7 +228,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                   ? fallbackPhone
                                                   : 'Contact hidden');
                                         })(),
-                                        address: (order['address'] ?? conversation?['address'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
+                                        address: (order['address'] ?? conversation?['selectedAddress'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
                                       ),
                                       const SizedBox(height: 32),

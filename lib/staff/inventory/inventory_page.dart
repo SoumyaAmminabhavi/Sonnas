@@ -269,6 +269,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                                     onPressed: () {
                                       setDialogState(() {
                                         dialogInventoryFuture = InventoryService.fetchInventory();
+                                        _inventoryFuture = InventoryService.fetchInventory();
                                       });
                                       setFieldState(() {});
                                     },
