@@ -20,15 +20,35 @@ async function main() {
   // Clear existing items in dev
   await prisma.cake.deleteMany();
   await prisma.cakeOption.deleteMany();
+  await prisma.category.deleteMany();
+
+  const createdSlugs = new Set<string>();
 
   for (let i = 0; i < products.length; i++) {
     const product = products[i]!;
+    let slug = slugify(product.name);
+
+    if (createdSlugs.has(slug)) {
+      slug = slugify(`${product.name}-${product.category}`);
+    }
+    createdSlugs.add(slug);
+
     const createdCake = await prisma.cake.create({
       data: {
         name: product.name,
-        slug: slugify(product.name),
+        slug: slug,
         description: product.description ?? "",
-        category: product.category,
+        category: product.category
+          ? {
+              connectOrCreate: {
+                where: { name: product.category },
+                create: {
+                  name: product.category,
+                  slug: slugify(product.category),
+                },
+              },
+            }
+          : undefined,
         image: product.image,
         isAvailable: product.isAvailable ?? true,
         sortOrder: product.sortOrder ?? i,
@@ -41,7 +61,7 @@ async function main() {
         }
       }
     });
-    console.log(`Created cake: ${createdCake.name} (${createdCake.category})`);
+    console.log(`Created cake: ${createdCake.name} (${product.category})`);
   }
 
   // ==========================================
