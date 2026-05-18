@@ -70,7 +70,7 @@ class OrderService {
     final query = Uri.encodeComponent(address);
     final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      debugPrint("Could not launch maps: $url");
+      debugPrint("Could not launch maps");
     }
   }
 
@@ -394,6 +394,9 @@ class OrderService {
       if (rawItems is! List) {
         throw ArgumentError('items must be a List');
       }
+      if (rawItems.isEmpty) {
+        throw ArgumentError('items must not be empty');
+      }
       final items = rawItems.map((e) {
         if (e is! Map) throw ArgumentError('Each item must be a Map');
         return Map<String, dynamic>.from(e);
@@ -422,7 +425,7 @@ class OrderService {
     final url = Uri.parse("https://wa.me/$cleanPhone?text=$query");
     
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      debugPrint("Could not launch WhatsApp: $url");
+      debugPrint("Could not launch WhatsApp");
     }
   }
 

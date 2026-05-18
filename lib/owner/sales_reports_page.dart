@@ -119,13 +119,16 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
   double _parsePrice(dynamic value) {
     if (value == null) return 0.0;
-    final str = value.toString().trim();
-    if (str.isEmpty) return 0.0;
-    final hasCurrency = str.contains('₹') || str.contains(r'$') || str.toLowerCase().contains('rs');
-    final hasDecimal = str.contains('.');
-    final cleanStr = str.replaceAll('₹', '').replaceAll(r'$', '').replaceAll(',', '').trim();
-    final parsed = double.tryParse(cleanStr) ?? 0.0;
-    if (hasCurrency || hasDecimal) {
+    final valStr = value.toString().trim();
+    if (valStr.isEmpty) return 0.0;
+    final hasDecimal = valStr.contains('.');
+    String str = valStr.replaceAll(RegExp(r'[₹$]'), '')
+        .replaceAll(RegExp(r'^(INR|Rs\.?|rs\.?)\s*', caseSensitive: false), '')
+        .replaceAll('/-', '')
+        .replaceAll(',', '')
+        .trim();
+    final parsed = double.tryParse(str) ?? 0.0;
+    if (hasDecimal) {
       return parsed;
     }
     return parsed / 100.0;

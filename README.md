@@ -121,7 +121,7 @@ cp .env.example .env
 SUPABASE_URL=https://<your-project-ref>.supabase.co
 SUPABASE_ANON_KEY=<your-anon-key>
 NEXT_PUBLIC_WHATSAPP_NUMBER=91...
-NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED=+91 ...
+NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED=+919999999999
 ```
 
 > **Never commit `.env`.** It is listed in `.gitignore`.

@@ -67,7 +67,7 @@ class MenuService {
         final cakes = List<Map<String, dynamic>>.from(
           await _client.from('Cake').select('*').order('name'),
         );
-        final cakeIds = cakes.map((c) => c['id']).whereType<String>().toList();
+        final cakeIds = cakes.map((c) => c['id']?.toString()).where((id) => id != null).toList();
         
         // Parallel fetch for categories and options
         final results = await Future.wait([
@@ -163,10 +163,9 @@ class MenuService {
     }
   }
 
-  /// Permanently delete a product and its options
+  /// Permanently delete a product (CakeOption cascade-deletes via DB)
   static Future<void> deleteCake(String id) async {
     try {
-      await _client.from('CakeOption').delete().eq('cakeId', id);
       await _client.from('Cake').delete().eq('id', id);
     } catch (e) {
       debugPrint('⚠️ Delete Failed: $e');

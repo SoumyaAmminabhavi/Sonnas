@@ -130,10 +130,17 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     setState(() => _isLoading = true);
 
-    final staff = await AuthService.verifyStaffCode(phone, code);
-    
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    Map<String, dynamic>? staff;
+    try {
+      staff = await AuthService.verifyStaffCode(phone, code);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showError("Verification failed. Please try again.");
+      return;
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
 
     if (staff != null) {
       setState(() {

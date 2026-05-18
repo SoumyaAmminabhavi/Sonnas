@@ -350,9 +350,21 @@ class _DashboardContent extends StatelessWidget {
                         orderNumber: o['orderNumber'] ?? '---',
                         title: o['customerName'] ?? 'Customer',
                         status: o['status']?.toString().toUpperCase() ?? 'PENDING',
-                        onAction: () {
+                        onAction: () async {
                           final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
-                          if (next != null) OrderService.updateOrderStatus(o['id'], next);
+                          if (next == null) return;
+                          try {
+                            await OrderService.updateOrderStatus(o['id'], next);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text("Failed to update order status"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         },
                         actionLabel: _getActionLabel(o['status']?.toString().toLowerCase() ?? ''),
                         isGrid: true,

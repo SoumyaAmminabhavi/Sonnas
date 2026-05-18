@@ -322,7 +322,7 @@ model Staff {
   shiftEnd         String
   workingDays      Json
   password         String?
-  joiningCode      String?
+  joiningCode      String?   @unique
   isActivated      Boolean  @default(false)
   biometricEnabled Boolean  @default(false)
   createdAt        DateTime @default(now())

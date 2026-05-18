@@ -268,9 +268,10 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                                 children: [
                                   TextButton.icon(
                                     onPressed: () {
+                                      final fresh = InventoryService.fetchInventory();
                                       setDialogState(() {
-                                        dialogInventoryFuture = InventoryService.fetchInventory();
-                                        _inventoryFuture = InventoryService.fetchInventory();
+                                        dialogInventoryFuture = fresh;
+                                        _inventoryFuture = fresh;
                                       });
                                       setFieldState(() {});
                                     },
