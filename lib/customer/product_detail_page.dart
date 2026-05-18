@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -26,7 +27,17 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final product = widget.product;
-    final imageUrl = SupabaseService.getPublicUrl(product['image'] ?? '', bucket: 'cakes');
+
+    // Validate product image URL before calling getPublicUrl
+    final String? imageUrl;
+    final rawImage = product['image'];
+    if (rawImage == null || rawImage.toString().isEmpty) {
+      imageUrl = null;
+    } else if (rawImage.toString().startsWith('data:')) {
+      imageUrl = rawImage.toString();
+    } else {
+      imageUrl = SupabaseService.getPublicUrl(rawImage, bucket: 'cakes');
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -55,7 +66,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
     );
   }
 
-  Widget _buildSliverAppBar(String imageUrl, ColorScheme cs) {
+  Widget _buildSliverAppBar(String? imageUrl, ColorScheme cs) {
     return SliverAppBar(
       expandedHeight: 400,
       backgroundColor: Colors.white,
@@ -71,15 +82,53 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
       flexibleSpace: FlexibleSpaceBar(
         background: Hero(
           tag: widget.heroTag ?? 'product_${widget.product['id'] ?? widget.product.hashCode}',
-          child: CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-            errorWidget: (context, url, error) => const Icon(Icons.error),
-          ),
+          child: _buildImageWidget(imageUrl),
         ),
       ),
     );
+  }
+
+  Widget _buildImageWidget(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      // Placeholder for null or empty imageUrl
+      return Container(
+        color: Colors.grey[200],
+        child: const Center(
+          child: Icon(Icons.cake, size: 100, color: Colors.grey),
+        ),
+      );
+    } else if (imageUrl.startsWith('data:')) {
+      // Handle data URI with Image.memory
+      try {
+        final base64String = imageUrl.split(',')[1];
+        final bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Colors.grey[200],
+            child: const Center(
+              child: Icon(Icons.error, size: 50, color: Colors.grey),
+            ),
+          ),
+        );
+      } catch (e) {
+        return Container(
+          color: Colors.grey[200],
+          child: const Center(
+            child: Icon(Icons.error, size: 50, color: Colors.grey),
+          ),
+        );
+      }
+    } else {
+      // Use CachedNetworkImage for network URLs
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+      );
+    }
   }
 
   Widget _buildHeader(Map<String, dynamic> product, ColorScheme cs) {
