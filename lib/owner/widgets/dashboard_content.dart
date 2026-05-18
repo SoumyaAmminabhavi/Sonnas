@@ -170,7 +170,10 @@ class DashboardContent extends ConsumerWidget {
                 selectedYear: selectedYear,
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Center(child: Text("Error: $err")),
+              error: (err, _) {
+                debugPrint('Chart error: $err');
+                return const Center(child: Text("Failed to load chart"));
+              },
             ),
           ),
         ],

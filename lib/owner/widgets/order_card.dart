@@ -93,7 +93,7 @@ class OrderCardReactive extends ConsumerWidget {
           customerName: data['customerName'] ?? 'Guest Customer',
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
-              : OrderService.formatPrice(calculatedTotal),
+              : OrderService.formatPrice(calculatedTotal * 100),
           imageUrl: imageUrl.isEmpty
               ? ''
               : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))

@@ -66,6 +66,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         if (paidOrderIds.isEmpty) {
           if (mounted) {
             setState(() {
+              _pendingFetchVersion++;
               _topItems = [];
               _categorySales = {};
               _lastProcessedIds = '';
@@ -224,6 +225,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
     final ids = paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
     if (ids.isEmpty) {
+      _pendingFetchVersion++;
       _topItems = [];
       _categorySales = {};
       _lastProcessedIds = '';

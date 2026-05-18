@@ -12,7 +12,7 @@ class OrderService {
     Timer? debounceTimer;
     final controller = StreamController<T>.broadcast();
 
-    source.listen(
+    final sub = source.listen(
       (data) {
         debounceTimer?.cancel();
         debounceTimer = Timer(duration, () {
@@ -23,7 +23,16 @@ class OrderService {
         debounceTimer?.cancel();
         if (!controller.isClosed) controller.addError(e, st);
       },
+      onDone: () {
+        debounceTimer?.cancel();
+        controller.close();
+      },
     );
+
+    controller.onCancel = () {
+      debounceTimer?.cancel();
+      sub.cancel();
+    };
 
     return controller.stream;
   }
@@ -32,7 +41,7 @@ class OrderService {
     final controller = StreamController<R>.broadcast();
     int latestRequestId = 0;
 
-    source.listen(
+    final sub = source.listen(
       (data) async {
         final requestId = ++latestRequestId;
         try {
@@ -49,7 +58,12 @@ class OrderService {
       onError: (e, st) {
         if (!controller.isClosed) controller.addError(e, st);
       },
+      onDone: () {
+        controller.close();
+      },
     );
+
+    controller.onCancel = () => sub.cancel();
 
     return controller.stream;
   }

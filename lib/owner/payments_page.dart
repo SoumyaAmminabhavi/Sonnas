@@ -72,6 +72,7 @@ class _PaymentsTab extends StatefulWidget {
 
 class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _streamKey = 0;
 
   @override
   void initState() {
@@ -83,6 +84,12 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _reloadData() {
+    setState(() {
+      _streamKey++;
+    });
   }
 
   double _normalizePrice(dynamic raw) {
@@ -105,8 +112,17 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
+      key: ValueKey(_streamKey),
       stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(widget.cs.primary),
+            ),
+          );
+        }
+
         if (snapshot.hasError) {
           debugPrint("❌ Payments load error: ${snapshot.error}");
           return Center(
@@ -119,7 +135,7 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
                 const SizedBox(height: 8),
                 Text("Please try again later or contact support.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: widget.cs.secondary.withValues(alpha: 0.5))),
                 const SizedBox(height: 24),
-                ElevatedButton(onPressed: () {}, child: const Text("RETRY")),
+                ElevatedButton(onPressed: _reloadData, child: const Text("RETRY")),
               ],
             ),
           );

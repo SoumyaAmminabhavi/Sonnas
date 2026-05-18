@@ -146,7 +146,18 @@ class SonnaOrder {
       phone: customerPhone,
       status: OrderStatusExtension.fromString(map['status']?.toString() ?? 'PENDING'),
       paymentStatus: map['paymentStatus']?.toString() ?? 'PENDING',
-      totalPrice: (double.tryParse(map['totalPrice']?.toString().replaceAll('₹', '').replaceAll(',', '') ?? '0') ?? 0.0) / 100.0,
+      totalPrice: (() {
+        final raw = map['totalPrice'];
+        if (raw == null) return 0.0;
+        final str = raw.toString();
+        final hasDecimal = str.contains('.');
+        final hasCurrency = str.contains('₹') || str.contains('INR');
+        final clean = str.replaceAll('₹', '').replaceAll('INR', '').replaceAll(',', '').trim();
+        if (clean.isEmpty) return 0.0;
+        final parsed = double.tryParse(clean) ?? 0.0;
+        if (hasDecimal || hasCurrency) return parsed;
+        return parsed / 100.0;
+      })(),
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
       items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i))).toList(),
       notes: map['notes']?.toString(),

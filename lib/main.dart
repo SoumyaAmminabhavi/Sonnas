@@ -17,7 +17,7 @@ final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.n
 
 class ThemeNotifier extends Notifier<ThemeMode> {
   @override
-  ThemeMode build() => ThemeMode.light;
+  ThemeMode build() => _initialThemeMode ?? ThemeMode.light;
   void setTheme(ThemeMode mode) => state = mode;
 }
 
@@ -77,14 +77,6 @@ class PatisserieApp extends ConsumerStatefulWidget {
 }
 
 class _PatisserieAppState extends ConsumerState<PatisserieApp> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(themeProvider.notifier).setTheme(_initialThemeMode);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);

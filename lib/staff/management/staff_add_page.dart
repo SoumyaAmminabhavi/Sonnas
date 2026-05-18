@@ -233,7 +233,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "Please share this 5-character joining code with the staff member. This is a one-time code for their first login.",
+              "Please share this 5-character alphanumeric joining code with the staff member. This is a one-time code for their first login.",
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

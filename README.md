@@ -81,7 +81,7 @@ The database schema is defined in `lib/services/schema.prisma` using Prisma synt
 - Running migrations (`npm run db:migrate`)
 - Generating a TypeScript client for any future Node.js/Next.js backend
 
-To apply schema changes (requires privileged `DATABASE_URL` located in your server-only env template `.env.server.example`):
+To apply schema changes (requires a privileged `DATABASE_URL` set in your server-only environment file (e.g. `.env.server.example`)):
 
 ```bash
 npm install          # install prisma + @prisma/client
@@ -104,7 +104,7 @@ The `vercel.json` configures SPA routing for the Flutter web build only. There i
 
 ```bash
 git clone <repo-url>
-cd Sonna
+cd Cake
 flutter pub get
 ```
 

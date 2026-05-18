@@ -355,7 +355,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                         final p = _normalizePrice(item['price']);
                                                         final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
                                                         return sum + (p * q);
-                                                      })),
+                                                      }) * 100),
                                                       cs: cs,
                                                     ),
                                                     const SizedBox(height: 12),
@@ -374,7 +374,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                             final p = _normalizePrice(item['price']);
                                                             final q = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
                                                             return sum + (p * q);
-                                                          })),
+                                                          }) * 100),
                                                       cs: cs,
                                                       isTotal: true,
                                                     ),
