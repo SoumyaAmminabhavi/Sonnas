@@ -47,7 +47,10 @@ class MenuService {
       }
     };
 
-    controller.onCancel = cleanup;
+    controller.onCancel = () {
+      // Do not close controller on cancel - only cleanup when stream is truly disposed
+      // The broadcast controller can be reused when listeners re-subscribe
+    };
 
     return controller.stream;
   }

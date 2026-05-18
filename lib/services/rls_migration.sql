@@ -22,18 +22,27 @@ CREATE POLICY "Menu items are viewable by everyone"
   USING (true);
 
 -- Block direct INSERT/UPDATE/DELETE from anon key
--- (Menu edits should go through authenticated admin sessions)
-CREATE POLICY "Menu items can be inserted by authenticated users"
+-- (Menu edits should go through authenticated admin sessions with staff/owner verification)
+CREATE POLICY "Menu items can be inserted by staff or service role"
   ON "Cake" FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Menu items can be updated by authenticated users"
+CREATE POLICY "Menu items can be updated by staff or service role"
   ON "Cake" FOR UPDATE
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Menu items can be deleted by authenticated users"
+CREATE POLICY "Menu items can be deleted by staff or service role"
   ON "Cake" FOR DELETE
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
 
 ALTER TABLE "Category" ENABLE ROW LEVEL SECURITY;
@@ -42,10 +51,16 @@ CREATE POLICY "Categories are viewable by everyone"
   ON "Category" FOR SELECT
   USING (true);
 
-CREATE POLICY "Categories can be modified by authenticated users"
+CREATE POLICY "Categories can be modified by staff or service role"
   ON "Category" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
 
 ALTER TABLE "CakeOption" ENABLE ROW LEVEL SECURITY;
@@ -54,10 +69,16 @@ CREATE POLICY "Cake options are viewable by everyone"
   ON "CakeOption" FOR SELECT
   USING (true);
 
-CREATE POLICY "Cake options can be modified by authenticated users"
+CREATE POLICY "Cake options can be modified by staff or service role"
   ON "CakeOption" FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
 
 -- ─── Order Tables (Public Read, Controlled Write) ───────────────────────────
@@ -78,17 +99,29 @@ CREATE POLICY "Orders can be created by anyone"
   ON "Order" FOR INSERT
   WITH CHECK (true);
 
--- Allow anyone to update orders (staff app uses anon key)
--- In production, restrict this via Edge Functions or migrate to authenticated sessions
-CREATE POLICY "Orders can be updated by anyone"
+-- IMPORTANT: Direct updates to orders should be restricted.
+-- Order modifications should go through controlled RPC functions or Edge Functions
+-- that validate business logic (e.g., status transitions, payment reconciliation).
+--
+-- For now, we allow staff to update orders, but this should be migrated to
+-- server-side RPCs that enforce proper state machine transitions.
+--
+-- The policy below allows authenticated staff to update orders, but direct
+-- client updates bypass validation. TODO: Move to server-side RPC.
+CREATE POLICY "Orders can be updated by staff only"
   ON "Order" FOR UPDATE
-  USING (true);
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
--- Allow anyone to delete orders (staff app uses anon key)
--- In production, restrict this via Edge Functions or migrate to authenticated sessions
-CREATE POLICY "Orders can be deleted by anyone"
+-- Allow authenticated staff to delete orders (should also be RPC-controlled)
+CREATE POLICY "Orders can be deleted by staff only"
   ON "Order" FOR DELETE
-  USING (true);
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
 
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
@@ -118,76 +151,115 @@ CREATE POLICY "Order items can be modified by anyone"
 
 ALTER TABLE "Staff" ENABLE ROW LEVEL SECURITY;
 
--- Restrict to authenticated users only
-CREATE POLICY "Staff data readable by authenticated users"
+-- Restrict to service role or authenticated staff only
+CREATE POLICY "Staff data readable by service role or self"
   ON "Staff" FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    (auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid()))
+  );
 
--- Restrict writes to authenticated users only
-CREATE POLICY "Staff data writable by authenticated users"
+-- Restrict writes to service role only (owner/staff management via Edge Functions)
+CREATE POLICY "Staff data writable by service role"
   ON "Staff" FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (auth.role() = 'service_role');
 
-CREATE POLICY "Staff data updatable by authenticated users"
+CREATE POLICY "Staff data updatable by service role or self"
   ON "Staff" FOR UPDATE
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    (auth.uid() IS NOT NULL AND id = auth.uid())
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    (auth.uid() IS NOT NULL AND id = auth.uid())
+  );
 
-CREATE POLICY "Staff data deletable by authenticated users"
+CREATE POLICY "Staff data deletable by service role only"
   ON "Staff" FOR DELETE
-  USING (auth.role() = 'authenticated');
+  USING (auth.role() = 'service_role');
 
 
 -- ─── Expense Table (Restricted) ─────────────────────────────────────────────
--- Financial data should only be accessible by owner/staff.
+-- Financial data should only be accessible by owner/staff with proper permissions.
 -- PRODUCTION WARNING: Login verification via anon-key should be migrated to an
 -- Edge Function to prevent unauthorized access to financial records.
 
 ALTER TABLE "Expense" ENABLE ROW LEVEL SECURITY;
 
--- Restrict to authenticated users only
-CREATE POLICY "Expenses readable by authenticated users"
+-- Restrict to service role or authenticated staff only
+CREATE POLICY "Expenses readable by service role or staff"
   ON "Expense" FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Expenses writable by authenticated users"
+CREATE POLICY "Expenses writable by service role or staff"
   ON "Expense" FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Expenses updatable by authenticated users"
+CREATE POLICY "Expenses updatable by service role or staff"
   ON "Expense" FOR UPDATE
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Expenses deletable by authenticated users"
+CREATE POLICY "Expenses deletable by service role or staff"
   ON "Expense" FOR DELETE
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
 
 -- ─── Inventory Table (Restricted) ───────────────────────────────────────────
--- Inventory data should only be accessible by staff.
+-- Inventory data should only be accessible by staff with inventory permissions.
 -- PRODUCTION WARNING: Login verification via anon-key should be migrated to an
 -- Edge Function to prevent unauthorized access to inventory data.
 
 ALTER TABLE "InventoryItem" ENABLE ROW LEVEL SECURITY;
 
--- Restrict to authenticated users only
-CREATE POLICY "Inventory readable by authenticated users"
+-- Restrict to service role or authenticated staff only
+CREATE POLICY "Inventory readable by service role or staff"
   ON "InventoryItem" FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Inventory writable by authenticated users"
+CREATE POLICY "Inventory writable by service role or staff"
   ON "InventoryItem" FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Inventory updatable by authenticated users"
+CREATE POLICY "Inventory updatable by service role or staff"
   ON "InventoryItem" FOR UPDATE
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
-CREATE POLICY "Inventory deletable by authenticated users"
+CREATE POLICY "Inventory deletable by service role or staff"
   ON "InventoryItem" FOR DELETE
-  USING (auth.role() = 'authenticated');
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+  );
 
 
 -- ─── SystemSetting Table (Restricted) ───────────────────────────────────────
@@ -197,23 +269,23 @@ CREATE POLICY "Inventory deletable by authenticated users"
 
 ALTER TABLE "SystemSetting" ENABLE ROW LEVEL SECURITY;
 
--- Restrict to authenticated users only
-CREATE POLICY "System settings readable by authenticated users"
+-- Restrict to service role only - sensitive system configuration
+CREATE POLICY "System settings readable by service role only"
   ON "SystemSetting" FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (auth.role() = 'service_role');
 
-CREATE POLICY "System settings writable by authenticated users"
+CREATE POLICY "System settings writable by service role only"
   ON "SystemSetting" FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (auth.role() = 'service_role');
 
-CREATE POLICY "System settings updatable by authenticated users"
+CREATE POLICY "System settings updatable by service role only"
   ON "SystemSetting" FOR UPDATE
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
 
-CREATE POLICY "System settings deletable by authenticated users"
+CREATE POLICY "System settings deletable by service role only"
   ON "SystemSetting" FOR DELETE
-  USING (auth.role() = 'authenticated');
+  USING (auth.role() = 'service_role');
 
 
 -- ─── WhatsApp Conversation Tables (Restricted) ──────────────────────────────

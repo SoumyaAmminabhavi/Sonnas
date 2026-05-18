@@ -11,7 +11,35 @@ class StaffService {
   }
 
   static Future<void> addStaff(Map<String, dynamic> data) async {
-    await _client.from('Staff').insert(data);
+    int attempts = 0;
+    while (attempts < AuthConstants.maxJoiningCodeRetries) {
+      try {
+        await _client.from('Staff').insert(data);
+        return; // Success
+      } catch (e) {
+        final errorStr = e.toString();
+        // Check if the error is a unique constraint violation on joiningCode
+        if ((errorStr.contains('23505') || errorStr.toLowerCase().contains('unique constraint')) &&
+            errorStr.toLowerCase().contains('joiningcode')) {
+          attempts++;
+          if (attempts >= AuthConstants.maxJoiningCodeRetries) {
+            throw StateError('Failed to insert staff after ${AuthConstants.maxJoiningCodeRetries} attempts due to duplicate joining codes');
+          }
+          // Generate a new joining code and retry
+          data['joiningCode'] = _generateJoiningCode();
+        } else {
+          rethrow; // Different error, propagate it
+        }
+      }
+    }
+  }
+
+  static String _generateJoiningCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final random = DateTime.now().millisecondsSinceEpoch;
+    return String.fromCharCodes(
+      Iterable.generate(5, (i) => chars.codeUnitAt((random + i) % chars.length))
+    );
   }
 
   static Future<void> updateStaff(String id, Map<String, dynamic> data) async {

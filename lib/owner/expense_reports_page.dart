@@ -157,6 +157,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                           firstDate: DateTime(2024),
                           lastDate: DateTime.now(),
                         );
+                        if (!mounted) return;
                         if (date != null) setDialogState(() => selectedDate = date);
                       },
                       child: Container(

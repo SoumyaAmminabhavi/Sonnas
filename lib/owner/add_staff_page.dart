@@ -746,15 +746,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
 
 
-  Future<String> _generateUniqueJoiningCode() async {
+  String _generateJoiningCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     final random = Random.secure();
-    for (int i = 0; i < AuthConstants.maxJoiningCodeRetries; i++) {
-      final code = String.fromCharCodes(Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
-      final isTaken = await StaffService.isJoiningCodeTaken(code);
-      if (!isTaken) return code;
-    }
-    throw StateError('Failed to generate a unique joining code after ${AuthConstants.maxJoiningCodeRetries} attempts');
+    return String.fromCharCodes(Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
   Future<void> _saveStaff() async {
@@ -785,11 +780,6 @@ class _AddStaffPageState extends State<AddStaffPage> {
         imageUrl = await StaffService.uploadStaffImage(fileName, _imageBytes!);
       }
 
-      String? joiningCode;
-      if (!isEdit) {
-        joiningCode = await _generateUniqueJoiningCode();
-      }
-
       final staff = {
         'name': _nameController.text,
         'phone': cleanPhone,
@@ -807,7 +797,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
         'shiftStart': _startTimeController.text,
         'shiftEnd': _endTimeController.text,
         'workingDays': _workingDays,
-        if (!isEdit) 'joiningCode': joiningCode,
+        if (!isEdit) 'joiningCode': _generateJoiningCode(),
         if (!isEdit) 'isActivated': false,
       };
 
@@ -822,7 +812,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       } else {
         await StaffService.addStaff(staff);
         if (mounted) {
-          _showSuccessDialog(joiningCode!);
+          _showSuccessDialog(staff['joiningCode']!);
         }
       }
     } catch (e) {

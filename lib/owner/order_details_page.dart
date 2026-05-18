@@ -115,7 +115,41 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
             if (order == null) {
               return Scaffold(
                 backgroundColor: cs.surface,
-                body: Center(child: Text("Order not found: ${widget.orderId}")),
+                body: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search_off, size: 48, color: cs.secondary.withValues(alpha: 0.3)),
+                      const SizedBox(height: 16),
+                      Text(
+                        "Order not found: ${widget.orderId}",
+                        style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text("Go Back"),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              final newFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''));
+                              setState(() {
+                                _orderFuture = newFuture;
+                              });
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text("Retry"),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 

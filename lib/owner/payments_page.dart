@@ -115,14 +115,6 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
       key: ValueKey(_streamKey),
       stream: OrderService.getAllOrdersStream(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
-          return Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(widget.cs.primary),
-            ),
-          );
-        }
-
         if (snapshot.hasError) {
           debugPrint("❌ Payments load error: ${snapshot.error}");
           return Center(
@@ -137,6 +129,14 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
                 const SizedBox(height: 24),
                 ElevatedButton(onPressed: _reloadData, child: const Text("RETRY")),
               ],
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(widget.cs.primary),
             ),
           );
         }

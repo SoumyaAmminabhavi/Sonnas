@@ -28,8 +28,9 @@ class KitchenPage extends StatelessWidget {
         
         final allOrders = snapshot.data ?? [];
         final activeOrders = allOrders.where((o) {
-          final s = o['status']?.toString().trim().toUpperCase() ?? '';
-          return s == 'PENDING' || s == 'CONFIRMED';
+          final s = o['status']?.toString().trim() ?? '';
+          final normalized = OrderStatusExtension.fromString(s);
+          return normalized == OrderStatus.pending || normalized == OrderStatus.confirmed;
         }).toList();
 
         if (activeOrders.isEmpty) {
