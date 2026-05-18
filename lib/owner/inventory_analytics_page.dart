@@ -298,7 +298,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           ),
         ],
       ),
-    );
+    ).whenComplete(controller.dispose);
   }
 
   // Helper for max
@@ -462,7 +462,12 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      nameController.dispose();
+      unitController.dispose();
+      currentController.dispose();
+      minController.dispose();
+    });
   }
 
   Widget _buildSheetInput(ColorScheme cs, String label, String hint, TextEditingController controller, {bool isNumber = false, bool allowDecimal = false}) {
