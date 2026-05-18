@@ -156,7 +156,7 @@ CREATE POLICY "Staff data readable by service role or self"
   ON "Staff" FOR SELECT
   USING (
     auth.role() = 'service_role' OR
-    (auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid()))
+    id = auth.uid()
   );
 
 -- Restrict writes to service role only (owner/staff management via Edge Functions)

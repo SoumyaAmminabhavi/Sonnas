@@ -239,10 +239,12 @@ class _DashboardContent extends StatelessWidget {
         // --- ROLE BASED FILTERING ---
         final bool isCleaning = role == StaffRole.cleaning;
         
-        final activeOrders = isCleaning ? [] : allOrders.where((o) => 
-          (o['status'] ?? '').toLowerCase() != 'delivered' && 
-          (o['status'] ?? '').toLowerCase() != 'completed'
-        ).toList();
+        final activeOrders = isCleaning ? [] : allOrders.where((o) {
+          final status = (o['status'] ?? '').toLowerCase();
+          return status != 'delivered' &&
+                 status != 'completed' &&
+                 status != 'cancelled';
+        }).toList();
         
         final completedOrdersCount = allOrders.length - activeOrders.length;
 

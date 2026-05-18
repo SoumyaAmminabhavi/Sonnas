@@ -142,6 +142,8 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       if (mounted) setState(() => _isLoading = false);
     }
 
+    if (!mounted) return;
+
     if (staff != null) {
       setState(() {
         _verifiedStaff = staff;

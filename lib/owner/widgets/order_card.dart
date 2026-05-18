@@ -21,7 +21,7 @@ class OrderCardReactive extends ConsumerWidget {
     final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
     final clean = str
         .replaceAll('₹', '')
-        .replaceAll('INR', '')
+        .replaceAll(RegExp('INR', caseSensitive: false), '')
         .replaceAll('/-', '')
         .replaceAll(',', '')
         .trim();

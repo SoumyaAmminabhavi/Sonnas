@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io';
+import 'dart:io' if (dart.library.html) '../utils/platform_file_stub.dart';
 
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1125,7 +1125,24 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
       }
 
-      // 4. Perform Upsert
+      // 4. Capture original cake data for rollback (if editing)
+      final isNewCake = widget.initialData == null;
+      Map<String, dynamic>? originalCakePayload;
+      if (!isNewCake && widget.initialData != null) {
+        originalCakePayload = {
+          'id': widget.initialData!['id'],
+          'name': widget.initialData!['name'],
+          'slug': widget.initialData!['slug'],
+          'categoryId': widget.initialData!['categoryId'],
+          'description': widget.initialData!['description'],
+          'image': widget.initialData!['image'],
+          'isAvailable': widget.initialData!['isAvailable'],
+          'sortOrder': widget.initialData!['sortOrder'],
+          'updatedAt': widget.initialData!['updatedAt'],
+        };
+      }
+
+      // 5. Perform Upsert
       final savePayload = {
         'id': finalCakeId,
         'name': cakeName,
@@ -1139,13 +1156,13 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       };
       final cakeId = await MenuService.upsertCake(savePayload);
 
-      // 5. Save Options (Hardened against duplication)
+      // 6. Save Options (Hardened against duplication)
       final List<dynamic> existingOptions = [
         ...(widget.initialData?['CakeOption'] as List? ?? []),
       ];
-      
+
       final currentSize = _weightController.text.trim();
-      
+
       // Robust ID reuse: Try to find an exact size match first
       Map<String, dynamic>? matchedOption;
       for (var opt in existingOptions) {
@@ -1165,7 +1182,6 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
       final normalizedPrice = _sanitizePrice(_priceController.text);
 
-      final isNewCake = widget.initialData == null;
       try {
         await MenuService.upsertCakeOption({
           'id': matchedOption?['id'] ?? _generateCmpId(),
@@ -1181,6 +1197,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         try {
           if (isNewCake) {
             await MenuService.deleteCake(cakeId);
+          } else if (originalCakePayload != null) {
+            // Restore original cake state for existing cakes
+            await MenuService.upsertCake(originalCakePayload);
           }
           if (imagePath != null && imagePath.isNotEmpty && isNewCake) {
              // In a real app, delete the uploaded image from Supabase storage here

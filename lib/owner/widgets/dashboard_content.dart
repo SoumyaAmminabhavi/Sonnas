@@ -139,8 +139,8 @@ class DashboardContent extends ConsumerWidget {
   Widget _buildPerformanceChart(BuildContext context, WidgetRef ref, ColorScheme cs) {
     final chartParam = SalesChartParam(
       range: selectedRange.name,
-      targetMonth: selectedMonth,
-      targetYear: selectedYear,
+      targetMonth: (selectedRange == SalesRange.monthly) ? selectedMonth : null,
+      targetYear: (selectedRange == SalesRange.monthly || selectedRange == SalesRange.yearly) ? selectedYear : null,
     );
     final salesChartAsync = ref.watch(salesChartProvider(chartParam));
 
