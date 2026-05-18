@@ -172,4 +172,14 @@ class MenuService {
       rethrow;
     }
   }
+
+  /// Permanently delete a category
+  static Future<void> deleteCategory(String id) async {
+    try {
+      await _client.from('Category').delete().eq('id', id);
+    } catch (e) {
+      debugPrint('⚠️ Delete Category Failed: $e');
+      rethrow;
+    }
+  }
 }

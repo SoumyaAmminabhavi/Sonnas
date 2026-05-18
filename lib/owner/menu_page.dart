@@ -31,6 +31,218 @@ class _MenuPageState extends ConsumerState<MenuPage> {
   Set<String> _selectedCategories = {'All'};
   bool _isUpdatingCategories = false;
 
+  void _showManageCategoriesSheet(
+    BuildContext context,
+    List<Map<String, dynamic>> initialCategories,
+    List<_MenuItem> allItems,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Consumer(
+              builder: (context, ref, child) {
+                final catsAsync = ref.watch(categoriesProvider);
+                final categories = catsAsync.value ?? initialCategories;
+                final theme = Theme.of(context);
+                final cs = theme.colorScheme;
+
+                return Container(
+                  height: MediaQuery.of(context).size.height * 0.75,
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.only(top: 12, bottom: 20),
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: cs.outlineVariant,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "MANAGE COLLECTIONS",
+                              style: GoogleFonts.plusJakartaSans(
+                                color: cs.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Organize your menu structure",
+                              style: GoogleFonts.notoSerif(
+                                color: cs.secondary,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(color: cs.outlineVariant.withValues(alpha: 0.3)),
+                      Expanded(
+                        child: ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(28, 16, 28, 32),
+                          itemCount: categories.length,
+                          separatorBuilder: (_, __) => Divider(
+                            color: cs.outlineVariant.withValues(alpha: 0.2),
+                            height: 1,
+                          ),
+                          itemBuilder: (context, index) {
+                            final cat = categories[index];
+                            final catId = cat['id']?.toString() ?? '';
+                            final catName = cat['name']?.toString() ?? 'Unnamed';
+                            
+                            final productCount = allItems.where((item) => item.category == catName).length;
+                            final canDelete = productCount == 0;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 14.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        catName,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: cs.secondary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "$productCount products in this collection",
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 12,
+                                          color: cs.secondary.withValues(alpha: 0.4),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (canDelete)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: Text(
+                                              "Delete Category?",
+                                              style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
+                                            ),
+                                            content: Text(
+                                              "Are you sure you want to delete '$catName'? This cannot be undone.",
+                                              style: GoogleFonts.plusJakartaSans(),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, false),
+                                                child: const Text("CANCEL"),
+                                              ),
+                                              TextButton(
+                                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                                onPressed: () => Navigator.pop(context, true),
+                                                child: const Text("DELETE"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirm == true && context.mounted) {
+                                          try {
+                                            await MenuService.deleteCategory(catId);
+                                            ref.invalidate(categoriesProvider);
+                                            ref.invalidate(menuProvider);
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text("Category '$catName' deleted successfully"),
+                                                  behavior: SnackBarBehavior.floating,
+                                                  backgroundColor: cs.primary,
+                                                ),
+                                              );
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text("Error: $e"),
+                                                  behavior: SnackBarBehavior.floating,
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        }
+                                      },
+                                    )
+                                  else
+                                    IconButton(
+                                      icon: Icon(Icons.remove, color: cs.outlineVariant),
+                                      onPressed: () {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: const Text("Cannot delete a category with active products"),
+                                            behavior: SnackBarBehavior.floating,
+                                            backgroundColor: cs.secondary,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(28.0),
+                        child: Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              "CLOSE",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                color: cs.primary,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -70,6 +282,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
             : constraints.maxWidth > 600
             ? 2
             : 1;
+        final isMobile = constraints.maxWidth < 600;
 
         return ref.watch(menuProvider).when(
           loading: () {
@@ -186,32 +399,78 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "OUR MENU",
-                          style: GoogleFonts.plusJakartaSans(
-                            color: cs.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 9,
-                            letterSpacing: 2.0,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Atelier Collection",
-                          style: GoogleFonts.notoSerif(
-                            color: cs.secondary,
-                            fontSize: 24,
-                            fontStyle: FontStyle.italic,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "${items.length} items cataloged",
-                          style: GoogleFonts.plusJakartaSans(
-                            color: cs.secondary.withValues(alpha: 0.4),
-                            fontSize: 12,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "OUR MENU",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: cs.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 9,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Atelier Collection",
+                                  style: GoogleFonts.notoSerif(
+                                    color: cs.secondary,
+                                    fontSize: 24,
+                                    fontStyle: FontStyle.italic,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "${items.length} items cataloged",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: cs.secondary.withValues(alpha: 0.4),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                             if (isMobile)
+                              IconButton.outlined(
+                                onPressed: () => _showManageCategoriesSheet(context, dbCategories, allItems),
+                                icon: Icon(Icons.category_outlined, color: cs.primary, size: 16),
+                                style: IconButton.styleFrom(
+                                  side: BorderSide(color: cs.primary.withValues(alpha: 0.3)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              )
+                            else
+                              OutlinedButton.icon(
+                                onPressed: () => _showManageCategoriesSheet(context, dbCategories, allItems),
+                                icon: Icon(Icons.category_outlined, size: 16, color: cs.primary),
+                                label: Text(
+                                  "MANAGE CATEGORIES",
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: cs.primary,
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: cs.primary.withValues(alpha: 0.3)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 24),
 
