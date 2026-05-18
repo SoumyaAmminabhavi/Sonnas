@@ -31,7 +31,7 @@ class ReportConstants {
 
 class UiConstants {
   static const double desktopBreakpoint = 768;
-  static const double notificationDurationSeconds = 8;
+  static const int notificationDurationSeconds = 8;
   static const int pinCodeLength = 5;
   static const int minPasswordLength = 6;
 }

@@ -214,16 +214,17 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
     );
   }
 
-  void _showAddStockDialog(BuildContext context, {Map<String, dynamic>? preselectedItem, bool isConsumption = false, List<Map<String, dynamic>> fallbackItems = const []}) {
+  void _showAddStockDialog(BuildContext context, {Map<String, dynamic>? preselectedItem, bool isConsumption = false, List<Map<String, dynamic>> fallbackItems = const []}) async {
     final TextEditingController quantityController = TextEditingController();
     Map<String, dynamic>? selectedItem = preselectedItem;
     bool isSubmitting = false;
     bool isManualSelection = false;
     Future<List<Map<String, dynamic>>> dialogInventoryFuture = _inventoryFuture;
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: Text(
             isConsumption ? "Record Usage" : (preselectedItem != null ? "Update Stock" : "Purchase Entry"),
@@ -400,7 +401,10 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
           ],
         ),
       ),
-    );
+      );
+    } finally {
+      quantityController.dispose();
+    }
   }
 }
 
