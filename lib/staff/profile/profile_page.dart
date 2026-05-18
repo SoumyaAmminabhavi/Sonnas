@@ -363,49 +363,57 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                         ),
                       ),
                       const Divider(height: 32),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: widget.cs.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            ref.watch(themeProvider) == ThemeMode.dark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                            color: widget.cs.primary,
-                          ),
-                        ),
-                        title: Text(
-                          "Dark Mode",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.bold,
-                            color: widget.cs.secondary,
-                          ),
-                        ),
-                        subtitle: Text(
-                          "Adjust app appearance",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: widget.cs.onSurfaceVariant,
-                          ),
-                        ),
-                        trailing: Switch(
-                          value: ref.watch(themeProvider) == ThemeMode.dark,
-                          activeThumbColor: widget.cs.primary,
-                          onChanged: (val) async {
-                            final prevTheme = ref.read(themeProvider);
-                            final mode = val ? ThemeMode.dark : ThemeMode.light;
-                            ref.read(themeProvider.notifier).setTheme(mode);
-                            try {
-                              await ThemeService.saveThemeMode(mode);
-                            } catch (e) {
-                              debugPrint("Theme Persistence Error: $e");
-                              if (!mounted) return;
-                              ref.read(themeProvider.notifier).setTheme(prevTheme);
-                            }
-                          },
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final themeMode = ref.watch(themeProvider);
+                          final isDarkEnabled = themeMode == ThemeMode.dark ||
+                              (themeMode == ThemeMode.system && Theme.of(context).brightness == Brightness.dark);
+
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: widget.cs.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isDarkEnabled ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                color: widget.cs.primary,
+                              ),
+                            ),
+                            title: Text(
+                              "Dark Mode",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.bold,
+                                color: widget.cs.secondary,
+                              ),
+                            ),
+                            subtitle: Text(
+                              "Adjust app appearance",
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: widget.cs.onSurfaceVariant,
+                              ),
+                            ),
+                            trailing: Switch(
+                              value: isDarkEnabled,
+                              activeThumbColor: widget.cs.primary,
+                              onChanged: (val) async {
+                                final prevTheme = ref.read(themeProvider);
+                                final mode = val ? ThemeMode.dark : ThemeMode.light;
+                                ref.read(themeProvider.notifier).setTheme(mode);
+                                try {
+                                  await ThemeService.saveThemeMode(mode);
+                                } catch (e) {
+                                  debugPrint("Theme Persistence Error: $e");
+                                  if (!mounted) return;
+                                  ref.read(themeProvider.notifier).setTheme(prevTheme);
+                                }
+                              },
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),

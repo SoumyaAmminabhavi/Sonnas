@@ -218,11 +218,13 @@ class _ProductCard extends ConsumerWidget {
     } else {
       imageUrl = SupabaseService.getPublicUrl(imagePath, bucket: 'cakes');
     }
-    
+
+    final heroTag = 'product_${item['id'] ?? index}';
+
     return InkWell(
       onTap: () => Navigator.push(
         context,
-                        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item, heroTag: 'product_${item['id']}')),
+                        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item, heroTag: heroTag)),
       ),
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -247,7 +249,7 @@ class _ProductCard extends ConsumerWidget {
                   children: [
                     Positioned.fill(
                       child: Hero(
-                        tag: 'product_${item['id']}',
+                        tag: heroTag,
                         child: imageUrl.isNotEmpty
                             ? (imageUrl.startsWith('data:')
                                 ? _buildDataImage(imageUrl, cs)
