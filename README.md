@@ -1,4 +1,3 @@
-
 # Sonna's Patisserie & Cafe 🍰✨
 
 A production-ready, full-stack Flutter application for a luxury artisan bakery. Features a multi-role architecture (Owner · Staff · Customer), real-time Supabase backend, biometric authentication, and cross-platform support (Android, Web).
