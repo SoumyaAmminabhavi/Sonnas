@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'order_success_screen.dart';
-import '../../owner/owner_dashboard.dart';
+import '../../owner/owner_dashboard.dart' deferred as owner_dashboard;
 import '../main.dart';
 import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
@@ -901,10 +901,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   final role = user?.userMetadata?['role']?.toString();
                   
                   if (role == 'owner' || role == 'admin') {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const OwnerDashboard()),
-                      (route) => false,
-                    );
+                    owner_dashboard.loadLibrary().then((_) {
+                      if (context.mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
+                          (route) => false,
+                        );
+                      }
+                    });
                   } else {
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(builder: (context) => const CustomerMainScreen()),

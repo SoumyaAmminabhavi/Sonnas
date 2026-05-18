@@ -8,7 +8,8 @@ import '../../services/supabase_service.dart';
 import 'product_detail_screen.dart';
 
 class MenuScreen extends StatefulWidget {
-  const MenuScreen({super.key});
+  final String? initialSearchQuery;
+  const MenuScreen({super.key, this.initialSearchQuery});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -24,10 +25,19 @@ class _MenuScreenState extends State<MenuScreen> {
   List<String> categories = ["All"];
 
   late RealtimeChannel _menuChannel;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearchQuery != null) {
+      _searchController.text = widget.initialSearchQuery!;
+      final lowerQuery = widget.initialSearchQuery!.trim().toLowerCase();
+      if (lowerQuery == "cakes" || lowerQuery == "pastries" || lowerQuery == "savories" || lowerQuery == "desserts") {
+        _selectedCategory = widget.initialSearchQuery!.trim();
+        _searchController.clear();
+      }
+    }
     _fetchCakes();
     _subscribeToMenuChanges();
   }
@@ -49,6 +59,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     Supabase.instance.client.removeChannel(_menuChannel);
     super.dispose();
   }
@@ -197,14 +208,28 @@ class _MenuScreenState extends State<MenuScreen> {
 
   void _filterByCategory() {
     setState(() {
+      final query = _searchController.text.trim().toLowerCase();
+      List<Map<String, dynamic>> temp = [];
+
       if (_selectedCategory == "All") {
-        filteredItems = List.from(menuItems);
+        temp = List.from(menuItems);
       } else {
-        filteredItems = menuItems.where((item) {
+        temp = menuItems.where((item) {
           final category = (item['category'] as String?) ?? 'Cakes';
           return category.toLowerCase().contains(_selectedCategory.toLowerCase());
         }).toList();
       }
+
+      if (query.isNotEmpty) {
+        temp = temp.where((item) {
+          final name = (item['title'] as String?)?.toLowerCase() ?? '';
+          final description = (item['description'] as String?)?.toLowerCase() ?? '';
+          final category = (item['category'] as String?)?.toLowerCase() ?? '';
+          return name.contains(query) || description.contains(query) || category.contains(query);
+        }).toList();
+      }
+
+      filteredItems = temp;
     });
   }
 
@@ -232,6 +257,48 @@ class _MenuScreenState extends State<MenuScreen> {
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2,
                       color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryColor.withOpacity(0.06),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        color: secondaryColor,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      onChanged: (_) => _filterByCategory(),
+                      decoration: InputDecoration(
+                        hintText: "Search delicacies...",
+                        hintStyle: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: secondaryColor.withOpacity(0.4),
+                        ),
+                        prefixIcon: Icon(Icons.search_rounded, color: primaryColor),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear_rounded, color: primaryColor),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _filterByCategory();
+                                },
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),

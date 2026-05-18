@@ -80,9 +80,7 @@ class PatisserieApp extends StatelessWidget {
         '/home': (context) => const CustomerMainScreen(),
         '/welcome': (context) => const WelcomeScreen(),
       },
-      home: Supabase.instance.client.auth.currentSession != null 
-          ? const CustomerMainScreen() 
-          : const WelcomeScreen(),
+      home: const CustomerMainScreen(),
     );
   }
 

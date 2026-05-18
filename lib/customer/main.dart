@@ -11,6 +11,7 @@ import 'providers/favorites_provider.dart';
 import 'providers/cart_provider.dart';
 import '../services/haptic_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerMainScreen extends StatefulWidget {
   const CustomerMainScreen({super.key});
@@ -21,30 +22,70 @@ class CustomerMainScreen extends StatefulWidget {
 
 class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _currentIndex = 0;
-  late final List<Widget> _screens;
+  String? _menuSearchQuery;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   StreamSubscription? _statusSubscription;
   StreamSubscription? _stockSubscription;
   Timer? _abandonedCartTimer;
   final Map<String, bool> _previousStockStatus = {};
 
+  List<Widget> _getScreens() {
+    final authId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+    return [
+      HomeScreen(onViewMenu: (query) {
+        setState(() {
+          _menuSearchQuery = query;
+          _currentIndex = 1;
+        });
+      }),
+      MenuScreen(
+        initialSearchQuery: _menuSearchQuery,
+        key: ValueKey('menu_${_menuSearchQuery ?? "none"}'),
+      ),
+      CartScreen(key: ValueKey('cart_$authId')),
+      OrdersScreen(key: ValueKey('orders_$authId')),
+      ProfileScreen(key: ValueKey('profile_$authId')),
+    ];
+  }
+
+  StreamSubscription<AuthState>? _authSubscription;
+  String _avatarUrl = "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=120&h=120&fit=crop";
+
+  Future<void> _loadAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final user = Supabase.instance.client.auth.currentUser;
+    final metadata = user?.userMetadata ?? {};
+    final cloudAvatar = metadata['avatar_url']?.toString();
+    
+    if (mounted) {
+      setState(() {
+        _avatarUrl = prefs.getString('avatar_url') ?? cloudAvatar ?? "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=120&h=120&fit=crop";
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _screens = [
-      HomeScreen(onViewMenu: () => setState(() => _currentIndex = 1)),
-      const MenuScreen(),
-      const CartScreen(),
-      const OrdersScreen(),
-      const ProfileScreen(),
-    ];
     _setupStatusListener();
     _setupStockListener();
     _setupAbandonedCartListener();
+    _loadAvatar();
+
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (mounted) {
+        setState(() {
+          _statusSubscription?.cancel();
+          _setupStatusListener();
+          _loadAvatar();
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _statusSubscription?.cancel();
     _stockSubscription?.cancel();
     _abandonedCartTimer?.cancel();
@@ -186,7 +227,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               Expanded(
                 child: IndexedStack(
                   index: _currentIndex,
-                  children: _screens,
+                  children: _getScreens(),
                 ),
               ),
             ],
@@ -304,9 +345,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 ),
                 child: Row(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 20,
-                      backgroundImage: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuC906zMoWpz20EzIX9rHUQWXwqHop9zHMqiJpL1cJocICMrUqiDRvZ6lbtZvxpEoxIbK0XyFhMe1gwGbSOa0ZMvULR4ivkTjlvx8Ds7CY03emu5eZpoZnkVlASDBsPOejOGv2YsYhdQVkt5j_tYptsfaQ3v__rxbDkK_7NK4V0RzprQlmaHd2rBFkNdcZcVqKZ41cC5SBLn8tyUkqqTFodANgA7CSqnNLBpPJ7o7VfLt2f994NtQX_u6MAPSP1M_fWHt7GgmcDs69AZ"),
+                      backgroundImage: NetworkImage(_avatarUrl),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

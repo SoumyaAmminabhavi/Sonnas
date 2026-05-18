@@ -3,11 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
-import '../../owner/owner_dashboard.dart';
+import '../../owner/owner_dashboard.dart' deferred as owner_dashboard;
+import 'profile_setup_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   final bool isOwner;
-  const AuthScreen({super.key, this.isOwner = false});
+  final VoidCallback? onSuccess;
+  const AuthScreen({super.key, this.isOwner = false, this.onSuccess});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -66,6 +68,46 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     await prefs.setString(_emailKey, email);
   }
 
+  Future<void> _routeUserAfterLogin(String email) async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    final metadata = user?.userMetadata ?? {};
+    final bool isSetupCompleted = metadata['profile_setup_completed'] == true;
+
+    await _saveEmail(email);
+
+    if (mounted) {
+      if (!isSetupCompleted && !widget.isOwner) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfileSetupScreen(
+              onSuccess: widget.onSuccess,
+              isOwner: widget.isOwner,
+            ),
+          ),
+        );
+      } else {
+        if (widget.onSuccess != null) {
+          widget.onSuccess!();
+        } else if (widget.isOwner) {
+          await owner_dashboard.loadLibrary();
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
+            );
+          }
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -76,11 +118,16 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     try {
       final supabase = Supabase.instance.client;
       if (_isSignUp) {
-        await supabase.auth.signUp(
+        final res = await supabase.auth.signUp(
           email: email,
           password: password,
         );
         if (mounted) {
+          if (res.session != null || supabase.auth.currentUser != null) {
+            await _routeUserAfterLogin(email);
+            return;
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text("Account created! Please check your email for verification."),
@@ -97,21 +144,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           password: password,
         );
         
-        await _saveEmail(email);
-
-        if (mounted) {
-          if (widget.isOwner) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const OwnerDashboard()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
-            );
-          }
-        }
+        await _routeUserAfterLogin(email);
       }
     } on AuthException catch (e) {
       if (mounted) {

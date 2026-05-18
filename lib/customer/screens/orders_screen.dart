@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'auth_screen.dart';
 
 
 class OrdersScreen extends StatefulWidget {
@@ -280,8 +281,106 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 
+  Widget _buildGuestView(BuildContext context) {
+    return Scaffold(
+      backgroundColor: background,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withOpacity(0.1),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    )
+                  ],
+                ),
+                child: const Icon(
+                  Icons.receipt_long_rounded,
+                  size: 80,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                "Gourmet History",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  color: onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Sign in to see your past orders, track active deliveries, and download receipts in high-fidelity PDF formats.",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: secondary.withOpacity(0.6),
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AuthScreen(
+                          isOwner: false,
+                          onSuccess: () {
+                            Navigator.pop(context);
+                            _fetchOrders();
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    elevation: 5,
+                    shadowColor: primary.withOpacity(0.3),
+                  ),
+                  child: Text(
+                    "SIGN IN OR REGISTER",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser == null) {
+      return _buildGuestView(context);
+    }
+
     return Scaffold(
       backgroundColor: background,
       body: SafeArea(
