@@ -105,7 +105,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     return spots;
   }
 
-  void _showAddExpenseDialog() {
+  void _showAddExpenseDialog() async {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
     final descController = TextEditingController();
@@ -113,162 +113,168 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     DateTime selectedDate = DateTime.now();
     bool isSaving = false;
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => PopScope(
-          canPop: !isSaving,
-          child: AlertDialog(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text(
-              "Log New Expense",
-              style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: _inputDecoration("Expense Title (e.g. Flour 50kg)"),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: _inputDecoration("Amount (₹)"),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedCategory,
-                    decoration: _inputDecoration("Category"),
-                    items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                    onChanged: (val) => setDialogState(() => selectedCategory = val!),
-                  ),
-                  const SizedBox(height: 16),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2024),
-                        lastDate: DateTime.now(),
-                      );
-                      if (date != null) setDialogState(() => selectedDate = date);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.calendar_today, size: 18),
-                          const SizedBox(width: 12),
-                          Text(DateFormat('dd MMM yyyy').format(selectedDate)),
-                        ],
+    try {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) => PopScope(
+            canPop: !isSaving,
+            child: AlertDialog(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                "Log New Expense",
+                style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: _inputDecoration("Expense Title (e.g. Flour 50kg)"),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: _inputDecoration("Amount (₹)"),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedCategory,
+                      decoration: _inputDecoration("Category"),
+                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                      onChanged: (val) => setDialogState(() => selectedCategory = val!),
+                    ),
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2024),
+                          lastDate: DateTime.now(),
+                        );
+                        if (date != null) setDialogState(() => selectedDate = date);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 18),
+                            const SizedBox(width: 12),
+                            Text(DateFormat('dd MMM yyyy').format(selectedDate)),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: descController,
-                    maxLines: 2,
-                    decoration: _inputDecoration("Notes (Optional)"),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: descController,
+                      maxLines: 2,
+                      decoration: _inputDecoration("Notes (Optional)"),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isSaving ? null : () => Navigator.pop(context),
-                child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
-              ),
-                ElevatedButton(
-                onPressed: isSaving ? null : () async {
-                  if (titleController.text.trim().isEmpty || amountController.text.trim().isEmpty) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Title and amount are required."),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    return;
-                  }
-                  final rawAmount = amountController.text.trim()
-                      .replaceAll('₹', '')
-                      .replaceAll(',', '')
-                      .replaceAll(' ', '');
-                  final amount = double.tryParse(rawAmount);
-                  if (amount == null || amount < 0) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Enter a valid non-negative amount."),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    return;
-                  }
-
-                  final expense = {
-                    'title': titleController.text,
-                    'amount': amount,
-                    'category': selectedCategory,
-                    'date': selectedDate.toIso8601String(),
-                    'description': descController.text,
-                  };
-
-                    setDialogState(() => isSaving = true);
-                    try {
-                      await FinanceService.addExpense(expense);
-                      if (context.mounted) {
-                        final messenger = ScaffoldMessenger.of(context);
-                        Navigator.pop(context);
-                        _loadData();
-                        messenger.showSnackBar(
-                        const SnackBar(
-                          content: Text("Expense logged successfully!"),
-                          backgroundColor: Colors.green,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    debugPrint("Expense Log Error: $e");
-                    if (context.mounted) {
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(context),
+                  child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
+                ),
+                  ElevatedButton(
+                  onPressed: isSaving ? null : () async {
+                    if (titleController.text.trim().isEmpty || amountController.text.trim().isEmpty) {
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text("Failed to log expense"),
+                        const SnackBar(
+                          content: Text("Title and amount are required."),
                           backgroundColor: Colors.red,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
+                      return;
                     }
-                  } finally {
-                    if (context.mounted) setDialogState(() => isSaving = false);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    final rawAmount = amountController.text.trim()
+                        .replaceAll('₹', '')
+                        .replaceAll(',', '')
+                        .replaceAll(' ', '');
+                    final amount = double.tryParse(rawAmount);
+                    if (amount == null || amount < 0) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Enter a valid non-negative amount."),
+                          backgroundColor: Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+  
+                    final expense = {
+                      'title': titleController.text,
+                      'amount': amount,
+                      'category': selectedCategory,
+                      'date': selectedDate.toIso8601String(),
+                      'description': descController.text,
+                    };
+  
+                      setDialogState(() => isSaving = true);
+                      try {
+                        await FinanceService.addExpense(expense);
+                        if (context.mounted) {
+                          final messenger = ScaffoldMessenger.of(context);
+                          Navigator.pop(context);
+                          _loadData();
+                          messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text("Expense logged successfully!"),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Expense Log Error: $e");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text("Failed to log expense"),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } finally {
+                      if (context.mounted) setDialogState(() => isSaving = false);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: isSaving
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text("Save Expense"),
                 ),
-                child: isSaving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text("Save Expense"),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } finally {
+      titleController.dispose();
+      amountController.dispose();
+      descController.dispose();
+    }
   }
 
   InputDecoration _inputDecoration(String label) {
