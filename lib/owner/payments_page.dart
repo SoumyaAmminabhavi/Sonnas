@@ -92,7 +92,7 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
     final hasCurrency = str.contains('₹') || str.toUpperCase().contains('INR');
     final clean = str
         .replaceAll('₹', '')
-        .replaceAll('INR', '')
+        .replaceAll(RegExp(r'INR', caseSensitive: false), '')
         .replaceAll('/-', '')
         .replaceAll(',', '')
         .trim();

@@ -202,8 +202,15 @@ class MenuDetailsPage extends ConsumerWidget {
                                     value: (cake['Category']?['name']?.toString() ?? 'General'),
                                     cs: cs,
                                   ),
-                                  const SizedBox(width: 24),
-                                  _InfoBadge(icon: Icons.timer_outlined, label: "EST. WEIGHT", value: "600-800g", cs: cs),
+                                  if (cake['estimated_weight'] != null && cake['estimated_weight'].toString().trim().isNotEmpty) ...[
+                                    const SizedBox(width: 24),
+                                    _InfoBadge(
+                                      icon: Icons.timer_outlined,
+                                      label: "EST. WEIGHT",
+                                      value: cake['estimated_weight'].toString(),
+                                      cs: cs,
+                                    ),
+                                  ],
                                 ],
                               ),
                               const SizedBox(height: 48),

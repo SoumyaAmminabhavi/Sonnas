@@ -270,10 +270,16 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
 
                                           return menuAsync.when(
                                             loading: () => const Center(child: CircularProgressIndicator()),
-                                            error: (e, _) => Text("Error loading menu: $e"),
+                                            error: (e, st) {
+                                              debugPrint('Failed to load menu: $e\n$st');
+                                              return const Text("Failed to load menu");
+                                            },
                                             data: (menu) => itemsAsync.when(
                                               loading: () => const Center(child: CircularProgressIndicator()),
-                                              error: (e, _) => Text("Error loading items: $e"),
+                                              error: (e, st) {
+                                                debugPrint('Failed to load items: $e\n$st');
+                                                return const Text("Failed to load items");
+                                              },
                                               data: (items) {
                                                 if (items.isEmpty) {
                                                   return Center(
