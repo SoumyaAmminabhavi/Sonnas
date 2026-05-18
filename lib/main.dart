@@ -17,7 +17,7 @@ final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.n
 
 class ThemeNotifier extends Notifier<ThemeMode> {
   @override
-  ThemeMode build() => _initialThemeMode ?? ThemeMode.light;
+  ThemeMode build() => _initialThemeMode;
   void setTheme(ThemeMode mode) => state = mode;
 }
 

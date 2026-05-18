@@ -22,7 +22,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
     return PopScope(
       canPop: widget.onClose == null,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           widget.onClose?.call();
         }

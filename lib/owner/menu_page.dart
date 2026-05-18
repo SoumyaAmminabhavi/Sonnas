@@ -102,7 +102,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                         child: ListView.separated(
                           padding: const EdgeInsets.fromLTRB(28, 16, 28, 32),
                           itemCount: categories.length,
-                          separatorBuilder: (_, __) => Divider(
+                          separatorBuilder: (_, index) => Divider(
                             color: cs.outlineVariant.withValues(alpha: 0.2),
                             height: 1,
                           ),

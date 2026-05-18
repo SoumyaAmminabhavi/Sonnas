@@ -11,35 +11,23 @@ class MenuService {
     final controller = StreamController<List<Map<String, dynamic>>>.broadcast();
     final subscriptions = <StreamSubscription>[];
     var refreshRequestId = 0;
-    bool isDisposed = false;
 
     Future<void> refresh() async {
-      if (isDisposed) return;
       final requestId = ++refreshRequestId;
       try {
         final data = await fetchMenu();
-        if (isDisposed || requestId != refreshRequestId) return;
+        if (requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.add(data);
       } catch (e, stackTrace) {
-        if (isDisposed || requestId != refreshRequestId) return;
+        if (requestId != refreshRequestId) return;
         if (!controller.isClosed) controller.addError(e, stackTrace);
       }
     }
 
     void handleEvent(_) => refresh();
 
-    void cleanup() {
-      if (isDisposed) return;
-      isDisposed = true;
-      for (final sub in subscriptions) {
-        sub.cancel();
-      }
-      subscriptions.clear();
-      if (!controller.isClosed) controller.close();
-    }
-
     controller.onListen = () {
-      if (subscriptions.isEmpty && !isDisposed) {
+      if (subscriptions.isEmpty) {
         subscriptions.add(_client.from('Cake').stream(primaryKey: ['id']).listen(handleEvent));
         subscriptions.add(_client.from('Category').stream(primaryKey: ['id']).listen(handleEvent));
         subscriptions.add(_client.from('CakeOption').stream(primaryKey: ['id']).listen(handleEvent));
@@ -48,8 +36,11 @@ class MenuService {
     };
 
     controller.onCancel = () {
-      // Do not close controller on cancel - only cleanup when stream is truly disposed
-      // The broadcast controller can be reused when listeners re-subscribe
+      // Cancel subscriptions to prevent memory leaks, but keep controller open for reuse
+      for (final sub in subscriptions) {
+        sub.cancel();
+      }
+      subscriptions.clear();
     };
 
     return controller.stream;
