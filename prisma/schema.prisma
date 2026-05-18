@@ -65,7 +65,6 @@ model Cake {
   sortOrder   Int                    @default(0)
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
-  deletedAt   DateTime?
   category    Category?              @relation(fields: [categoryId], references: [id])
   options     CakeOption[]
   orderItems  OrderItem[]
@@ -125,7 +124,6 @@ model Order {
   customImageUrl  String?
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
-  deletedAt       DateTime?
   confirmedAt     DateTime?
   deliveredAt     DateTime?
   cancelledAt     DateTime?
@@ -300,3 +298,131 @@ enum ConversationState {
   SELECTING_QUANTITY
   ASKING_DELIVERY_DATE
 }
+
+// ==========================================
+// WhatsApp Dynamic Template Engine Models
+// ==========================================
+
+model WhatsAppTemplate {
+  id              String                  @id @default(cuid())
+  code            String                  // e.g. "WELCOME_MESSAGE", "CART_EMPTY"
+  language        String                  @default("en") // e.g. "en", "hi", "mr"
+  description     String?                 
+  category        TemplateCategory        @default(GENERAL)
+  isActive        Boolean                 @default(true)
+  activeVersionId String?                 @unique // Links directly to current published version
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  versions        WhatsAppTemplateVersion[] @relation("TemplateToVersions")
+  activeVersion   WhatsAppTemplateVersion?  @relation("ActiveVersion", fields: [activeVersionId], references: [id], onDelete: SetNull)
+
+  @@unique([code, language])
+  @@index([code])
+  @@index([isActive])
+}
+
+model WhatsAppTemplateVersion {
+  id             String                    @id @default(cuid())
+  templateId     String
+  versionNumber  Int                       @default(1)
+  bodyText       String                    @db.Text
+  headerText     String?                   @db.Text
+  footerText     String?                   @db.Text
+  mediaUrl       String?                   
+  mediaType      WhatsAppMediaType?        
+  interactiveType WhatsAppInteractiveType  @default(NONE) 
+  ctaButtonTitle String?                   
+  ctaButtonUrl   String?                   
+  listButtonTitle String?                  
+  listTitle      String?                   
+  changeLog      String?                   
+  createdBy      String?                   
+  createdAt      DateTime                  @default(now())
+
+  template       WhatsAppTemplate          @relation("TemplateToVersions", fields: [templateId], references: [id], onDelete: Cascade)
+  buttons        WhatsAppButton[]          
+  listSections   WhatsAppListSection[]     
+  activeFor      WhatsAppTemplate?         @relation("ActiveVersion")
+
+  @@unique([templateId, versionNumber])
+  @@index([templateId])
+}
+
+model WhatsAppButton {
+  id          String                  @id @default(cuid())
+  versionId   String
+  sortOrder   Int                     @default(0)
+  buttonId    String                  
+  title       String                  
+  
+  version     WhatsAppTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+}
+
+model WhatsAppListSection {
+  id          String                  @id @default(cuid())
+  versionId   String
+  sortOrder   Int                     @default(0)
+  title       String                  
+  dataSource  SectionDataSource       @default(STATIC) 
+  
+  rows        WhatsAppListRow[]
+  version     WhatsAppTemplateVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([versionId])
+}
+
+model WhatsAppListRow {
+  id          String                  @id @default(cuid())
+  sectionId   String
+  sortOrder   Int                     @default(0)
+  rowId       String                  
+  title       String                  
+  description String?                 
+
+  section     WhatsAppListSection     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+}
+
+// ==========================================
+// Enums for WhatsApp Template System
+// ==========================================
+
+enum TemplateCategory {
+  GREETING
+  MENU
+  CATEGORY
+  PRODUCT
+  ORDER
+  PAYMENT
+  DELIVERY
+  ERROR
+  GENERAL
+}
+
+enum WhatsAppMediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  NONE
+}
+
+enum WhatsAppInteractiveType {
+  NONE
+  BUTTONS
+  LIST
+  CTA_URL
+}
+
+enum SectionDataSource {
+  STATIC            
+  CATEGORIES        
+  TOP_FAVORITES     
+  PRODUCT_LIST      
+  CURRENT_CART      
+  ACTIVE_ORDERS     
+}
+

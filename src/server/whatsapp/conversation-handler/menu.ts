@@ -21,6 +21,8 @@ import {
 import { ConversationState } from "../../../../generated/prisma";
 import { updateState } from "./session";
 import { RESET_STATE } from "./constants";
+import { getWhatsAppTemplate } from "./template-service";
+import { compileTemplate } from "./compiler";
 
 const { JaroWinklerDistance } = natural;
 
@@ -138,6 +140,85 @@ export async function sendMenuPDF(to: string) {
 }
 
 export async function sendWelcome(to: string, name?: string) {
+  const customerName = name ?? "there";
+
+  try {
+    // 1. Try to fetch dynamic template layout from PostgreSQL via our template-service
+    const template = await getWhatsAppTemplate("WELCOME_MESSAGE", "en");
+
+    if (template?.activeVersion) {
+      const activeVersion = template.activeVersion;
+      const context = { customer_name: customerName };
+
+      const bodyText = compileTemplate(activeVersion.bodyText, context);
+      const headerText = activeVersion.headerText ? compileTemplate(activeVersion.headerText, context) : "Sonna's Patisserie";
+      const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
+
+      // 2. Resolve Interactive List Sections dynamically
+      const resolvedSections = await Promise.all(
+        activeVersion.listSections.map(async (section) => {
+          if (section.dataSource === "CATEGORIES") {
+            const dbCategories = await safeGetCategories();
+            const rows = dbCategories.length > 0
+              ? dbCategories.slice(0, 6).map((cat) => ({
+                  id: `cat_${cat.id}`,
+                  title: cat.name.slice(0, 24),
+                }))
+              : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }];
+            return { title: section.title, rows };
+          }
+
+          if (section.dataSource === "TOP_FAVORITES") {
+            const cakes = await safeGetCakes();
+            const topCakes = cakes.slice(0, 2);
+            const rows = topCakes.map((c) => ({
+              id: `cake_${c.id}`,
+              title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
+              description: "Signature Selection",
+            }));
+            return { title: section.title, rows };
+          }
+
+          // STATIC list rows configured in the panel
+          const rows = section.rows.map((row) => ({
+            id: compileTemplate(row.rowId, context),
+            title: compileTemplate(row.title, context).slice(0, 24),
+            description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined,
+          }));
+
+          return { title: section.title, rows };
+        })
+      );
+
+      // 3. Send Dynamic Interactive List Menu
+      await sendInteractiveList(
+        to,
+        headerText,
+        bodyText,
+        activeVersion.listButtonTitle ?? "View Options",
+        resolvedSections
+      );
+
+      // 4. Send media asset PDF if specified
+      if (activeVersion.mediaUrl && activeVersion.mediaType === "DOCUMENT") {
+        await sendDocumentMessage(
+          to,
+          activeVersion.mediaUrl,
+          "Sonna_Patisserie_Menu.pdf",
+          footerText ?? "Here is our official menu for your reference. 🧁"
+        );
+      }
+      return; // Dynamic flow finished successfully!
+    }
+  } catch (err) {
+    console.error("[WhatsApp] Error processing dynamic WELCOME_MESSAGE template:", err);
+  }
+
+  // ==========================================
+  // Resilient Fallback to Hardcoded layout
+  // ==========================================
+  console.warn("[WhatsApp] Dynamic WELCOME_MESSAGE missing or failed. Falling back to hardcoded greetings.");
+
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
   const cakes = await safeGetCakes();
   const topCakes = cakes.slice(0, 2);
@@ -151,28 +232,28 @@ export async function sendWelcome(to: string, name?: string) {
     [
       {
         title: "⭐ Top Favorites",
-        rows: topCakes.map(c => ({
+        rows: topCakes.map((c) => ({
           id: `cake_${c.id}`,
           title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
-          description: `Signature Selection`
-        }))
+          description: `Signature Selection`,
+        })),
       },
       {
         title: "📋 Browse by Category",
         rows: dbCategories.length > 0
-          ? dbCategories.slice(0, 6).map(cat => ({
-            id: `cat_${cat.id}`,
-            title: cat.name.slice(0, 24)
-          }))
-          : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }]
+          ? dbCategories.slice(0, 6).map((cat) => ({
+              id: `cat_${cat.id}`,
+              title: cat.name.slice(0, 24),
+            }))
+          : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }],
       },
       {
         title: "✨ Other Services",
         rows: [
           { id: "btn_custom", title: "🎨 Custom Creation", description: "Design your own cake" },
-          { id: "btn_status", title: "📦 Track My Order", description: "Check your history" }
-        ]
-      }
+          { id: "btn_status", title: "📦 Track My Order", description: "Check your history" },
+        ],
+      },
     ]
   );
   await sendMenuPDF(to);
