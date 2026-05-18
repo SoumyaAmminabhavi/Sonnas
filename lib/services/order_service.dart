@@ -110,7 +110,7 @@ class OrderService {
       if (p == p.toInt().toDouble()) {
         return "${PriceConstants.currencySymbol}${p.toInt()}";
       }
-      return "₹${p.toStringAsFixed(2)}";
+      return "${PriceConstants.currencySymbol}${p.toStringAsFixed(2)}";
     } catch (e) {
       return "${PriceConstants.currencySymbol}$price";
     }

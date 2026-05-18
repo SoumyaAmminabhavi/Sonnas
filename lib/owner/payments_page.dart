@@ -91,6 +91,11 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
     ref.invalidate(ordersStreamProvider);
   }
 
+  /// Normalizes a price value to rupees (major units).
+  /// DB stores prices as integers in paise (minor units), but some legacy
+  /// values may already be in rupees. Heuristic: if the string contains
+  /// a decimal point or currency symbol, treat it as rupees; otherwise
+  /// divide by 100 to convert from paise.
   double _normalizePrice(dynamic raw) {
     if (raw == null) return 0.0;
     final str = raw.toString();

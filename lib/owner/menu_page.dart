@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' if (dart.library.html) '../utils/platform_file_stub.dart';
+import 'dart:io' if (dart.library.html) '../services/platform_file_stub.dart' as io show File;
 
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1657,7 +1657,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                         errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
                       )
                     : Image.file(
-                        File(_selectedImage!.path),
+                        io.File(_selectedImage!.path),
                         fit: BoxFit.cover,
                         errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
                       ))

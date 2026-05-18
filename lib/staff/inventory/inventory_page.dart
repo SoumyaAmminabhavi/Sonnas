@@ -301,7 +301,8 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                         }
                         final items = snapshot.data!;
                         return DropdownButtonFormField<String>(
-                          initialValue: selectedItem?['id'],
+                          // ignore: deprecated_member_use
+                          value: selectedItem?['id'],
                           decoration: InputDecoration(
                             labelText: "Select Ingredient",
                             labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
