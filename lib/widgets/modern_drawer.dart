@@ -8,10 +8,10 @@ import '../services/auth_provider.dart';
 class ModernDrawer extends ConsumerWidget {
   const ModernDrawer({super.key});
 
-  void _showOwnerAuth(BuildContext context, WidgetRef ref) {
+  Future<void> _showOwnerAuth(BuildContext context, WidgetRef ref) async {
     final pinController = TextEditingController();
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) {
         return Consumer(
@@ -83,7 +83,7 @@ class ModernDrawer extends ConsumerWidget {
           },
         );
       },
-    );
+    ).whenComplete(() => pinController.dispose());
   }
 
   @override

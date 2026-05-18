@@ -218,23 +218,49 @@ CREATE POLICY "System settings deletable by authenticated users"
 
 -- ─── WhatsApp Conversation Tables (Restricted) ──────────────────────────────
 -- WhatsApp data contains customer PII.
--- Currently allows anon access (app uses anon key).
--- In production, migrate to Edge Functions with service role access.
+-- SECURITY: Restricted to authenticated users and service_role only.
+-- Anon access blocked to protect phone numbers and conversation data.
 
 ALTER TABLE "WhatsAppConversation" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "WhatsApp conversations accessible by everyone"
-  ON "WhatsAppConversation" FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- Restrict to authenticated users only
+CREATE POLICY "WhatsApp conversations readable by authenticated users"
+  ON "WhatsAppConversation" FOR SELECT
+  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+
+CREATE POLICY "WhatsApp conversations writable by authenticated users"
+  ON "WhatsAppConversation" FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+
+CREATE POLICY "WhatsApp conversations updatable by authenticated users"
+  ON "WhatsAppConversation" FOR UPDATE
+  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role')
+  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+
+CREATE POLICY "WhatsApp conversations deletable by authenticated users"
+  ON "WhatsAppConversation" FOR DELETE
+  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
 
 
 ALTER TABLE "WhatsAppCartItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "WhatsApp cart items accessible by everyone"
-  ON "WhatsAppCartItem" FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- Restrict to authenticated users only
+CREATE POLICY "WhatsApp cart items readable by authenticated users"
+  ON "WhatsAppCartItem" FOR SELECT
+  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+
+CREATE POLICY "WhatsApp cart items writable by authenticated users"
+  ON "WhatsAppCartItem" FOR INSERT
+  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+
+CREATE POLICY "WhatsApp cart items updatable by authenticated users"
+  ON "WhatsAppCartItem" FOR UPDATE
+  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role')
+  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+
+CREATE POLICY "WhatsApp cart items deletable by authenticated users"
+  ON "WhatsAppCartItem" FOR DELETE
+  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
 
 
 -- ─── Auth Tables (NextAuth-style) ───────────────────────────────────────────
