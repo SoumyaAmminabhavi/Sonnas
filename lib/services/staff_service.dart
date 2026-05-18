@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
@@ -36,10 +37,8 @@ class StaffService {
 
   static String _generateJoiningCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final random = DateTime.now().millisecondsSinceEpoch;
-    return String.fromCharCodes(
-      Iterable.generate(5, (i) => chars.codeUnitAt((random + i) % chars.length))
-    );
+    final random = Random.secure();
+    return String.fromCharCodes(Iterable.generate(5, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
   static Future<void> updateStaff(String id, Map<String, dynamic> data) async {
