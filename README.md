@@ -59,7 +59,7 @@ A production-ready, full-stack Flutter application for a luxury artisan bakery. 
 
 | Layer            | Technology                                               |
 | ---------------- | -------------------------------------------------------- |
-| Framework        | Flutter (Dart `^3.6.0`, Material 3)                    |
+| Framework        | Flutter (Dart `^3.11.0`, Material 3)                    |
 | State Management | `flutter_riverpod`                                     |
 | Backend          | Supabase (Postgres + Auth + Storage + RLS)               |
 | Schema Tooling   | Prisma (schema definition & migrations only — not used at runtime by Flutter) |
@@ -96,8 +96,8 @@ The `vercel.json` configures SPA routing for the Flutter web build only. There i
 
 ### Prerequisites
 
-- Flutter SDK `>=3.6.0`
-- Dart SDK `>=3.6.0`
+- Flutter SDK `>=3.11.0`
+- Dart SDK `>=3.11.0`
 - A [Supabase](https://supabase.com) project with the schema applied (see `lib/services/schema.prisma`)
 
 ### 1 — Clone & install dependencies

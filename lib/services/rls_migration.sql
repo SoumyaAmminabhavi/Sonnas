@@ -113,62 +113,107 @@ CREATE POLICY "Order items can be modified by anyone"
 
 -- ─── Staff Table (Restricted) ───────────────────────────────────────────────
 -- Staff data contains sensitive info (PINs, personal details).
--- Currently allows anon access for staff login flow (reads phone/joiningCode/password hash).
--- In production, migrate to Edge Functions with service role access.
+-- PRODUCTION WARNING: Login verification via anon-key should be migrated to an
+-- Edge Function to avoid exposing password hashes and personal data to clients.
 
 ALTER TABLE "Staff" ENABLE ROW LEVEL SECURITY;
 
--- Allow anon read access for staff login verification (app uses anon key)
--- Password hashes are bcrypt, so exposure is low risk, but migrate to Edge Functions for production
-CREATE POLICY "Staff data readable for login"
+-- Restrict to authenticated users only
+CREATE POLICY "Staff data readable by authenticated users"
   ON "Staff" FOR SELECT
-  USING (true);
+  USING (auth.role() = 'authenticated');
 
--- Allow anon write access for staff registration (app uses anon key)
--- In production, restrict this via Edge Functions or migrate to authenticated sessions
-CREATE POLICY "Staff data writable for registration"
-  ON "Staff" FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- Restrict writes to authenticated users only
+CREATE POLICY "Staff data writable by authenticated users"
+  ON "Staff" FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Staff data updatable by authenticated users"
+  ON "Staff" FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Staff data deletable by authenticated users"
+  ON "Staff" FOR DELETE
+  USING (auth.role() = 'authenticated');
 
 
 -- ─── Expense Table (Restricted) ─────────────────────────────────────────────
 -- Financial data should only be accessible by owner/staff.
--- Currently allows anon access (app uses anon key).
--- In production, migrate to Edge Functions with service role access.
+-- PRODUCTION WARNING: Login verification via anon-key should be migrated to an
+-- Edge Function to prevent unauthorized access to financial records.
 
 ALTER TABLE "Expense" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Expenses accessible by everyone"
-  ON "Expense" FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- Restrict to authenticated users only
+CREATE POLICY "Expenses readable by authenticated users"
+  ON "Expense" FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Expenses writable by authenticated users"
+  ON "Expense" FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Expenses updatable by authenticated users"
+  ON "Expense" FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Expenses deletable by authenticated users"
+  ON "Expense" FOR DELETE
+  USING (auth.role() = 'authenticated');
 
 
 -- ─── Inventory Table (Restricted) ───────────────────────────────────────────
 -- Inventory data should only be accessible by staff.
--- Currently allows anon access (app uses anon key).
--- In production, migrate to Edge Functions with service role access.
+-- PRODUCTION WARNING: Login verification via anon-key should be migrated to an
+-- Edge Function to prevent unauthorized access to inventory data.
 
 ALTER TABLE "InventoryItem" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Inventory accessible by everyone"
-  ON "InventoryItem" FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- Restrict to authenticated users only
+CREATE POLICY "Inventory readable by authenticated users"
+  ON "InventoryItem" FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Inventory writable by authenticated users"
+  ON "InventoryItem" FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Inventory updatable by authenticated users"
+  ON "InventoryItem" FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Inventory deletable by authenticated users"
+  ON "InventoryItem" FOR DELETE
+  USING (auth.role() = 'authenticated');
 
 
 -- ─── SystemSetting Table (Restricted) ───────────────────────────────────────
 -- System settings (including owner PIN hash) contain sensitive data.
--- Currently allows anon access for owner PIN verification (app uses anon key).
--- PIN hashes are bcrypt, so exposure is low risk, but migrate to Edge Functions for production.
+-- PRODUCTION WARNING: Login verification via anon-key should be migrated to an
+-- Edge Function to prevent exposure of owner PIN hash and system configuration.
 
 ALTER TABLE "SystemSetting" ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "System settings accessible by everyone"
-  ON "SystemSetting" FOR ALL
-  USING (true)
-  WITH CHECK (true);
+-- Restrict to authenticated users only
+CREATE POLICY "System settings readable by authenticated users"
+  ON "SystemSetting" FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "System settings writable by authenticated users"
+  ON "SystemSetting" FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "System settings updatable by authenticated users"
+  ON "SystemSetting" FOR UPDATE
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "System settings deletable by authenticated users"
+  ON "SystemSetting" FOR DELETE
+  USING (auth.role() = 'authenticated');
 
 
 -- ─── WhatsApp Conversation Tables (Restricted) ──────────────────────────────
