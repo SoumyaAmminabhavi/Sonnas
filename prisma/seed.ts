@@ -1,5 +1,5 @@
 import { PrismaClient } from '../generated/prisma';
-import { products } from '../src/data/products';
+import { products, categories } from '../src/data/products';
 
 
 const prisma = new PrismaClient();
@@ -22,6 +22,20 @@ async function main() {
   await prisma.cakeOption.deleteMany();
   await prisma.category.deleteMany();
 
+  // 1. Seed categories first to ensure correct image mappings from products.ts
+  for (let i = 0; i < categories.length; i++) {
+    const cat = categories[i]!;
+    await prisma.category.create({
+      data: {
+        name: cat.name,
+        slug: cat.slug,
+        image: cat.image,
+        sortOrder: i,
+      },
+    });
+    console.log(`Seeded category: ${cat.name}`);
+  }
+
   const createdSlugs = new Set<string>();
 
   for (let i = 0; i < products.length; i++) {
@@ -40,13 +54,7 @@ async function main() {
         description: product.description ?? "",
         category: product.category
           ? {
-              connectOrCreate: {
-                where: { name: product.category },
-                create: {
-                  name: product.category,
-                  slug: slugify(product.category),
-                },
-              },
+              connect: { name: product.category }
             }
           : undefined,
         image: product.image,
