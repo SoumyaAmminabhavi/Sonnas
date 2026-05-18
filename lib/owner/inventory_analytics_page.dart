@@ -298,7 +298,9 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           ),
         ],
       ),
-    ).whenComplete(controller.dispose);
+    ).whenComplete(() {
+      Future.delayed(const Duration(milliseconds: 500), () => controller.dispose());
+    });
   }
 
   // Helper for max
@@ -463,10 +465,12 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
         ),
       ),
     ).whenComplete(() {
-      nameController.dispose();
-      unitController.dispose();
-      currentController.dispose();
-      minController.dispose();
+      Future.delayed(const Duration(milliseconds: 500), () {
+        nameController.dispose();
+        unitController.dispose();
+        currentController.dispose();
+        minController.dispose();
+      });
     });
   }
 

@@ -77,9 +77,10 @@ class LandingPage extends StatelessWidget {
                 // Subtext
                 Text(
                   "LUXURY CAKES & HANDCRAFTED DESSERTS",
-                  style: theme.textTheme.labelSmall?.copyWith(
+                  style: GoogleFonts.plusJakartaSans(
                     color: cs.onSurfaceVariant,
                     fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 4.0,
                   ),
                   textAlign: TextAlign.center,

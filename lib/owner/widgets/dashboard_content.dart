@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../services/dashboard_provider.dart';
-import '../../services/order_service.dart';
 import '../../widgets/skeleton.dart';
 import 'order_card.dart';
 
@@ -61,7 +60,7 @@ class DashboardContent extends ConsumerWidget {
           const SizedBox(height: 48),
 
           // Chart Section
-          _buildPerformanceChart(context, cs),
+          _buildPerformanceChart(context, ref, cs),
           const SizedBox(height: 48),
 
           // Recent Orders Header
@@ -137,7 +136,14 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildPerformanceChart(BuildContext context, ColorScheme cs) {
+  Widget _buildPerformanceChart(BuildContext context, WidgetRef ref, ColorScheme cs) {
+    final chartParam = SalesChartParam(
+      range: selectedRange.name,
+      targetMonth: selectedMonth,
+      targetYear: selectedYear,
+    );
+    final salesChartAsync = ref.watch(salesChartProvider(chartParam));
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -155,12 +161,16 @@ class DashboardContent extends ConsumerWidget {
           const SizedBox(height: 40),
           SizedBox(
             height: 220,
-            child: StreamBuilder<Map<int, double>>(
-              stream: OrderService.getSalesChartStream(range: selectedRange.name, targetMonth: selectedMonth, targetYear: selectedYear),
-              builder: (context, snapshot) {
-                final data = snapshot.data ?? {};
-                return _SalesLineChart(data: data, selectedRange: selectedRange, cs: cs, selectedMonth: selectedMonth, selectedYear: selectedYear);
-              },
+            child: salesChartAsync.when(
+              data: (data) => _SalesLineChart(
+                data: data,
+                selectedRange: selectedRange,
+                cs: cs,
+                selectedMonth: selectedMonth,
+                selectedYear: selectedYear,
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text("Error: $err")),
             ),
           ),
         ],

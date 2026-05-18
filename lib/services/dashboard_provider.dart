@@ -81,3 +81,31 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
     },
   );
 });
+
+class SalesChartParam {
+  final String range;
+  final int? targetMonth;
+  final int? targetYear;
+
+  const SalesChartParam({required this.range, this.targetMonth, this.targetYear});
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SalesChartParam &&
+          runtimeType == other.runtimeType &&
+          range == other.range &&
+          targetMonth == other.targetMonth &&
+          targetYear == other.targetYear;
+
+  @override
+  int get hashCode => range.hashCode ^ targetMonth.hashCode ^ targetYear.hashCode;
+}
+
+final salesChartProvider = StreamProvider.autoDispose.family<Map<int, double>, SalesChartParam>((ref, param) {
+  return OrderService.getSalesChartStream(
+    range: param.range,
+    targetMonth: param.targetMonth,
+    targetYear: param.targetYear,
+  );
+});

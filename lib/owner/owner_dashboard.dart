@@ -113,7 +113,11 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
         if (orders.isNotEmpty) {
           final latestOrderId = orders.first['id']?.toString();
           if (latestOrderId != null && latestOrderId != _lastNotifiedOrderId && orders.length > _lastOrderCount!) {
-            _showNewOrderNotification(orders.first);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showNewOrderNotification(orders.first);
+              }
+            });
             _lastNotifiedOrderId = latestOrderId;
           }
         }

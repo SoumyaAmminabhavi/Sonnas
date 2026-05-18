@@ -83,7 +83,9 @@ class ModernDrawer extends ConsumerWidget {
           },
         );
       },
-    ).whenComplete(() => pinController.dispose());
+    ).whenComplete(() {
+      Future.delayed(const Duration(milliseconds: 500), () => pinController.dispose());
+    });
   }
 
   @override
