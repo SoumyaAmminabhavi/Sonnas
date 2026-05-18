@@ -17,8 +17,31 @@ export const cakeRouter = createTRPCRouter({
   }),
 
   getAllCategories: publicProcedure.query(async ({ ctx }) => {
-    return ctx.db.category.findMany({
+    const categories = await ctx.db.category.findMany({
+      include: {
+        cakes: {
+          orderBy: { sortOrder: "asc" },
+          take: 1,
+          select: { image: true },
+        },
+      },
       orderBy: { sortOrder: "asc" },
+    });
+
+    return categories.map((cat) => {
+      const firstCakeImage = cat.cakes[0]?.image ?? null;
+      // Prioritize the first product's image, fallback to category image if empty
+      const displayImage = firstCakeImage ?? cat.image;
+
+      return {
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        image: displayImage,
+        sortOrder: cat.sortOrder,
+        createdAt: cat.createdAt,
+        updatedAt: cat.updatedAt,
+      };
     });
   }),
 
