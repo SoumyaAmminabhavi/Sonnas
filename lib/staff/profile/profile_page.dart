@@ -41,7 +41,9 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
 
   String get _displayName {
     final name = widget.staffData?['name'];
-    if (name != null && name.toString().trim().isNotEmpty) return name.toString();
+    if (name != null && name.toString().trim().isNotEmpty) {
+      return name.toString();
+    }
     return 'Staff Member';
   }
 
@@ -65,7 +67,8 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   String get _displayAddress => widget.staffData?['address'] ?? '—';
   String get _displayEmail => widget.staffData?['email'] ?? '—';
   String get _displayEmergencyName => widget.staffData?['emergencyName'] ?? '—';
-  String get _displayEmergencyPhone => widget.staffData?['emergencyPhone'] ?? '—';
+  String get _displayEmergencyPhone =>
+      widget.staffData?['emergencyPhone'] ?? '—';
 
   @override
   Widget build(BuildContext context) {
@@ -103,9 +106,12 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Container(height: 1, color: widget.cs.secondary.withValues(alpha: 0.3)),
+                Container(
+                  height: 1,
+                  color: widget.cs.secondary.withValues(alpha: 0.3),
+                ),
                 const SizedBox(height: 48),
-                
+
                 Center(
                   child: Column(
                     children: [
@@ -128,7 +134,10 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: widget.cs.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(100),
@@ -205,7 +214,11 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.emergency_rounded, color: Colors.orange.shade700, size: 28),
+                      Icon(
+                        Icons.emergency_rounded,
+                        color: Colors.orange.shade700,
+                        size: 28,
+                      ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
@@ -278,7 +291,10 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                             color: widget.cs.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.fingerprint_rounded, color: widget.cs.primary),
+                          child: Icon(
+                            Icons.fingerprint_rounded,
+                            color: widget.cs.primary,
+                          ),
                         ),
                         title: Text(
                           "Biometric Login",
@@ -301,7 +317,8 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                           activeThumbColor: widget.cs.primary,
                           onChanged: (val) async {
                             if (val) {
-                              final bool canCheck = await BiometricService.canCheckBiometrics();
+                              final bool canCheck =
+                                  await BiometricService.canCheckBiometrics();
                               if (!canCheck) {
                                 if (!mounted) return;
                                 if (context.mounted) {
@@ -309,9 +326,17 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                     SnackBar(
                                       content: Row(
                                         children: [
-                                          const Icon(Icons.error_outline, color: Colors.white),
+                                          const Icon(
+                                            Icons.error_outline,
+                                            color: Colors.white,
+                                          ),
                                           const SizedBox(width: 12),
-                                          Expanded(child: Text("No biometric hardware detected.", overflow: TextOverflow.ellipsis)),
+                                          Expanded(
+                                            child: Text(
+                                              "No biometric hardware detected.",
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                       backgroundColor: Colors.redAccent,
@@ -320,20 +345,33 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                 }
                                 return;
                               }
-                              final bool success = await BiometricService.authenticate();
+                              final bool success =
+                                  await BiometricService.authenticate();
                               if (success) {
-                                final bool dbUpdated = await StaffService.updateBiometricStatus(widget.staffId, val);
+                                final bool dbUpdated =
+                                    await StaffService.updateBiometricStatus(
+                                      widget.staffId,
+                                      val,
+                                    );
                                 if (!context.mounted) return;
-                                
+
                                 if (dbUpdated) {
                                   setState(() => _biometricEnabled = val);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Row(
                                         children: [
-                                          const Icon(Icons.check_circle_outline, color: Colors.white),
+                                          const Icon(
+                                            Icons.check_circle_outline,
+                                            color: Colors.white,
+                                          ),
                                           const SizedBox(width: 12),
-                                          Expanded(child: Text("Biometric Login Enabled", overflow: TextOverflow.ellipsis)),
+                                          Expanded(
+                                            child: Text(
+                                              "Biometric Login Enabled",
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -341,7 +379,11 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                 }
                               }
                             } else {
-                              final bool dbUpdated = await StaffService.updateBiometricStatus(widget.staffId, false);
+                              final bool dbUpdated =
+                                  await StaffService.updateBiometricStatus(
+                                    widget.staffId,
+                                    false,
+                                  );
                               if (!context.mounted) return;
 
                               if (dbUpdated) {
@@ -350,9 +392,17 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                   SnackBar(
                                     content: Row(
                                       children: [
-                                        const Icon(Icons.info_outline, color: Colors.white),
+                                        const Icon(
+                                          Icons.info_outline,
+                                          color: Colors.white,
+                                        ),
                                         const SizedBox(width: 12),
-                                        Expanded(child: Text("Biometric Login Disabled", overflow: TextOverflow.ellipsis)),
+                                        Expanded(
+                                          child: Text(
+                                            "Biometric Login Disabled",
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -366,8 +416,11 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                       Builder(
                         builder: (context) {
                           final themeMode = ref.watch(themeProvider);
-                          final isDarkEnabled = themeMode == ThemeMode.dark ||
-                              (themeMode == ThemeMode.system && Theme.of(context).brightness == Brightness.dark);
+                          final isDarkEnabled =
+                              themeMode == ThemeMode.dark ||
+                              (themeMode == ThemeMode.system &&
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark);
 
                           return ListTile(
                             contentPadding: EdgeInsets.zero,
@@ -378,7 +431,9 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                isDarkEnabled ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                isDarkEnabled
+                                    ? Icons.dark_mode_rounded
+                                    : Icons.light_mode_rounded,
                                 color: widget.cs.primary,
                               ),
                             ),
@@ -401,14 +456,18 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                               activeThumbColor: widget.cs.primary,
                               onChanged: (val) async {
                                 final prevTheme = ref.read(themeProvider);
-                                final mode = val ? ThemeMode.dark : ThemeMode.light;
+                                final mode = val
+                                    ? ThemeMode.dark
+                                    : ThemeMode.light;
                                 ref.read(themeProvider.notifier).setTheme(mode);
                                 try {
                                   await ThemeService.saveThemeMode(mode);
                                 } catch (e) {
                                   debugPrint("Theme Persistence Error: $e");
                                   if (!mounted) return;
-                                  ref.read(themeProvider.notifier).setTheme(prevTheme);
+                                  ref
+                                      .read(themeProvider.notifier)
+                                      .setTheme(prevTheme);
                                 }
                               },
                             ),
@@ -419,7 +478,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Logout Button
                 SizedBox(
                   width: double.infinity,
@@ -428,7 +487,9 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                       // Do NOT clear biometric status on logout
                       await SessionService.clearSession();
                       if (context.mounted) {
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
                       }
                     },
                     icon: const Icon(Icons.logout_rounded, color: Colors.red),
@@ -443,7 +504,9 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: Colors.red.withValues(alpha: 0.2)),
+                        side: BorderSide(
+                          color: Colors.red.withValues(alpha: 0.2),
+                        ),
                       ),
                     ),
                   ),
@@ -475,7 +538,13 @@ class _PetalProfileImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = name.trim().split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join().toUpperCase();
+    final initials = name
+        .trim()
+        .split(' ')
+        .map((e) => e.isNotEmpty ? e[0] : '')
+        .take(2)
+        .join()
+        .toUpperCase();
 
     return Stack(
       alignment: Alignment.center,

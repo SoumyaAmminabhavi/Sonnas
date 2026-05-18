@@ -12,9 +12,6 @@ import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
 import '../services/theme_service.dart';
 
-
-
-
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
   const OwnerSettingsPage({super.key, this.onTabChanged});
@@ -26,7 +23,10 @@ class OwnerSettingsPage extends StatelessWidget {
         final isDesktop = constraints.maxWidth >= 768;
 
         // Removing nested Scaffold as it's hosted in OwnerDashboard
-        return _SettingsContent(isDesktop: isDesktop, onTabChanged: onTabChanged);
+        return _SettingsContent(
+          isDesktop: isDesktop,
+          onTabChanged: onTabChanged,
+        );
       },
     );
   }
@@ -51,7 +51,6 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   void initState() {
     super.initState();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -102,10 +101,7 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
           ],
         ),
         const SizedBox(height: 24),
-        Container(
-          height: 1,
-          color: cs.secondary.withValues(alpha: 0.3),
-        ),
+        Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
         const SizedBox(height: 48),
 
         LayoutBuilder(
@@ -168,7 +164,11 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
           _buildInfoRow(cs, "Contact Phone", "+91 91132 31424"),
           _buildInfoRow(cs, "Instagram", "@sonnas__"),
           _buildInfoRow(cs, "Contact Email", "sonnaspatisseriecafe@gmail.com"),
-          _buildInfoRow(cs, "Address", "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021"),
+          _buildInfoRow(
+            cs,
+            "Address",
+            "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021",
+          ),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
@@ -244,26 +244,37 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return SkeletonWrapper(
                   child: Column(
-                    children: List.generate(3, (index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: Row(
-                        children: [
-                          const Skeleton(height: 40, width: 40, borderRadius: 20),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Skeleton(height: 14, width: 120),
-                                const SizedBox(height: 8),
-                                const Skeleton(height: 10, width: 80),
-                              ],
+                    children: List.generate(
+                      3,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Row(
+                          children: [
+                            const Skeleton(
+                              height: 40,
+                              width: 40,
+                              borderRadius: 20,
                             ),
-                          ),
-                          const Skeleton(height: 24, width: 60, borderRadius: 12),
-                        ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Skeleton(height: 14, width: 120),
+                                  const SizedBox(height: 8),
+                                  const Skeleton(height: 10, width: 80),
+                                ],
+                              ),
+                            ),
+                            const Skeleton(
+                              height: 24,
+                              width: 60,
+                              borderRadius: 12,
+                            ),
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
                   ),
                 );
               }
@@ -285,14 +296,18 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               }
 
               return Column(
-                children: staff.map((s) => _buildStaffRow(
-                  cs,
-                  s['name'] ?? 'Unknown',
-                  s['role'] ?? 'Staff',
-                  s['isActivated'] ?? true,
-                  imageUrl: s['imageUrl'],
-                  staffData: s,
-                )).toList(),
+                children: staff
+                    .map(
+                      (s) => _buildStaffRow(
+                        cs,
+                        s['name'] ?? 'Unknown',
+                        s['role'] ?? 'Staff',
+                        s['isActivated'] ?? true,
+                        imageUrl: s['imageUrl'],
+                        staffData: s,
+                      ),
+                    )
+                    .toList(),
               );
             },
           ),
@@ -329,8 +344,6 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     );
   }
 
-
-
   Widget _buildBISection(ColorScheme cs) {
     return _SettingsCard(
       title: "Business Intelligence",
@@ -342,14 +355,22 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             "Sales Reports",
             Icons.bar_chart,
             "View historical data",
-            onTap: () => setState(() => _activeSubPage = SalesReportsPage(onClose: () => setState(() => _activeSubPage = null))),
+            onTap: () => setState(
+              () => _activeSubPage = SalesReportsPage(
+                onClose: () => setState(() => _activeSubPage = null),
+              ),
+            ),
           ),
           _buildActionRow(
             cs,
             "Expense Reports",
             Icons.receipt_long,
             "Analyze costs",
-            onTap: () => setState(() => _activeSubPage = ExpenseReportsPage(onClose: () => setState(() => _activeSubPage = null))),
+            onTap: () => setState(
+              () => _activeSubPage = ExpenseReportsPage(
+                onClose: () => setState(() => _activeSubPage = null),
+              ),
+            ),
           ),
 
           _buildActionRow(
@@ -357,9 +378,12 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             "Inventory Analytics",
             Icons.inventory,
             "Stock trends",
-            onTap: () => setState(() => _activeSubPage = InventoryAnalyticsPage(onClose: () => setState(() => _activeSubPage = null))),
+            onTap: () => setState(
+              () => _activeSubPage = InventoryAnalyticsPage(
+                onClose: () => setState(() => _activeSubPage = null),
+              ),
+            ),
           ),
-
         ],
       ),
     );
@@ -369,7 +393,7 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmall = constraints.maxWidth < 300;
-        
+
         if (isSmall) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
@@ -433,7 +457,13 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     );
   }
 
-  Widget _buildSwitchRow(ColorScheme cs, String title, String subtitle, bool value, ValueChanged<bool>? onChanged) {
+  Widget _buildSwitchRow(
+    ColorScheme cs,
+    String title,
+    String subtitle,
+    bool value,
+    ValueChanged<bool>? onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -470,7 +500,14 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     );
   }
 
-  Widget _buildStaffRow(ColorScheme cs, String name, String role, bool active, {String? imageUrl, Map<String, dynamic>? staffData}) {
+  Widget _buildStaffRow(
+    ColorScheme cs,
+    String name,
+    String role,
+    bool active, {
+    String? imageUrl,
+    Map<String, dynamic>? staffData,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -511,7 +548,9 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: active ? Colors.green.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.1),
+              color: active
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -525,10 +564,15 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
           ),
           if (staffData != null)
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert, color: cs.secondary.withValues(alpha: 0.5)),
+              icon: Icon(
+                Icons.more_vert,
+                color: cs.secondary.withValues(alpha: 0.5),
+              ),
               elevation: 4,
               offset: const Offset(0, 40),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               color: cs.surface,
               onSelected: (value) async {
                 if (value == 'edit') {
@@ -542,7 +586,8 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AddStaffPage(staff: staffData, isReadOnly: true),
+                      builder: (context) =>
+                          AddStaffPage(staff: staffData, isReadOnly: true),
                     ),
                   );
                 } else if (value == 'delete') {
@@ -550,12 +595,20 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text("Remove Staff"),
-                      content: Text("Are you sure you want to remove ${staffData['name']}?"),
+                      content: Text(
+                        "Are you sure you want to remove ${staffData['name']}?",
+                      ),
                       actions: [
-                        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("Cancel"),
+                        ),
                         TextButton(
                           onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Remove", style: TextStyle(color: Colors.red)),
+                          child: const Text(
+                            "Remove",
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
                       ],
                     ),
@@ -564,7 +617,6 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                     await StaffService.deleteStaff(staffData['id']);
                   }
                 }
-
               },
               itemBuilder: (context) => [
                 PopupMenuItem(
@@ -577,7 +629,11 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                           color: Colors.blue.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.visibility_outlined, size: 16, color: Colors.blue),
+                        child: const Icon(
+                          Icons.visibility_outlined,
+                          size: 16,
+                          color: Colors.blue,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -601,7 +657,11 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                           color: cs.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.edit_outlined, size: 16, color: cs.primary),
+                        child: Icon(
+                          Icons.edit_outlined,
+                          size: 16,
+                          color: cs.primary,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -625,7 +685,11 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                           color: Colors.red.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                        child: const Icon(
+                          Icons.delete_outline,
+                          size: 16,
+                          color: Colors.red,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -639,17 +703,20 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                     ],
                   ),
                 ),
-
               ],
             ),
-
         ],
       ),
     );
   }
 
-
-  Widget _buildActionRow(ColorScheme cs, String title, IconData icon, String subtitle, {VoidCallback? onTap}) {
+  Widget _buildActionRow(
+    ColorScheme cs,
+    String title,
+    IconData icon,
+    String subtitle, {
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -687,7 +754,10 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: cs.secondary.withValues(alpha: 0.5)),
+            Icon(
+              Icons.chevron_right,
+              color: cs.secondary.withValues(alpha: 0.5),
+            ),
           ],
         ),
       ),
@@ -744,7 +814,10 @@ class _SettingsCard extends StatelessWidget {
           ),
           Container(height: 1, color: cs.secondary.withValues(alpha: 0.05)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 24.0,
+            ),
             child: child,
           ),
         ],
