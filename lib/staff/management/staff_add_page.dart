@@ -118,8 +118,8 @@ class _StaffAddPageState extends State<StaffAddPage> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      final bytes = await image.readAsBytes();
-      if (bytes.length > AuthConstants.maxImageSizeBytes) {
+      final fileSize = await image.length();
+      if (fileSize > AuthConstants.maxImageSizeBytes) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Image too large. Maximum size is ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB")),
@@ -127,6 +127,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         }
         return;
       }
+      final bytes = await image.readAsBytes();
       setState(() {
         _pickedImage = image;
         _imageBytes = bytes;

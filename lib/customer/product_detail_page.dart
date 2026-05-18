@@ -163,8 +163,9 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
             child: ElevatedButton(
               onPressed: () {
                 ref.read(cartProvider.notifier).addItem(product, quantity: _quantity);
+                final messenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text("Added to cart!"), behavior: SnackBarBehavior.floating),
                 );
               },
