@@ -58,7 +58,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                       const SizedBox(width: 16),
                       ElevatedButton.icon(
                         onPressed: () {
-                          ref.read(orderNotifierProvider(widget.orderId).notifier).refresh();
+                          ref.invalidate(orderNotifierProvider(widget.orderId));
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text("Retry"),
@@ -117,7 +117,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                 const SizedBox(height: 24),
                 TextButton.icon(
                   onPressed: () {
-                    ref.read(orderNotifierProvider(widget.orderId).notifier).refresh();
+                    ref.invalidate(orderNotifierProvider(widget.orderId));
                   },
                   icon: const Icon(Icons.refresh),
                   label: const Text("Retry"),
@@ -494,7 +494,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                   try {
                                                     await OrderService.updateOrderStatus(order['id'], next);
                                                     if (!context.mounted) return;
-                                                    ref.read(orderNotifierProvider(widget.orderId).notifier).refresh();
+                                                    ref.invalidate(orderNotifierProvider(widget.orderId));
                                                     if (context.mounted) {
                                                       ScaffoldMessenger.of(context).showSnackBar(
                                                         SnackBar(
@@ -594,8 +594,6 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                 );
               },
             );
-      },
-    );
   }
 
   static double _normalizePrice(dynamic raw) {

@@ -186,7 +186,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
       if (widget.staff == null) {
         await StaffService.addStaff(staffData);
         if (mounted) {
-          _showSuccessDialog(staffData['joiningCode']!);
+          _showSuccessDialog(staffData['joiningCode'] as String);
         }
       } else {
         await StaffService.updateStaff(widget.staff!['id'], staffData);
