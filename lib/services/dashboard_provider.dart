@@ -109,3 +109,22 @@ final salesChartProvider = StreamProvider.autoDispose.family<Map<int, double>, S
     targetYear: param.targetYear,
   );
 });
+
+/// Async notifier for fetching and refreshing a single order by ID or number
+class OrderNotifier extends AutoDisposeFamilyAsyncNotifier<Map<String, dynamic>?, String> {
+  @override
+  Future<Map<String, dynamic>?> build(String arg) async {
+    final cleanId = arg.replaceAll(RegExp(r'[#]'), '');
+    return await OrderService.fetchOrderByIdOrNumber(cleanId);
+  }
+
+  /// Refresh the order data
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => build(arg));
+  }
+}
+
+final orderNotifierProvider = AutoDisposeFamilyAsyncNotifierProvider<OrderNotifier, Map<String, dynamic>?, String>(
+  () => OrderNotifier(),
+);

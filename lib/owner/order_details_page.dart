@@ -11,149 +11,127 @@ import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/dashboard_provider.dart';
 
-class OwnerOrderDetailsView extends StatefulWidget {
+class OwnerOrderDetailsView extends ConsumerStatefulWidget {
   final String orderId;
   final ValueChanged<int>? onTabChanged;
 
   const OwnerOrderDetailsView({super.key, required this.orderId, this.onTabChanged});
 
   @override
-  State<OwnerOrderDetailsView> createState() => _OwnerOrderDetailsViewState();
+  ConsumerState<OwnerOrderDetailsView> createState() => _OwnerOrderDetailsViewState();
 }
 
-class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
-  late Future<Map<String, dynamic>?> _orderFuture;
+class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
   bool _isUpdating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final cleanId = widget.orderId.replaceAll(RegExp(r'[#]'), '');
-    _orderFuture = OrderService.fetchOrderByIdOrNumber(cleanId);
-  }
-
-  @override
-  void didUpdateWidget(covariant OwnerOrderDetailsView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.orderId != widget.orderId) {
-      final cleanId = widget.orderId.replaceAll(RegExp(r'[#]'), '');
-      setState(() {
-        _orderFuture = OrderService.fetchOrderByIdOrNumber(cleanId);
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _orderFuture,
-      builder: (context, snapshot) {
-        final order = snapshot.data;
-        final conversation = order?['WhatsAppConversation'];
+    final orderAsync = ref.watch(orderNotifierProvider(widget.orderId));
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Shimmer.fromColors(
-                  baseColor: cs.surfaceContainer,
-                  highlightColor: cs.surface,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 56),
-                        Container(height: 220, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
-                        const SizedBox(height: 24),
-                        Container(width: 200, height: 28, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                        const SizedBox(height: 12),
-                        Container(width: 140, height: 18, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
-                        const SizedBox(height: 32),
-                        ...List.generate(5, (i) => Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Container(height: 52, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
-                        )),
-                      ],
-                    ),
+    return orderAsync.when(
+      data: (order) {
+        if (order == null) {
+          return Scaffold(
+            backgroundColor: cs.surface,
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.search_off, size: 48, color: cs.secondary.withValues(alpha: 0.3)),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Order not found: ${widget.orderId}",
+                    style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
                   ),
-                ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Center(
-                  child: Column(
+                  const SizedBox(height: 24),
+                  Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: cs.error),
-                      const SizedBox(height: 16),
-                      Text("Unable to load this order right now.",
-                        style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
-                      ),
-                      const SizedBox(height: 24),
                       TextButton.icon(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text("Go Back"),
+                      ),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
                         onPressed: () {
-                          final newFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''));
-                          setState(() {
-                            _orderFuture = newFuture;
-                          });
+                          ref.read(orderNotifierProvider(widget.orderId).notifier).refresh();
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text("Retry"),
                       ),
                     ],
                   ),
-                ),
-              );
-            }
+                ],
+              ),
+            ),
+          );
+        }
 
-            if (order == null) {
-              return Scaffold(
-                backgroundColor: cs.surface,
-                body: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.search_off, size: 48, color: cs.secondary.withValues(alpha: 0.3)),
-                      const SizedBox(height: 16),
-                      Text(
-                        "Order not found: ${widget.orderId}",
-                        style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          TextButton.icon(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.arrow_back),
-                            label: const Text("Go Back"),
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              final newFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''));
-                              setState(() {
-                                _orderFuture = newFuture;
-                              });
-                            },
-                            icon: const Icon(Icons.refresh),
-                            label: const Text("Retry"),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+        final conversation = order['WhatsAppConversation'];
+        return _buildOrderDetailsScaffold(context, cs, order, conversation);
+      },
+      loading: () {
+        return Scaffold(
+          backgroundColor: cs.surface,
+          body: Shimmer.fromColors(
+            baseColor: cs.surfaceContainer,
+            highlightColor: cs.surface,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 56),
+                  Container(height: 220, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                  const SizedBox(height: 24),
+                  Container(width: 200, height: 28, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                  const SizedBox(height: 12),
+                  Container(width: 140, height: 18, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6))),
+                  const SizedBox(height: 32),
+                  ...List.generate(5, (i) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Container(height: 52, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+                  )),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      error: (error, stackTrace) {
+        return Scaffold(
+          backgroundColor: cs.surface,
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, size: 48, color: cs.error),
+                const SizedBox(height: 16),
+                Text("Unable to load this order right now.",
+                  style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6)),
                 ),
-              );
-            }
+                const SizedBox(height: 24),
+                TextButton.icon(
+                  onPressed: () {
+                    ref.read(orderNotifierProvider(widget.orderId).notifier).refresh();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Retry"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
-            return LayoutBuilder(
+  Widget _buildOrderDetailsScaffold(BuildContext context, ColorScheme cs, Map<String, dynamic> order, dynamic conversation) {
+    return LayoutBuilder(
               builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth >= 768;
 
@@ -516,10 +494,7 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                                                   try {
                                                     await OrderService.updateOrderStatus(order['id'], next);
                                                     if (!context.mounted) return;
-                                                    final newFuture = OrderService.fetchOrderByIdOrNumber(widget.orderId.replaceAll(RegExp(r'[#]'), ''));
-                                                    setState(() {
-                                                      _orderFuture = newFuture;
-                                                    });
+                                                    ref.read(orderNotifierProvider(widget.orderId).notifier).refresh();
                                                     if (context.mounted) {
                                                       ScaffoldMessenger.of(context).showSnackBar(
                                                         SnackBar(
@@ -619,8 +594,8 @@ class _OwnerOrderDetailsViewState extends State<OwnerOrderDetailsView> {
                 );
               },
             );
-          },
-        );
+      },
+    );
   }
 
   static double _normalizePrice(dynamic raw) {

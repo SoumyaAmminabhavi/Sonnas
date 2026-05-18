@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/order_service.dart';
+import '../services/dashboard_provider.dart';
 import 'package:intl/intl.dart';
 import 'expense_reports_page.dart';
 import 'sales_reports_page.dart';
@@ -62,17 +64,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
   }
 }
 
-class _PaymentsTab extends StatefulWidget {
+class _PaymentsTab extends ConsumerStatefulWidget {
   final ColorScheme cs;
   const _PaymentsTab({required this.cs});
 
   @override
-  State<_PaymentsTab> createState() => _PaymentsTabState();
+  ConsumerState<_PaymentsTab> createState() => _PaymentsTabState();
 }
 
-class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderStateMixin {
+class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _streamKey = 0;
 
   @override
   void initState() {
@@ -87,9 +88,7 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
   }
 
   void _reloadData() {
-    setState(() {
-      _streamKey++;
-    });
+    ref.invalidate(ordersStreamProvider);
   }
 
   double _normalizePrice(dynamic raw) {
@@ -111,37 +110,10 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      key: ValueKey(_streamKey),
-      stream: OrderService.getAllOrdersStream(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          debugPrint("❌ Payments load error: ${snapshot.error}");
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 48, color: widget.cs.error.withValues(alpha: 0.5)),
-                const SizedBox(height: 16),
-                Text("Something went wrong while loading payments", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: widget.cs.error.withValues(alpha: 0.7))),
-                const SizedBox(height: 8),
-                Text("Please try again later or contact support.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: widget.cs.secondary.withValues(alpha: 0.5))),
-                const SizedBox(height: 24),
-                ElevatedButton(onPressed: _reloadData, child: const Text("RETRY")),
-              ],
-            ),
-          );
-        }
+    final ordersAsync = ref.watch(ordersStreamProvider);
 
-        if (snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
-          return Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(widget.cs.primary),
-            ),
-          );
-        }
-
-        final orders = snapshot.data ?? [];
+    return ordersAsync.when(
+      data: (orders) {
         String paymentStatusOf(Map<String, dynamic> o) =>
             (o['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
         
@@ -185,6 +157,28 @@ class _PaymentsTabState extends State<_PaymentsTab> with SingleTickerProviderSta
 
         final isDesktop = MediaQuery.of(context).size.width >= 1100;
         return _buildPaymentsView(context, isDesktop, weeklyGross, totalPending, pendingOrders, completedHistory);
+      },
+      loading: () => Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(widget.cs.primary),
+        ),
+      ),
+      error: (error, stackTrace) {
+        debugPrint("❌ Payments load error: $error");
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: widget.cs.error.withValues(alpha: 0.5)),
+              const SizedBox(height: 16),
+              Text("Something went wrong while loading payments", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: widget.cs.error.withValues(alpha: 0.7))),
+              const SizedBox(height: 8),
+              Text("Please try again later or contact support.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: widget.cs.secondary.withValues(alpha: 0.5))),
+              const SizedBox(height: 24),
+              ElevatedButton(onPressed: _reloadData, child: const Text("RETRY")),
+            ],
+          ),
+        );
       },
     );
   }
