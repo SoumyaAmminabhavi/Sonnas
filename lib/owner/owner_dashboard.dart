@@ -61,41 +61,51 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
     final isMobile = size.width < 600;
 
     late OverlayEntry overlayEntry;
+    final child = Material(
+      color: Colors.transparent,
+      child: _NotificationWidget(
+        customerName: customerName,
+        orderNumber: orderNumber,
+        isMobile: isMobile,
+        onView: () {
+          final String? orderId = order['id']?.toString();
+          if (orderId == null || orderId.isEmpty) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Invalid order ID')),
+            );
+            if (overlayEntry.mounted) overlayEntry.remove();
+            return;
+          }
+          Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
+          if (overlayEntry.mounted) overlayEntry.remove();
+        },
+        onDismiss: () {
+          if (overlayEntry.mounted) overlayEntry.remove();
+        },
+      ),
+    );
+
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
-        top: isMobile ? 16 : null,
+        top: isMobile ? 0 : null,
         bottom: isMobile ? null : 24,
         right: isMobile ? 16 : 24,
         left: isMobile ? 16 : null,
         width: isMobile ? null : 380,
-        child: Material(
-          color: Colors.transparent,
-          child: _NotificationWidget(
-            customerName: customerName,
-            orderNumber: orderNumber,
-              onView: () {
-                 final String? orderId = order['id']?.toString();
-                if (orderId == null || orderId.isEmpty) {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invalid order ID')),
-                  );
-                  if (overlayEntry.mounted) overlayEntry.remove();
-                  return;
-                }
-                Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
-                if (overlayEntry.mounted) overlayEntry.remove();
-             },
-            onClose: () { if (overlayEntry.mounted) overlayEntry.remove(); },
-          ),
-        ),
+        child: isMobile
+            ? SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: child,
+                ),
+              )
+            : child,
       ),
     );
 
     Overlay.of(context).insert(overlayEntry);
-    Future.delayed(const Duration(seconds: 8), () {
-      if (overlayEntry.mounted) overlayEntry.remove();
-    });
   }
 
   @override
@@ -184,33 +194,163 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
   }
 }
 
-class _NotificationWidget extends StatelessWidget {
+class _NotificationWidget extends StatefulWidget {
   final String customerName, orderNumber;
-  final VoidCallback onView, onClose;
+  final VoidCallback onView;
+  final VoidCallback onDismiss;
+  final bool isMobile;
 
-  const _NotificationWidget({required this.customerName, required this.orderNumber, required this.onView, required this.onClose});
+  const _NotificationWidget({
+    required this.customerName,
+    required this.orderNumber,
+    required this.onView,
+    required this.onDismiss,
+    required this.isMobile,
+  });
+
+  @override
+  State<_NotificationWidget> createState() => _NotificationWidgetState();
+}
+
+class _NotificationWidgetState extends State<_NotificationWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  Timer? _autoDismissTimer;
+  bool _isDismissing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    
+    _slideAnimation = Tween<Offset>(
+      begin: widget.isMobile ? const Offset(0, -1.0) : const Offset(1.0, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _controller.forward();
+
+    _autoDismissTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted) {
+        _dismiss();
+      }
+    });
+  }
+
+  void _dismiss() {
+    if (_isDismissing) return;
+    setState(() {
+      _isDismissing = true;
+    });
+    _autoDismissTimer?.cancel();
+    _controller.reverse().then((_) {
+      if (mounted) {
+        widget.onDismiss();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoDismissTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFF4D8D),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: const Color(0xFFFF4D8D).withValues(alpha: 0.3), blurRadius: 40, offset: const Offset(0, 10))],
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
-          const SizedBox(width: 16),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-            Text("NEW ORDER RECEIVED", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: Colors.white.withValues(alpha: 0.7))),
-            Text("$customerName (#$orderNumber)", style: GoogleFonts.notoSerif(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-          ])),
-          const SizedBox(width: 12),
-          TextButton(onPressed: onView, style: TextButton.styleFrom(backgroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text("VIEW", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, color: const Color(0xFFFF4D8D), fontSize: 12))),
-          IconButton(icon: const Icon(Icons.close, size: 18, color: Colors.white), onPressed: onClose, padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-        ],
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF4D8D),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF4D8D).withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              )
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "NEW ORDER RECEIVED",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "${widget.customerName} (#${widget.orderNumber})",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: widget.onView,
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  "VIEW",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFF4D8D),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.close, size: 18, color: Colors.white),
+                onPressed: _dismiss,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                splashRadius: 20,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

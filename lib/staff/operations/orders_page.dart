@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../services/dashboard_provider.dart';
 import '../../services/order_service.dart';
 import '../../services/supabase_service.dart';
 import '../../models/order.dart';
@@ -108,36 +106,13 @@ class StaffOrderCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final itemsAsync = ref.watch(orderItemsProvider(order.id));
-                      return itemsAsync.when(
-                        data: (items) => Text(
-                          "#${order.orderNumber} • ${items.length} items",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: cs.secondary.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        loading: () => Text(
-                          "#${order.orderNumber} • ... items",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: cs.secondary.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        error: (err, stack) => Text(
-                          "#${order.orderNumber} • — items",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: cs.secondary.withValues(alpha: 0.2),
-                          ),
-                        ),
-                      );
-                    },
+                  Text(
+                    "#${order.orderNumber} • ${order.items.length} items",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: cs.secondary.withValues(alpha: 0.4),
+                    ),
                   ),
                 ],
               ),

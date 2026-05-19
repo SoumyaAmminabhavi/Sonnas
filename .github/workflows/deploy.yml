@@ -21,6 +21,17 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Validate Required Secrets
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::SUPABASE_URL secret is not set!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::SUPABASE_ANON_KEY secret is not set!"
+            exit 1
+          fi
+
       - name: Build Flutter Web
         run: >
           flutter build web --release --base-href "/"

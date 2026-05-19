@@ -27,21 +27,21 @@ CREATE POLICY "Menu items can be inserted by staff or service role"
   ON "Cake" FOR INSERT
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Menu items can be updated by staff or service role"
   ON "Cake" FOR UPDATE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Menu items can be deleted by staff or service role"
   ON "Cake" FOR DELETE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 
@@ -55,11 +55,11 @@ CREATE POLICY "Categories can be modified by staff or service role"
   ON "Category" FOR ALL
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   )
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 
@@ -73,11 +73,11 @@ CREATE POLICY "Cake options can be modified by staff or service role"
   ON "CakeOption" FOR ALL
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   )
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 
@@ -112,7 +112,7 @@ CREATE POLICY "Orders can be updated by staff only"
   ON "Order" FOR UPDATE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 -- Allow authenticated staff to delete orders (should also be RPC-controlled)
@@ -120,28 +120,45 @@ CREATE POLICY "Orders can be deleted by staff only"
   ON "Order" FOR DELETE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone to view order items (staff app uses anon key)
--- In production, restrict this via Edge Functions or migrate to authenticated sessions
 CREATE POLICY "Order items are viewable by everyone"
   ON "OrderItem" FOR SELECT
   USING (true);
 
--- Order items should only be created alongside orders (via RPC or trigger)
-CREATE POLICY "Order items can be created by anyone"
+-- Order items can be created by authenticated users or service role
+CREATE POLICY "Order items can be created by authenticated users"
   ON "OrderItem" FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    auth.uid() IS NOT NULL
+  );
 
--- Allow anyone to modify order items (staff app uses anon key)
--- In production, restrict this via Edge Functions or migrate to authenticated sessions
-CREATE POLICY "Order items can be modified by anyone"
-  ON "OrderItem" FOR ALL
-  USING (true);
+-- Restrict update/delete on OrderItem: only service_role or active staff
+CREATE POLICY "Order items can be updated by active staff"
+  ON "OrderItem" FOR UPDATE
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s."authUserId" = auth.uid()::text AND s."isActivated" = true
+    )
+  );
+
+CREATE POLICY "Order items can be deleted by active staff"
+  ON "OrderItem" FOR DELETE
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (
+      SELECT 1 FROM "Staff" s
+      WHERE s."authUserId" = auth.uid()::text AND s."isActivated" = true
+    )
+  );
 
 
 -- ─── Staff Table (Restricted) ───────────────────────────────────────────────
@@ -156,7 +173,7 @@ CREATE POLICY "Staff data readable by service role or self"
   ON "Staff" FOR SELECT
   USING (
     auth.role() = 'service_role' OR
-    id = auth.uid()
+    "authUserId" = auth.uid()::text
   );
 
 -- Restrict writes to service role only (owner/staff management via Edge Functions)
@@ -168,11 +185,11 @@ CREATE POLICY "Staff data updatable by service role or self"
   ON "Staff" FOR UPDATE
   USING (
     auth.role() = 'service_role' OR
-    (auth.uid() IS NOT NULL AND id = auth.uid())
+    (auth.uid() IS NOT NULL AND "authUserId" = auth.uid()::text)
   )
   WITH CHECK (
     auth.role() = 'service_role' OR
-    (auth.uid() IS NOT NULL AND id = auth.uid())
+    (auth.uid() IS NOT NULL AND "authUserId" = auth.uid()::text)
   );
 
 CREATE POLICY "Staff data deletable by service role only"
@@ -192,32 +209,32 @@ CREATE POLICY "Expenses readable by service role or staff"
   ON "Expense" FOR SELECT
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Expenses writable by service role or staff"
   ON "Expense" FOR INSERT
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Expenses updatable by service role or staff"
   ON "Expense" FOR UPDATE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   )
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Expenses deletable by service role or staff"
   ON "Expense" FOR DELETE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 
@@ -233,32 +250,32 @@ CREATE POLICY "Inventory readable by service role or staff"
   ON "InventoryItem" FOR SELECT
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Inventory writable by service role or staff"
   ON "InventoryItem" FOR INSERT
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Inventory updatable by service role or staff"
   ON "InventoryItem" FOR UPDATE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   )
   WITH CHECK (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 CREATE POLICY "Inventory deletable by service role or staff"
   ON "InventoryItem" FOR DELETE
   USING (
     auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE id = auth.uid() AND "isActivated" = true)
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
 

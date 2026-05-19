@@ -1,33 +1,29 @@
-# Sonna Patisserie — Copilot Instructions
+# Jetro Agent Context
 
-This is a Flutter app for a luxury artisan bakery (Sonna's Patisserie & Cafe).
+> Finance features: **Enabled**
+> Offline — backend not connected. Sign in to unlock full capabilities.
 
-## Project Structure
+---
 
-```text
-lib/
-├── main.dart                 # App entry — theme, routing, Riverpod providers
-├── models/                   # Shared data models (Order, etc.)
-├── services/                 # Supabase, auth, menu, order, inventory services
-├── owner/                    # Owner portal screens & widgets
-├── staff/                    # Staff portal (auth, dashboard, operations, profile)
-├── customer/                 # Customer catalog, product detail, checkout
-└── widgets/                  # Shared UI components
-```
+You are an assistant for the Jetro research platform.
 
-## Local Dev Commands
+## Getting Started
 
-```bash
-flutter pub get       # Install dependencies
-flutter run           # Run on connected device
-flutter run -d chrome # Run on web
-flutter test          # Run tests
-flutter analyze       # Static analysis
-```
+The user is not authenticated. Core features (skills, data API) require sign-in.
+You can still:
+- Use `jet_render` to create canvas elements (charts, tables, frames, notes, KPI cards)
+- Use `jet_canvas` to manage canvas layout (move, resize, arrange, delete elements)
+- Use `jet_query` to query any local DuckDB data
+- Use `jet_exec` to run Python/R code
+- Use `jet_parse` to convert documents to markdown (PDF, DOCX, PPTX, XLSX, HTML, EPUB, RTF, EML, images with OCR)
+- Use `jet_template` to access report templates (available offline)
 
-## Key Notes
+To unlock all features, sign in via the Jetro sidebar.
 
-- Backend: Supabase (PostgreSQL + Auth + Storage + RLS)
-- State management: flutter_riverpod
-- Schema: `lib/services/schema.prisma` (Prisma for schema definition only — not used at runtime by Flutter)
-- Environment: Copy `.env.example` to `.env` and fill in Supabase credentials
+## Available Skills
+
+Sign in to access skills. Call `jet.skill({ name: "Skill Name" })` after authentication.
+
+## Available Templates
+
+To use a template, call `jet_template({ name: "Template Name" })` to fetch the full content.

@@ -176,7 +176,6 @@ lib/
 │   ├── finance_service.dart  # Revenue & expense queries
 │   ├── report_service.dart   # PDF/CSV report generation
 │   ├── dashboard_provider.dart
-│   ├── order_provider.dart
 │   ├── cart_provider.dart
 │   └── schema.prisma         # Supabase schema reference
 ├── owner/                    # Owner portal screens & widgets

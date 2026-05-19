@@ -93,7 +93,7 @@ class OrderItem {
       cakeId: map['cakeId']?.toString(),
       cakeName: map['cakeName']?.toString() ?? 'Unknown Cake',
       quantity: int.tryParse(map['quantity']?.toString() ?? '1') ?? 1,
-      price: (double.tryParse(map['price']?.toString().replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '') ?? '0') ?? 0.0) / PriceConstants.minorUnitsPerMajor,
+      price: PriceConstants.normalizePrice(map['price']),
     );
   }
 }
@@ -132,7 +132,7 @@ class SonnaOrder {
   });
 
   factory SonnaOrder.fromMap(Map<String, dynamic> map) {
-    final List<dynamic> rawItems = map['items'] as List<dynamic>? ?? [];
+    final List<dynamic> rawItems = map['items'] as List<dynamic>? ?? map['OrderItem'] as List<dynamic>? ?? [];
     
     // Fix: prefer customerPhone, fallback to phone or WhatsAppConversation.phone
     final customerPhone = (map['customerPhone'] ?? map['phone'] ?? map['WhatsAppConversation']?['phone'])?.toString().trim() ?? '';
@@ -144,18 +144,7 @@ class SonnaOrder {
       phone: customerPhone,
       status: OrderStatusExtension.fromString(map['status']?.toString() ?? 'PENDING'),
       paymentStatus: map['paymentStatus']?.toString() ?? 'PENDING',
-      totalPrice: (() {
-        final raw = map['totalPrice'];
-        if (raw == null) return 0.0;
-        final str = raw.toString();
-        final hasDecimal = str.contains('.');
-        final hasCurrency = str.contains(PriceConstants.currencySymbol) || str.contains('INR');
-        final clean = str.replaceAll(PriceConstants.currencySymbol, '').replaceAll('INR', '').replaceAll(',', '').trim();
-        if (clean.isEmpty) return 0.0;
-        final parsed = double.tryParse(clean) ?? 0.0;
-        if (hasDecimal || hasCurrency) return parsed;
-        return parsed / PriceConstants.minorUnitsPerMajor;
-      })(),
+      totalPrice: PriceConstants.normalizePrice(map['totalPrice']),
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
       items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i))).toList(),
       notes: map['notes']?.toString(),

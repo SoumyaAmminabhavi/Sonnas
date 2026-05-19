@@ -2,6 +2,37 @@ class PriceConstants {
   static const int minorUnitsPerMajor = 100;
   static const String currencySymbol = '₹';
   static const String currencyCode = 'INR';
+
+  static double normalizePrice(dynamic rawPrice) {
+    if (rawPrice == null) return 0.0;
+    final rawStr = rawPrice.toString().trim();
+    if (rawStr.isEmpty) return 0.0;
+
+    final upperStr = rawStr.toUpperCase();
+    final hasCurrency = upperStr.contains('₹') || 
+                        upperStr.contains('\$') || 
+                        upperStr.contains('INR') || 
+                        upperStr.contains('RS');
+    final hasDecimal = rawStr.contains('.');
+    final hasTrailing = rawStr.endsWith('/-');
+
+    String clean = rawStr
+        .replaceAll('₹', '')
+        .replaceAll('\$', '')
+        .replaceAll(RegExp(r'INR', caseSensitive: false), '')
+        .replaceAll(RegExp(r'Rs\.?', caseSensitive: false), '')
+        .replaceAll('/-', '')
+        .replaceAll(',', '')
+        .trim();
+    
+    final parsedVal = double.tryParse(clean) ?? 0.0;
+
+    if (hasCurrency || hasDecimal || hasTrailing) {
+      return parsedVal;
+    } else {
+      return parsedVal / minorUnitsPerMajor.toDouble();
+    }
+  }
 }
 
 class AuthConstants {

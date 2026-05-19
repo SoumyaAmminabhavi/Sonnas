@@ -112,7 +112,7 @@ class MenuService {
   /// Create or update a category
   static Future<String> upsertCategory(Map<String, dynamic> category) async {
     final data = Map<String, dynamic>.from(category);
-    data.remove('updatedAt');
+    data['updatedAt'] = category['updatedAt'] ?? DateTime.now().toUtc().toIso8601String();
     final res = await _client.from('Category').upsert(data).select().single();
     return res['id'].toString();
   }
@@ -121,7 +121,7 @@ class MenuService {
   static Future<String> upsertCake(Map<String, dynamic> cake) async {
     final data = Map<String, dynamic>.from(cake);
     data.remove('category');
-    data.remove('updatedAt');
+    data['updatedAt'] = cake['updatedAt'] ?? DateTime.now().toUtc().toIso8601String();
     
     final res = await _client.from('Cake').upsert(data).select().single();
     return res['id'].toString();
@@ -143,7 +143,7 @@ class MenuService {
     final data = Map<String, dynamic>.from(option);
     data['cakeId'] = cakeId;
     data['size'] = size;
-    data.remove('updatedAt');
+    data['updatedAt'] = option['updatedAt'] ?? DateTime.now().toUtc().toIso8601String();
 
     try {
       await _client.from('CakeOption').upsert(data);

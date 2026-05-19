@@ -39,11 +39,7 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
       int paidOrderCount = 0;
       
       for (var order in orders) {
-        final rawPrice = order['totalPrice'];
-        final price = (rawPrice is num
-            ? rawPrice.toDouble()
-            : double.tryParse(rawPrice?.toString().replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '') ?? '0') ?? 0.0)
-            / PriceConstants.minorUnitsPerMajor;
+        final price = PriceConstants.normalizePrice(order['totalPrice']);
             
         final pStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
         if (pStatus == 'PAID') {

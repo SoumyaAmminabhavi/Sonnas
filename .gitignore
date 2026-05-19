@@ -91,3 +91,7 @@ data/
 projects/
 scratch/
 issues.txt
+
+# Local database setup
+lib/services/db_migration.sql
+

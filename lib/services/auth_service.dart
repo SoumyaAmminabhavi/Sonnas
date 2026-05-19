@@ -7,66 +7,6 @@ import 'constants.dart';
 class AuthService {
   static SupabaseClient get _client => SupabaseService.client;
 
-  // ⚠️ WARNING: CLIENT-SIDE LOCKOUT VULNERABILITY ⚠️
-  // The following lockout mechanism (_staffCodeAttempts map and associated methods)
-  // is implemented in-memory on the client side and can be easily bypassed by:
-  // 1. Restarting the app (clears the in-memory map)
-  // 2. Modifying the app code or using a modified client
-  // 3. Making direct API calls to the backend
-  //
-  // TODO: This MUST be moved to server-side enforcement (e.g., Supabase Edge Function
-  // or RPC) to provide real security. The server should track failed attempts by phone
-  // number in the database and enforce rate limiting there. This client-side check
-  // only provides a basic UX deterrent, not actual security protection.
-  static final Map<String, _AttemptTracker> _staffCodeAttempts = {};
-
-  static bool isStaffCodeLockedOut(String phone) {
-    final normalizedPhone = _normalizePhone(phone);
-    final tracker = _staffCodeAttempts[normalizedPhone];
-    if (tracker == null) return false;
-    if (tracker.lockoutUntil != null && DateTime.now().isBefore(tracker.lockoutUntil!)) {
-      return true;
-    }
-    if (tracker.lockoutUntil != null && DateTime.now().isAfter(tracker.lockoutUntil!)) {
-      _staffCodeAttempts.remove(normalizedPhone);
-      return false;
-    }
-    return false;
-  }
-
-  static int getStaffCodeAttemptsRemaining(String phone) {
-    final normalizedPhone = _normalizePhone(phone);
-    final tracker = _staffCodeAttempts[normalizedPhone];
-    if (tracker == null) return AuthConstants.maxStaffCodeAttempts;
-    if (tracker.lockoutUntil != null && DateTime.now().isBefore(tracker.lockoutUntil!)) {
-      return 0;
-    }
-    return (AuthConstants.maxStaffCodeAttempts - tracker.count).clamp(0, AuthConstants.maxStaffCodeAttempts);
-  }
-
-  static Duration? getStaffCodeLockoutRemaining(String phone) {
-    final normalizedPhone = _normalizePhone(phone);
-    final tracker = _staffCodeAttempts[normalizedPhone];
-    if (tracker == null || tracker.lockoutUntil == null) return null;
-    final remaining = tracker.lockoutUntil!.difference(DateTime.now());
-    return remaining.isNegative ? null : remaining;
-  }
-
-  static void _recordStaffCodeFailure(String phone) {
-    final normalizedPhone = _normalizePhone(phone);
-    final tracker = _staffCodeAttempts[normalizedPhone] ?? _AttemptTracker();
-    tracker.count++;
-    if (tracker.count >= AuthConstants.maxStaffCodeAttempts) {
-      tracker.lockoutUntil = DateTime.now().add(AuthConstants.staffCodeLockoutDuration);
-    }
-    _staffCodeAttempts[normalizedPhone] = tracker;
-  }
-
-  static void resetStaffCodeAttempts(String phone) {
-    final normalizedPhone = _normalizePhone(phone);
-    _staffCodeAttempts.remove(normalizedPhone);
-  }
-
   static String _normalizePhone(String phone) {
     final digitsOnly = phone.replaceAll(RegExp(r'\D'), '');
     return digitsOnly.length > AuthConstants.phoneDigits
@@ -103,30 +43,29 @@ class AuthService {
 
   static Future<Map<String, dynamic>?> verifyStaffCode(String phone, String code) async {
     final normalizedPhone = _normalizePhone(phone);
-
-    if (isStaffCodeLockedOut(normalizedPhone)) {
-      final masked = normalizedPhone.length >= 4 
-          ? '******${normalizedPhone.substring(normalizedPhone.length - 4)}' 
-          : '******';
-      debugPrint('⚠️ Staff code verification locked out for $masked');
-      return null;
+    try {
+      final res = await _client.rpc('verify_staff_code', params: {
+        'phone_param': normalizedPhone,
+        'code_param': code,
+      });
+      
+      final map = Map<String, dynamic>.from(res);
+      final success = map['success'] as bool? ?? false;
+      if (!success) {
+        final msg = map['message'] as String? ?? 'Verification failed';
+        throw Exception(msg);
+      }
+      
+      final staff = await _client
+          .from('Staff')
+          .select()
+          .eq('phone', normalizedPhone)
+          .maybeSingle();
+      return staff;
+    } catch (e) {
+      debugPrint('❌ Staff verification RPC failed: $e');
+      rethrow;
     }
-
-    final res = await _client
-        .from('Staff')
-        .select()
-        .eq('phone', normalizedPhone)
-        .eq('joiningCode', code)
-        .eq('isActivated', false)
-        .maybeSingle();
-
-    if (res == null) {
-      _recordStaffCodeFailure(normalizedPhone);
-    } else {
-      resetStaffCodeAttempts(normalizedPhone);
-    }
-
-    return res;
   }
 
   static Future<bool> registerStaff(String id, String password) async {
@@ -142,74 +81,20 @@ class AuthService {
     }
   }
 
-  // Cache the hash to avoid redundant network calls and improve login speed
-  static String? _cachedOwnerPinHash;
-
-  /// Fetch the owner PIN hash early to make login instant
+  @Deprecated('Use server-side RPC validation instead')
   static Future<void> prewarmOwnerAuth() async {
-    try {
-      final res = await _client
-          .from('SystemSetting')
-          .select('value')
-          .eq('key', 'owner_pin_hash')
-          .maybeSingle();
-      if (res != null) {
-        _cachedOwnerPinHash = res['value']?.toString();
-      }
-    } catch (e) {
-      debugPrint('⚠️ Prewarm Auth Failed: $e');
-    }
+    // No-op (Server-side RPC validation renders client-side caching obsolete)
   }
 
   static Future<bool> verifyOwnerPin(String pin) async {
     try {
-      String? hash = _cachedOwnerPinHash;
-      
-      // If not cached, fetch it now (fallback)
-      if (hash == null) {
-        final res = await _client
-            .from('SystemSetting')
-            .select('value')
-            .eq('key', 'owner_pin_hash')
-            .maybeSingle();
-        
-        if (res == null) {
-           debugPrint('❌ Owner PIN hash not found in DB');
-           return false;
-        }
-        hash = res['value']?.toString();
-        _cachedOwnerPinHash = hash; 
-      }
-      
-      if (hash == null) return false;
-      bool isCorrect = DBCrypt().checkpw(pin, hash);
-
-      // Defensive retry: if it fails, the PIN might have changed. Refresh cache and try once more.
-      if (!isCorrect) {
-        final res = await _client
-            .from('SystemSetting')
-            .select('value')
-            .eq('key', 'owner_pin_hash')
-            .maybeSingle();
-        
-        if (res != null) {
-          final freshHash = res['value']?.toString();
-          if (freshHash != null && freshHash != hash) {
-            _cachedOwnerPinHash = freshHash;
-            isCorrect = DBCrypt().checkpw(pin, freshHash);
-          }
-        }
-      }
-
-      return isCorrect;
+      final res = await _client.rpc('verify_owner_pin', params: {
+        'pin': pin,
+      });
+      return res as bool? ?? false;
     } catch (e) {
-      debugPrint('⚠️ PIN Verification Error: $e');
+      debugPrint('⚠️ PIN Verification RPC Error: $e');
       return false;
     }
   }
-}
-
-class _AttemptTracker {
-  int count = 0;
-  DateTime? lockoutUntil;
 }

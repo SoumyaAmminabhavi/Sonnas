@@ -196,61 +196,51 @@ class KitchenOrderCard extends StatelessWidget {
                       Consumer(
                         builder: (context, ref, child) {
                           final menuAsync = ref.watch(menuProvider);
-                          final itemsAsync = ref.watch(orderItemsProvider(order.id));
-                          final items = itemsAsync.value ?? [];
+                          final items = order.items.map((i) => {'cakeName': i.cakeName, 'cakeId': i.cakeId, 'quantity': i.quantity}).toList();
                           return _buildKitchenImage(orderMap, items, menuAsync.value ?? [], cs);
                         }
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final itemsAsync = ref.watch(orderItemsProvider(order.id));
-                      return itemsAsync.when(
-                        data: (items) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...order.items.take(3).map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
                           children: [
-                            ...items.take(3).map((item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.cake_outlined, size: 14, color: cs.primary.withValues(alpha: 0.4)),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      "${item['quantity'] ?? 1}x ${item['cakeName'] ?? 'Unknown'}",
-                                      style: GoogleFonts.plusJakartaSans(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: cs.secondary.withValues(alpha: 0.8),
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
-                            if (items.length > 3)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4, left: 24),
-                                child: Text(
-                                  "+ ${items.length - 3} more creations",
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    fontStyle: FontStyle.italic,
-                                    color: cs.primary.withValues(alpha: 0.5),
-                                  ),
+                            Icon(Icons.cake_outlined, size: 14, color: cs.primary.withValues(alpha: 0.4)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                "${item.quantity}x ${item.cakeName}",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.secondary.withValues(alpha: 0.8),
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
+                            ),
                           ],
                         ),
-                        loading: () => const Center(child: SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-                        error: (err, stack) => Text("Unable to load kitchen tasks. Please try again.", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: cs.error.withValues(alpha: 0.7))),
-                      );
-                    },
+                      )),
+                      if (order.items.length > 3)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4, left: 24),
+                          child: Text(
+                            "+ ${order.items.length - 3} more creations",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                              color: cs.primary.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),

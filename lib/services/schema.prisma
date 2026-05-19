@@ -266,6 +266,9 @@ model Staff {
   joiningCode      String?   @unique
   isActivated      Boolean?  @default(false)
   biometricEnabled Boolean?  @default(false)
+  authUserId       String?   @unique
+  failedAttempts   Int       @default(0)
+  lockoutUntil     DateTime? @db.Timestamptz(6)
   createdAt        DateTime? @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime? @default(now()) @updatedAt @db.Timestamptz(6)
 

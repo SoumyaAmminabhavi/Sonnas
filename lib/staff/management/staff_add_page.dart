@@ -128,6 +128,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         return;
       }
       final bytes = await image.readAsBytes();
+      if (!mounted) return;
       setState(() {
         _pickedImage = image;
         _imageBytes = bytes;

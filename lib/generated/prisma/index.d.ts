@@ -10021,7 +10021,9 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     confirmedAt: Date | null
+    paidAt: Date | null
     deliveredAt: Date | null
+    completedAt: Date | null
     cancelledAt: Date | null
     deliverySlot: string | null
   }
@@ -10049,7 +10051,9 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     confirmedAt: Date | null
+    paidAt: Date | null
     deliveredAt: Date | null
+    completedAt: Date | null
     cancelledAt: Date | null
     deliverySlot: string | null
   }
@@ -10077,7 +10081,9 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     confirmedAt: number
+    paidAt: number
     deliveredAt: number
+    completedAt: number
     cancelledAt: number
     deliverySlot: number
     _all: number
@@ -10115,7 +10121,9 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     confirmedAt?: true
+    paidAt?: true
     deliveredAt?: true
+    completedAt?: true
     cancelledAt?: true
     deliverySlot?: true
   }
@@ -10143,7 +10151,9 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     confirmedAt?: true
+    paidAt?: true
     deliveredAt?: true
+    completedAt?: true
     cancelledAt?: true
     deliverySlot?: true
   }
@@ -10171,7 +10181,9 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     confirmedAt?: true
+    paidAt?: true
     deliveredAt?: true
+    completedAt?: true
     cancelledAt?: true
     deliverySlot?: true
     _all?: true
@@ -10286,7 +10298,9 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     confirmedAt: Date | null
+    paidAt: Date | null
     deliveredAt: Date | null
+    completedAt: Date | null
     cancelledAt: Date | null
     deliverySlot: string | null
     _count: OrderCountAggregateOutputType | null
@@ -10333,7 +10347,9 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     confirmedAt?: boolean
+    paidAt?: boolean
     deliveredAt?: boolean
+    completedAt?: boolean
     cancelledAt?: boolean
     deliverySlot?: boolean
     user?: boolean | Order$userArgs<ExtArgs>
@@ -10365,7 +10381,9 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     confirmedAt?: boolean
+    paidAt?: boolean
     deliveredAt?: boolean
+    completedAt?: boolean
     cancelledAt?: boolean
     deliverySlot?: boolean
     user?: boolean | Order$userArgs<ExtArgs>
@@ -10395,7 +10413,9 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     confirmedAt?: boolean
+    paidAt?: boolean
     deliveredAt?: boolean
+    completedAt?: boolean
     cancelledAt?: boolean
     deliverySlot?: boolean
   }
@@ -10441,7 +10461,9 @@ export namespace Prisma {
       createdAt: Date
       updatedAt: Date
       confirmedAt: Date | null
+      paidAt: Date | null
       deliveredAt: Date | null
+      completedAt: Date | null
       cancelledAt: Date | null
       deliverySlot: string | null
     }, ExtArgs["result"]["order"]>
@@ -10862,7 +10884,9 @@ export namespace Prisma {
     readonly createdAt: FieldRef<"Order", 'DateTime'>
     readonly updatedAt: FieldRef<"Order", 'DateTime'>
     readonly confirmedAt: FieldRef<"Order", 'DateTime'>
+    readonly paidAt: FieldRef<"Order", 'DateTime'>
     readonly deliveredAt: FieldRef<"Order", 'DateTime'>
+    readonly completedAt: FieldRef<"Order", 'DateTime'>
     readonly cancelledAt: FieldRef<"Order", 'DateTime'>
     readonly deliverySlot: FieldRef<"Order", 'String'>
   }
@@ -16282,8 +16306,18 @@ export namespace Prisma {
 
   export type AggregateStaff = {
     _count: StaffCountAggregateOutputType | null
+    _avg: StaffAvgAggregateOutputType | null
+    _sum: StaffSumAggregateOutputType | null
     _min: StaffMinAggregateOutputType | null
     _max: StaffMaxAggregateOutputType | null
+  }
+
+  export type StaffAvgAggregateOutputType = {
+    failedAttempts: number | null
+  }
+
+  export type StaffSumAggregateOutputType = {
+    failedAttempts: number | null
   }
 
   export type StaffMinAggregateOutputType = {
@@ -16306,6 +16340,9 @@ export namespace Prisma {
     joiningCode: string | null
     isActivated: boolean | null
     biometricEnabled: boolean | null
+    authUserId: string | null
+    failedAttempts: number | null
+    lockoutUntil: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -16330,6 +16367,9 @@ export namespace Prisma {
     joiningCode: string | null
     isActivated: boolean | null
     biometricEnabled: boolean | null
+    authUserId: string | null
+    failedAttempts: number | null
+    lockoutUntil: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -16356,11 +16396,22 @@ export namespace Prisma {
     joiningCode: number
     isActivated: number
     biometricEnabled: number
+    authUserId: number
+    failedAttempts: number
+    lockoutUntil: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
+
+  export type StaffAvgAggregateInputType = {
+    failedAttempts?: true
+  }
+
+  export type StaffSumAggregateInputType = {
+    failedAttempts?: true
+  }
 
   export type StaffMinAggregateInputType = {
     id?: true
@@ -16382,6 +16433,9 @@ export namespace Prisma {
     joiningCode?: true
     isActivated?: true
     biometricEnabled?: true
+    authUserId?: true
+    failedAttempts?: true
+    lockoutUntil?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -16406,6 +16460,9 @@ export namespace Prisma {
     joiningCode?: true
     isActivated?: true
     biometricEnabled?: true
+    authUserId?: true
+    failedAttempts?: true
+    lockoutUntil?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -16432,6 +16489,9 @@ export namespace Prisma {
     joiningCode?: true
     isActivated?: true
     biometricEnabled?: true
+    authUserId?: true
+    failedAttempts?: true
+    lockoutUntil?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -16475,6 +16535,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: StaffAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: StaffSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: StaffMinAggregateInputType
@@ -16505,6 +16577,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: StaffCountAggregateInputType | true
+    _avg?: StaffAvgAggregateInputType
+    _sum?: StaffSumAggregateInputType
     _min?: StaffMinAggregateInputType
     _max?: StaffMaxAggregateInputType
   }
@@ -16531,9 +16605,14 @@ export namespace Prisma {
     joiningCode: string | null
     isActivated: boolean | null
     biometricEnabled: boolean | null
+    authUserId: string | null
+    failedAttempts: number
+    lockoutUntil: Date | null
     createdAt: Date | null
     updatedAt: Date | null
     _count: StaffCountAggregateOutputType | null
+    _avg: StaffAvgAggregateOutputType | null
+    _sum: StaffSumAggregateOutputType | null
     _min: StaffMinAggregateOutputType | null
     _max: StaffMaxAggregateOutputType | null
   }
@@ -16574,6 +16653,9 @@ export namespace Prisma {
     joiningCode?: boolean
     isActivated?: boolean
     biometricEnabled?: boolean
+    authUserId?: boolean
+    failedAttempts?: boolean
+    lockoutUntil?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["staff"]>
@@ -16600,6 +16682,9 @@ export namespace Prisma {
     joiningCode?: boolean
     isActivated?: boolean
     biometricEnabled?: boolean
+    authUserId?: boolean
+    failedAttempts?: boolean
+    lockoutUntil?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["staff"]>
@@ -16626,6 +16711,9 @@ export namespace Prisma {
     joiningCode?: boolean
     isActivated?: boolean
     biometricEnabled?: boolean
+    authUserId?: boolean
+    failedAttempts?: boolean
+    lockoutUntil?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
@@ -16656,6 +16744,9 @@ export namespace Prisma {
       joiningCode: string | null
       isActivated: boolean | null
       biometricEnabled: boolean | null
+      authUserId: string | null
+      failedAttempts: number
+      lockoutUntil: Date | null
       createdAt: Date | null
       updatedAt: Date | null
     }, ExtArgs["result"]["staff"]>
@@ -17072,6 +17163,9 @@ export namespace Prisma {
     readonly joiningCode: FieldRef<"Staff", 'String'>
     readonly isActivated: FieldRef<"Staff", 'Boolean'>
     readonly biometricEnabled: FieldRef<"Staff", 'Boolean'>
+    readonly authUserId: FieldRef<"Staff", 'String'>
+    readonly failedAttempts: FieldRef<"Staff", 'Int'>
+    readonly lockoutUntil: FieldRef<"Staff", 'DateTime'>
     readonly createdAt: FieldRef<"Staff", 'DateTime'>
     readonly updatedAt: FieldRef<"Staff", 'DateTime'>
   }
@@ -24427,7 +24521,9 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     confirmedAt: 'confirmedAt',
+    paidAt: 'paidAt',
     deliveredAt: 'deliveredAt',
+    completedAt: 'completedAt',
     cancelledAt: 'cancelledAt',
     deliverySlot: 'deliverySlot'
   };
@@ -24532,6 +24628,9 @@ export namespace Prisma {
     joiningCode: 'joiningCode',
     isActivated: 'isActivated',
     biometricEnabled: 'biometricEnabled',
+    authUserId: 'authUserId',
+    failedAttempts: 'failedAttempts',
+    lockoutUntil: 'lockoutUntil',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -25391,7 +25490,9 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     deliveredAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     cancelledAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     deliverySlot?: StringNullableFilter<"Order"> | string | null
     user?: XOR<UserNullableRelationFilter, UserWhereInput> | null
@@ -25422,7 +25523,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     confirmedAt?: SortOrderInput | SortOrder
+    paidAt?: SortOrderInput | SortOrder
     deliveredAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
     cancelledAt?: SortOrderInput | SortOrder
     deliverySlot?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
@@ -25456,7 +25559,9 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     deliveredAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     cancelledAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     deliverySlot?: StringNullableFilter<"Order"> | string | null
     user?: XOR<UserNullableRelationFilter, UserWhereInput> | null
@@ -25487,7 +25592,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     confirmedAt?: SortOrderInput | SortOrder
+    paidAt?: SortOrderInput | SortOrder
     deliveredAt?: SortOrderInput | SortOrder
+    completedAt?: SortOrderInput | SortOrder
     cancelledAt?: SortOrderInput | SortOrder
     deliverySlot?: SortOrderInput | SortOrder
     _count?: OrderCountOrderByAggregateInput
@@ -25523,7 +25630,9 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Order"> | Date | string
     confirmedAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+    paidAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     deliveredAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
+    completedAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     cancelledAt?: DateTimeNullableWithAggregatesFilter<"Order"> | Date | string | null
     deliverySlot?: StringNullableWithAggregatesFilter<"Order"> | string | null
   }
@@ -25939,6 +26048,9 @@ export namespace Prisma {
     joiningCode?: StringNullableFilter<"Staff"> | string | null
     isActivated?: BoolNullableFilter<"Staff"> | boolean | null
     biometricEnabled?: BoolNullableFilter<"Staff"> | boolean | null
+    authUserId?: StringNullableFilter<"Staff"> | string | null
+    failedAttempts?: IntFilter<"Staff"> | number
+    lockoutUntil?: DateTimeNullableFilter<"Staff"> | Date | string | null
     createdAt?: DateTimeNullableFilter<"Staff"> | Date | string | null
     updatedAt?: DateTimeNullableFilter<"Staff"> | Date | string | null
   }
@@ -25965,6 +26077,9 @@ export namespace Prisma {
     joiningCode?: SortOrderInput | SortOrder
     isActivated?: SortOrderInput | SortOrder
     biometricEnabled?: SortOrderInput | SortOrder
+    authUserId?: SortOrderInput | SortOrder
+    failedAttempts?: SortOrder
+    lockoutUntil?: SortOrderInput | SortOrder
     createdAt?: SortOrderInput | SortOrder
     updatedAt?: SortOrderInput | SortOrder
   }
@@ -25974,6 +26089,7 @@ export namespace Prisma {
     phone?: string
     email?: string
     joiningCode?: string
+    authUserId?: string
     AND?: StaffWhereInput | StaffWhereInput[]
     OR?: StaffWhereInput[]
     NOT?: StaffWhereInput | StaffWhereInput[]
@@ -25994,9 +26110,11 @@ export namespace Prisma {
     password?: StringNullableFilter<"Staff"> | string | null
     isActivated?: BoolNullableFilter<"Staff"> | boolean | null
     biometricEnabled?: BoolNullableFilter<"Staff"> | boolean | null
+    failedAttempts?: IntFilter<"Staff"> | number
+    lockoutUntil?: DateTimeNullableFilter<"Staff"> | Date | string | null
     createdAt?: DateTimeNullableFilter<"Staff"> | Date | string | null
     updatedAt?: DateTimeNullableFilter<"Staff"> | Date | string | null
-  }, "id" | "phone" | "email" | "joiningCode">
+  }, "id" | "phone" | "email" | "joiningCode" | "authUserId">
 
   export type StaffOrderByWithAggregationInput = {
     id?: SortOrder
@@ -26020,11 +26138,16 @@ export namespace Prisma {
     joiningCode?: SortOrderInput | SortOrder
     isActivated?: SortOrderInput | SortOrder
     biometricEnabled?: SortOrderInput | SortOrder
+    authUserId?: SortOrderInput | SortOrder
+    failedAttempts?: SortOrder
+    lockoutUntil?: SortOrderInput | SortOrder
     createdAt?: SortOrderInput | SortOrder
     updatedAt?: SortOrderInput | SortOrder
     _count?: StaffCountOrderByAggregateInput
+    _avg?: StaffAvgOrderByAggregateInput
     _max?: StaffMaxOrderByAggregateInput
     _min?: StaffMinOrderByAggregateInput
+    _sum?: StaffSumOrderByAggregateInput
   }
 
   export type StaffScalarWhereWithAggregatesInput = {
@@ -26052,6 +26175,9 @@ export namespace Prisma {
     joiningCode?: StringNullableWithAggregatesFilter<"Staff"> | string | null
     isActivated?: BoolNullableWithAggregatesFilter<"Staff"> | boolean | null
     biometricEnabled?: BoolNullableWithAggregatesFilter<"Staff"> | boolean | null
+    authUserId?: StringNullableWithAggregatesFilter<"Staff"> | string | null
+    failedAttempts?: IntWithAggregatesFilter<"Staff"> | number
+    lockoutUntil?: DateTimeNullableWithAggregatesFilter<"Staff"> | Date | string | null
     createdAt?: DateTimeNullableWithAggregatesFilter<"Staff"> | Date | string | null
     updatedAt?: DateTimeNullableWithAggregatesFilter<"Staff"> | Date | string | null
   }
@@ -27096,7 +27222,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     user?: UserCreateNestedOneWithoutOrdersInput
@@ -27127,7 +27255,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -27154,7 +27284,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneWithoutOrdersNestedInput
@@ -27185,7 +27317,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -27214,7 +27348,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
   }
@@ -27240,7 +27376,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -27268,7 +27406,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -27719,6 +27859,9 @@ export namespace Prisma {
     joiningCode?: string | null
     isActivated?: boolean | null
     biometricEnabled?: boolean | null
+    authUserId?: string | null
+    failedAttempts?: number
+    lockoutUntil?: Date | string | null
     createdAt?: Date | string | null
     updatedAt?: Date | string | null
   }
@@ -27745,6 +27888,9 @@ export namespace Prisma {
     joiningCode?: string | null
     isActivated?: boolean | null
     biometricEnabled?: boolean | null
+    authUserId?: string | null
+    failedAttempts?: number
+    lockoutUntil?: Date | string | null
     createdAt?: Date | string | null
     updatedAt?: Date | string | null
   }
@@ -27771,6 +27917,9 @@ export namespace Prisma {
     joiningCode?: NullableStringFieldUpdateOperationsInput | string | null
     isActivated?: NullableBoolFieldUpdateOperationsInput | boolean | null
     biometricEnabled?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    authUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAttempts?: IntFieldUpdateOperationsInput | number
+    lockoutUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
@@ -27797,6 +27946,9 @@ export namespace Prisma {
     joiningCode?: NullableStringFieldUpdateOperationsInput | string | null
     isActivated?: NullableBoolFieldUpdateOperationsInput | boolean | null
     biometricEnabled?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    authUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAttempts?: IntFieldUpdateOperationsInput | number
+    lockoutUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
@@ -27823,6 +27975,9 @@ export namespace Prisma {
     joiningCode?: string | null
     isActivated?: boolean | null
     biometricEnabled?: boolean | null
+    authUserId?: string | null
+    failedAttempts?: number
+    lockoutUntil?: Date | string | null
     createdAt?: Date | string | null
     updatedAt?: Date | string | null
   }
@@ -27849,6 +28004,9 @@ export namespace Prisma {
     joiningCode?: NullableStringFieldUpdateOperationsInput | string | null
     isActivated?: NullableBoolFieldUpdateOperationsInput | boolean | null
     biometricEnabled?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    authUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAttempts?: IntFieldUpdateOperationsInput | number
+    lockoutUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
@@ -27875,6 +28033,9 @@ export namespace Prisma {
     joiningCode?: NullableStringFieldUpdateOperationsInput | string | null
     isActivated?: NullableBoolFieldUpdateOperationsInput | boolean | null
     biometricEnabled?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    authUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    failedAttempts?: IntFieldUpdateOperationsInput | number
+    lockoutUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     updatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
@@ -28999,7 +29160,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     confirmedAt?: SortOrder
+    paidAt?: SortOrder
     deliveredAt?: SortOrder
+    completedAt?: SortOrder
     cancelledAt?: SortOrder
     deliverySlot?: SortOrder
   }
@@ -29031,7 +29194,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     confirmedAt?: SortOrder
+    paidAt?: SortOrder
     deliveredAt?: SortOrder
+    completedAt?: SortOrder
     cancelledAt?: SortOrder
     deliverySlot?: SortOrder
   }
@@ -29059,7 +29224,9 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     confirmedAt?: SortOrder
+    paidAt?: SortOrder
     deliveredAt?: SortOrder
+    completedAt?: SortOrder
     cancelledAt?: SortOrder
     deliverySlot?: SortOrder
   }
@@ -29459,8 +29626,15 @@ export namespace Prisma {
     joiningCode?: SortOrder
     isActivated?: SortOrder
     biometricEnabled?: SortOrder
+    authUserId?: SortOrder
+    failedAttempts?: SortOrder
+    lockoutUntil?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type StaffAvgOrderByAggregateInput = {
+    failedAttempts?: SortOrder
   }
 
   export type StaffMaxOrderByAggregateInput = {
@@ -29483,6 +29657,9 @@ export namespace Prisma {
     joiningCode?: SortOrder
     isActivated?: SortOrder
     biometricEnabled?: SortOrder
+    authUserId?: SortOrder
+    failedAttempts?: SortOrder
+    lockoutUntil?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -29507,8 +29684,15 @@ export namespace Prisma {
     joiningCode?: SortOrder
     isActivated?: SortOrder
     biometricEnabled?: SortOrder
+    authUserId?: SortOrder
+    failedAttempts?: SortOrder
+    lockoutUntil?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type StaffSumOrderByAggregateInput = {
+    failedAttempts?: SortOrder
   }
 
   export type BoolNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -31479,7 +31663,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     conversation?: WhatsAppConversationCreateNestedOneWithoutOrdersInput
@@ -31508,7 +31694,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -31623,7 +31811,9 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Order"> | Date | string
     updatedAt?: DateTimeFilter<"Order"> | Date | string
     confirmedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    paidAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     deliveredAt?: DateTimeNullableFilter<"Order"> | Date | string | null
+    completedAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     cancelledAt?: DateTimeNullableFilter<"Order"> | Date | string | null
     deliverySlot?: StringNullableFilter<"Order"> | string | null
   }
@@ -32344,7 +32534,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     user?: UserCreateNestedOneWithoutOrdersInput
@@ -32374,7 +32566,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
   }
@@ -32457,7 +32651,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneWithoutOrdersNestedInput
@@ -32487,7 +32683,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -32513,7 +32711,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     user?: UserCreateNestedOneWithoutOrdersInput
@@ -32542,7 +32742,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
     items?: OrderItemUncheckedCreateNestedManyWithoutOrderInput
@@ -33576,7 +33778,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
   }
@@ -33653,7 +33857,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     conversation?: WhatsAppConversationUpdateOneWithoutOrdersNestedInput
@@ -33682,7 +33888,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -33710,7 +33918,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
   }
@@ -34021,7 +34231,9 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     confirmedAt?: Date | string | null
+    paidAt?: Date | string | null
     deliveredAt?: Date | string | null
+    completedAt?: Date | string | null
     cancelledAt?: Date | string | null
     deliverySlot?: string | null
   }
@@ -34056,7 +34268,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneWithoutOrdersNestedInput
@@ -34085,7 +34299,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
     items?: OrderItemUncheckedUpdateManyWithoutOrderNestedInput
@@ -34113,7 +34329,9 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliveredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deliverySlot?: NullableStringFieldUpdateOperationsInput | string | null
   }

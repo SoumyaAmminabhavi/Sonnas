@@ -222,7 +222,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
         'items': cart.items.map((i) => {
           'cakeName': i.product['name'],
           'quantity': i.quantity,
-          'price': int.tryParse(i.product['price']?.toString() ?? '0') ?? 0,
+          'price': (num.tryParse(i.product['price']?.toString() ?? '0') ?? 0).round(),
         }).toList(),
       };
 

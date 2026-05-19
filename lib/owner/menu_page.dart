@@ -973,6 +973,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       imageQuality: 70,
       maxWidth: 1024,
     );
+    if (!mounted) return;
     if (image != null) {
       setState(() => _selectedImage = image);
     }

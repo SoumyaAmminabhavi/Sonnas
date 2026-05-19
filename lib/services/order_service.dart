@@ -216,7 +216,7 @@ class OrderService {
       (_) async {
         final res = await _client
             .from('Order')
-            .select('*, WhatsAppConversation(*)')
+            .select('*, WhatsAppConversation(*), items:OrderItem(*)')
             .order('createdAt', ascending: false)
             .limit(OrderConstants.recentOrdersLimit);
         return List<Map<String, dynamic>>.from(res);
@@ -260,7 +260,7 @@ class OrderService {
 
   /// Stats stream for dashboard charts
   static Stream<Map<int, double>> getSalesChartStream({required String range, int? targetMonth, int? targetYear}) {
-    return _client.from('Order').stream(primaryKey: ['id']).map((orders) {
+    return _client.from('Order').stream(primaryKey: ['id']).eq('paymentStatus', 'PAID').map((orders) {
       final Map<int, double> chartData = {};
       
       final now = DateTime.now();
@@ -304,7 +304,7 @@ class OrderService {
         // Only count PAID orders in revenue
         if ((order['paymentStatus']?.toString().toUpperCase()) != 'PAID') continue;
 
-        final amount = (double.tryParse(order['totalPrice']?.toString() ?? '0') ?? 0.0) / PriceConstants.minorUnitsPerMajor;
+        final amount = PriceConstants.normalizePrice(order['totalPrice']);
 
         int key;
         if (range == 'today') {
@@ -387,7 +387,7 @@ class OrderService {
       (_) async {
         final res = await _client
             .from('Order')
-            .select('*, WhatsAppConversation(*)')
+            .select('*, WhatsAppConversation(*), items:OrderItem(*)')
             .inFilter('status', ['PENDING', 'CONFIRMED'])
             .order('createdAt', ascending: true);
         return List<Map<String, dynamic>>.from(res);

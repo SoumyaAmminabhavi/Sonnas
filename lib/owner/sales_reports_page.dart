@@ -120,20 +120,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   double _parsePrice(dynamic value) {
-    if (value == null) return 0.0;
-    final valStr = value.toString().trim();
-    if (valStr.isEmpty) return 0.0;
-    final hasDecimal = valStr.contains('.');
-    String str = valStr.replaceAll(RegExp(r'[₹$]'), '')
-        .replaceAll(RegExp(r'^(INR|Rs\.?|rs\.?)\s*', caseSensitive: false), '')
-        .replaceAll('/-', '')
-        .replaceAll(',', '')
-        .trim();
-    final parsed = double.tryParse(str) ?? 0.0;
-    if (hasDecimal) {
-      return parsed;
-    }
-    return parsed / PriceConstants.minorUnitsPerMajor;
+    return PriceConstants.normalizePrice(value);
   }
 
   void _calculateMetrics() {
