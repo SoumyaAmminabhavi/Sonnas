@@ -312,44 +312,44 @@ CREATE POLICY "System settings deletable by service role only"
 
 ALTER TABLE "WhatsAppConversation" ENABLE ROW LEVEL SECURITY;
 
--- Restrict to authenticated users only
-CREATE POLICY "WhatsApp conversations readable by authenticated users"
+-- Restrict to owner or service_role only
+CREATE POLICY "WhatsApp conversations readable by owner or service_role"
   ON "WhatsAppConversation" FOR SELECT
-  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  USING (auth.role() = 'service_role' OR auth.uid() = owner_id);
 
-CREATE POLICY "WhatsApp conversations writable by authenticated users"
+CREATE POLICY "WhatsApp conversations writable by owner or service_role"
   ON "WhatsAppConversation" FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = owner_id);
 
-CREATE POLICY "WhatsApp conversations updatable by authenticated users"
+CREATE POLICY "WhatsApp conversations updatable by owner or service_role"
   ON "WhatsAppConversation" FOR UPDATE
-  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role')
-  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  USING (auth.role() = 'service_role' OR auth.uid() = owner_id)
+  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = owner_id);
 
-CREATE POLICY "WhatsApp conversations deletable by authenticated users"
+CREATE POLICY "WhatsApp conversations deletable by owner or service_role"
   ON "WhatsAppConversation" FOR DELETE
-  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  USING (auth.role() = 'service_role' OR auth.uid() = owner_id);
 
 
 ALTER TABLE "WhatsAppCartItem" ENABLE ROW LEVEL SECURITY;
 
--- Restrict to authenticated users only
-CREATE POLICY "WhatsApp cart items readable by authenticated users"
+-- Restrict to conversation owner or service_role only
+CREATE POLICY "WhatsApp cart items readable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR SELECT
-  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  USING (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
 
-CREATE POLICY "WhatsApp cart items writable by authenticated users"
+CREATE POLICY "WhatsApp cart items writable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR INSERT
-  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
 
-CREATE POLICY "WhatsApp cart items updatable by authenticated users"
+CREATE POLICY "WhatsApp cart items updatable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR UPDATE
-  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role')
-  WITH CHECK (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  USING (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id))
+  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
 
-CREATE POLICY "WhatsApp cart items deletable by authenticated users"
+CREATE POLICY "WhatsApp cart items deletable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR DELETE
-  USING (auth.uid() IS NOT NULL OR auth.role() = 'service_role');
+  USING (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
 
 
 -- ─── Auth Tables (NextAuth-style) ───────────────────────────────────────────

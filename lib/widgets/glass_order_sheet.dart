@@ -263,6 +263,12 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
               width: 48,
               height: 48,
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+                child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
+              ),
             ),
           );
         } catch (_) {

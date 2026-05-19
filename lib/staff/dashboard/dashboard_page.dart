@@ -245,8 +245,11 @@ class _DashboardContent extends StatelessWidget {
                  status != 'completed' &&
                  status != 'cancelled';
         }).toList();
-        
-        final completedOrdersCount = allOrders.length - activeOrders.length;
+
+        final completedOrdersCount = allOrders.where((o) {
+          final status = (o['status'] ?? '').toLowerCase();
+          return status == 'delivered' || status == 'completed';
+        }).length;
 
         return ListView(
           padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 24, vertical: 32),

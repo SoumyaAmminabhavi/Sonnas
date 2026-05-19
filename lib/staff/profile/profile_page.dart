@@ -500,10 +500,16 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                   await ThemeService.saveThemeMode(mode);
                                 } catch (e) {
                                   debugPrint("Theme Persistence Error: $e");
-                                  if (!mounted) return;
                                   ref
                                       .read(themeProvider.notifier)
                                       .setTheme(prevTheme);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text("Failed to save theme preference"),
+                                      ),
+                                    );
+                                  }
                                 }
                               },
                             ),

@@ -28,14 +28,19 @@ class OrderCardReactive extends ConsumerWidget {
 
         // 1. Try customImageUrl from the order
         String imageUrl = data['customImageUrl']?.toString().trim() ?? '';
-        
+
+        // Normalize invalid order images (whatsapp:// or file://)
+        if (imageUrl.isNotEmpty && (imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://'))) {
+          imageUrl = '';
+        }
+
         // 2. Try to find an image from the associated WhatsApp Conversation if order image is missing
         final rawConversation = data['WhatsAppConversation'];
         if (imageUrl.isEmpty && rawConversation is Map) {
           imageUrl = rawConversation['customImageUrl']?.toString().trim() ?? '';
         }
 
-        // 3. Fallback to Menu Item image if still empty
+        // 3. Fallback to Menu Item image if still empty or invalid
         if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://')) {
           imageUrl = '';
           if (items.isNotEmpty && menuAsync.hasValue) {

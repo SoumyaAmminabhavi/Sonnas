@@ -379,8 +379,7 @@ class OrderService {
   static Stream<List<Map<String, dynamic>>> getKitchenOrdersStream() {
     final rawStream = _client
         .from('Order')
-        .stream(primaryKey: ['id'])
-        .inFilter('status', ['PENDING', 'CONFIRMED']);
+        .stream(primaryKey: ['id']);
 
     return _switchMapAsync(
       _debounceStream(rawStream, OrderConstants.streamDebounce),
@@ -388,7 +387,6 @@ class OrderService {
         final res = await _client
             .from('Order')
             .select('*, WhatsAppConversation(*), items:OrderItem(*)')
-            .inFilter('status', ['PENDING', 'CONFIRMED'])
             .order('createdAt', ascending: true);
         return List<Map<String, dynamic>>.from(res);
       },

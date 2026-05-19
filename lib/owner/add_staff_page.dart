@@ -811,9 +811,9 @@ class _AddStaffPageState extends State<AddStaffPage> {
           Navigator.pop(context);
         }
       } else {
-        await StaffService.addStaff(staff);
+        final String finalJoiningCode = await StaffService.addStaff(staff);
         if (mounted) {
-          _showSuccessDialog(staff['joiningCode']!);
+          _showSuccessDialog(finalJoiningCode);
         }
       }
     } catch (e) {

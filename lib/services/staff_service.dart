@@ -11,18 +11,16 @@ class StaffService {
     return _client.from('Staff').stream(primaryKey: ['id']).order('name');
   }
 
-  static Future<void> addStaff(Map<String, dynamic> data) async {
+  static Future<String> addStaff(Map<String, dynamic> data) async {
     final mutableData = Map<String, dynamic>.from(data);
     int attempts = 0;
     while (attempts < AuthConstants.maxJoiningCodeRetries) {
       try {
         await _client.from('Staff').insert(mutableData);
-        return; // Success
-      } catch (e) {
-        final errorStr = e.toString();
+        return mutableData['joiningCode'] as String; // Success - return final code
+      } on PostgrestException catch (e) {
         // Check if the error is a unique constraint violation on joiningCode
-        if ((errorStr.contains('23505') || errorStr.toLowerCase().contains('unique constraint')) &&
-            errorStr.toLowerCase().contains('joiningcode')) {
+        if (e.code == '23505' && (e.message?.toLowerCase().contains('joiningcode') ?? false)) {
           attempts++;
           if (attempts >= AuthConstants.maxJoiningCodeRetries) {
             throw StateError('Failed to insert staff after ${AuthConstants.maxJoiningCodeRetries} attempts due to duplicate joining codes');
@@ -32,8 +30,22 @@ class StaffService {
         } else {
           rethrow; // Different error, propagate it
         }
+      } catch (e) {
+        // Fallback for non-PostgrestException errors
+        final errorStr = e.toString();
+        if ((errorStr.contains('23505') || errorStr.toLowerCase().contains('unique constraint')) &&
+            errorStr.toLowerCase().contains('joiningcode')) {
+          attempts++;
+          if (attempts >= AuthConstants.maxJoiningCodeRetries) {
+            throw StateError('Failed to insert staff after ${AuthConstants.maxJoiningCodeRetries} attempts due to duplicate joining codes');
+          }
+          mutableData['joiningCode'] = _generateJoiningCode();
+        } else {
+          rethrow;
+        }
       }
     }
+    throw StateError('Unexpected: loop exited without return');
   }
 
   static String _generateJoiningCode() {
