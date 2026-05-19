@@ -197,6 +197,19 @@ class StaffOrderCard extends StatelessWidget {
             width: 52,
             height: 52,
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                _getStatusIcon(order.status),
+                color: _getStatusColor(order.status, cs).withValues(alpha: 0.7),
+                size: 22,
+              ),
+            ),
           ),
         );
       } catch (_) {

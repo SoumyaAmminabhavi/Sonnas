@@ -356,6 +356,7 @@ class _ProductCard extends ConsumerWidget {
       return Image.memory(
         uriData.contentAsBytes(),
         fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _placeholder(cs),
       );
     } catch (e) {
       return _placeholder(cs);

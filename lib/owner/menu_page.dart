@@ -184,11 +184,12 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                                                 ),
                                               );
                                             }
-                                          } catch (e) {
+                                          } catch (e, st) {
+                                            debugPrint('Category delete error: $e\n$st');
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
-                                                  content: Text("Error: $e"),
+                                                  content: const Text("An error occurred, please try again"),
                                                   behavior: SnackBarBehavior.floating,
                                                   backgroundColor: Colors.red,
                                                 ),
@@ -900,12 +901,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     final firstOption = options.isNotEmpty ? options[0] as Map<String, dynamic> : null;
 
     final priceValue = firstOption?['price'];
-    double displayPrice = 0;
-    if (priceValue is num) {
-      displayPrice = priceValue.toDouble() / PriceConstants.minorUnitsPerMajor;
-    } else if (priceValue != null) {
-      displayPrice = (double.tryParse(priceValue.toString()) ?? 0) / PriceConstants.minorUnitsPerMajor;
-    }
+    final double displayPrice = priceValue != null
+        ? PriceConstants.normalizePrice(priceValue)
+        : 0.0;
 
     _nameController = TextEditingController(text: data?['name']?.toString());
     _selectedCategoryId = data?['categoryId']?.toString();

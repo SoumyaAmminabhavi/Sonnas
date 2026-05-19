@@ -57,11 +57,11 @@ void main() async {
         child: PatisserieApp(),
       ),
     );
-  } catch (e) {
-    debugPrint('Critical Initialization Error: $e');
-    runApp(MaterialApp(
+  } catch (e, stackTrace) {
+    debugPrint('Critical Initialization Error: $e\n$stackTrace');
+    runApp(const MaterialApp(
       home: Scaffold(
-        body: Center(child: Text('Initialization Error: $e')),
+        body: Center(child: Text('Initialization failed. Please restart the app.')),
       ),
     ));
   }

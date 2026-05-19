@@ -97,8 +97,8 @@ class ReportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text("Total Revenue: Rs. ${totalRevenue.toStringAsFixed(0)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                    pw.Text("Avg Order Value: Rs. ${avgOrder.toStringAsFixed(0)}"),
+                    pw.Text("Total Revenue: ${PriceConstants.currencySymbol}${totalRevenue.toStringAsFixed(0)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text("Avg Order Value: ${PriceConstants.currencySymbol}${avgOrder.toStringAsFixed(0)}"),
                   ],
                 ),
               ],
@@ -112,7 +112,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(e.key.toString().isNotEmpty ? e.key.toString() : "Uncategorized"),
-                  pw.Text("Rs. ${e.value.toStringAsFixed(0)}"),
+                  pw.Text("${PriceConstants.currencySymbol}${e.value.toStringAsFixed(0)}"),
                 ],
               ),
             )),
@@ -128,7 +128,7 @@ class ReportService {
                   o['orderNumber']?.toString() ?? 'N/A',
                   o['customerName']?.toString() ?? 'Guest',
                   o['status']?.toString() ?? 'PENDING',
-                  "Rs. $cleanPrice",
+                  "${PriceConstants.currencySymbol}$cleanPrice",
                 ];
               }).toList(),
             ),
@@ -219,7 +219,7 @@ class ReportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text("Report Date: ${DateFormat('dd MMM yyyy').format(DateTime.now())}"),
-                pw.Text("Total Expenses: Rs. ${totalExpenses.toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text("Total Expenses: ${PriceConstants.currencySymbol}${totalExpenses.toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
               ],
             ),
             pw.SizedBox(height: 30),
@@ -231,7 +231,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(e.key),
-                  pw.Text("Rs. ${e.value.toStringAsFixed(2)}"),
+                  pw.Text("${PriceConstants.currencySymbol}${e.value.toStringAsFixed(2)}"),
                 ],
               ),
             )),
@@ -247,7 +247,7 @@ class ReportService {
                   dateStr,
                   e['title']?.toString() ?? 'N/A',
                   e['category']?.toString() ?? 'Other',
-                  "Rs. ${e['amount']?.toString() ?? '0'}",
+                  "${PriceConstants.currencySymbol}${e['amount']?.toString() ?? '0'}",
                 ];
               }).toList(),
             ),

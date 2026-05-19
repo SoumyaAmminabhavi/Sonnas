@@ -60,7 +60,7 @@ class OwnerSidebar extends StatelessWidget {
           ),
           _DrawerEntry(
             icon: Icons.analytics,
-            title: "FINANCE",
+            title: "PAYMENTS",
             isSelected: currentIndex == 2,
             onTap: () => onTap(2),
           ),

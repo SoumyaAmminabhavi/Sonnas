@@ -13,11 +13,14 @@ class StaffService {
 
   static Future<String> addStaff(Map<String, dynamic> data) async {
     final mutableData = Map<String, dynamic>.from(data);
+    // Ensure a joining code exists before the first attempt
+    mutableData['joiningCode'] ??= _generateJoiningCode();
     int attempts = 0;
     while (attempts < AuthConstants.maxJoiningCodeRetries) {
+      final code = mutableData['joiningCode'] as String;
       try {
         await _client.from('Staff').insert(mutableData);
-        return mutableData['joiningCode'] as String; // Success - return final code
+        return code; // Success
       } on PostgrestException catch (e) {
         // Check if the error is a unique constraint violation on joiningCode
         if (e.code == '23505' && e.message.toLowerCase().contains('joiningcode')) {

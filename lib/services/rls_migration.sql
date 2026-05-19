@@ -365,34 +365,54 @@ ALTER TABLE "VerificationToken" ENABLE ROW LEVEL SECURITY;
 
 DO $$
 BEGIN
-  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
-    ON "Account" FOR ALL
-    USING (auth.role() = ''service_role'')
-    WITH CHECK (auth.role() = ''service_role'')';
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'Account' AND policyname = 'Auth tables restricted to service role'
+  ) THEN
+    EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+      ON "Account" FOR ALL
+      USING (auth.role() = ''service_role'')
+      WITH CHECK (auth.role() = ''service_role'')';
+  END IF;
 END $$;
 
 DO $$
 BEGIN
-  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
-    ON "Session" FOR ALL
-    USING (auth.role() = ''service_role'')
-    WITH CHECK (auth.role() = ''service_role'')';
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'Session' AND policyname = 'Auth tables restricted to service role'
+  ) THEN
+    EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+      ON "Session" FOR ALL
+      USING (auth.role() = ''service_role'')
+      WITH CHECK (auth.role() = ''service_role'')';
+  END IF;
 END $$;
 
 DO $$
 BEGIN
-  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
-    ON "User" FOR ALL
-    USING (auth.role() = ''service_role'')
-    WITH CHECK (auth.role() = ''service_role'')';
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'User' AND policyname = 'Auth tables restricted to service role'
+  ) THEN
+    EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+      ON "User" FOR ALL
+      USING (auth.role() = ''service_role'')
+      WITH CHECK (auth.role() = ''service_role'')';
+  END IF;
 END $$;
 
 DO $$
 BEGIN
-  EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
-    ON "VerificationToken" FOR ALL
-    USING (auth.role() = ''service_role'')
-    WITH CHECK (auth.role() = ''service_role'')';
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'VerificationToken' AND policyname = 'Auth tables restricted to service role'
+  ) THEN
+    EXECUTE 'CREATE POLICY "Auth tables restricted to service role"
+      ON "VerificationToken" FOR ALL
+      USING (auth.role() = ''service_role'')
+      WITH CHECK (auth.role() = ''service_role'')';
+  END IF;
 END $$;
 
 
