@@ -20,7 +20,7 @@ class StaffService {
         return mutableData['joiningCode'] as String; // Success - return final code
       } on PostgrestException catch (e) {
         // Check if the error is a unique constraint violation on joiningCode
-        if (e.code == '23505' && (e.message?.toLowerCase().contains('joiningcode') ?? false)) {
+        if (e.code == '23505' && e.message.toLowerCase().contains('joiningcode')) {
           attempts++;
           if (attempts >= AuthConstants.maxJoiningCodeRetries) {
             throw StateError('Failed to insert staff after ${AuthConstants.maxJoiningCodeRetries} attempts due to duplicate joining codes');

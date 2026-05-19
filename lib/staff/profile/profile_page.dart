@@ -503,13 +503,13 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                   ref
                                       .read(themeProvider.notifier)
                                       .setTheme(prevTheme);
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Failed to save theme preference"),
-                                      ),
-                                    );
-                                  }
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Failed to save theme preference"),
+                                        ),
+                                      );
+                                    }
                                 }
                               },
                             ),

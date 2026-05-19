@@ -31,6 +31,18 @@ jobs:
             echo "::error::SUPABASE_ANON_KEY secret is not set!"
             exit 1
           fi
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "::error::VERCEL_TOKEN secret is not set!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then
+            echo "::error::VERCEL_ORG_ID secret is not set!"
+            exit 1
+          fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "::error::VERCEL_PROJECT_ID secret is not set!"
+            exit 1
+          fi
 
       - name: Build Flutter Web
         run: >
