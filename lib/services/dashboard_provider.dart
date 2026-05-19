@@ -49,8 +49,13 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
         
         final rawPhone = order['customerPhone'] ?? order['phone'];
         if (rawPhone != null) {
-          final phone = rawPhone.toString().trim();
-          if (phone.isNotEmpty) customers.add(phone);
+          final digitsOnly = rawPhone.toString().replaceAll(RegExp(r'\D'), '');
+          final phone = digitsOnly.length > 10
+              ? digitsOnly.substring(digitsOnly.length - 10)
+              : digitsOnly;
+          if (phone.isNotEmpty) {
+            customers.add(phone);
+          }
         }
       }
       
