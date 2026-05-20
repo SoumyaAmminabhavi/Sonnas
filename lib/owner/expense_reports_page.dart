@@ -140,7 +140,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                     TextField(
                       controller: amountController,
                       keyboardType: TextInputType.number,
-                      decoration: _inputDecoration("Amount (₹)"),
+                      decoration: _inputDecoration("Amount (${PriceConstants.currencySymbol})"),
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
@@ -413,8 +413,8 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
         crossAxisSpacing: 16,
         childAspectRatio: isMobile ? 2.5 : 1.5,
         children: [
-          _buildMetricCard(cs, "Total Life Expense", "₹${_totalExpenses.toInt()}", Icons.payments_outlined, const Color(0xFF701235)),
-          _buildMetricCard(cs, "Current Month Burn", "₹${_monthlyBurn.toInt()}", Icons.local_fire_department_outlined, Colors.orange),
+          _buildMetricCard(cs, "Total Life Expense", "${PriceConstants.currencySymbol}${_totalExpenses.toInt()}", Icons.payments_outlined, const Color(0xFF701235)),
+          _buildMetricCard(cs, "Current Month Burn", "${PriceConstants.currencySymbol}${_monthlyBurn.toInt()}", Icons.local_fire_department_outlined, Colors.orange),
           _buildMetricCard(cs, "Top Spending Area", _topCategory, Icons.pie_chart_outline, Colors.blueGrey),
         ],
       );
@@ -501,7 +501,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
               contentPadding: EdgeInsets.zero,
               title: Text(e['title'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(e['category'] ?? 'Other'),
-              trailing: Text("₹${e['amount']}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, fontSize: 16)),
+              trailing: Text("${PriceConstants.currencySymbol}${e['amount']}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, fontSize: 16)),
             )),
           ],
         ),
@@ -544,7 +544,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text("₹${e.value.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text("${PriceConstants.currencySymbol}${e.value.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
                 ],
               ),
             )),

@@ -92,25 +92,11 @@ class OrderService {
   static String formatPrice(dynamic price) {
     if (price == null) return "${PriceConstants.currencySymbol}0";
     try {
-      double p;
-      if (price is num) {
-        p = price.toDouble() / PriceConstants.minorUnitsPerMajor;
-      } else {
-        String clean = price.toString()
-            .replaceAll(PriceConstants.currencySymbol, '')
-            .replaceAll(PriceConstants.currencyCode, '')
-            .replaceAll('/-', '')
-            .replaceAll(',', '')
-            .trim();
-            
-        if (clean.isEmpty) return "${PriceConstants.currencySymbol}0";
-        p = double.parse(clean) / PriceConstants.minorUnitsPerMajor;
+      final double normalized = PriceConstants.normalizePrice(price);
+      if (normalized == normalized.toInt().toDouble()) {
+        return "${PriceConstants.currencySymbol}${normalized.toInt()}";
       }
-      
-      if (p == p.toInt().toDouble()) {
-        return "${PriceConstants.currencySymbol}${p.toInt()}";
-      }
-      return "${PriceConstants.currencySymbol}${p.toStringAsFixed(2)}";
+      return "${PriceConstants.currencySymbol}${normalized.toStringAsFixed(2)}";
     } catch (e) {
       return "${PriceConstants.currencySymbol}$price";
     }

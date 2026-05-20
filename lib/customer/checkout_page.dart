@@ -96,7 +96,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                       ],
                     ),
                   ),
-                  Text(_formatPrice(item.totalPrice), style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+                  Text(_priceDisplay(item.totalPrice), style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline, size: 20),
                     onPressed: () => ref.read(cartProvider.notifier).updateQuantity(idx, -1),
@@ -110,7 +110,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("TOTAL", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-              Text(_formatPrice(cart.subtotal), style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.w900, color: cs.primary)),
+              Text(_priceDisplay(cart.subtotal), style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.w900, color: cs.primary)),
             ],
           ),
         ],
@@ -261,8 +261,8 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
     );
   }
 
-  String _formatPrice(double priceInCents) {
-    final rupees = priceInCents / PriceConstants.minorUnitsPerMajor;
+  String _priceDisplay(double priceInCents) {
+    final rupees = PriceConstants.normalizePrice(priceInCents);
     return "${PriceConstants.currencySymbol}${rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2)}";
   }
 }

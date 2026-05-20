@@ -284,8 +284,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                   spacing: 40,
                   runSpacing: 16,
                   children: [
-                    _buildCompactStat(context, "WEEKLY GROSS", "₹${weeklyGross.toStringAsFixed(2)}", cs.onSurface),
-                    _buildCompactStat(context, "PENDING", "₹${totalPending.toStringAsFixed(2)}", cs.primary),
+                    _buildCompactStat(context, "WEEKLY GROSS", "${PriceConstants.currencySymbol}${weeklyGross.toStringAsFixed(2)}", cs.onSurface),
+                    _buildCompactStat(context, "PENDING", "${PriceConstants.currencySymbol}${totalPending.toStringAsFixed(2)}", cs.primary),
                   ],
                 ),
               ],

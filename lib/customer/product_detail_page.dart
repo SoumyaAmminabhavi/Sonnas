@@ -146,7 +146,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
               ),
             ),
             Text(
-              "₹${_formatPrice(product['price'])}",
+              _priceDisplay(product['price']),
               style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w800, color: cs.primary),
             ),
           ],
@@ -234,11 +234,9 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
     );
   }
 
-  static String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final double priceNum = price is num ? price.toDouble() : double.tryParse(price.toString()) ?? 0.0;
-    final double rupees = priceNum / PriceConstants.minorUnitsPerMajor;
-    return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
+  static String _priceDisplay(dynamic price) {
+    final double normalized = PriceConstants.normalizePrice(price);
+    return "${PriceConstants.currencySymbol}${normalized.toStringAsFixed(normalized.truncateToDouble() == normalized ? 0 : 2)}";
   }
 
   static String _getCategoryName(Map<String, dynamic> product) {
