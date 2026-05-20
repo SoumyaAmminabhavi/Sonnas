@@ -44,7 +44,7 @@ class AuthService {
   static Future<Map<String, dynamic>?> verifyStaffCode(String phone, String code) async {
     final normalizedPhone = _normalizePhone(phone);
     try {
-      final res = await _client.rpc('verify_staff_code', params: {
+      final res = await _client.rpc<Map<dynamic, dynamic>>('verify_staff_code', params: {
         'phone_param': normalizedPhone,
         'code_param': code,
       });
@@ -71,14 +71,14 @@ class AuthService {
   static Future<bool> registerStaff(String id, String password) async {
     try {
       final hashedSub = DBCrypt().hashpw(password, DBCrypt().gensalt());
-      final res = await _client.rpc('self_update_staff', params: {
+      final res = await _client.rpc<bool>('self_update_staff', params: {
         'staff_id': id,
         'update_data': {
           'password': hashedSub,
           'isActivated': true,
         },
       });
-      return res as bool? ?? false;
+      return res;
     } catch (e) {
       debugPrint('❌ Register staff RPC failed: $e');
       return false;
@@ -92,10 +92,10 @@ class AuthService {
 
   static Future<bool> verifyOwnerPin(String pin) async {
     try {
-      final res = await _client.rpc('verify_owner_pin', params: {
+      final res = await _client.rpc<bool>('verify_owner_pin', params: {
         'pin': pin,
       });
-      return res as bool? ?? false;
+      return res;
     } catch (e) {
       debugPrint('⚠️ PIN Verification RPC Error: $e');
       return false;

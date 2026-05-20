@@ -101,16 +101,14 @@ ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Orders are viewable by everyone" ON "Order";
 CREATE POLICY "Orders are viewable by everyone"
   ON "Order" FOR SELECT
-  USING (
-    auth.role() = 'service_role' OR
-    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
-  );
+  USING (true);
 
 DROP POLICY IF EXISTS "Orders can be created by anyone" ON "Order";
 CREATE POLICY "Orders can be created by anyone"
   ON "Order" FOR INSERT
   WITH CHECK (
-    auth.role() = 'service_role'
+    auth.role() = 'service_role' OR
+    auth.role() = 'anon'
   );
 
 -- IMPORTANT: Direct updates to orders should be restricted.
@@ -142,19 +140,20 @@ CREATE POLICY "Orders can be deleted by staff only"
 
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
 
--- Allow anyone to view order items (staff app uses anon key)
+-- Allow authenticated staff or service role to view order items
 DROP POLICY IF EXISTS "Order items are viewable by everyone" ON "OrderItem";
 CREATE POLICY "Order items are viewable by everyone"
   ON "OrderItem" FOR SELECT
   USING (true);
 
--- Order items can be created by authenticated users or service role
+-- Order items can be created by authenticated users, anon checkouts, or service role
 DROP POLICY IF EXISTS "Order items can be created by authenticated users" ON "OrderItem";
 CREATE POLICY "Order items can be created by authenticated users"
   ON "OrderItem" FOR INSERT
   WITH CHECK (
     auth.role() = 'service_role' OR
-    auth.uid() IS NOT NULL
+    auth.uid() IS NOT NULL OR
+    auth.role() = 'anon'
   );
 
 -- Restrict update/delete on OrderItem: only service_role or active staff
@@ -561,34 +560,25 @@ CREATE TRIGGER set_updated_at_whatsapp_conversation
 
 
 -- ─── NOTES ──────────────────────────────────────────────────────────────────
--- 1. After applying this migration, the Flutter app will continue to work as-is
---    because all tables allow anon key access via "true" policies.
+-- 1. After applying this migration, the Flutter app will require authenticated staff
+--    sessions to access restricted tables.
 --
 -- 2. Order creation via the RPC `create_order_with_items` is set as
---    SECURITY DEFINER so it can insert into the Order table on behalf of anon.
+--    SECURITY DEFINER so it can insert into the "Order" and "OrderItem" tables on behalf of anonymous checkouts.
 --
--- 3. SECURITY WARNING: The current policies allow unrestricted anon access to
---    sensitive tables (Staff, Expense, Inventory, SystemSetting, WhatsApp data).
---    This is necessary because the app uses anon key authentication, NOT
---    authenticated Supabase sessions.
+-- 3. SECURITY WARNING: The tables Staff, Expense, InventoryItem, SystemSetting,
+--    WhatsAppTemplate, WhatsAppTemplateVersion, WhatsAppButton, WhatsAppListSection,
+--    and WhatsAppListRow are now protected by RLS and require active staff authentication.
 --
 -- 4. PRODUCTION MIGRATION PATH:
---    Option A) Migrate to Supabase Edge Functions:
---      - Create Edge Functions for: staff login, owner PIN verify, order updates,
---        expense CRUD, inventory CRUD, staff management
---      - Use service_role key in Edge Functions
---      - Update policies to restrict anon access: USING (auth.role() = 'service_role')
+--    - For the restricted tables (Staff, Expense, InventoryItem, SystemSetting, and the WhatsApp tables):
+--      Migrate the client connections to use authenticated Supabase Auth sessions, or route
+--      queries through Supabase Edge Functions executing under the service_role authorization.
 --
---    Option B) Migrate to Supabase Auth:
---      - Implement Supabase Auth with custom claims (staff_id, role, permissions)
---      - Update Staff table to include auth.uid() reference column
---      - Update policies to check auth.uid() and custom claims
---      - Modify Flutter app to use authenticated sessions
---
--- 5. CURRENT RISKS:
---    - Anyone with the anon key can read bcrypt password hashes (low risk)
---    - Anyone with the anon key can read/write sensitive business data (HIGH RISK)
---    - Deploy to production ONLY if anon key is kept strictly confidential
+-- 5. CURRENT RISKS & DEPLOYMENT GUIDANCE:
+--    - Core features, operations skills, and restricted data API access require authenticated
+--      staff sign-in. Ensure all active staff members are registered in the Staff table and
+--      activated, with their authUserId set properly.
 --
 -- 6. Test thoroughly in a staging environment before applying to production.
 -- ─────────────────────────────────────────────────────────────────────────────

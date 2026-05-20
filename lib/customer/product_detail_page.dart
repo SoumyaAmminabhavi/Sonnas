@@ -143,7 +143,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
           children: [
             Expanded(
               child: Text(
-                product['name'] ?? 'Unknown Masterpiece',
+                (product['name'] as String?) ?? 'Unknown Masterpiece',
                 style: GoogleFonts.notoSerif(fontSize: 32, fontWeight: FontWeight.bold, color: cs.secondary),
               ),
             ),
@@ -173,7 +173,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
         Text("THE CREATION", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: cs.secondary.withValues(alpha: 0.4))),
         const SizedBox(height: 12),
         Text(
-          product['description'] ?? 'A unique selection curated by Chef Sonna, using the finest ingredients and artisan techniques.',
+          (product['description'] as String?) ?? 'A unique selection curated by Chef Sonna, using the finest ingredients and artisan techniques.',
           style: GoogleFonts.notoSerif(fontSize: 15, height: 1.6, color: cs.secondary.withValues(alpha: 0.8)),
         ),
       ],
@@ -218,7 +218,7 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
                 final messenger = ScaffoldMessenger.of(context);
                 Navigator.pop(context);
                 messenger.showSnackBar(
-                  SnackBar(content: Text("Added to cart!"), behavior: SnackBarBehavior.floating),
+                  const SnackBar(content: Text("Added to cart!"), behavior: SnackBarBehavior.floating),
                 );
               },
               style: ElevatedButton.styleFrom(

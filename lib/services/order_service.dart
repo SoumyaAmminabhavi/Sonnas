@@ -10,60 +10,66 @@ class OrderService {
 
   static Stream<T> _debounceStream<T>(Stream<T> source, Duration duration) {
     Timer? debounceTimer;
+    StreamSubscription<T>? sub;
     final controller = StreamController<T>.broadcast();
 
-    final sub = source.listen(
-      (data) {
-        debounceTimer?.cancel();
-        debounceTimer = Timer(duration, () {
-          if (!controller.isClosed) controller.add(data);
-        });
-      },
-      onError: (e, st) {
-        debounceTimer?.cancel();
-        if (!controller.isClosed) controller.addError(e, st);
-      },
-      onDone: () {
-        debounceTimer?.cancel();
-        controller.close();
-      },
-    );
+    controller.onListen = () {
+      sub = source.listen(
+        (data) {
+          debounceTimer?.cancel();
+          debounceTimer = Timer(duration, () {
+            if (!controller.isClosed) controller.add(data);
+          });
+        },
+        onError: (Object e, StackTrace st) {
+          debounceTimer?.cancel();
+          if (!controller.isClosed) controller.addError(e, st);
+        },
+        onDone: () {
+          debounceTimer?.cancel();
+          controller.close();
+        },
+      );
+    };
 
     controller.onCancel = () {
       debounceTimer?.cancel();
-      sub.cancel();
+      sub?.cancel();
     };
 
     return controller.stream;
   }
 
   static Stream<R> _switchMapAsync<T, R>(Stream<T> source, Future<R> Function(T) mapper) {
+    StreamSubscription<T>? sub;
     final controller = StreamController<R>.broadcast();
     int latestRequestId = 0;
 
-    final sub = source.listen(
-      (data) async {
-        final requestId = ++latestRequestId;
-        try {
-          final result = await mapper(data);
-          if (requestId == latestRequestId && !controller.isClosed) {
-            controller.add(result);
+    controller.onListen = () {
+      sub = source.listen(
+        (data) async {
+          final requestId = ++latestRequestId;
+          try {
+            final result = await mapper(data);
+            if (requestId == latestRequestId && !controller.isClosed) {
+              controller.add(result);
+            }
+          } catch (e, st) {
+            if (requestId == latestRequestId && !controller.isClosed) {
+              controller.addError(e, st);
+            }
           }
-        } catch (e, st) {
-          if (requestId == latestRequestId && !controller.isClosed) {
-            controller.addError(e, st);
-          }
-        }
-      },
-      onError: (e, st) {
-        if (!controller.isClosed) controller.addError(e, st);
-      },
-      onDone: () {
-        controller.close();
-      },
-    );
+        },
+        onError: (Object e, StackTrace st) {
+          if (!controller.isClosed) controller.addError(e, st);
+        },
+        onDone: () {
+          controller.close();
+        },
+      );
+    };
 
-    controller.onCancel = () => sub.cancel();
+    controller.onCancel = () => sub?.cancel();
 
     return controller.stream;
   }
@@ -373,7 +379,7 @@ class OrderService {
         final res = await _client
             .from('Order')
             .select('*, WhatsAppConversation(*), items:OrderItem(*)')
-            .inFilter('status', ['PENDING', 'CONFIRMED', 'ACCEPTED', 'PREPARING'])
+            .inFilter('status', ['PENDING', 'CONFIRMED', 'OUT_FOR_DELIVERY'])
             .order('createdAt', ascending: true);
         return List<Map<String, dynamic>>.from(res);
       },
@@ -399,7 +405,7 @@ class OrderService {
         return Map<String, dynamic>.from(e);
       }).toList();
       
-      await _client.rpc(
+      await _client.rpc<void>(
         'create_order_with_items',
         params: {
           'p_order_data': orderData,

@@ -227,10 +227,10 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         ],
                                       ),
                                       const SizedBox(height: 32),
-                                      _SlimProgressIndicator(cs: cs, status: order['status'] ?? 'PENDING'),
+                                      _SlimProgressIndicator(cs: cs, status: (order['status'] as String?) ?? 'PENDING'),
                                       const SizedBox(height: 32),
                                       _CustomerInfoCard(
-                                        name: order['customerName'] ?? conversation?['name'] ?? 'Guest Customer',
+                                        name: (order['customerName'] as String?) ?? (conversation?['name'] as String?) ?? 'Guest Customer',
                                         phone: (() {
                                           final p = order['customerPhone']?.toString().trim();
                                           final fallbackPhone = conversation?['phone']?.toString().trim();
@@ -255,7 +255,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                       Consumer(
                                         builder: (context, ref, child) {
                                           final menuAsync = ref.watch(menuProvider);
-                                          final itemsAsync = ref.watch(orderItemsProvider(order['id']));
+                                          final itemsAsync = ref.watch(orderItemsProvider(order['id'] as String));
 
                                           return menuAsync.when(
                                             loading: () => const Center(child: CircularProgressIndicator()),
@@ -287,8 +287,8 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                      ...items.map<Widget>((item) {
                                                        String displayImageUrl = '';
                                                        Uint8List? displayImageBytes;
-                                                       final String cakeName = item['cakeName'] ?? '';
-                                                       final String? cakeId = item['cakeId']?.toString();
+                                                        final String cakeName = (item['cakeName'] as String?) ?? '';
+                                                        final String? cakeId = item['cakeId']?.toString();
                                                        // Prefer cakeId match for reliability; fall back to name match
                                                        final matchingCake = cakeId != null
                                                            ? menu.firstWhere(
@@ -302,7 +302,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                                (c) => (c['name']?.toString().toLowerCase() ?? '') == cakeName.toLowerCase(),
                                                                orElse: () => <String, dynamic>{},
                                                              );
-                                                       displayImageUrl = matchingCake['image'] ?? '';
+                                                       displayImageUrl = (matchingCake['image'] as String?) ?? '';
 
                                                         final rawCustomUrl = (() {
                                                           final orderUrl = order['customImageUrl']?.toString().trim();
@@ -462,11 +462,11 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                               if (phone.isEmpty) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
+                                                    const SnackBar(
                                                       content: Row(
                                                         children: [
-                                                          const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                                                          const SizedBox(width: 12),
+                                                          Icon(Icons.warning_amber_rounded, color: Colors.white),
+                                                          SizedBox(width: 12),
                                                           Expanded(child: Text("No contact number available.")),
                                                         ],
                                                       ),
@@ -476,19 +476,19 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                 }
                                                 return;
                                               }
-                                              final name = order['customerName'] ?? conversation?['name'] ?? 'there';
+                                              final name = (order['customerName'] as String?) ?? (conversation?['name'] as String?) ?? 'there';
                                               String cake = 'your selection';
                                               try {
-                                                final items = await OrderService.fetchOrderItems(order['id']);
+                                                final items = await OrderService.fetchOrderItems(order['id'] as String);
                                                 if (items.isNotEmpty) {
-                                                  cake = items.first['cakeName'] ?? 'your selection';
+                                                  cake = (items.first['cakeName'] as String?) ?? 'your selection';
                                                 }
                                               } catch (_) {}
                                                final orderNum = order['orderNumber']?.toString();
                                                final orderRef = (orderNum != null && orderNum.isNotEmpty)
                                                    ? 'your order #$orderNum'
                                                    : 'your order';
-                                               OrderService.launchWhatsApp(
+                                               await OrderService.launchWhatsApp(
                                                  phone,
                                                  "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding $orderRef ($cake).",
                                                );
@@ -549,7 +549,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
         color: cs.primary,
         tooltip: "Holographic 3D View",
         onPressed: () {
-          showDialog(
+          showDialog<void>(
             context: context,
             builder: (context) => _HolographicViewer(
               imageUrl: decoded.url,
@@ -598,7 +598,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
       onPressed: (active && !_isUpdating) ? () async {
         setState(() => _isUpdating = true);
         try {
-          await OrderService.updateOrderStatus(order['id'], next);
+          await OrderService.updateOrderStatus(order['id'] as String, next);
           if (!mounted) return;
           ref.invalidate(orderNotifierProvider(widget.orderId));
           final currentContext = context;
@@ -734,7 +734,7 @@ class _CustomerInfoCard extends StatelessWidget {
                 if (address.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   InkWell(
-                    onTap: _isCoordinates(address) ? () => OrderService.launchMaps(address) : null,
+                    onTap: () => OrderService.launchMaps(address),
                     borderRadius: BorderRadius.circular(4),
                     child: Row(
                       children: [

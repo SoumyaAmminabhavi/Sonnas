@@ -147,7 +147,7 @@ class SonnaOrder {
       paymentStatus: map['paymentStatus']?.toString() ?? 'PENDING',
       totalPrice: PriceConstants.normalizePrice(map['totalPrice']),
       createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
-      items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i))).toList(),
+      items: rawItems.map((i) => OrderItem.fromMap(Map<String, dynamic>.from(i as Map<dynamic, dynamic>))).toList(),
       notes: map['notes']?.toString(),
       customImageUrl: map['customImageUrl']?.toString(),
       conversationImageUrl: map['WhatsAppConversation'] != null ? map['WhatsAppConversation']['customImageUrl']?.toString() : null,

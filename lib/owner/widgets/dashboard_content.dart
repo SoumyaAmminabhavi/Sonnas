@@ -16,9 +16,9 @@ class DashboardContent extends ConsumerWidget {
   final SalesRange selectedRange;
   final int selectedMonth;
   final int selectedYear;
-  final Function(SalesRange) onRangeChanged;
-  final Function(int) onMonthChanged;
-  final Function(int) onYearChanged;
+  final void Function(SalesRange) onRangeChanged;
+  final void Function(int) onMonthChanged;
+  final void Function(int) onYearChanged;
   final VoidCallback onViewAllOrders;
 
   const DashboardContent({
@@ -251,9 +251,9 @@ class _ChartHeader extends StatelessWidget {
   final SalesRange selectedRange;
   final int selectedMonth, selectedYear;
   final ColorScheme cs;
-  final Function(SalesRange) onRangeChanged;
-  final Function(int) onMonthChanged;
-  final Function(int) onYearChanged;
+  final void Function(SalesRange) onRangeChanged;
+  final void Function(int) onMonthChanged;
+  final void Function(int) onYearChanged;
 
   const _ChartHeader({
     required this.isDesktop, required this.selectedRange, required this.cs,
@@ -289,9 +289,9 @@ class _ChartControls extends StatelessWidget {
   final SalesRange selectedRange;
   final int selectedMonth, selectedYear;
   final ColorScheme cs;
-  final Function(SalesRange) onRangeChanged;
-  final Function(int) onMonthChanged;
-  final Function(int) onYearChanged;
+  final void Function(SalesRange) onRangeChanged;
+  final void Function(int) onMonthChanged;
+  final void Function(int) onYearChanged;
 
   const _ChartControls({
     required this.selectedRange, required this.cs, required this.selectedMonth, required this.selectedYear,

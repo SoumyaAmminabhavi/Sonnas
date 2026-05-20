@@ -41,7 +41,7 @@ class ReportService {
     rows.add(["Total Orders", totalOrders]);
     rows.add(["Total Revenue", totalRevenue]);
     
-    String csv = ListToCsvConverter().convert(rows);
+    String csv = const ListToCsvConverter().convert(rows);
     
     // Add UTF-8 BOM so Excel opens it with correct encoding
     final bytes = [0xEF, 0xBB, 0xBF, ...utf8.encode(csv)];
@@ -69,7 +69,7 @@ class ReportService {
             alignment: pw.Alignment.centerRight,
             child: pw.Text(
               "Page ${context.pageNumber} of ${context.pagesCount}",
-              style: pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
             ),
           ),
           build: (context) => [
@@ -79,7 +79,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                  pw.Text("Sales Report", style: pw.TextStyle(fontSize: 18)),
+                  pw.Text("Sales Report", style: const pw.TextStyle(fontSize: 18)),
                 ],
               ),
             ),
@@ -200,7 +200,7 @@ class ReportService {
             alignment: pw.Alignment.centerRight,
             child: pw.Text(
               "Page ${context.pageNumber} of ${context.pagesCount}",
-              style: pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
             ),
           ),
           build: (context) => [
@@ -210,7 +210,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                  pw.Text("Expense Report", style: pw.TextStyle(fontSize: 18)),
+                  pw.Text("Expense Report", style: const pw.TextStyle(fontSize: 18)),
                 ],
               ),
             ),

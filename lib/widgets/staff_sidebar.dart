@@ -75,8 +75,8 @@ class StaffSidebar extends StatelessWidget {
           ...List.generate(menuItems.length, (index) {
             final item = menuItems[index];
             return _DrawerEntry(
-              icon: item['icon'],
-              title: item['title'],
+              icon: item['icon'] as IconData,
+              title: item['title'] as String,
               isSelected: currentIndex == index,
               onTap: () => onTap(index),
             );

@@ -160,10 +160,10 @@ class _StaffCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isActivated = staff['isActivated'] ?? false;
-    final String role = staff['role'] ?? 'STAFF';
-    final String subRole = staff['sub_role'] ?? 'NONE';
-    final String shift = staff['shift'] ?? 'FULL_DAY';
+    final bool isActivated = (staff['isActivated'] as bool?) ?? false;
+    final String role = (staff['role'] as String?) ?? 'STAFF';
+    final String subRole = (staff['sub_role'] as String?) ?? 'NONE';
+    final String shift = (staff['shift'] as String?) ?? 'FULL_DAY';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -189,9 +189,9 @@ class _StaffCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SecureAvatar(
-                    path: staff['imageUrl'],
+                    path: staff['imageUrl'] as String?,
                     bucket: 'staff_photos',
-                    name: staff['name'] ?? '?',
+                    name: (staff['name'] as String?) ?? '?',
                     radius: 24,
                   ),
                   const SizedBox(width: 16),
@@ -203,7 +203,7 @@ class _StaffCard extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                staff['name'] ?? "Unknown",
+                                (staff['name'] as String?) ?? "Unknown",
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -222,7 +222,7 @@ class _StaffCard extends StatelessWidget {
                             Icon(Icons.phone_outlined, size: 12, color: cs.onSurfaceVariant.withValues(alpha: 0.6)),
                             const SizedBox(width: 4),
                             Text(
-                              staff['phone'] ?? "No phone",
+                              (staff['phone'] as String?) ?? "No phone",
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 color: cs.onSurfaceVariant.withValues(alpha: 0.6),
@@ -288,7 +288,7 @@ class _StaffCard extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Delete Staff Member?"),
@@ -298,7 +298,7 @@ class _StaffCard extends StatelessWidget {
           TextButton(
             onPressed: () async {
               try {
-                await StaffService.deleteStaff(staff['id']);
+                await StaffService.deleteStaff(staff['id'] as String);
                 if (ctx.mounted) Navigator.pop(ctx);
               } catch (e, st) {
                 if (ctx.mounted) Navigator.pop(ctx);

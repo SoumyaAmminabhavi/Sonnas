@@ -100,8 +100,8 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Unable to load sales analytics. Please try again."),
+          const SnackBar(
+            content: Text("Unable to load sales analytics. Please try again."),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -151,7 +151,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         orElse: () => <String, dynamic>{},
       );
 
-      final category = matchingCake['Category']?['name'] ?? 'Custom';
+      final String category = (matchingCake['Category']?['name'] as String?) ?? 'Custom';
       final itemPrice = _parsePrice(item['price']);
       final qty = (item['quantity'] as num?)?.toInt() ?? 1;
       final subtotal = itemPrice * qty;
@@ -235,7 +235,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           _lastProcessedIds = currentIds;
         });
       }
-    }).catchError((e) {
+    }).catchError((Object e) {
       debugPrint("Error processing live items: $e");
     });
   }
@@ -622,7 +622,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: CachedNetworkImage(
-                          imageUrl: item['image'],
+                          imageUrl: item['image'] as String,
                           width: 48,
                           height: 48,
                           fit: BoxFit.cover,
@@ -655,7 +655,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['name'],
+                        item['name'] as String,
                         style: GoogleFonts.plusJakartaSans(
                           color: cs.secondary,
                           fontWeight: FontWeight.bold,
@@ -663,7 +663,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                         ),
                       ),
                       Text(
-                        item['category'],
+                        item['category'] as String,
                         style: GoogleFonts.plusJakartaSans(
                           color: cs.secondary.withValues(alpha: 0.5),
                           fontSize: 11,
@@ -870,7 +870,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           _processItemsFromOrders(_orders, _cachedMenu);
         });
       }
-    }, onError: (error) {
+    }, onError: (Object error) {
       debugPrint("Sales reports stream error: $error");
     });
   }

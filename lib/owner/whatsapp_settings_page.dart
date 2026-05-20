@@ -23,6 +23,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
   }
 
   Future<void> _loadTemplateVersions(String templateId) async {
+    final currentTemplateId = _selectedTemplate?['id']?.toString();
     final messenger = ScaffoldMessenger.of(context);
     setState(() {
       _isLoadingVersions = true;
@@ -32,6 +33,12 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
 
     try {
       final versions = await WhatsAppService.fetchTemplateVersions(templateId);
+      
+      // Stale response guard
+      if (currentTemplateId != _selectedTemplate?['id']?.toString()) {
+        return;
+      }
+
       final activeVersionId = _selectedTemplate?['activeVersionId']?.toString();
 
       Map<String, dynamic>? activeVer;
@@ -49,6 +56,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         selectedVer = activeVer;
       }
 
+      if (!mounted) return;
       setState(() {
         _selectedTemplateVersions = versions;
         _selectedVersionDetails = selectedVer;
@@ -57,8 +65,14 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     } catch (e, stackTrace) {
       debugPrint('Error loading template versions: $e');
       debugPrint('Stack trace: $stackTrace');
-      setState(() => _isLoadingVersions = false);
+      
+      // Stale response guard
+      if (currentTemplateId != _selectedTemplate?['id']?.toString()) {
+        return;
+      }
+
       if (!mounted) return;
+      setState(() => _isLoadingVersions = false);
       messenger.showSnackBar(
         const SnackBar(content: Text('Error loading template versions')),
       );
@@ -71,125 +85,146 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     final descController = TextEditingController();
     String category = 'GENERAL';
     String language = 'en';
+    bool isSubmitting = false;
 
-    showDialog(
+    showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         final cs = Theme.of(context).colorScheme;
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text(
-            "New Notification Template",
-            style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
-          ),
-          content: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: codeController,
-                    decoration: InputDecoration(
-                      labelText: "Template Code",
-                      hintText: "e.g., WELCOME_MESSAGE, CART_ALERT",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return PopScope(
+              canPop: !isSubmitting,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                title: Text(
+                  "New Notification Template",
+                  style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
+                ),
+                content: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: codeController,
+                          enabled: !isSubmitting,
+                          decoration: InputDecoration(
+                            labelText: "Template Code",
+                            hintText: "e.g., WELCOME_MESSAGE, CART_ALERT",
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          validator: (val) => (val == null || val.trim().isEmpty) ? "Code is required" : null,
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: category,
+                          decoration: InputDecoration(
+                            labelText: "Category",
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          items: isSubmitting ? [
+                            DropdownMenuItem(value: category, child: Text(category)),
+                          ] : const [
+                            DropdownMenuItem(value: 'GREETING', child: Text('Greeting / Welcome')),
+                            DropdownMenuItem(value: 'MENU', child: Text('Menu Navigation')),
+                            DropdownMenuItem(value: 'CATEGORY', child: Text('Category Browse')),
+                            DropdownMenuItem(value: 'PRODUCT', child: Text('Product / Catalog')),
+                            DropdownMenuItem(value: 'ORDER', child: Text('Order Status Update')),
+                            DropdownMenuItem(value: 'PAYMENT', child: Text('Payment Request')),
+                            DropdownMenuItem(value: 'DELIVERY', child: Text('Delivery Updates')),
+                            DropdownMenuItem(value: 'ERROR', child: Text('Error / Fallback')),
+                            DropdownMenuItem(value: 'GENERAL', child: Text('General Broadcast')),
+                          ],
+                          onChanged: isSubmitting ? null : (val) { if (val != null) category = val; },
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          initialValue: language,
+                          decoration: InputDecoration(
+                            labelText: "Language",
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          items: isSubmitting ? [
+                            DropdownMenuItem(value: language, child: Text(language)),
+                          ] : const [
+                            DropdownMenuItem(value: 'en', child: Text('English (en)')),
+                            DropdownMenuItem(value: 'hi', child: Text('Hindi (hi)')),
+                            DropdownMenuItem(value: 'mr', child: Text('Marathi (mr)')),
+                          ],
+                          onChanged: isSubmitting ? null : (val) { if (val != null) language = val; },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: descController,
+                          enabled: !isSubmitting,
+                          maxLines: 2,
+                          decoration: InputDecoration(
+                            labelText: "Description",
+                            hintText: "What is this message used for?",
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ],
                     ),
-                    validator: (val) => (val == null || val.trim().isEmpty) ? "Code is required" : null,
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: category,
-                    decoration: InputDecoration(
-                      labelText: "Category",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'GREETING', child: Text('Greeting / Welcome')),
-                      DropdownMenuItem(value: 'MENU', child: Text('Menu Navigation')),
-                      DropdownMenuItem(value: 'CATEGORY', child: Text('Category Browse')),
-                      DropdownMenuItem(value: 'PRODUCT', child: Text('Product / Catalog')),
-                      DropdownMenuItem(value: 'ORDER', child: Text('Order Status Update')),
-                      DropdownMenuItem(value: 'PAYMENT', child: Text('Payment Request')),
-                      DropdownMenuItem(value: 'DELIVERY', child: Text('Delivery Updates')),
-                      DropdownMenuItem(value: 'ERROR', child: Text('Error / Fallback')),
-                      DropdownMenuItem(value: 'GENERAL', child: Text('General Broadcast')),
-                    ],
-                    onChanged: (val) { if (val != null) category = val; },
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isSubmitting ? null : () => Navigator.pop(context),
+                    child: const Text("Cancel"),
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    initialValue: language,
-                    decoration: InputDecoration(
-                      labelText: "Language",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'en', child: Text('English (en)')),
-                      DropdownMenuItem(value: 'hi', child: Text('Hindi (hi)')),
-                      DropdownMenuItem(value: 'mr', child: Text('Marathi (mr)')),
-                    ],
-                    onChanged: (val) { if (val != null) language = val; },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: descController,
-                    maxLines: 2,
-                    decoration: InputDecoration(
-                      labelText: "Description",
-                      hintText: "What is this message used for?",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
+                    onPressed: isSubmitting ? null : () async {
+                      if (formKey.currentState?.validate() == true) {
+                        setDialogState(() {
+                          isSubmitting = true;
+                        });
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        try {
+                          final t = await WhatsAppService.createTemplate(
+                            code: codeController.text,
+                            category: category,
+                            language: language,
+                            description: descController.text,
+                          );
+                          if (!mounted) return;
+                          navigator.pop();
+                          setState(() {
+                            _selectedTemplate = t;
+                          });
+                          await _loadTemplateVersions(t['id'] as String);
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Template created successfully!')),
+                          );
+                        } catch (e, stackTrace) {
+                          debugPrint('Error creating template: $e');
+                          debugPrint('Stack trace: $stackTrace');
+                          setDialogState(() {
+                            isSubmitting = false;
+                          });
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Error creating template')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text("Create"),
                   ),
                 ],
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cs.primary,
-                foregroundColor: cs.onPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              onPressed: () async {
-                if (formKey.currentState?.validate() == true) {
-                  final navigator = Navigator.of(context);
-                  final messenger = ScaffoldMessenger.of(context);
-                  try {
-                    final t = await WhatsAppService.createTemplate(
-                      code: codeController.text,
-                      category: category,
-                      language: language,
-                      description: descController.text,
-                    );
-                    if (!mounted) return;
-                    navigator.pop();
-                    setState(() {
-                      _selectedTemplate = t;
-                    });
-                    _loadTemplateVersions(t['id']);
-                    messenger.showSnackBar(
-                      const SnackBar(content: Text('Template created successfully!')),
-                    );
-                  } catch (e, stackTrace) {
-                    debugPrint('Error creating template: $e');
-                    debugPrint('Stack trace: $stackTrace');
-                    if (!mounted) return;
-                    messenger.showSnackBar(
-                      const SnackBar(content: Text('Error creating template')),
-                    );
-                  }
-                }
-              },
-              child: const Text("Create"),
-            ),
-          ],
+            );
+          },
         );
       },
     ).then((_) {
@@ -222,7 +257,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         ? 1
         : _selectedTemplateVersions.map((v) => v['versionNumber'] as int).reduce((a, b) => a > b ? a : b) + 1;
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) {
         final cs = Theme.of(context).colorScheme;
@@ -363,7 +398,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                 children: [
                                   Expanded(
                                     child: TextFormField(
-                                      initialValue: entry.value['title'],
+                                      initialValue: entry.value['title'] as String?,
                                       decoration: InputDecoration(
                                         labelText: "Button ${idx + 1} Text",
                                         isDense: true,
@@ -443,7 +478,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                       children: [
                                         Expanded(
                                           child: TextFormField(
-                                            initialValue: section['title'],
+                                            initialValue: section['title'] as String?,
                                             decoration: const InputDecoration(labelText: "Section Title", isDense: true),
                                             onChanged: (val) => dynamicSections[sIdx]['title'] = val,
                                           ),
@@ -458,7 +493,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     DropdownButtonFormField<String>(
-                                      initialValue: section['dataSource'],
+                                      initialValue: section['dataSource'] as String?,
                                       decoration: const InputDecoration(labelText: "Data Source Mode", isDense: true),
                                       items: const [
                                         DropdownMenuItem(value: 'STATIC', child: Text('Static Text Rows')),
@@ -481,7 +516,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                           TextButton(
                                             onPressed: () {
                                               setDialogState(() {
-                                                (dynamicSections[sIdx]['rows'] as List).add({
+                                                (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>).add({
                                                   'title': 'New Option',
                                                   'description': ''
                                                 });
@@ -491,7 +526,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                           ),
                                         ],
                                       ),
-                                      ...(section['rows'] as List).asMap().entries.map((rEntry) {
+                                      ...(section['rows'] as List<Map<String, dynamic>>).asMap().entries.map((rEntry) {
                                         final rIdx = rEntry.key;
                                         final row = rEntry.value;
                                         return Padding(
@@ -500,17 +535,17 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                             children: [
                                               Expanded(
                                                 child: TextFormField(
-                                                  initialValue: row['title'],
+                                                  initialValue: row['title'] as String?,
                                                   decoration: const InputDecoration(labelText: "Title", isDense: true),
-                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['title'] = val,
+                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['title'] = val,
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
                                               Expanded(
                                                 child: TextFormField(
-                                                  initialValue: row['description'],
+                                                  initialValue: row['description'] as String?,
                                                   decoration: const InputDecoration(labelText: "Description", isDense: true),
-                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['description'] = val,
+                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['description'] = val,
                                                 ),
                                               ),
                                               IconButton(
@@ -555,7 +590,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       final messenger = ScaffoldMessenger.of(context);
                       try {
                         await WhatsAppService.createTemplateVersion(
-                          templateId: _selectedTemplate!['id'],
+                          templateId: _selectedTemplate!['id'] as String,
                           versionNumber: nextVerNum,
                           bodyText: bodyController.text,
                           headerText: headerController.text.isNotEmpty ? headerController.text : null,
@@ -573,7 +608,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
 
                         if (!mounted) return;
                         navigator.pop();
-                        _loadTemplateVersions(_selectedTemplate!['id']);
+                        await _loadTemplateVersions(_selectedTemplate!['id'] as String);
                         messenger.showSnackBar(
                           const SnackBar(content: Text('New version created successfully!')),
                         );
@@ -621,7 +656,8 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            debugPrint("❌ Templates load error: ${snapshot.error}");
+            return const Center(child: Text("Failed to load data"));
           }
           final templates = snapshot.data ?? [];
           if (templates.isEmpty) {
@@ -658,11 +694,11 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: () {
+                  onTap: () async {
                     setState(() {
                       _selectedTemplate = t;
                     });
-                    _loadTemplateVersions(t['id']);
+                    await _loadTemplateVersions(t['id'] as String);
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -674,7 +710,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                           children: [
                             Expanded(
                               child: Text(
-                                t['code'] ?? '',
+                                (t['code'] as String?) ?? '',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -685,10 +721,21 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                             Transform.scale(
                               scale: 0.65,
                               child: Switch(
-                                value: t['isActive'] ?? true,
+                                value: (t['isActive'] as bool?) ?? true,
                                 activeThumbColor: cs.primary,
                                 onChanged: (value) async {
-                                  await WhatsAppService.updateTemplateStatus(t['id'], value);
+                                  final messenger = ScaffoldMessenger.of(context);
+                                  try {
+                                    await WhatsAppService.updateTemplateStatus(t['id'] as String, value);
+                                  } catch (e, stackTrace) {
+                                    debugPrint('Error updating template status: $e\n$stackTrace');
+                                    if (mounted) {
+                                      setState(() {});
+                                      messenger.showSnackBar(
+                                        SnackBar(content: Text('Failed to update status: $e')),
+                                      );
+                                    }
+                                  }
                                 },
                               ),
                             ),
@@ -697,7 +744,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                         if (t['description'] != null && t['description'].toString().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
-                            t['description'],
+                            t['description'] as String,
                             style: TextStyle(
                               fontSize: 12,
                               color: isSelected
@@ -720,7 +767,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                t['category'] ?? 'GENERAL',
+                                (t['category'] as String?) ?? 'GENERAL',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -940,7 +987,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _selectedTemplate!['code'] ?? '',
+                    (_selectedTemplate!['code'] as String?) ?? '',
                     style: GoogleFonts.notoSerif(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -962,7 +1009,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: const Text("Delete Template"),
-                      content: Text("Are you sure you want to delete ${_selectedTemplate!['code']} and all its historical draft configurations?"),
+                      content: Text("Are you sure you want to delete ${(_selectedTemplate!['code'] as String?) ?? ''} and all its historical draft configurations?"),
                       actions: [
                         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
                         TextButton(
@@ -973,12 +1020,25 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                     ),
                   );
                   if (confirm == true) {
-                    await WhatsAppService.deleteTemplate(_selectedTemplate!['id']);
                     if (!mounted) return;
-                    setState(() {
-                      _selectedTemplate = null;
-                      _selectedTemplateVersions = [];
-                    });
+                    final messenger = ScaffoldMessenger.of(context);
+                    try {
+                      await WhatsAppService.deleteTemplate(_selectedTemplate!['id'] as String);
+                      if (!mounted) return;
+                      setState(() {
+                        _selectedTemplate = null;
+                        _selectedTemplateVersions = [];
+                      });
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Template deleted successfully!')),
+                      );
+                    } catch (e, stackTrace) {
+                      debugPrint('Error deleting template: $e\n$stackTrace');
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Failed to delete template: $e')),
+                      );
+                    }
                   }
                 }
               },
@@ -1082,17 +1142,25 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                             label: const Text("Deploy Active", style: TextStyle(fontSize: 12)),
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
-                              await WhatsAppService.setActiveVersion(
-                                _selectedTemplate!['id'],
-                                _selectedVersionDetails!['id'],
-                              );
-                              if (!mounted) return;
-                              setState(() {
-                                _selectedTemplate!['activeVersionId'] = _selectedVersionDetails!['id'];
-                              });
-                              messenger.showSnackBar(
-                                const SnackBar(content: Text('Version deployed as live notification engine!')),
-                              );
+                              try {
+                                await WhatsAppService.setActiveVersion(
+                                  _selectedTemplate!['id'] as String,
+                                  _selectedVersionDetails!['id'] as String,
+                                );
+                                if (!mounted) return;
+                                setState(() {
+                                  _selectedTemplate!['activeVersionId'] = _selectedVersionDetails!['id'];
+                                });
+                                messenger.showSnackBar(
+                                  const SnackBar(content: Text('Version deployed as live notification engine!')),
+                                );
+                              } catch (e, stackTrace) {
+                                debugPrint('Error activating template version: $e\n$stackTrace');
+                                if (!mounted) return;
+                                messenger.showSnackBar(
+                                  SnackBar(content: Text('Failed to deploy version: $e')),
+                                );
+                              }
                             },
                           )
                         else
@@ -1115,17 +1183,17 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                     ),
                   ),
                   const Divider(height: 24),
-                  _buildMetaField("Body Copy", _selectedVersionDetails!['bodyText'] ?? '---', isLongText: true),
-                  _buildMetaField("Header Title", _selectedVersionDetails!['headerText'] ?? '---'),
-                  _buildMetaField("Footer Note", _selectedVersionDetails!['footerText'] ?? '---'),
-                  _buildMetaField("Action Interface Type", _selectedVersionDetails!['interactiveType'] ?? 'NONE'),
+                  _buildMetaField("Body Copy", (_selectedVersionDetails!['bodyText'] as String?) ?? '---', isLongText: true),
+                  _buildMetaField("Header Title", (_selectedVersionDetails!['headerText'] as String?) ?? '---'),
+                  _buildMetaField("Footer Note", (_selectedVersionDetails!['footerText'] as String?) ?? '---'),
+                  _buildMetaField("Action Interface Type", (_selectedVersionDetails!['interactiveType'] as String?) ?? 'NONE'),
                   if (_selectedVersionDetails!['interactiveType'] == 'CTA_URL') ...[
-                    _buildMetaField("Redirect Link Title", _selectedVersionDetails!['ctaButtonTitle'] ?? '---'),
-                    _buildMetaField("URL Address", _selectedVersionDetails!['ctaButtonUrl'] ?? '---'),
+                    _buildMetaField("Redirect Link Title", (_selectedVersionDetails!['ctaButtonTitle'] as String?) ?? '---'),
+                    _buildMetaField("URL Address", (_selectedVersionDetails!['ctaButtonUrl'] as String?) ?? '---'),
                   ],
                   if (_selectedVersionDetails!['mediaType'] != 'NONE') ...[
-                    _buildMetaField("Attachment Type", _selectedVersionDetails!['mediaType'] ?? '---'),
-                    _buildMetaField("Attachment Source Link", _selectedVersionDetails!['mediaUrl'] ?? '---'),
+                    _buildMetaField("Attachment Type", (_selectedVersionDetails!['mediaType'] as String?) ?? '---'),
+                    _buildMetaField("Attachment Source Link", (_selectedVersionDetails!['mediaUrl'] as String?) ?? '---'),
                   ]
                 ],
               ),
@@ -1261,12 +1329,12 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
       return Container();
     }
 
-    final body = _selectedVersionDetails!['bodyText'] ?? '';
-    final header = _selectedVersionDetails!['headerText'];
-    final footer = _selectedVersionDetails!['footerText'];
-    final mediaUrl = _selectedVersionDetails!['mediaUrl'];
-    final mediaType = _selectedVersionDetails!['mediaType'] ?? 'NONE';
-    final isInteractive = _selectedVersionDetails!['interactiveType'] ?? 'NONE';
+    final String body = (_selectedVersionDetails!['bodyText'] as String?) ?? '';
+    final String? header = _selectedVersionDetails!['headerText'] as String?;
+    final String? footer = _selectedVersionDetails!['footerText'] as String?;
+    final String? mediaUrl = _selectedVersionDetails!['mediaUrl'] as String?;
+    final String mediaType = (_selectedVersionDetails!['mediaType'] as String?) ?? 'NONE';
+    final String isInteractive = (_selectedVersionDetails!['interactiveType'] as String?) ?? 'NONE';
 
     return Container(
       width: 320,
@@ -1406,7 +1474,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    btn['title'] ?? '',
+                                    (btn['title'] as String?) ?? '',
                                     style: const TextStyle(
                                       color: Color(0xFF00A884), // WhatsApp primary brand green
                                       fontWeight: FontWeight.bold,
@@ -1434,7 +1502,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                   const Icon(Icons.open_in_new, size: 14, color: Color(0xFF00A884)),
                                   const SizedBox(width: 6),
                                   Text(
-                                    _selectedVersionDetails!['ctaButtonTitle'] ?? 'Open Link',
+                                    (_selectedVersionDetails!['ctaButtonTitle'] as String?) ?? 'Open Link',
                                     style: const TextStyle(
                                       color: Color(0xFF00A884),
                                       fontWeight: FontWeight.bold,
@@ -1462,7 +1530,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                   const Icon(Icons.list_alt_rounded, size: 14, color: Color(0xFF00A884)),
                                   const SizedBox(width: 6),
                                   Text(
-                                    _selectedVersionDetails!['listButtonTitle'] ?? 'View Options',
+                                    (_selectedVersionDetails!['listButtonTitle'] as String?) ?? 'View Options',
                                     style: const TextStyle(
                                       color: Color(0xFF00A884),
                                       fontWeight: FontWeight.bold,

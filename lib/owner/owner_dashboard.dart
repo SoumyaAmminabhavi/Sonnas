@@ -55,8 +55,8 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
   }
 
   void _showNewOrderNotification(Map<String, dynamic> order) {
-    final orderNumber = order['orderNumber'] ?? '---';
-    final customerName = order['customerName'] ?? 'Guest';
+    final orderNumber = (order['orderNumber'] as String?) ?? '---';
+    final customerName = (order['customerName'] as String?) ?? 'Guest';
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
 
@@ -67,7 +67,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
         customerName: customerName,
         orderNumber: orderNumber,
         isMobile: isMobile,
-        onView: () {
+        onView: () async {
           final String? orderId = order['id']?.toString();
           if (orderId == null || orderId.isEmpty) {
             if (!mounted) return;
@@ -77,7 +77,7 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
             if (overlayEntry.mounted) overlayEntry.remove();
             return;
           }
-          Navigator.push(context, MaterialPageRoute(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
+          await Navigator.push<void>(context, MaterialPageRoute<void>(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
           if (overlayEntry.mounted) overlayEntry.remove();
         },
         onDismiss: () {

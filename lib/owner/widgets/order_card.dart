@@ -19,12 +19,12 @@ class OrderCardReactive extends ConsumerWidget {
     
     // Watch cached menu and order items
     final menuAsync = ref.watch(menuProvider);
-    final itemsAsync = ref.watch(orderItemsProvider(data['id'] ?? ''));
+    final itemsAsync = ref.watch(orderItemsProvider((data['id'] as String?) ?? ''));
 
     return itemsAsync.when(
       data: (items) {
-        final status = data['status'] ?? 'PENDING';
-        Color statusColor = status == 'COMPLETED' ? cs.secondary : cs.primary;
+        final String status = (data['status'] as String?) ?? 'PENDING';
+        final Color statusColor = status == 'COMPLETED' ? cs.secondary : cs.primary;
 
         // 1. Try customImageUrl from the order
         String imageUrl = data['customImageUrl']?.toString().trim() ?? '';
@@ -44,20 +44,20 @@ class OrderCardReactive extends ConsumerWidget {
         if (imageUrl.isEmpty || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://')) {
           imageUrl = '';
           if (items.isNotEmpty && menuAsync.hasValue) {
-            final String firstName = items[0]['cakeName'] ?? '';
+            final String firstName = (items[0]['cakeName'] as String?) ?? '';
             final String? firstCakeId = items[0]['cakeId']?.toString();
             final matchingCake = menuAsync.value!.firstWhere(
               (c) => (firstCakeId != null && c['id']?.toString() == firstCakeId) ||
                      (c['name']?.toString().toLowerCase() == firstName.toLowerCase()),
               orElse: () => <String, dynamic>{},
             );
-            imageUrl = matchingCake['image'] ?? '';
+            imageUrl = (matchingCake['image'] as String?) ?? '';
           }
         }
 
         String orderSubtitle = 'Custom Creation';
         if (items.isNotEmpty) {
-          final String firstName = items[0]['cakeName'] ?? 'Boutique Order';
+          final String firstName = (items[0]['cakeName'] as String?) ?? 'Boutique Order';
           orderSubtitle = items.length > 1 ? "$firstName + ${items.length - 1} more" : firstName;
         }
 
@@ -77,7 +77,7 @@ class OrderCardReactive extends ConsumerWidget {
           status: status,
           statusColor: statusColor,
           paymentStatus: (data['paymentStatus'] ?? 'PENDING').toString().toUpperCase(),
-          customerName: data['customerName'] ?? 'Guest Customer',
+          customerName: (data['customerName'] as String?) ?? 'Guest Customer',
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
               : OrderService.formatPrice(calculatedTotal),
@@ -86,14 +86,17 @@ class OrderCardReactive extends ConsumerWidget {
               : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
                   ? imageUrl
                   : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
-          deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
+          deliveryDate: (data['deliveryDate'] as String?) ?? 'Not scheduled',
           deliveryTime: data['deliverySlot']?.toString() ?? data['deliveryTime']?.toString(),
           orderSubtitle: orderSubtitle,
           onWhatsAppPressed: () async {
             final rawConversation = data['WhatsAppConversation'];
             final conversation = rawConversation is Map ? rawConversation : null;
-            final String customerName = data['customerName'] ?? conversation?['name'] ?? 'Guest Customer';
-            final String customerPhone = data['customerPhone']?.toString() ?? conversation?['phone']?.toString() ?? '';
+            final String customerName = (data['customerName'] as String?) ?? (conversation?['name'] as String?) ?? 'Guest Customer';
+            final String customerPhone = data['customerPhone']?.toString() ?? 
+                conversation?['phone']?.toString() ?? 
+                data['phone']?.toString() ?? 
+                '';
             final String orderId = data['orderNumber']?.toString() ?? '---';
             
             if (customerPhone.isEmpty) {
@@ -108,10 +111,10 @@ class OrderCardReactive extends ConsumerWidget {
             // Get first item name for the message
             String cakeName = 'your order';
             if (items.isNotEmpty) {
-              cakeName = items.first['cakeName'] ?? 'your order';
+              cakeName = (items.first['cakeName'] as String?) ?? 'your order';
             }
 
-            OrderService.launchWhatsApp(
+            await OrderService.launchWhatsApp(
               customerPhone, 
               "Hi $customerName, this is Sonna's Patisserie. Your order #$orderId ($cakeName) is ready for you!"
             );
@@ -161,9 +164,9 @@ class _OrderCardBase extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: orderId.isEmpty ? null : () => Navigator.push(
+      onTap: orderId.isEmpty ? null : () => Navigator.push<void>(
         context,
-        MaterialPageRoute(
+        MaterialPageRoute<void>(
           builder: (context) => OwnerOrderDetailsView(
             orderId: orderId,
             onTabChanged: onTabChanged,

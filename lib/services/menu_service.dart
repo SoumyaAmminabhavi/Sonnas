@@ -9,7 +9,7 @@ class MenuService {
   /// Real-time menu updates with joined data
   static Stream<List<Map<String, dynamic>>> getMenuStream() {
     final controller = StreamController<List<Map<String, dynamic>>>.broadcast();
-    final subscriptions = <StreamSubscription>[];
+    final subscriptions = <StreamSubscription<List<Map<String, dynamic>>>>[];
     var refreshRequestId = 0;
 
     Future<void> refresh() async {
@@ -35,11 +35,12 @@ class MenuService {
     };
 
     controller.onCancel = () {
-      // Cancel subscriptions to prevent memory leaks, but keep controller open for reuse
+      // Cancel subscriptions and close to prevent memory leaks
       for (final sub in subscriptions) {
         sub.cancel();
       }
       subscriptions.clear();
+      controller.close();
     };
 
     return controller.stream;

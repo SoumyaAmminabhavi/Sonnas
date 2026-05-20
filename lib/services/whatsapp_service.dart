@@ -72,7 +72,10 @@ class WhatsAppService {
         .from('WhatsAppTemplateVersion')
         .select('*, buttons:WhatsAppButton(*), listSections:WhatsAppListSection(*, rows:WhatsAppListRow(*))')
         .eq('templateId', templateId)
-        .order('versionNumber', ascending: false);
+        .order('versionNumber', ascending: false)
+        .order('sortOrder', referencedTable: 'buttons')
+        .order('sortOrder', referencedTable: 'listSections')
+        .order('sortOrder', referencedTable: 'listSections.rows');
     return List<Map<String, dynamic>>.from(res);
   }
 
@@ -82,6 +85,9 @@ class WhatsAppService {
         .from('WhatsAppTemplateVersion')
         .select('*, buttons:WhatsAppButton(*), listSections:WhatsAppListSection(*, rows:WhatsAppListRow(*))')
         .eq('id', versionId)
+        .order('sortOrder', referencedTable: 'buttons')
+        .order('sortOrder', referencedTable: 'listSections')
+        .order('sortOrder', referencedTable: 'listSections.rows')
         .maybeSingle();
     return res != null ? Map<String, dynamic>.from(res) : null;
   }
@@ -154,7 +160,7 @@ class WhatsAppService {
           }).select().single();
 
           final String sectionId = sectionRecord['id'].toString();
-          final List? rows = section['rows'];
+          final List<dynamic>? rows = section['rows'] as List<dynamic>?;
 
           if (rows != null && rows.isNotEmpty) {
             final rowsPayload = rows.asMap().entries.map((rEntry) {

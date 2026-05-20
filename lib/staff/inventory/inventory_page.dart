@@ -119,7 +119,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                 _buildQuickStat(
                   context,
                   "Low Stock", 
-                  items.where((i) => (i['currentStock'] ?? 0) <= (i['minStock'] ?? 0)).length.toString(), 
+                  items.where((i) => ((i['currentStock'] as num?) ?? 0) <= ((i['minStock'] as num?) ?? 0)).length.toString(), 
                   Icons.warning_amber_rounded,
                   widget.cs.primary.withValues(alpha: 0.05),
                   iconColor: widget.cs.error,
@@ -211,7 +211,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
         : InventoryService.fetchInventory();
 
     try {
-      await showDialog(
+      await showDialog<void>(
         context: context,
         builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -227,14 +227,14 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                   builder: (context, setFieldState) {
                     if (isManualSelection) {
                       return DropdownButtonFormField<String>(
-                        initialValue: selectedItem?['id'],
+                        initialValue: selectedItem?['id'] as String?,
                         decoration: InputDecoration(
                           labelText: "Select Ingredient (Manual)",
                           labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
                         ),
                         items: fallbackItems.map((item) => DropdownMenuItem(
                           value: item['id'] as String,
-                          child: Text(item['name'] ?? ''),
+                          child: Text((item['name'] as String?) ?? ''),
                         )).toList(),
                         onChanged: (val) {
                           final newItem = fallbackItems.firstWhere((i) => i['id'] == val);
@@ -290,14 +290,14 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                         final items = snapshot.data!;
                         return DropdownButtonFormField<String>(
                           // ignore: deprecated_member_use
-                          value: selectedItem?['id'],
+                          value: selectedItem?['id'] as String?,
                           decoration: InputDecoration(
                             labelText: "Select Ingredient",
                             labelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
                           ),
                           items: items.map((item) => DropdownMenuItem(
                             value: item['id'] as String,
-                            child: Text(item['name'] ?? ''),
+                            child: Text((item['name'] as String?) ?? ''),
                           )).toList(),
                           onChanged: (val) {
                             final newItem = items.firstWhere((i) => i['id'] == val);
@@ -329,7 +329,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: isConsumption ? "Quantity Used" : (preselectedItem != null ? "Quantity to Add" : "Purchase Quantity"),
-                  suffixText: selectedItem?['unit'] ?? '',
+                  suffixText: (selectedItem?['unit'] as String?) ?? '',
                   helperText: isConsumption ? "This will be deducted from current stock" : "This will be added to current stock",
                 ),
               ),
@@ -351,14 +351,15 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                 
                 try {
                   if (isConsumption) {
-                    await InventoryService.recordConsumption(selectedItem!['id'], qty);
+                    await InventoryService.recordConsumption(selectedItem!['id'] as String, qty);
                   } else {
-                    await InventoryService.updateInventoryStock(selectedItem!['id'], qty);
+                    await InventoryService.updateInventoryStock(selectedItem!['id'] as String, qty);
                   }
                   
                   if (context.mounted) {
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text(isConsumption 
                           ? "Recorded consumption of $qty ${selectedItem!['unit']} ${selectedItem!['name']}"
@@ -400,7 +401,7 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
 class _InventoryCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final ColorScheme cs;
-  final Function(Map<String, dynamic>) onAddStock;
+  final void Function(Map<String, dynamic>) onAddStock;
 
   const _InventoryCard({
     required this.item, 
@@ -410,10 +411,10 @@ class _InventoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double stock = (item['currentStock'] ?? 0).toDouble();
-    final double minStock = (item['minStock'] ?? 0).toDouble();
+    final double stock = ((item['currentStock'] as num?) ?? 0).toDouble();
+    final double minStock = ((item['minStock'] as num?) ?? 0).toDouble();
     final bool isLow = stock <= minStock;
-    final String unit = item['unit'] ?? 'units';
+    final String unit = (item['unit'] as String?) ?? 'units';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -459,7 +460,7 @@ class _InventoryCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            item['name'] ?? 'Unknown Item',
+            (item['name'] as String?) ?? 'Unknown Item',
             style: GoogleFonts.notoSerif(
               fontSize: 18,
               fontWeight: FontWeight.bold,

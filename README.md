@@ -96,7 +96,7 @@ The `vercel.json` configures SPA routing for the Flutter web build only. There i
 ### Prerequisites
 
 - Flutter SDK `>=3.19.0` (stable channel)
-- Dart SDK `>=3.3.0` (bundled with Flutter)
+- Dart SDK `>=3.11.0` (bundled with Flutter)
 - A [Supabase](https://supabase.com) project with the schema applied (see `lib/services/schema.prisma`)
 
 ### 1 — Clone & install dependencies

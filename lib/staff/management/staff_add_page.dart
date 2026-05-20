@@ -66,14 +66,14 @@ class _StaffAddPageState extends State<StaffAddPage> {
     _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
     if (widget.staff != null) {
       final s = widget.staff!;
-      _nameController.text = s['name'] ?? '';
-      _phoneController.text = s['phone'] ?? '';
-      _emailController.text = s['email'] ?? '';
-      _addressController.text = s['address'] ?? '';
-      _dobController.text = s['dob'] ?? '';
-      _selectedBloodGroup = s['bloodGroup'];
-      _emergencyNameController.text = s['emergencyName'] ?? '';
-      _emergencyPhoneController.text = s['emergencyPhone'] ?? '';
+      _nameController.text = (s['name'] as String?) ?? '';
+      _phoneController.text = (s['phone'] as String?) ?? '';
+      _emailController.text = (s['email'] as String?) ?? '';
+      _addressController.text = (s['address'] as String?) ?? '';
+      _dobController.text = (s['dob'] as String?) ?? '';
+      _selectedBloodGroup = s['bloodGroup'] as String?;
+      _emergencyNameController.text = (s['emergencyName'] as String?) ?? '';
+      _emergencyPhoneController.text = (s['emergencyPhone'] as String?) ?? '';
       _selectedRole = StaffRole.values.firstWhere(
         (r) => r.dbValue == (s['role'] ?? 'CHEF'),
         orElse: () => StaffRole.chef,
@@ -90,15 +90,15 @@ class _StaffAddPageState extends State<StaffAddPage> {
       if (s['permissions'] != null) {
         _permissions = {
           ..._permissions,
-          ...Map<String, bool>.from(s['permissions']),
+          ...Map<String, bool>.from(s['permissions'] as Map),
         };
       }
       
-      _startTimeController.text = s['shiftStart'] ?? '08:00 AM';
-      _endTimeController.text = s['shiftEnd'] ?? '04:00 PM';
+      _startTimeController.text = (s['shiftStart'] as String?) ?? '08:00 AM';
+      _endTimeController.text = (s['shiftEnd'] as String?) ?? '04:00 PM';
       
       if (s['workingDays'] != null) {
-        _workingDays = List<String>.from(s['workingDays']);
+        _workingDays = List<String>.from(s['workingDays'] as Iterable);
       }
     }
   }
@@ -125,7 +125,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
       if (fileSize > AuthConstants.maxImageSizeBytes) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Image too large. Maximum size is ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB")),
+            const SnackBar(content: Text("Image too large. Maximum size is ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB")),
           );
         }
         return;
@@ -159,7 +159,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
 
     setState(() => _isSaving = true);
     try {
-      String? imageUrl = widget.staff?['imageUrl'];
+      String? imageUrl = widget.staff?['imageUrl'] as String?;
       if (_pickedImage != null && _imageBytes != null) {
         // Fix 1.6: Use a random UUID-like hash instead of phone number to protect PII
         final String fileHash = DateTime.now().millisecondsSinceEpoch.toString();
@@ -193,7 +193,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
           _showSuccessDialog(joiningCode);
         }
       } else {
-        await StaffService.updateStaff(widget.staff!['id'], staffData);
+        await StaffService.updateStaff(widget.staff!['id'] as String, staffData);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Staff member profile updated successfully!")),
@@ -218,7 +218,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
   }
 
   void _showSuccessDialog(String code) {
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -384,7 +384,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
                       border: Border.all(color: cs.primaryContainer.withValues(alpha: 0.5), style: BorderStyle.solid, width: 2),
                       image: _imageBytes != null 
                         ? DecorationImage(image: MemoryImage(_imageBytes!), fit: BoxFit.cover)
-                        : (widget.staff?['imageUrl'] != null ? DecorationImage(image: NetworkImage(widget.staff!['imageUrl']), fit: BoxFit.cover) : null),
+                        : (widget.staff?['imageUrl'] != null ? DecorationImage(image: NetworkImage(widget.staff!['imageUrl'] as String), fit: BoxFit.cover) : null),
                     ),
                     child: (_imageBytes == null && widget.staff?['imageUrl'] == null)
                       ? Icon(Icons.add_a_photo_outlined, color: cs.secondary, size: 30)

@@ -60,7 +60,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       if (fileSize > AuthConstants.maxImageSizeBytes) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Image too large. Maximum size is ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB")),
+            const SnackBar(content: Text("Image too large. Maximum size is ${AuthConstants.maxImageSizeBytes ~/ (1024 * 1024)}MB")),
           );
         }
         return;
@@ -89,14 +89,14 @@ class _AddStaffPageState extends State<AddStaffPage> {
     _workingDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
     if (widget.staff != null) {
       final s = widget.staff!;
-      _nameController.text = s['name'] ?? '';
-      _phoneController.text = s['phone'] ?? '';
-      _emailController.text = s['email'] ?? '';
-      _addressController.text = s['address'] ?? '';
-      _dobController.text = s['dob'] ?? '';
-      _selectedBloodGroup = s['bloodGroup'];
-      _emergencyNameController.text = s['emergencyName'] ?? '';
-      _emergencyPhoneController.text = s['emergencyPhone'] ?? '';
+      _nameController.text = (s['name'] as String?) ?? '';
+      _phoneController.text = (s['phone'] as String?) ?? '';
+      _emailController.text = (s['email'] as String?) ?? '';
+      _addressController.text = (s['address'] as String?) ?? '';
+      _dobController.text = (s['dob'] as String?) ?? '';
+      _selectedBloodGroup = s['bloodGroup'] as String?;
+      _emergencyNameController.text = (s['emergencyName'] as String?) ?? '';
+      _emergencyPhoneController.text = (s['emergencyPhone'] as String?) ?? '';
       _selectedRole = StaffRole.values.firstWhere(
         (r) => r.dbValue == (s['role'] ?? 'CHEF'),
         orElse: () => StaffRole.chef,
@@ -113,15 +113,15 @@ class _AddStaffPageState extends State<AddStaffPage> {
       if (s['permissions'] != null) {
         _permissions = {
           ..._permissions,
-          ...Map<String, bool>.from(s['permissions']),
+          ...Map<String, bool>.from(s['permissions'] as Map<dynamic, dynamic>),
         };
       }
       
-      _startTimeController.text = s['shiftStart'] ?? '08:00 AM';
-      _endTimeController.text = s['shiftEnd'] ?? '04:00 PM';
+      _startTimeController.text = (s['shiftStart'] as String?) ?? '08:00 AM';
+      _endTimeController.text = (s['shiftEnd'] as String?) ?? '04:00 PM';
       
       if (s['workingDays'] != null) {
-        _workingDays = List<String>.from(s['workingDays']);
+        _workingDays = List<String>.from(s['workingDays'] as Iterable<dynamic>);
       }
     }
   }
@@ -146,70 +146,74 @@ class _AddStaffPageState extends State<AddStaffPage> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 768;
+    return PopScope(
+      canPop: !_isSaving,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 768;
 
-        return Scaffold(
-          backgroundColor: cs.surface,
-          appBar: isDesktop
-              ? AppBar(
-                  backgroundColor: cs.surface.withValues(alpha: 0.9),
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  leading: IconButton(
-                    icon: Icon(Icons.arrow_back, color: cs.primary),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  title: Text(
-                    "Sonna's Patisserie & Cafe",
-                    style: GoogleFonts.notoSerif(
-                      color: cs.primary,
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.5,
+          return Scaffold(
+            backgroundColor: cs.surface,
+            appBar: isDesktop
+                ? AppBar(
+                    backgroundColor: cs.surface.withValues(alpha: 0.9),
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    leading: IconButton(
+                      icon: Icon(Icons.arrow_back, color: cs.primary),
+                      onPressed: _isSaving ? null : () => Navigator.pop(context),
+                    ),
+                    title: Text(
+                      "Sonna's Patisserie & Cafe",
+                      style: GoogleFonts.notoSerif(
+                        color: cs.primary,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  )
+                : AppBar(
+                    backgroundColor: cs.surface.withValues(alpha: 0.8),
+                    elevation: 0,
+                    leading: IconButton(
+                      icon: Icon(Icons.arrow_back, color: cs.primary),
+                      onPressed: _isSaving ? null : () => Navigator.pop(context),
+                    ),
+                    title: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Add New Staff",
+                          style: GoogleFonts.notoSerif(
+                            color: cs.primary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.secondary.withValues(alpha: 0.6),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                )
-              : AppBar(
-                  backgroundColor: cs.surface.withValues(alpha: 0.8),
-                  elevation: 0,
-                  leading: IconButton(
-                    icon: Icon(Icons.arrow_back, color: cs.primary),
-                    onPressed: () => Navigator.pop(context),
+            body: Row(
+              children: [
+                if (isDesktop)
+                  OwnerSidebar(
+                    currentIndex: 4, // Active under Settings
+                    onTap: (index) {
+                      if (!_isSaving) {
+                        Navigator.pop(context, index);
+                      }
+                    },
                   ),
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Add New Staff",
-                        style: GoogleFonts.notoSerif(
-                          color: cs.primary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
-                        style: GoogleFonts.plusJakartaSans(
-                          color: cs.secondary.withValues(alpha: 0.6),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-          body: Row(
-            children: [
-              if (isDesktop)
-                OwnerSidebar(
-                  currentIndex: 4, // Active under Settings
-                  onTap: (index) {
-                    Navigator.pop(context, index);
-                  },
-                ),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24.0),
@@ -266,8 +270,9 @@ class _AddStaffPageState extends State<AddStaffPage> {
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBasicInfoSection(ColorScheme cs) {
     bool isMobile = MediaQuery.of(context).size.width < 500;
@@ -297,7 +302,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                       ? Image.memory(_imageBytes!, fit: BoxFit.cover)
                       : (widget.staff?['imageUrl'] != null
                           ? FutureBuilder<String?>(
-                              future: SupabaseService.getSignedUrl('staff_photos', widget.staff!['imageUrl']),
+                              future: SupabaseService.getSignedUrl('staff_photos', widget.staff!['imageUrl'] as String),
                               builder: (context, snapshot) {
                                 if (snapshot.hasData) {
                                   return Image.network(snapshot.data!, fit: BoxFit.cover);
@@ -806,7 +811,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
       };
 
       if (isEdit) {
-        await StaffService.updateStaff(widget.staff!['id'], staff);
+        await StaffService.updateStaff(widget.staff!['id'] as String, staff);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Staff member updated")),
@@ -834,7 +839,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
   }
 
   void _showSuccessDialog(String code) {
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
@@ -940,7 +945,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
 
         const SizedBox(height: 12),
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
           child: Text(
             "CANCEL",
             style: GoogleFonts.plusJakartaSans(

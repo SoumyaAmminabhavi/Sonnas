@@ -59,7 +59,7 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     if (_activeSubPage != null) {
       return PopScope(
         canPop: false,
-        onPopInvoked: (didPop) {
+        onPopInvokedWithResult: (didPop, result) {
           if (!didPop) {
             setState(() => _activeSubPage = null);
           }
@@ -248,27 +248,27 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                   child: Column(
                     children: List.generate(
                       3,
-                      (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
+                      (index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 16.0),
                         child: Row(
                           children: [
-                            const Skeleton(
+                            Skeleton(
                               height: 40,
                               width: 40,
                               borderRadius: 20,
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Skeleton(height: 14, width: 120),
-                                  const SizedBox(height: 8),
-                                  const Skeleton(height: 10, width: 80),
+                                  Skeleton(height: 14, width: 120),
+                                  SizedBox(height: 8),
+                                  Skeleton(height: 10, width: 80),
                                 ],
                               ),
                             ),
-                            const Skeleton(
+                            Skeleton(
                               height: 24,
                               width: 60,
                               borderRadius: 12,
@@ -302,10 +302,10 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                     .map(
                       (s) => _buildStaffRow(
                         cs,
-                        s['name'] ?? 'Unknown',
-                        s['role'] ?? 'Staff',
-                        s['isActivated'] ?? true,
-                        imageUrl: s['imageUrl'],
+                        (s['name'] as String?) ?? 'Unknown',
+                        (s['role'] as String?) ?? 'Staff',
+                        (s['isActivated'] as bool?) ?? true,
+                        imageUrl: s['imageUrl'] as String?,
                         staffData: s,
                       ),
                     )
@@ -319,9 +319,9 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () async {
-                final result = await Navigator.push(
+                final result = await Navigator.push<dynamic>(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddStaffPage()),
+                  MaterialPageRoute<dynamic>(builder: (context) => const AddStaffPage()),
                 );
                 if (result != null && result is int) {
                   widget.onTabChanged?.call(result);
@@ -590,16 +590,16 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               color: cs.surface,
               onSelected: (value) async {
                 if (value == 'edit') {
-                  Navigator.push(
+                  await Navigator.push<void>(
                     context,
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (context) => AddStaffPage(staff: staffData),
                     ),
                   );
                 } else if (value == 'view') {
-                  Navigator.push(
+                  await Navigator.push<void>(
                     context,
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (context) =>
                           AddStaffPage(staff: staffData, isReadOnly: true),
                     ),
@@ -628,7 +628,7 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                     ),
                   );
                   if (confirm == true) {
-                    await StaffService.deleteStaff(staffData['id']);
+                    await StaffService.deleteStaff(staffData['id'] as String);
                   }
                 }
               },

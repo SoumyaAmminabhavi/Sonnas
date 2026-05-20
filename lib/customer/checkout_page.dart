@@ -91,7 +91,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.product['name'], style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text((item.product['name'] as String?) ?? '', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 14)),
                         Text("Qty: ${item.quantity}", style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.secondary.withValues(alpha: 0.5))),
                       ],
                     ),
@@ -242,7 +242,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
   }
 
   void _showSuccessDialog() {
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(

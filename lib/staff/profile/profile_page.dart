@@ -58,17 +58,17 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   }
 
   String get _displayShift {
-    final start = widget.staffData?['shiftStart'] ?? '—';
-    final end = widget.staffData?['shiftEnd'] ?? '—';
+    final start = (widget.staffData?['shiftStart'] as String?) ?? '—';
+    final end = (widget.staffData?['shiftEnd'] as String?) ?? '—';
     return '$start – $end';
   }
 
-  String get _displayBloodGroup => widget.staffData?['bloodGroup'] ?? '—';
-  String get _displayAddress => widget.staffData?['address'] ?? '—';
-  String get _displayEmail => widget.staffData?['email'] ?? '—';
-  String get _displayEmergencyName => widget.staffData?['emergencyName'] ?? '—';
+  String get _displayBloodGroup => (widget.staffData?['bloodGroup'] as String?) ?? '—';
+  String get _displayAddress => (widget.staffData?['address'] as String?) ?? '—';
+  String get _displayEmail => (widget.staffData?['email'] as String?) ?? '—';
+  String get _displayEmergencyName => (widget.staffData?['emergencyName'] as String?) ?? '—';
   String get _displayEmergencyPhone =>
-      widget.staffData?['emergencyPhone'] ?? '—';
+      (widget.staffData?['emergencyPhone'] as String?) ?? '—';
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +117,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                     children: [
                       _PetalProfileImage(
                         size: imageSize,
-                        imageUrl: widget.staffData?['imageUrl'],
+                        imageUrl: widget.staffData?['imageUrl'] as String?,
                         name: _displayName,
                         cs: widget.cs,
                       ),
@@ -324,24 +324,24 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                   if (!mounted) return;
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.error_outline,
-                                              color: Colors.white,
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.error_outline,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              "No biometric hardware detected.",
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Text(
-                                                "No biometric hardware detected.",
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        backgroundColor: Colors.redAccent,
+                                          ),
+                                        ],
                                       ),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
                                     );
                                   }
                                   return;
@@ -359,14 +359,14 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                   if (dbUpdated) {
                                     setState(() => _biometricEnabled = val);
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content: Row(
                                           children: [
-                                            const Icon(
+                                            Icon(
                                               Icons.check_circle_outline,
                                               color: Colors.white,
                                             ),
-                                            const SizedBox(width: 12),
+                                            SizedBox(width: 12),
                                             Expanded(
                                               child: Text(
                                                 "Biometric Login Enabled",
@@ -393,14 +393,14 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                 if (dbUpdated) {
                                   setState(() => _biometricEnabled = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                       content: Row(
                                         children: [
-                                          const Icon(
+                                          Icon(
                                             Icons.info_outline,
                                             color: Colors.white,
                                           ),
-                                          const SizedBox(width: 12),
+                                          SizedBox(width: 12),
                                           Expanded(
                                             child: Text(
                                               "Biometric Login Disabled",
@@ -424,14 +424,14 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                               }
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
+                                  const SnackBar(
                                     content: Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.error_outline,
                                           color: Colors.white,
                                         ),
-                                        const SizedBox(width: 12),
+                                        SizedBox(width: 12),
                                         Expanded(
                                           child: Text(
                                             "Failed to update biometric settings. Please try again.",

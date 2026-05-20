@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,9 +39,9 @@ void main() async {
     await SupabaseService.initialize();
     
     // Pre-warm owner authentication (fetches PIN hash early for instant login)
-    AuthService.prewarmOwnerAuth().catchError((e) {
+    unawaited(AuthService.prewarmOwnerAuth().catchError((Object e) {
       debugPrint('⚠️ Prewarm Owner Auth failed: $e');
-    });
+    }));
     
     // Load saved theme
     try {
@@ -176,7 +177,7 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
       );
       return;
     }
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const CustomerCheckoutPage()));
+    Navigator.push<void>(context, MaterialPageRoute<void>(builder: (_) => const CustomerCheckoutPage()));
   }
 
   @override

@@ -159,7 +159,7 @@ class MenuDetailsPage extends ConsumerWidget {
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                cake['name'] ?? 'Untitled Creation',
+                                (cake['name'] as String?) ?? 'Untitled Creation',
                                 style: GoogleFonts.notoSerif(fontSize: isDesktop ? 42 : 32, height: 1.1, color: cs.secondary),
                               ),
                               const SizedBox(height: 32),
@@ -190,7 +190,7 @@ class MenuDetailsPage extends ConsumerWidget {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                cake['description'] ?? 'No description provided.',
+                                (cake['description'] as String?) ?? 'No description provided.',
                                 style: GoogleFonts.notoSerif(fontSize: 16, height: 1.6, color: cs.onSurface.withValues(alpha: 0.8)),
                               ),
                               const SizedBox(height: 48),
@@ -219,7 +219,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                 style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.secondary.withValues(alpha: 0.4)),
                               ),
                               const SizedBox(height: 16),
-                              ...options.map((opt) => _OptionCard(opt: opt, cs: cs)),
+                              ...options.map((opt) => _OptionCard(opt: opt as Map<String, dynamic>, cs: cs)),
                               if (options.isEmpty)
                                 Text(
                                   "No size configurations found for this item.",
@@ -235,8 +235,8 @@ class MenuDetailsPage extends ConsumerWidget {
                 ],
               ),
               floatingActionButton: FloatingActionButton.extended(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => AddMenuPage(cakeData: cake, onTabChanged: onTabChanged)));
+                onPressed: () async {
+                  await Navigator.push<void>(context, MaterialPageRoute<void>(builder: (context) => AddMenuPage(cakeData: cake, onTabChanged: onTabChanged)));
                 },
                 backgroundColor: cs.primary,
                 icon: const Icon(Icons.edit_outlined, color: Colors.white),

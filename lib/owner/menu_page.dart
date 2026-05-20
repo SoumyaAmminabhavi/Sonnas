@@ -1,8 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:io' show File;
 
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,7 +36,7 @@ class _MenuPageState extends ConsumerState<MenuPage> {
     List<Map<String, dynamic>> initialCategories,
     List<_MenuItem> allItems,
   ) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -188,8 +187,8 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                                             debugPrint('Category delete error: $e\n$st');
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: const Text("An error occurred, please try again"),
+                                                const SnackBar(
+                                                  content: Text("An error occurred, please try again"),
                                                   behavior: SnackBarBehavior.floating,
                                                   backgroundColor: Colors.red,
                                                 ),
@@ -256,9 +255,9 @@ class _MenuPageState extends ConsumerState<MenuPage> {
           elevation: 6,
           shape: const CircleBorder(),
           onPressed: () async {
-            await Navigator.push(
+            await Navigator.push<void>(
               context,
-              MaterialPageRoute(
+              MaterialPageRoute<void>(
                 builder: (_) =>
                     AddMenuPage(onTabChanged: widget.onTabChanged),
               ),
@@ -334,16 +333,16 @@ class _MenuPageState extends ConsumerState<MenuPage> {
               final String version = data['updatedAt']?.toString() ?? '1';
               final String imageUrl = imageField.isEmpty
                   ? ''
-                  : (imageField.startsWith('http://') || imageField.startsWith('https://'))
+                  : RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*:').hasMatch(imageField)
                       ? '$imageField?v=$version'
                       : '${SupabaseService.getPublicUrl(imageField, bucket: 'cakes')}?v=$version';
 
               return _MenuItem(
-                id: data['id'],
-                name: data['name'] ?? 'Untitled Cake',
-                category: data['Category']?['name'] ?? data['category'] ?? 'General',
+                id: (data['id'] as String?) ?? '',
+                name: (data['name'] as String?) ?? 'Untitled Cake',
+                category: (data['Category']?['name'] as String?) ?? (data['category'] as String?) ?? 'General',
                 price: basePrice,
-                description: data['description'] ?? '',
+                description: (data['description'] as String?) ?? '',
                 serves: baseServes,
                 weight: "Standard",
                 imageUrl: imageUrl,
@@ -660,10 +659,10 @@ class _MenuItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push<void>(
           context,
-          MaterialPageRoute(
+          MaterialPageRoute<void>(
             builder: (_) =>
                 MenuDetailsPage(cakeId: item.id, onTabChanged: onTabChanged),
           ),
@@ -892,6 +891,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
   final _picker = ImagePicker();
   XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   String? _existingImageUrl;
   bool _isUploading = false;
 
@@ -921,7 +921,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     _weightController = TextEditingController(text: (firstOption?['size'] ?? firstOption?['weight'])?.toString() ?? '');
     _servesController = TextEditingController(text: firstOption?['serves']?.toString() ?? '');
     _newCategoryController = TextEditingController();
-    _existingImageUrl = data?['image'];
+    _existingImageUrl = data?['image'] as String?;
 
     _loadCategories();
   }
@@ -975,7 +975,11 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     );
     if (!mounted) return;
     if (image != null) {
-      setState(() => _selectedImage = image);
+      final bytes = await image.readAsBytes();
+      setState(() {
+        _selectedImage = image;
+        _selectedImageBytes = bytes;
+      });
     }
   }
 
@@ -1082,7 +1086,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
             'sortOrder': nextSortOrder,
             'updatedAt': DateTime.now().toIso8601String(),
           });
-          _loadCategories();
+          await _loadCategories();
         }
       } else {
         // FK Guard: Ensure category selection is valid
@@ -1169,14 +1173,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       Map<String, dynamic>? matchedOption;
       for (var opt in existingOptions) {
         if (opt['size']?.toString().trim() == currentSize) {
-          matchedOption = Map<String, dynamic>.from(opt);
+          matchedOption = Map<String, dynamic>.from(opt as Map<dynamic, dynamic>);
           break;
         }
       }
 
       // If no exact size match but editing, reuse the first option's ID to avoid orphan rows
       if (matchedOption == null && existingOptions.isNotEmpty && widget.initialData != null) {
-        matchedOption = Map<String, dynamic>.from(existingOptions.first);
+        matchedOption = Map<String, dynamic>.from(existingOptions.first as Map<dynamic, dynamic>);
         matchedOption['cakeId'] = cakeId;
         matchedOption['size'] = currentSize;
       }
@@ -1487,7 +1491,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                           if (confirmed == true) {
                             setState(() => _isUploading = true);
                             try {
-                              await MenuService.deleteCake(widget.initialData!['id']);
+                              await MenuService.deleteCake(widget.initialData!['id'] as String);
                               ref.invalidate(menuProvider);
                               if (!context.mounted) return;
                               Navigator.pop(context);
@@ -1541,8 +1545,8 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
     // 1. Add categories from DB
     for (var cat in _categories) {
       items.add(DropdownMenuItem(
-        value: cat['id'],
-        child: Text(cat['name'] ?? 'Untitled'),
+        value: cat['id'] as String?,
+        child: Text((cat['name'] as String?) ?? 'Untitled'),
       ));
     }
 
@@ -1650,21 +1654,15 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: _selectedImage != null
-                ? (kIsWeb 
-                    ? Image.network(
-                        _selectedImage!.path, 
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
-                      )
-                    : Image.file(
-                        File(_selectedImage!.path),
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
-                      ))
+            child: _selectedImageBytes != null
+                ? Image.memory(
+                    _selectedImageBytes!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(cs),
+                  )
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
-                        (_existingImageUrl!.startsWith('http://') || _existingImageUrl!.startsWith('https://'))
+                        RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*:').hasMatch(_existingImageUrl!)
                             ? _existingImageUrl!
                             : SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
                         fit: BoxFit.cover,

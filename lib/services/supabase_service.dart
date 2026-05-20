@@ -104,7 +104,7 @@ class SupabaseService {
         await storageClient.from(bucket).uploadBinary(path, file, fileOptions: const FileOptions(upsert: true));
       } else {
         // Must be io.File on non-web platform
-        await storageClient.from(bucket).upload(path, file, fileOptions: const FileOptions(upsert: true));
+        await storageClient.from(bucket).upload(path, file as io.File, fileOptions: const FileOptions(upsert: true));
       }
       return path;
     } catch (e) {

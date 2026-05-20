@@ -270,8 +270,8 @@ class KitchenOrderCard extends StatelessWidget {
                       debugPrint("Kitchen order status update failed: $e");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text("Failed to update order status"),
+                          const SnackBar(
+                            content: Text("Failed to update order status"),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -340,14 +340,14 @@ class KitchenOrderCard extends StatelessWidget {
         imageUrl.toLowerCase() == 'cake_placeholder.png') {
       imageUrl = ''; // Clear corrupted/unsupported values
       if (items.isNotEmpty && menu.isNotEmpty) {
-        final String firstName = items[0]['cakeName'] ?? '';
+        final String firstName = (items[0]['cakeName'] as String?) ?? '';
         final String? firstCakeId = items[0]['cakeId']?.toString();
         final matchingCake = menu.firstWhere(
           (c) => (firstCakeId != null && c['id']?.toString() == firstCakeId) ||
                  (c['name']?.toString().toLowerCase() == firstName.toLowerCase()),
           orElse: () => <String, dynamic>{},
         );
-        imageUrl = matchingCake['image'] ?? '';
+        imageUrl = (matchingCake['image'] as String?) ?? '';
         version = matchingCake['updatedAt']?.toString();
       }
     }

@@ -67,16 +67,16 @@ class StaffService {
 
   static Future<bool> updateBiometricStatus(String id, bool enabled) async {
     try {
-      final res = await _client.rpc('self_update_staff', params: {
+      final res = await _client.rpc<bool>('self_update_staff', params: {
         'staff_id': id,
         'update_data': {
           'biometricEnabled': enabled,
         },
       });
-      return res as bool? ?? false;
+      return res;
     } catch (e) {
       debugPrint('❌ Update biometric status RPC failed: $e');
-      return false;
+      rethrow;
     }
   }
 

@@ -149,7 +149,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
         ),
       ),
       error: (error, stackTrace) {
-        debugPrint("❌ Payments load error: $error");
+        debugPrint("❌ Payments load error: $error\n$stackTrace");
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -424,7 +424,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                   ),
                 ),
                 Text(
-                  item['customerName'] ?? 'Anonymous',
+                  (item['customerName'] as String?) ?? 'Anonymous',
                   style: GoogleFonts.notoSerif(
                     color: cs.onSurface,
                     fontSize: 18,
@@ -432,7 +432,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                   ),
                 ),
                 Text(
-                  item['cakeName'] ?? 'Custom Creation',
+                  (item['cakeName'] as String?) ?? 'Custom Creation',
                   style: GoogleFonts.notoSerif(
                     color: cs.secondary.withValues(alpha: 0.5),
                     fontSize: 11,
@@ -468,8 +468,8 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                           ),
                         );
                       }
-                    } catch (e) {
-                      debugPrint("❌ Failed to update payment status: $e");
+                    } catch (e, stackTrace) {
+                      debugPrint("❌ Failed to update payment status: $e\n$stackTrace");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -589,7 +589,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              item['customerName'] ?? 'Anonymous',
+                              (item['customerName'] as String?) ?? 'Anonymous',
                               style: GoogleFonts.plusJakartaSans(
                                 color: cs.onSurface,
                                 fontSize: 13,

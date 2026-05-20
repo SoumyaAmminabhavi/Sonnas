@@ -55,7 +55,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
       }
       if (mounted) {
         setState(() {
-          _loginPhoneController.text = savedStaff['phone'] ?? '';
+          _loginPhoneController.text = (savedStaff['phone'] as String?) ?? '';
         });
       }
     }
@@ -162,7 +162,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
 
     setState(() => _isLoading = true);
 
-    final success = await AuthService.registerStaff(_verifiedStaff!['id'], password);
+    final success = await AuthService.registerStaff(_verifiedStaff!['id'] as String, password);
     
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -196,7 +196,7 @@ class _StaffLoginPageState extends State<StaffLoginPage> {
     }
 
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
+      MaterialPageRoute<void>(
         builder: (context) => StaffDashboard(role: mappedRole, staffData: staff),
       ),
     );

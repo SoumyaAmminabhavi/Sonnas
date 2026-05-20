@@ -166,21 +166,21 @@ class _OrdersList extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Row(
+                child: const Row(
                   children: [
-                    const Skeleton(height: 50, width: 50, borderRadius: 12),
-                    const SizedBox(width: 16),
+                    Skeleton(height: 50, width: 50, borderRadius: 12),
+                    SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Skeleton(height: 14, width: 140),
-                          const SizedBox(height: 8),
-                          const Skeleton(height: 10, width: 90),
+                          Skeleton(height: 14, width: 140),
+                          SizedBox(height: 8),
+                          Skeleton(height: 10, width: 90),
                         ],
                       ),
                     ),
-                    const Skeleton(height: 24, width: 70, borderRadius: 12),
+                    Skeleton(height: 24, width: 70, borderRadius: 12),
                   ],
                 ),
               ),
@@ -196,8 +196,8 @@ class _OrdersList extends StatelessWidget {
             onRetry: () {
               // Trigger a rebuild by popping and pushing or just using a key?
               // For now, providing a graceful UI is the priority.
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => ManageOrdersPage(onTabChanged: onTabChanged)),
+              Navigator.of(context).pushReplacement<void, void>(
+                MaterialPageRoute<void>(builder: (context) => ManageOrdersPage(onTabChanged: onTabChanged)),
               );
             },
           );
@@ -212,7 +212,7 @@ class _OrdersList extends StatelessWidget {
           final status = order['status'] ?? 'PENDING';
           final createdAtStr = order['createdAt'];
           
-          DateTime? createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr) : null;
+          DateTime? createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr as String) : null;
 
           switch (filter) {
             case _OrderFilter.custom:

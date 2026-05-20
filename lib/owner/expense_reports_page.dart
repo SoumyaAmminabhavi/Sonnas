@@ -55,8 +55,8 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Unable to fetch finance data. Please try again."),
+          const SnackBar(
+            content: Text("Unable to fetch finance data. Please try again."),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -115,7 +115,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     bool isSaving = false;
 
     try {
-      await showDialog(
+      await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (context) => StatefulBuilder(
@@ -234,7 +234,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                         if (context.mounted) {
                           final messenger = ScaffoldMessenger.of(context);
                           Navigator.pop(context);
-                          _loadData();
+                          await _loadData();
                           messenger.showSnackBar(
                           const SnackBar(
                             content: Text("Expense logged successfully!"),
@@ -247,8 +247,8 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                       debugPrint("Expense Log Error: $e");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text("Failed to log expense"),
+                          const SnackBar(
+                            content: Text("Failed to log expense"),
                             backgroundColor: Colors.red,
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -295,7 +295,7 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
 
     return PopScope(
       canPop: widget.onClose == null,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           widget.onClose?.call();
         }
@@ -499,8 +499,8 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
             const SizedBox(height: 24),
             ..._expenses.take(10).map((e) => ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text(e['title'] ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(e['category'] ?? 'Other'),
+              title: Text((e['title'] as String?) ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text((e['category'] as String?) ?? 'Other'),
               trailing: Text("${PriceConstants.currencySymbol}${e['amount']}", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold, fontSize: 16)),
             )),
           ],

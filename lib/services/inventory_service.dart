@@ -28,7 +28,7 @@ class InventoryService {
   /// Update inventory stock level (Increment or absolute)
   static Future<void> updateInventoryStock(String id, double value, {bool isIncrement = true}) async {
     if (isIncrement) {
-      await _client.rpc('increment_inventory', params: {'item_id': id, 'amount': value});
+      await _client.rpc<void>('increment_inventory', params: {'item_id': id, 'amount': value});
     } else {
       if (value < 0) throw Exception("Stock level cannot be negative");
       await _client.from('InventoryItem').update({'currentStock': value}).eq('id', id);

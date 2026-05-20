@@ -16,7 +16,7 @@ class GlassOrderSheet extends StatefulWidget {
   const GlassOrderSheet({super.key, required this.order, this.showActions = true});
 
   static void show(BuildContext context, SonnaOrder order, {bool showActions = true}) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -239,7 +239,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
             (c) => c['name']?.toString().toLowerCase() == item.cakeName.toLowerCase(),
             orElse: () => <String, dynamic>{},
           );
-    displayImageUrl = matchingCake['image'] ?? '';
+    displayImageUrl = (matchingCake['image'] as String?) ?? '';
 
     if (displayImageUrl.isEmpty || item.cakeName.toUpperCase().contains('CUSTOM')) {
       final customTrimmed = widget.order.customImageUrl?.trim();

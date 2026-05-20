@@ -22,7 +22,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
     return PopScope(
       canPop: widget.onClose == null,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
           widget.onClose?.call();
         }
@@ -48,7 +48,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           
            if (snapshot.hasError) {
               debugPrint("Inventory Stream Error: ${snapshot.error}");
-              return Center(child: Text("Unable to load stock data"));
+              return const Center(child: Text("Unable to load stock data"));
            }
 
           final allItems = snapshot.data ?? [];
@@ -175,7 +175,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
             children: [
               Expanded(
                 child: Text(
-                  item['name']?.toUpperCase() ?? 'ITEM',
+                  (item['name'] as String?)?.toUpperCase() ?? 'ITEM',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
@@ -205,7 +205,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       ),
                     );
                     if (confirm == true) {
-                      await InventoryService.deleteInventoryItem(item['id']);
+                      await InventoryService.deleteInventoryItem(item['id'] as String);
                     }
                   } else if (val == 'edit') {
                     _showEditStockDialog(context, cs, item);
@@ -233,7 +233,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
               ),
               const SizedBox(width: 4),
               Text(
-                item['unit'] ?? '',
+                (item['unit'] as String?) ?? '',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: cs.secondary.withValues(alpha: 0.4),
@@ -258,7 +258,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
   void _showEditStockDialog(BuildContext context, ColorScheme cs, Map<String, dynamic> item) {
     final controller = TextEditingController(text: item['currentStock'].toString());
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -286,7 +286,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                 return;
               }
               
-              await InventoryService.updateInventoryStock(item['id'], newVal, isIncrement: false);
+              await InventoryService.updateInventoryStock(item['id'] as String, newVal, isIncrement: false);
               if (context.mounted) Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
@@ -312,7 +312,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
     String selectedCategory = _categories[1]; // Default to Ingredients
     bool isSaving = false;
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
@@ -436,8 +436,8 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                       debugPrint("Add Inventory Item Error: $e");
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text("Failed to add item"),
+                          const SnackBar(
+                            content: Text("Failed to add item"),
                             backgroundColor: Colors.red,
                             behavior: SnackBarBehavior.floating,
                           ),
@@ -667,7 +667,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  item['name'] ?? 'Unknown',
+                  (item['name'] as String?) ?? 'Unknown',
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w500,
                     fontSize: 13,

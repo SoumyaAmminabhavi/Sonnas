@@ -183,9 +183,9 @@ class _CustomerCatalogPageState extends ConsumerState<CustomerCatalogPage> {
 
   Widget _buildCartFab(ColorScheme cs, CartState cart) {
     return FloatingActionButton.extended(
-      onPressed: () => Navigator.push(
+      onPressed: () => Navigator.push<void>(
         context,
-        MaterialPageRoute(builder: (context) => const CustomerCheckoutPage()),
+        MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutPage()),
       ),
       backgroundColor: cs.primary,
       label: Text(
@@ -223,9 +223,9 @@ class _ProductCard extends ConsumerWidget {
     final heroTag = 'product_${item['id'] ?? index}';
 
     return InkWell(
-      onTap: () => Navigator.push(
+      onTap: () => Navigator.push<void>(
         context,
-                        MaterialPageRoute(builder: (context) => CustomerProductDetailPage(product: item, heroTag: heroTag)),
+        MaterialPageRoute<void>(builder: (context) => CustomerProductDetailPage(product: item, heroTag: heroTag)),
       ),
       borderRadius: BorderRadius.circular(24),
       child: Container(
@@ -295,7 +295,7 @@ class _ProductCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item['name'] ?? 'Unknown Item',
+                    (item['name'] as String?) ?? 'Unknown Item',
                     style: GoogleFonts.notoSerif(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -306,7 +306,7 @@ class _ProductCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item['description'] ?? 'No description available',
+                    (item['description'] as String?) ?? 'No description available',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 10,
                       color: cs.secondary.withValues(alpha: 0.5),

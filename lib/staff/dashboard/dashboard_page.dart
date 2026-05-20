@@ -74,7 +74,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
         cs: cs,
         isDesktop: isDesktop,
         role: widget.role,
-        shift: widget.staffData?['shift'] ?? 'MORNING',
+        shift: (widget.staffData?['shift'] as String?) ?? 'MORNING',
         hasKitchen: hasKitchen,
         hasOrders: hasOrders,
         hasHygiene: hasHygiene,
@@ -94,8 +94,8 @@ class _StaffDashboardState extends State<StaffDashboard> {
         cs: cs, 
         isDesktop: isDesktop, 
         role: widget.role,
-        staffId: widget.staffData?['id'] ?? 'unknown',
-        currentBiometricStatus: widget.staffData?['biometricEnabled'] ?? false,
+        staffId: (widget.staffData?['id'] as String?) ?? 'unknown',
+        currentBiometricStatus: (widget.staffData?['biometricEnabled'] as bool?) ?? false,
         staffData: widget.staffData,
       ),
     );
@@ -239,7 +239,7 @@ class _DashboardContent extends StatelessWidget {
         // --- ROLE BASED FILTERING ---
         final bool isCleaning = role == StaffRole.cleaning;
         
-        final activeOrders = isCleaning ? [] : allOrders.where((o) {
+        final activeOrders = isCleaning ? <Map<String, dynamic>>[] : allOrders.where((o) {
           final status = (o['status'] ?? '').toLowerCase();
           return status != 'delivered' &&
                  status != 'completed' &&
@@ -286,7 +286,7 @@ class _DashboardContent extends StatelessWidget {
                 
                 // Hide order metrics for cleaning staff
                 if (isCleaning) {
-                  return _MetricCard(
+                  return const _MetricCard(
                     icon: Icons.cleaning_services_outlined, 
                     value: "Standards", 
                     label: "HYGIENE COMPLIANCE", 
@@ -328,7 +328,7 @@ class _DashboardContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             if (isCleaning)
-              _MetricCard(
+              const _MetricCard(
                 icon: Icons.checklist_rtl_rounded, 
                 value: "View All", 
                 label: "TAP OPERATIONS FOR CHECKLIST", 
@@ -352,19 +352,19 @@ class _DashboardContent extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final o = activeOrders[index];
                       return _TaskCard(
-                        orderNumber: o['orderNumber'] ?? '---',
-                        title: o['customerName'] ?? 'Customer',
+                        orderNumber: (o['orderNumber'] as String?) ?? '---',
+                        title: (o['customerName'] as String?) ?? 'Customer',
                         status: o['status']?.toString().toUpperCase() ?? 'PENDING',
                         onAction: () async {
                           final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
                           if (next == null) return;
                           try {
-                            await OrderService.updateOrderStatus(o['id'], next);
+                            await OrderService.updateOrderStatus(o['id'] as String, next);
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text("Failed to update order status"),
+                                const SnackBar(
+                                  content: Text("Failed to update order status"),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -382,14 +382,14 @@ class _DashboardContent extends StatelessWidget {
                   children: activeOrders.take(5).map((o) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: _TaskCard(
-                      orderNumber: o['orderNumber'] ?? '---',
-                      title: o['customerName'] ?? 'Customer',
+                      orderNumber: (o['orderNumber'] as String?) ?? '---',
+                      title: (o['customerName'] as String?) ?? 'Customer',
                       status: o['status']?.toString().toUpperCase() ?? 'PENDING',
                       onAction: () async {
                         final next = _getNextStatus(o['status']?.toString().toLowerCase() ?? '');
                         if (next == null) return;
                         try {
-                          await OrderService.updateOrderStatus(o['id'], next);
+                          await OrderService.updateOrderStatus(o['id'] as String, next);
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -648,9 +648,9 @@ class _StaffBottomNav extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(item['icon'], color: isActive ? cs.primary : cs.secondary.withValues(alpha: 0.5), size: 24),
+                  Icon(item['icon'] as IconData, color: isActive ? cs.primary : cs.secondary.withValues(alpha: 0.5), size: 24),
                   const SizedBox(height: 4),
-                  Text(item['label'], style: GoogleFonts.plusJakartaSans(color: isActive ? cs.primary : cs.secondary.withValues(alpha: 0.5), fontSize: 10, fontWeight: isActive ? FontWeight.bold : FontWeight.w500)),
+                  Text(item['label'] as String, style: GoogleFonts.plusJakartaSans(color: isActive ? cs.primary : cs.secondary.withValues(alpha: 0.5), fontSize: 10, fontWeight: isActive ? FontWeight.bold : FontWeight.w500)),
                 ],
               ),
             ),
