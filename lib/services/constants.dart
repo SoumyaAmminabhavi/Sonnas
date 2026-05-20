@@ -27,6 +27,10 @@ class PriceConstants {
     
     final parsedVal = double.tryParse(clean) ?? 0.0;
 
+    if (rawPrice is String && !hasCurrency && !hasDecimal && !hasTrailing) {
+      return parsedVal;
+    }
+
     if (hasCurrency || hasDecimal || hasTrailing) {
       return parsedVal;
     } else {

@@ -31,7 +31,6 @@ class MenuService {
         subscriptions.add(_client.from('Cake').stream(primaryKey: ['id']).listen(handleEvent));
         subscriptions.add(_client.from('Category').stream(primaryKey: ['id']).listen(handleEvent));
         subscriptions.add(_client.from('CakeOption').stream(primaryKey: ['id']).listen(handleEvent));
-        refresh();
       }
     };
 

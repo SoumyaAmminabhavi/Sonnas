@@ -13,19 +13,6 @@ class StaffInventoryPage extends StatefulWidget {
 }
 
 class _StaffInventoryPageState extends State<StaffInventoryPage> {
-  late Future<List<Map<String, dynamic>>> _inventoryFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _inventoryFuture = InventoryService.fetchInventory();
-  }
-
-  void _refreshInventoryFuture() {
-    setState(() {
-      _inventoryFuture = InventoryService.fetchInventory();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +206,9 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
     Map<String, dynamic>? selectedItem = preselectedItem;
     bool isSubmitting = false;
     bool isManualSelection = false;
-    Future<List<Map<String, dynamic>>> dialogInventoryFuture = _inventoryFuture;
+    Future<List<Map<String, dynamic>>> dialogInventoryFuture = fallbackItems.isNotEmpty
+        ? Future.value(fallbackItems)
+        : InventoryService.fetchInventory();
 
     try {
       await showDialog(
@@ -271,7 +260,6 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                                       final fresh = InventoryService.fetchInventory();
                                       setDialogState(() {
                                         dialogInventoryFuture = fresh;
-                                        _inventoryFuture = fresh;
                                       });
                                       setFieldState(() {});
                                     },
@@ -367,7 +355,6 @@ class _StaffInventoryPageState extends State<StaffInventoryPage> {
                   } else {
                     await InventoryService.updateInventoryStock(selectedItem!['id'], qty);
                   }
-                  _refreshInventoryFuture();
                   
                   if (context.mounted) {
                     Navigator.pop(context);

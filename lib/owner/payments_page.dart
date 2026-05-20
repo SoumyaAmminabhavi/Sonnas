@@ -92,27 +92,6 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
     ref.invalidate(ordersStreamProvider);
   }
 
-  /// Normalizes a price value to rupees (major units).
-  /// DB stores prices as integers in paise (minor units), but some legacy
-  /// values may already be in rupees. Heuristic: if the string contains
-  /// a decimal point or currency symbol, treat it as rupees; otherwise
-  /// divide by 100 to convert from paise.
-  double _normalizePrice(dynamic raw) {
-    if (raw == null) return 0.0;
-    final str = raw.toString();
-    final hasDecimal = str.contains('.');
-    final hasCurrency = str.contains(PriceConstants.currencySymbol) || str.toUpperCase().contains('INR');
-    final clean = str
-        .replaceAll(PriceConstants.currencySymbol, '')
-        .replaceAll(RegExp(r'INR', caseSensitive: false), '')
-        .replaceAll('/-', '')
-        .replaceAll(',', '')
-        .trim();
-    if (clean.isEmpty) return 0.0;
-    final parsed = double.tryParse(clean) ?? 0.0;
-    if (hasDecimal || hasCurrency) return parsed;
-    return parsed / PriceConstants.minorUnitsPerMajor;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +127,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
 
         double totalPending = 0;
         for (var o in pendingOrders) {
-          totalPending += _normalizePrice(o['totalPrice']);
+          totalPending += PriceConstants.normalizePrice(o['totalPrice']);
         }
 
         double weeklyGross = 0;
@@ -156,7 +135,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
           if (paymentStatusOf(o) == 'PAID') {
             final date = getPaymentDate(o);
             if (date != null && date.isAfter(sevenDaysAgo)) {
-              weeklyGross += _normalizePrice(o['totalPrice']);
+              weeklyGross += PriceConstants.normalizePrice(o['totalPrice']);
             }
           }
         }

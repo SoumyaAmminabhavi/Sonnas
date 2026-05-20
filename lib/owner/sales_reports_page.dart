@@ -172,10 +172,17 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       
       _topItems = sortedItems.take(5).map((e) {
         final details = itemDetails[e.key] ?? {};
-        final rawImage = details['image']?.toString();
-        final resolvedImage = (rawImage != null && rawImage.isNotEmpty)
-            ? SupabaseService.getPublicUrl(rawImage, bucket: 'cakes')
-            : null;
+        final rawImage = details['image']?.toString().trim();
+        final String? resolvedImage;
+        if (rawImage == null || rawImage.isEmpty) {
+          resolvedImage = null;
+        } else if (rawImage.startsWith('data:') ||
+            rawImage.startsWith('http://') ||
+            rawImage.startsWith('https://')) {
+          resolvedImage = rawImage;
+        } else {
+          resolvedImage = SupabaseService.getPublicUrl(rawImage, bucket: 'cakes');
+        }
         return {
           'name': e.key,
           'count': e.value,
@@ -209,7 +216,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     }).join(',');
     
     if (currentIds == _lastProcessedIds) return;
-    _lastProcessedIds = currentIds;
 
     final ids = paidOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
     if (ids.isEmpty) {
@@ -226,6 +232,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
       if (mounted && fetchVersion == _pendingFetchVersion) {
         setState(() {
           _processItems(items, menu);
+          _lastProcessedIds = currentIds;
         });
       }
     }).catchError((e) {

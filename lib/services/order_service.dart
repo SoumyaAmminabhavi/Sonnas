@@ -373,7 +373,7 @@ class OrderService {
         final res = await _client
             .from('Order')
             .select('*, WhatsAppConversation(*), items:OrderItem(*)')
-            .inFilter('status', ['PENDING', 'CONFIRMED'])
+            .inFilter('status', ['PENDING', 'CONFIRMED', 'ACCEPTED', 'PREPARING'])
             .order('createdAt', ascending: true);
         return List<Map<String, dynamic>>.from(res);
       },

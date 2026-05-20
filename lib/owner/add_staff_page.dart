@@ -111,7 +111,10 @@ class _AddStaffPageState extends State<AddStaffPage> {
       );
       
       if (s['permissions'] != null) {
-        _permissions = Map<String, bool>.from(s['permissions']);
+        _permissions = {
+          ..._permissions,
+          ...Map<String, bool>.from(s['permissions']),
+        };
       }
       
       _startTimeController.text = s['shiftStart'] ?? '08:00 AM';
@@ -816,10 +819,11 @@ class _AddStaffPageState extends State<AddStaffPage> {
           _showSuccessDialog(finalJoiningCode);
         }
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint("Add staff error: $e\n$st");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: $e")),
+          const SnackBar(content: Text("Unable to save staff details. Please try again.")),
         );
       }
     } finally {

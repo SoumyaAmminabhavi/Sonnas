@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 import 'constants.dart';
@@ -67,9 +67,15 @@ class StaffService {
 
   static Future<bool> updateBiometricStatus(String id, bool enabled) async {
     try {
-      await _client.from('Staff').update({'biometricEnabled': enabled}).eq('id', id);
-      return true;
+      final res = await _client.rpc('self_update_staff', params: {
+        'staff_id': id,
+        'update_data': {
+          'biometricEnabled': enabled,
+        },
+      });
+      return res as bool? ?? false;
     } catch (e) {
+      debugPrint('❌ Update biometric status RPC failed: $e');
       return false;
     }
   }

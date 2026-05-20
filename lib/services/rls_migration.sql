@@ -17,12 +17,14 @@
 
 ALTER TABLE "Cake" ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Menu items are viewable by everyone" ON "Cake";
 CREATE POLICY "Menu items are viewable by everyone"
   ON "Cake" FOR SELECT
   USING (true);
 
 -- Block direct INSERT/UPDATE/DELETE from anon key
 -- (Menu edits should go through authenticated admin sessions with staff/owner verification)
+DROP POLICY IF EXISTS "Menu items can be inserted by staff or service role" ON "Cake";
 CREATE POLICY "Menu items can be inserted by staff or service role"
   ON "Cake" FOR INSERT
   WITH CHECK (
@@ -30,6 +32,7 @@ CREATE POLICY "Menu items can be inserted by staff or service role"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Menu items can be updated by staff or service role" ON "Cake";
 CREATE POLICY "Menu items can be updated by staff or service role"
   ON "Cake" FOR UPDATE
   USING (
@@ -37,6 +40,7 @@ CREATE POLICY "Menu items can be updated by staff or service role"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Menu items can be deleted by staff or service role" ON "Cake";
 CREATE POLICY "Menu items can be deleted by staff or service role"
   ON "Cake" FOR DELETE
   USING (
@@ -47,10 +51,12 @@ CREATE POLICY "Menu items can be deleted by staff or service role"
 
 ALTER TABLE "Category" ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Categories are viewable by everyone" ON "Category";
 CREATE POLICY "Categories are viewable by everyone"
   ON "Category" FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Categories can be modified by staff or service role" ON "Category";
 CREATE POLICY "Categories can be modified by staff or service role"
   ON "Category" FOR ALL
   USING (
@@ -65,10 +71,12 @@ CREATE POLICY "Categories can be modified by staff or service role"
 
 ALTER TABLE "CakeOption" ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Cake options are viewable by everyone" ON "CakeOption";
 CREATE POLICY "Cake options are viewable by everyone"
   ON "CakeOption" FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Cake options can be modified by staff or service role" ON "CakeOption";
 CREATE POLICY "Cake options can be modified by staff or service role"
   ON "CakeOption" FOR ALL
   USING (
@@ -90,14 +98,20 @@ ALTER TABLE "Order" ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone to read orders (staff app uses anon key)
 -- In production, restrict this via Edge Functions or migrate to authenticated sessions
+DROP POLICY IF EXISTS "Orders are viewable by everyone" ON "Order";
 CREATE POLICY "Orders are viewable by everyone"
   ON "Order" FOR SELECT
-  USING (true);
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
--- Allow order creation via direct insert (anon key access for customer orders)
+DROP POLICY IF EXISTS "Orders can be created by anyone" ON "Order";
 CREATE POLICY "Orders can be created by anyone"
   ON "Order" FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (
+    auth.role() = 'service_role'
+  );
 
 -- IMPORTANT: Direct updates to orders should be restricted.
 -- Order modifications should go through controlled RPC functions or Edge Functions
@@ -108,6 +122,7 @@ CREATE POLICY "Orders can be created by anyone"
 --
 -- The policy below allows authenticated staff to update orders, but direct
 -- client updates bypass validation. TODO: Move to server-side RPC.
+DROP POLICY IF EXISTS "Orders can be updated by staff only" ON "Order";
 CREATE POLICY "Orders can be updated by staff only"
   ON "Order" FOR UPDATE
   USING (
@@ -116,6 +131,7 @@ CREATE POLICY "Orders can be updated by staff only"
   );
 
 -- Allow authenticated staff to delete orders (should also be RPC-controlled)
+DROP POLICY IF EXISTS "Orders can be deleted by staff only" ON "Order";
 CREATE POLICY "Orders can be deleted by staff only"
   ON "Order" FOR DELETE
   USING (
@@ -127,11 +143,13 @@ CREATE POLICY "Orders can be deleted by staff only"
 ALTER TABLE "OrderItem" ENABLE ROW LEVEL SECURITY;
 
 -- Allow anyone to view order items (staff app uses anon key)
+DROP POLICY IF EXISTS "Order items are viewable by everyone" ON "OrderItem";
 CREATE POLICY "Order items are viewable by everyone"
   ON "OrderItem" FOR SELECT
   USING (true);
 
 -- Order items can be created by authenticated users or service role
+DROP POLICY IF EXISTS "Order items can be created by authenticated users" ON "OrderItem";
 CREATE POLICY "Order items can be created by authenticated users"
   ON "OrderItem" FOR INSERT
   WITH CHECK (
@@ -140,6 +158,7 @@ CREATE POLICY "Order items can be created by authenticated users"
   );
 
 -- Restrict update/delete on OrderItem: only service_role or active staff
+DROP POLICY IF EXISTS "Order items can be updated by active staff" ON "OrderItem";
 CREATE POLICY "Order items can be updated by active staff"
   ON "OrderItem" FOR UPDATE
   USING (
@@ -150,6 +169,7 @@ CREATE POLICY "Order items can be updated by active staff"
     )
   );
 
+DROP POLICY IF EXISTS "Order items can be deleted by active staff" ON "OrderItem";
 CREATE POLICY "Order items can be deleted by active staff"
   ON "OrderItem" FOR DELETE
   USING (
@@ -169,6 +189,7 @@ CREATE POLICY "Order items can be deleted by active staff"
 ALTER TABLE "Staff" ENABLE ROW LEVEL SECURITY;
 
 -- Restrict to service role or authenticated staff only
+DROP POLICY IF EXISTS "Staff data readable by service role or self" ON "Staff";
 CREATE POLICY "Staff data readable by service role or self"
   ON "Staff" FOR SELECT
   USING (
@@ -177,21 +198,22 @@ CREATE POLICY "Staff data readable by service role or self"
   );
 
 -- Restrict writes to service role only (owner/staff management via Edge Functions)
+DROP POLICY IF EXISTS "Staff data writable by service role" ON "Staff";
 CREATE POLICY "Staff data writable by service role"
   ON "Staff" FOR INSERT
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Staff data updatable by service role or self" ON "Staff";
 CREATE POLICY "Staff data updatable by service role or self"
   ON "Staff" FOR UPDATE
   USING (
-    auth.role() = 'service_role' OR
-    (auth.uid() IS NOT NULL AND "authUserId" = auth.uid()::text)
+    auth.role() = 'service_role'
   )
   WITH CHECK (
-    auth.role() = 'service_role' OR
-    (auth.uid() IS NOT NULL AND "authUserId" = auth.uid()::text)
+    auth.role() = 'service_role'
   );
 
+DROP POLICY IF EXISTS "Staff data deletable by service role only" ON "Staff";
 CREATE POLICY "Staff data deletable by service role only"
   ON "Staff" FOR DELETE
   USING (auth.role() = 'service_role');
@@ -205,6 +227,7 @@ CREATE POLICY "Staff data deletable by service role only"
 ALTER TABLE "Expense" ENABLE ROW LEVEL SECURITY;
 
 -- Restrict to service role or authenticated staff only
+DROP POLICY IF EXISTS "Expenses readable by service role or staff" ON "Expense";
 CREATE POLICY "Expenses readable by service role or staff"
   ON "Expense" FOR SELECT
   USING (
@@ -212,6 +235,7 @@ CREATE POLICY "Expenses readable by service role or staff"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Expenses writable by service role or staff" ON "Expense";
 CREATE POLICY "Expenses writable by service role or staff"
   ON "Expense" FOR INSERT
   WITH CHECK (
@@ -219,6 +243,7 @@ CREATE POLICY "Expenses writable by service role or staff"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Expenses updatable by service role or staff" ON "Expense";
 CREATE POLICY "Expenses updatable by service role or staff"
   ON "Expense" FOR UPDATE
   USING (
@@ -230,6 +255,7 @@ CREATE POLICY "Expenses updatable by service role or staff"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Expenses deletable by service role or staff" ON "Expense";
 CREATE POLICY "Expenses deletable by service role or staff"
   ON "Expense" FOR DELETE
   USING (
@@ -246,6 +272,7 @@ CREATE POLICY "Expenses deletable by service role or staff"
 ALTER TABLE "InventoryItem" ENABLE ROW LEVEL SECURITY;
 
 -- Restrict to service role or authenticated staff only
+DROP POLICY IF EXISTS "Inventory readable by service role or staff" ON "InventoryItem";
 CREATE POLICY "Inventory readable by service role or staff"
   ON "InventoryItem" FOR SELECT
   USING (
@@ -253,6 +280,7 @@ CREATE POLICY "Inventory readable by service role or staff"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Inventory writable by service role or staff" ON "InventoryItem";
 CREATE POLICY "Inventory writable by service role or staff"
   ON "InventoryItem" FOR INSERT
   WITH CHECK (
@@ -260,6 +288,7 @@ CREATE POLICY "Inventory writable by service role or staff"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Inventory updatable by service role or staff" ON "InventoryItem";
 CREATE POLICY "Inventory updatable by service role or staff"
   ON "InventoryItem" FOR UPDATE
   USING (
@@ -271,6 +300,7 @@ CREATE POLICY "Inventory updatable by service role or staff"
     EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
   );
 
+DROP POLICY IF EXISTS "Inventory deletable by service role or staff" ON "InventoryItem";
 CREATE POLICY "Inventory deletable by service role or staff"
   ON "InventoryItem" FOR DELETE
   USING (
@@ -287,19 +317,23 @@ CREATE POLICY "Inventory deletable by service role or staff"
 ALTER TABLE "SystemSetting" ENABLE ROW LEVEL SECURITY;
 
 -- Restrict to service role only - sensitive system configuration
+DROP POLICY IF EXISTS "System settings readable by service role only" ON "SystemSetting";
 CREATE POLICY "System settings readable by service role only"
   ON "SystemSetting" FOR SELECT
   USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "System settings writable by service role only" ON "SystemSetting";
 CREATE POLICY "System settings writable by service role only"
   ON "SystemSetting" FOR INSERT
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "System settings updatable by service role only" ON "SystemSetting";
 CREATE POLICY "System settings updatable by service role only"
   ON "SystemSetting" FOR UPDATE
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "System settings deletable by service role only" ON "SystemSetting";
 CREATE POLICY "System settings deletable by service role only"
   ON "SystemSetting" FOR DELETE
   USING (auth.role() = 'service_role');
@@ -313,43 +347,81 @@ CREATE POLICY "System settings deletable by service role only"
 ALTER TABLE "WhatsAppConversation" ENABLE ROW LEVEL SECURITY;
 
 -- Restrict to owner or service_role only
+DROP POLICY IF EXISTS "WhatsApp conversations readable by owner or service_role" ON "WhatsAppConversation";
 CREATE POLICY "WhatsApp conversations readable by owner or service_role"
   ON "WhatsAppConversation" FOR SELECT
-  USING (auth.role() = 'service_role' OR auth.uid() = owner_id);
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
+DROP POLICY IF EXISTS "WhatsApp conversations writable by owner or service_role" ON "WhatsAppConversation";
 CREATE POLICY "WhatsApp conversations writable by owner or service_role"
   ON "WhatsAppConversation" FOR INSERT
-  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = owner_id);
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
+DROP POLICY IF EXISTS "WhatsApp conversations updatable by owner or service_role" ON "WhatsAppConversation";
 CREATE POLICY "WhatsApp conversations updatable by owner or service_role"
   ON "WhatsAppConversation" FOR UPDATE
-  USING (auth.role() = 'service_role' OR auth.uid() = owner_id)
-  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = owner_id);
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
+DROP POLICY IF EXISTS "WhatsApp conversations deletable by owner or service_role" ON "WhatsAppConversation";
 CREATE POLICY "WhatsApp conversations deletable by owner or service_role"
   ON "WhatsAppConversation" FOR DELETE
-  USING (auth.role() = 'service_role' OR auth.uid() = owner_id);
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
 
 ALTER TABLE "WhatsAppCartItem" ENABLE ROW LEVEL SECURITY;
 
 -- Restrict to conversation owner or service_role only
+DROP POLICY IF EXISTS "WhatsApp cart items readable by conversation owner or service_role" ON "WhatsAppCartItem";
 CREATE POLICY "WhatsApp cart items readable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR SELECT
-  USING (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
+DROP POLICY IF EXISTS "WhatsApp cart items writable by conversation owner or service_role" ON "WhatsAppCartItem";
 CREATE POLICY "WhatsApp cart items writable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR INSERT
-  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
+DROP POLICY IF EXISTS "WhatsApp cart items updatable by conversation owner or service_role" ON "WhatsAppCartItem";
 CREATE POLICY "WhatsApp cart items updatable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR UPDATE
-  USING (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id))
-  WITH CHECK (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  )
+  WITH CHECK (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
+DROP POLICY IF EXISTS "WhatsApp cart items deletable by conversation owner or service_role" ON "WhatsAppCartItem";
 CREATE POLICY "WhatsApp cart items deletable by conversation owner or service_role"
   ON "WhatsAppCartItem" FOR DELETE
-  USING (auth.role() = 'service_role' OR auth.uid() = (SELECT owner_id FROM "WhatsAppConversation" WHERE id = "WhatsAppCartItem".conversation_id));
+  USING (
+    auth.role() = 'service_role' OR
+    EXISTS (SELECT 1 FROM "Staff" WHERE "authUserId" = auth.uid()::text AND "isActivated" = true)
+  );
 
 
 -- ─── Auth Tables (NextAuth-style) ───────────────────────────────────────────
@@ -447,34 +519,42 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS set_updated_at_cake ON "Cake";
 CREATE TRIGGER set_updated_at_cake
   BEFORE UPDATE ON "Cake"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_category ON "Category";
 CREATE TRIGGER set_updated_at_category
   BEFORE UPDATE ON "Category"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_cake_option ON "CakeOption";
 CREATE TRIGGER set_updated_at_cake_option
   BEFORE UPDATE ON "CakeOption"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_order ON "Order";
 CREATE TRIGGER set_updated_at_order
   BEFORE UPDATE ON "Order"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_expense ON "Expense";
 CREATE TRIGGER set_updated_at_expense
   BEFORE UPDATE ON "Expense"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_staff ON "Staff";
 CREATE TRIGGER set_updated_at_staff
   BEFORE UPDATE ON "Staff"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_inventory ON "InventoryItem";
 CREATE TRIGGER set_updated_at_inventory
   BEFORE UPDATE ON "InventoryItem"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS set_updated_at_whatsapp_conversation ON "WhatsAppConversation";
 CREATE TRIGGER set_updated_at_whatsapp_conversation
   BEFORE UPDATE ON "WhatsAppConversation"
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

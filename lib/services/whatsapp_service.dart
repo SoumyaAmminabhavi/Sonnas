@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
@@ -177,7 +178,11 @@ class WhatsAppService {
       return fullDetails ?? Map<String, dynamic>.from(versionRecord);
     } catch (e) {
       if (versionId != null) {
-        await _client.from('WhatsAppTemplateVersion').delete().eq('id', versionId);
+        try {
+          await _client.from('WhatsAppTemplateVersion').delete().eq('id', versionId);
+        } catch (cleanupError, cleanupStack) {
+          debugPrint("Rollback delete failed: $cleanupError\n$cleanupStack");
+        }
       }
       rethrow;
     }

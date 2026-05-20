@@ -31,11 +31,13 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
 
     // Validate product image URL before calling getPublicUrl
     final String? imageUrl;
-    final rawImage = product['image'];
-    if (rawImage == null || rawImage.toString().isEmpty) {
+    final rawImage = product['image']?.toString().trim();
+    if (rawImage == null || rawImage.isEmpty) {
       imageUrl = null;
-    } else if (rawImage.toString().startsWith('data:')) {
-      imageUrl = rawImage.toString();
+    } else if (rawImage.startsWith('data:') ||
+        rawImage.startsWith('http://') ||
+        rawImage.startsWith('https://')) {
+      imageUrl = rawImage;
     } else {
       imageUrl = SupabaseService.getPublicUrl(rawImage, bucket: 'cakes');
     }

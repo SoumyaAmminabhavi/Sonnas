@@ -134,7 +134,10 @@ class DashboardContent extends ConsumerWidget {
       loading: () => Column(
         children: List.generate(3, (_) => const Padding(padding: EdgeInsets.only(bottom: 16), child: Skeleton(height: 122, width: double.infinity))),
       ),
-      error: (err, _) => Center(child: Text("Error: $err")),
+      error: (err, st) {
+        debugPrint('Failed to load orders: $err\n$st');
+        return const Center(child: Text("Failed to load orders"));
+      },
     );
   }
 

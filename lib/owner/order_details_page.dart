@@ -304,24 +304,33 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                              );
                                                        displayImageUrl = matchingCake['image'] ?? '';
 
-                                                       final rawCustomUrl = order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString();
-                                                       final decodedCustom = decodeDataUrlToBytes(rawCustomUrl);
-                                                       final resolvedCustomUrl = decodedCustom.url;
-                                                       final resolvedCustomBytes = decodedCustom.imageBytes;
-                                                       bool isCustomUrl = false;
-                                                       if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
-                                                           (resolvedCustomUrl != null || resolvedCustomBytes != null)) {
-                                                         if (resolvedCustomBytes != null) {
-                                                           displayImageBytes = resolvedCustomBytes;
-                                                         } else {
-                                                           displayImageUrl = resolvedCustomUrl!;
-                                                         }
-                                                         isCustomUrl = true;
-                                                       }
+                                                        final rawCustomUrl = (() {
+                                                          final orderUrl = order['customImageUrl']?.toString().trim();
+                                                          if (orderUrl != null && orderUrl.isNotEmpty) return orderUrl;
+                                                          final conversationUrl = conversation?['customImageUrl']?.toString().trim();
+                                                          return (conversationUrl != null && conversationUrl.isNotEmpty) ? conversationUrl : null;
+                                                        })();
+                                                        final decodedCustom = decodeDataUrlToBytes(rawCustomUrl);
+                                                        final resolvedCustomUrl = decodedCustom.url;
+                                                        final resolvedCustomBytes = decodedCustom.imageBytes;
+                                                        bool isCustomUrl = false;
+                                                        if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
+                                                            (resolvedCustomUrl != null || resolvedCustomBytes != null)) {
+                                                          if (resolvedCustomBytes != null) {
+                                                            displayImageBytes = resolvedCustomBytes;
+                                                          } else {
+                                                            displayImageUrl = resolvedCustomUrl!;
+                                                          }
+                                                          isCustomUrl = true;
+                                                        }
 
-                                                       final finalImageUrl = (displayImageBytes == null && displayImageUrl.isNotEmpty)
-                                                           ? ((isCustomUrl || displayImageUrl.startsWith('http')) ? displayImageUrl : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
-                                                           : '';
+                                                        final finalImageUrl = (displayImageBytes == null && displayImageUrl.isNotEmpty)
+                                                            ? ((isCustomUrl ||
+                                                                    displayImageUrl.startsWith('http') ||
+                                                                    displayImageUrl.startsWith('data:'))
+                                                                ? displayImageUrl
+                                                                : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
+                                                            : '';
 
                                                        return Padding(
                                                          padding: const EdgeInsets.only(bottom: 12.0),
@@ -526,7 +535,12 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
   }
 
   Widget _buildViewImageButton(ColorScheme cs, Map<String, dynamic> order, dynamic conversation) {
-    final String? rawUrl = (order['customImageUrl']?.toString() ?? conversation?['customImageUrl']?.toString())?.trim();
+    final String? rawUrl = (() {
+      final orderUrl = order['customImageUrl']?.toString().trim();
+      if (orderUrl != null && orderUrl.isNotEmpty) return orderUrl;
+      final conversationUrl = conversation?['customImageUrl']?.toString().trim();
+      return (conversationUrl != null && conversationUrl.isNotEmpty) ? conversationUrl : null;
+    })();
     final decoded = decodeDataUrlToBytes(rawUrl);
 
     if (decoded.imageBytes != null || decoded.url != null) {
@@ -585,6 +599,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
         setState(() => _isUpdating = true);
         try {
           await OrderService.updateOrderStatus(order['id'], next);
+          if (!mounted) return;
           ref.invalidate(orderNotifierProvider(widget.orderId));
           final currentContext = context;
           if (!currentContext.mounted) return;
@@ -601,6 +616,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
           );
         } catch (e, st) {
           debugPrint('Order status update failed: $e\n$st');
+          if (!mounted) return;
           final currentContext = context;
           if (!currentContext.mounted) return;
           ScaffoldMessenger.of(currentContext).showSnackBar(

@@ -87,7 +87,7 @@ class OrderCardReactive extends ConsumerWidget {
                   ? imageUrl
                   : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
           deliveryDate: data['deliveryDate'] ?? 'Not scheduled',
-          deliveryTime: data['deliveryTime'],
+          deliveryTime: data['deliverySlot']?.toString() ?? data['deliveryTime']?.toString(),
           orderSubtitle: orderSubtitle,
           onWhatsAppPressed: () async {
             final rawConversation = data['WhatsAppConversation'];

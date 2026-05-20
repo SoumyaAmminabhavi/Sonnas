@@ -71,12 +71,16 @@ class AuthService {
   static Future<bool> registerStaff(String id, String password) async {
     try {
       final hashedSub = DBCrypt().hashpw(password, DBCrypt().gensalt());
-      final res = await _client.from('Staff').update({
-        'password': hashedSub,
-        'isActivated': true,
-      }).eq('id', id).select('id').maybeSingle();
-      return res != null;
+      final res = await _client.rpc('self_update_staff', params: {
+        'staff_id': id,
+        'update_data': {
+          'password': hashedSub,
+          'isActivated': true,
+        },
+      });
+      return res as bool? ?? false;
     } catch (e) {
+      debugPrint('❌ Register staff RPC failed: $e');
       return false;
     }
   }

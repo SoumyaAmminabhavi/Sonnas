@@ -88,7 +88,10 @@ class _StaffAddPageState extends State<StaffAddPage> {
       );
       
       if (s['permissions'] != null) {
-        _permissions = Map<String, bool>.from(s['permissions']);
+        _permissions = {
+          ..._permissions,
+          ...Map<String, bool>.from(s['permissions']),
+        };
       }
       
       _startTimeController.text = s['shiftStart'] ?? '08:00 AM';
@@ -185,9 +188,9 @@ class _StaffAddPageState extends State<StaffAddPage> {
       };
 
       if (widget.staff == null) {
-        await StaffService.addStaff(staffData);
+        final joiningCode = await StaffService.addStaff(staffData);
         if (mounted) {
-          _showSuccessDialog(staffData['joiningCode'] as String);
+          _showSuccessDialog(joiningCode);
         }
       } else {
         await StaffService.updateStaff(widget.staff!['id'], staffData);
@@ -202,8 +205,13 @@ class _StaffAddPageState extends State<StaffAddPage> {
           }
         }
       }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+    } catch (e, st) {
+      debugPrint("Staff save error: $e\n$st");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Unable to save staff details. Please try again.")),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

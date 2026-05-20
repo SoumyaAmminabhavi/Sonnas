@@ -334,7 +334,9 @@ class _MenuPageState extends ConsumerState<MenuPage> {
               final String version = data['updatedAt']?.toString() ?? '1';
               final String imageUrl = imageField.isEmpty
                   ? ''
-                  : '${SupabaseService.getPublicUrl(imageField, bucket: 'cakes')}?v=$version';
+                  : (imageField.startsWith('http://') || imageField.startsWith('https://'))
+                      ? '$imageField?v=$version'
+                      : '${SupabaseService.getPublicUrl(imageField, bucket: 'cakes')}?v=$version';
 
               return _MenuItem(
                 id: data['id'],
@@ -1172,12 +1174,11 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
         }
       }
 
-      // If no exact size match but editing, create a fresh option instead of cloning the first option's ID
+      // If no exact size match but editing, reuse the first option's ID to avoid orphan rows
       if (matchedOption == null && existingOptions.isNotEmpty && widget.initialData != null) {
-        matchedOption = {
-          'cakeId': cakeId,
-          'size': currentSize,
-        };
+        matchedOption = Map<String, dynamic>.from(existingOptions.first);
+        matchedOption['cakeId'] = cakeId;
+        matchedOption['size'] = currentSize;
       }
 
       final normalizedPrice = _sanitizePrice(_priceController.text);
@@ -1663,7 +1664,9 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                       ))
                 : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
                     ? Image.network(
-                        SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
+                        (_existingImageUrl!.startsWith('http://') || _existingImageUrl!.startsWith('https://'))
+                            ? _existingImageUrl!
+                            : SupabaseService.getPublicUrl(_existingImageUrl, bucket: 'cakes'),
                         fit: BoxFit.cover,
                       )
                     : Column(

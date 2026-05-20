@@ -323,7 +323,11 @@ class KitchenOrderCard extends StatelessWidget {
     // 1. Try customImageUrl from the order
     String imageUrl = data['customImageUrl']?.toString().trim() ?? '';
     final whatsAppData = data['WhatsAppConversation'];
-    if (imageUrl.isEmpty && whatsAppData is Map) {
+    final invalidOrderImage = imageUrl.isEmpty ||
+        imageUrl.startsWith('whatsapp://') ||
+        imageUrl.startsWith('file://') ||
+        imageUrl.toLowerCase() == 'cake_placeholder.png';
+    if (invalidOrderImage && whatsAppData is Map) {
       imageUrl = whatsAppData['customImageUrl']?.toString().trim() ?? '';
     }
 
