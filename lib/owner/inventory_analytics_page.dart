@@ -22,7 +22,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
 
     return PopScope(
       canPop: widget.onClose == null,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           widget.onClose?.call();
         }
@@ -298,9 +298,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           ),
         ],
       ),
-    ).whenComplete(() {
-      Future.delayed(const Duration(milliseconds: 500), () => controller.dispose());
-    });
+    );
   }
 
   // Helper for max
@@ -464,14 +462,7 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
           ),
         ),
       ),
-    ).whenComplete(() {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        nameController.dispose();
-        unitController.dispose();
-        currentController.dispose();
-        minController.dispose();
-      });
-    });
+    );
   }
 
   Widget _buildSheetInput(ColorScheme cs, String label, String hint, TextEditingController controller, {bool isNumber = false, bool allowDecimal = false}) {

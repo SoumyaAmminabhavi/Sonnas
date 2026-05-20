@@ -276,7 +276,7 @@ class _ProductCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          "₹${_formatPrice(item['price'])}",
+                          "${PriceConstants.currencySymbol}${PriceConstants.normalizePrice(item['price']).toStringAsFixed(PriceConstants.normalizePrice(item['price']).truncateToDouble() == PriceConstants.normalizePrice(item['price']) ? 0 : 2)}",
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
@@ -368,12 +368,5 @@ class _ProductCard extends ConsumerWidget {
       color: cs.primary.withValues(alpha: 0.05),
       child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
     );
-  }
-
-  static String _formatPrice(dynamic price) {
-    if (price == null) return '0';
-    final double priceNum = price is num ? price.toDouble() : double.tryParse(price.toString()) ?? 0.0;
-    final double rupees = priceNum / PriceConstants.minorUnitsPerMajor;
-    return rupees.toStringAsFixed(rupees.truncateToDouble() == rupees ? 0 : 2);
   }
 }

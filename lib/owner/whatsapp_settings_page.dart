@@ -54,11 +54,13 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         _selectedVersionDetails = selectedVer;
         _isLoadingVersions = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error loading template versions: $e');
+      debugPrint('Stack trace: $stackTrace');
       setState(() => _isLoadingVersions = false);
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(content: Text('Error loading template versions: $e')),
+        const SnackBar(content: Text('Error loading template versions')),
       );
     }
   }
@@ -175,10 +177,12 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                     messenger.showSnackBar(
                       const SnackBar(content: Text('Template created successfully!')),
                     );
-                  } catch (e) {
+                  } catch (e, stackTrace) {
+                    debugPrint('Error creating template: $e');
+                    debugPrint('Stack trace: $stackTrace');
                     if (!mounted) return;
                     messenger.showSnackBar(
-                      SnackBar(content: Text('Error creating template: $e')),
+                      const SnackBar(content: Text('Error creating template')),
                     );
                   }
                 }
@@ -573,10 +577,12 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                         messenger.showSnackBar(
                           const SnackBar(content: Text('New version created successfully!')),
                         );
-                      } catch (e) {
+                      } catch (e, stackTrace) {
+                        debugPrint('Error creating template version: $e');
+                        debugPrint('Stack trace: $stackTrace');
                         if (!mounted) return;
                         messenger.showSnackBar(
-                          SnackBar(content: Text('Error creating template version: $e')),
+                          const SnackBar(content: Text('Error creating template version')),
                         );
                       }
                     }
