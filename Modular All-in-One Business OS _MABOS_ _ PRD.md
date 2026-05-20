@@ -490,9 +490,9 @@ Example Schemas
 
 | Phase | Focus |
 | --- | --- |
-| Phase 1 (0–3m) | MVP, core modules, 100 tenants |
-| Phase 2 (3–12m) | Loyalty, booking, vendor, 1000+ tenants, regional presence |
-| Phase 3 (12–24m) | AI/predictive analytics, automation, open API, white-label, franchise, global expansion |
+| Phase 1 (Month 1) | MVP, core modules, 100 tenants |
+| Phase 2 (Month 2) | Loyalty, booking, vendor, 1000+ tenants, regional presence |
+| Phase 3 (Month 3) | AI/predictive analytics, automation, open API, white-label, franchise, global expansion |
 
 * **AI Integrations:** Automated inventory prediction, sales forecasting
 * **Automation Roadmap:** Auto-restock, reminders, smart alerts
