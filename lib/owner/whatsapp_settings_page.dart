@@ -250,8 +250,8 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     String interactiveType = (_selectedVersionDetails!['interactiveType'] as String?) ?? 'NONE';
     bool isSubmitting = false;
 
-    final List<Map<String, dynamic>> dynamicButtons = (_selectedVersionDetails!['buttons'] as List?)?.map((b) => Map<String, dynamic>.from(b as Map)).toList() ?? [];
-    final List<Map<String, dynamic>> dynamicSections = (_selectedVersionDetails!['listSections'] as List?)?.map((s) => Map<String, dynamic>.from(s as Map)).toList() ?? [];
+    final List<Map<String, dynamic>> dynamicButtons = (_selectedVersionDetails!['buttons'] as List?)?.whereType<Map>().map((b) => Map<String, dynamic>.from(b)).toList() ?? [];
+    final List<Map<String, dynamic>> dynamicSections = (_selectedVersionDetails!['listSections'] as List?)?.whereType<Map>().map((s) => Map<String, dynamic>.from(s)).toList() ?? [];
 
     showDialog<void>(
       context: context,
@@ -481,14 +481,14 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                             TextButton(
                                               onPressed: () {
                                                 setDialogState(() {
-                                                  (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>).add({'title': 'New Option', 'description': ''});
+                                                  (dynamicSections[sIdx]['rows'] as List).add({'title': 'New Option', 'description': ''});
                                                 });
                                               },
                                               child: const Text("Add Row", style: TextStyle(fontSize: 12)),
                                             ),
                                         ],
                                       ),
-                                      ...(section['rows'] as List<Map<String, dynamic>>).asMap().entries.map((rEntry) {
+                                      ...(section['rows'] as List).asMap().entries.map((rEntry) {
                                         final rIdx = rEntry.key;
                                         final row = rEntry.value;
                                         return Padding(
@@ -499,7 +499,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                                 child: TextFormField(
                                                   initialValue: row['title'] as String?,
                                                   decoration: const InputDecoration(labelText: "Title", isDense: true),
-                                                  onChanged: isSubmitting ? null : (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['title'] = val,
+                                                  onChanged: isSubmitting ? null : (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['title'] = val,
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
@@ -507,7 +507,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                                 child: TextFormField(
                                                   initialValue: row['description'] as String?,
                                                   decoration: const InputDecoration(labelText: "Description", isDense: true),
-                                                  onChanged: isSubmitting ? null : (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['description'] = val,
+                                                  onChanged: isSubmitting ? null : (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['description'] = val,
                                                 ),
                                               ),
                                               if (!isSubmitting)
@@ -881,7 +881,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                           TextButton(
                                             onPressed: () {
                                               setDialogState(() {
-                                                (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>).add({
+                                                (dynamicSections[sIdx]['rows'] as List).add({
                                                   'title': 'New Option',
                                                   'description': ''
                                                 });
@@ -891,7 +891,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                           ),
                                         ],
                                       ),
-                                      ...(section['rows'] as List<Map<String, dynamic>>).asMap().entries.map((rEntry) {
+                                      ...(section['rows'] as List).asMap().entries.map((rEntry) {
                                         final rIdx = rEntry.key;
                                         final row = rEntry.value;
                                         return Padding(
@@ -902,7 +902,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                                 child: TextFormField(
                                                   initialValue: row['title'] as String?,
                                                   decoration: const InputDecoration(labelText: "Title", isDense: true),
-                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['title'] = val,
+                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['title'] = val,
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
@@ -910,7 +910,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                                 child: TextFormField(
                                                   initialValue: row['description'] as String?,
                                                   decoration: const InputDecoration(labelText: "Description", isDense: true),
-                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['description'] = val,
+                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['description'] = val,
                                                 ),
                                               ),
                                               IconButton(
