@@ -9,7 +9,7 @@ import { formatPrice } from "~/lib/format";
 export const FeaturedProducts = () => {
   const { data: cakes, isLoading } = api.cake.getAll.useQuery();
 
-  const whatsappNumber = env.NEXT_PUBLIC_WHATSAPP_NUMBER.replace(/\D/g, "");
+  const whatsappNumber = env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "") ?? "";
 
   return (
     <section id="cakes" className="py-2xl bg-cream">
