@@ -10,6 +10,16 @@ reviews:
     - "!**/pubspec.lock"
     - "!ios/Pods/**"
     - "!android/.gradle/**"
+    - "!lib/generated/**"
+    - "!package-lock.json"
+    - "!package.json"
+    - "!pubspec.yaml"
+    - "!.env*"
+    - "!.github/**"
+    - "!README.md"
+    - "!analysis_options.yaml"
+    - "!.gitignore"
+    - "!.coderabbit.yaml"
   path_instructions:
     - path: "**/*.dart"
       instructions: |
