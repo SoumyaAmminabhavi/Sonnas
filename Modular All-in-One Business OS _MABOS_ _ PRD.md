@@ -243,7 +243,7 @@ Shared Data Architecture
 
 * **Frontend/Backend:** Next.js (fullstack, API routes, SSR, React for UI)
 * **Database:** PostgreSQL (cloud-managed, mature, scalable)
-* **ORM:** Prisma (typed models, fast iteration)
+* **ORM:** None (Direct Supabase Client `@supabase/ssr` for native RLS and type-safety)
 * **Authentication:** Supabase Auth (JWT/OAuth/initiate SSO later)
 * **Realtime/Subscriptions:** Supabase realtime, websockets, notifications
 * **Storage:** Supabase storage (files/images)
@@ -365,6 +365,8 @@ RBAC Structure
 
 Example Schemas
 
+* users: id, email, name, image_url, created_at, updated_at (mirrored from Supabase Auth)
+* org_roles (userbase authorization): id, org_id, user_id, role, status, joined_at
 * inventory: id, org_id, product_id, qty_on_hand, threshold, location, updated_at
 * orders: id, org_id, customer_id, staff_id, status, total, created_at
 * staff: id, org_id, name, email, phone, role, status
@@ -518,7 +520,39 @@ Example Schemas
 
 ---
 
-## 16\. Final Recommendations
+## 16\. Target Userbase
+
+To support the MABOS commercial rollout and ensure high engagement on the consolidated Supabase + Next.js stack, the platform targets four major business segments that form our primary user base.
+
+### 16.1 Target Segments & User Mix
+
+| Business Vertical | Target Tenant Sub-types | Key Front-line Staff Users | End-Consumer Usage |
+| --- | --- | --- | --- |
+| **F&B / Hospitality** | Quick Service Restaurants (QSRs), Patisseries, Cafes, Salons | Cashiers, Waiters, Kitchen Chefs | Dine-in QR ordering, takeaway checkouts, feedback |
+| **Retail & Commerce** | Boutiques, Specialty Stores, Groceries, Gift Shops | Cashiers, Inventory Clerks | Online storefront browsing, home delivery tracking |
+| **Wellness & Services**| Salons, Spas, Consulting Centers, Clinics | Therapists, Receptionists | Direct booking, service schedule management, reviews |
+| **Fitness & Gyms** | Local Gyms, Crossfit Boxes, Yoga Studios | Personal Trainers, Desk Admins | Class bookings, subscription renewals, check-ins |
+
+### 16.2 User Base Projections (3-Month Growth Plan)
+
+With the compressed 3-month scalability roadmap, MABOS targets aggressive user growth from launch to regional expansion.
+
+| Projection Metric | Phase 1 (Month 1) | Phase 2 (Month 2) | Phase 3 (Month 3) |
+| --- | --- | --- | --- |
+| **Active Tenants** | 100 pilot outlets | 1,000 scaling outlets | 5,000 regional outlets |
+| **Staff & Operator Users** | ~1,200 active users | ~12,000 active users | ~60,000 active users |
+| **Active End-Consumers** | ~25,000 consumers | ~250,000 consumers | ~1,500,000 consumers |
+| **Daily POS Transactions** | ~5,000 transactions/day | ~50,000 transactions/day | ~250,000 transactions/day |
+
+### 16.3 Growth & Retention Channels
+
+1. **Self-Serve Business Onboarding:** Extremely optimized 5-minute workspace setup wizard with predefined sector profiles (e.g. cafe templates with preloaded sample menus).
+2. **Viral Consumer Loops:** Customer QR code ordering and digital receipt delivery automatically introduce MABOS to the local consumer base, driving consumer awareness and direct referrals.
+3. **Multi-Location Hubs:** Single business operators invite managers and cashier staff, growing the internal business staff user base organically with zero acquisition cost.
+
+---
+
+## 17\. Final Recommendations
 
 * **Architecture Decision:** Unified Next.js + Supabase + Stripe stack for extreme speed, 100% security coverage via native Row-Level Security, and single-source management.
 * **MVP Strategy:** Focus purely on horizontal core value. Defer complex multi-app dependencies (like Prisma, Redis, or external job queue engines) to Phase 2 to ensure absolute deployment within 2 months.
