@@ -60,7 +60,7 @@ jobs:
           --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
 
       - name: Install Vercel CLI
-        run: npm install -g vercel
+        run: npm install -g vercel@latest
 
       - name: Deploy to Vercel
         run: |
@@ -68,7 +68,11 @@ jobs:
           vercel deploy build/web \
           --prod \
           --token="${{ secrets.VERCEL_TOKEN }}" \
-          --yes
+          --yes || {
+            echo "::error::Vercel deployment failed. Verify VERCEL_ORG_ID and VERCEL_PROJECT_ID secrets match your Vercel project."
+            echo "::error::Get correct IDs from: https://vercel.com/dashboard → Project Settings → General"
+            exit 1
+          }
         env:
           VERCEL_ORG_ID: "${{ secrets.VERCEL_ORG_ID }}"
           VERCEL_PROJECT_ID: "${{ secrets.VERCEL_PROJECT_ID }}"
