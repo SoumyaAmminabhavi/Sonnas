@@ -211,7 +211,7 @@ Shared Data Architecture
 * **Orders:** POS orders, online orders, statuses, fulfillment, returns
 * **POS:** Fast register, split payments, receipt printing, barcode/QR
 * **Payments:** Stripe/Razorpay, card/cash, refunds, settlement dashboard
-* **Notifications:** Email (Postmark), SMS, in-app (Supabase Realtime); FCM/Web Push deferred to Phase 2
+* **Notifications:** Email (Postmark), SMS, in-app (Supabase Realtime)
 * **Realtime Sync:** Supabase realtime—orders, stock, dashboard sync
 * **Reports:** Exportable (CSV, PDF), scheduled reports
 * **CRM:** Customer profiles, segmentation, activity timeline
@@ -233,7 +233,7 @@ Shared Data Architecture
 * **Mobile:** 100% responsive, PWA support
 * **Backups:** Daily encrypted backups, point-in-time recovery
 * **Disaster Recovery:** RPO < 1hr, automated failover
-* **Monitoring/Logging:** Structured logging, alerting (Sentry/Datadog)
+* **Monitoring/Logging:** Structured logging
 
 ---
 
@@ -250,7 +250,7 @@ Shared Data Architecture
 * **Hosting:** Vercel (serverless, edge, CDN cached)
 * **Deployment:** GitHub Actions CI/CD → Vercel
 * **Admin Dashboard:** Built into Next.js app
-* **Notifications:** Firebase Cloud Messaging, email via Postmark
+* **Notifications:** In-app (Supabase Realtime), email via Postmark
 * **Analytics:** Supabase, Vercel Analytics, custom events
 * **Payments:** Stripe (global) | Razorpay (India+)
 * **Multi-tenancy:** Row-level security in Postgres/Supabase
@@ -279,9 +279,8 @@ Stack Rationale
 | Analytics (Business) | Postgres / Supabase | Custom event tables: revenue, orders, usage |
 | Notifications (Email) | Postmark | Transactional email |
 | Notifications (In-app) | Supabase Realtime | MVP-ready, no extra infra |
-| Notifications (Push) | FCM / Web Push | Deferred to Phase 2 |
 | CI/CD | GitHub Actions | Lint, test, preview builds, deploy |
-| Monitoring | Sentry | Error tracking and logging |
+| Monitoring | Next.js / Supabase Logs | Structured error and access logging |
 | Background Queues | Supabase Edge Functions | Lightweight serverless jobs for async processes (invoices, syncs) |
 | Cache (optional) | Redis | Phase 2 — high-throughput modules only |
 
@@ -318,7 +317,7 @@ Database & Data Flow
 
 Realtime & Caching
 
-* Supabase (orders/stock, bookings, push updates)
+* Supabase (orders/stock, bookings, realtime updates)
 * Redis (optional, later for high-throughput modules)
 
 Queue Handling
