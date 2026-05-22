@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io' if (dart.library.html) 'platform_file_stub.dart' as io show File;
+import 'package:app/services/menu_service.dart';
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
@@ -73,6 +74,12 @@ class SupabaseService {
     // Use direct public URL (Transformation is a paid feature)
     return storageClient.from(bucket).getPublicUrl(cleanPath);
   }
+
+  /// Delegate: Fetch all menu items with full category and option data
+  static Future<List<Map<String, dynamic>>> fetchMenu() => MenuService.fetchMenu();
+
+  /// Delegate: Fetch all categories
+  static Future<List<Map<String, dynamic>>> fetchCategories() => MenuService.fetchCategories();
 
   /// Helper to get a signed URL for private storage items
   static Future<String?> getSignedUrl(String bucket, String path) async {

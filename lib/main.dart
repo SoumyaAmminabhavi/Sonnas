@@ -12,7 +12,6 @@ import 'widgets/glass_bottom_nav.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/cart_provider.dart';
-import 'customer/checkout_page.dart';
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
 
@@ -177,7 +176,9 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
       );
       return;
     }
-    Navigator.push<void>(context, MaterialPageRoute<void>(builder: (_) => const CustomerCheckoutPage()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Checkout coming soon")),
+    );
   }
 
   @override
