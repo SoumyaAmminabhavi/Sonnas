@@ -34,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
           // Dark Overlay
           Positioned.fill(
             child: Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
             ),
           ),
           // Content
@@ -78,7 +78,7 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.pink.withOpacity(0.3),
+                            color: Colors.pink.withValues(alpha: 0.3),
                             blurRadius: 15,
                             offset: const Offset(0, 8),
                           ),
@@ -118,7 +118,7 @@ class WelcomeScreen extends StatelessWidget {
                         );
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withOpacity(0.5),
+                        foregroundColor: Colors.white.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
                       child: Text(

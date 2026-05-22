@@ -179,7 +179,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: secondary.withOpacity(0.1),
+                  color: secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -297,7 +297,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withOpacity(0.1),
+                      color: primary.withValues(alpha: 0.1),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     )
@@ -324,7 +324,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 "Sign in to see your past orders, track active deliveries, and download receipts in high-fidelity PDF formats.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondary.withOpacity(0.6),
+                  color: secondary.withValues(alpha: 0.6),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -355,7 +355,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: 5,
-                    shadowColor: primary.withOpacity(0.3),
+                    shadowColor: primary.withValues(alpha: 0.3),
                   ),
                   child: Text(
                     "SIGN IN OR REGISTER",
@@ -398,7 +398,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2.0,
-                      color: primary.withOpacity(0.6),
+                      color: primary.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -459,7 +459,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                   ),
                                 ),
                                 Text(
@@ -530,12 +530,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: secondary.withOpacity(0.04),
+            color: secondary.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: secondary.withOpacity(0.05)),
+        border: Border.all(color: secondary.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -549,7 +549,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               errorBuilder: (_, __, ___) => Container(
                 width: 80,
                 height: 80,
-                color: primary.withOpacity(0.1),
+                color: primary.withValues(alpha: 0.1),
                 child: const Icon(Icons.cake, color: primary),
               ),
             ),
@@ -567,7 +567,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: secondary.withOpacity(0.5),
+                        color: secondary.withValues(alpha: 0.5),
                       ),
                     ),
                     Row(
@@ -579,7 +579,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           decoration: BoxDecoration(
                             color: source == 'WHATSAPP'
                                 ? Colors.green.shade50
-                                : primary.withOpacity(0.07),
+                                : primary.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -599,7 +599,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
+                            color: statusColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -630,7 +630,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
-                    color: secondary.withOpacity(0.8),
+                    color: secondary.withValues(alpha: 0.8),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -652,7 +652,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
-                            color: Colors.red.withOpacity(0.6),
+                            color: Colors.red.withValues(alpha: 0.6),
                           ),
                         ),
                       ),

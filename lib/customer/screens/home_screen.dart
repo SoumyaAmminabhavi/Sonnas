@@ -238,8 +238,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.2),
-                          background.withOpacity(1.0),
+                          Colors.black.withValues(alpha: 0.2),
+                          background.withValues(alpha: 1.0),
                         ],
                         stops: const [0.0, 1.0],
                       ),
@@ -361,7 +361,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 180,
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.05),
+                                color: primaryColor.withValues(alpha: 0.05),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: ClipRRect(
@@ -370,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   cake['image']!,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
-                                    color: primaryColor.withOpacity(0.1),
+                                    color: primaryColor.withValues(alpha: 0.1),
                                     child: const Icon(Icons.cake, color: primaryColor),
                                   ),
                                 ),
@@ -411,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       onPressed: () => favorites.toggleFavorite(cake),
                                       icon: Icon(
                                         isFav ? Icons.favorite : Icons.favorite_border,
-                                        color: isFav ? primaryColor : Colors.grey.withOpacity(0.4),
+                                        color: isFav ? primaryColor : Colors.grey.withValues(alpha: 0.4),
                                         size: 18,
                                       ),
                                       visualDensity: VisualDensity.compact,
@@ -474,8 +474,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 colors: [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
               )
             : null,
-        border: isGradient ? null : Border.all(color: primaryColor.withOpacity(0.2)),
-        color: isGradient ? null : Colors.white.withOpacity(0.8),
+        border: isGradient ? null : Border.all(color: primaryColor.withValues(alpha: 0.2)),
+        color: isGradient ? null : Colors.white.withValues(alpha: 0.8),
       ),
       child: Material(
         color: Colors.transparent,
@@ -514,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -528,7 +528,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: primaryColor.withOpacity(0.6),
+                color: primaryColor.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -540,11 +540,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -561,7 +561,7 @@ class _HomeScreenState extends State<HomeScreen> {
           hintText: "Search for chocolates, custom cakes...",
           hintStyle: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF701235).withOpacity(0.4),
+            color: const Color(0xFF701235).withValues(alpha: 0.4),
           ),
           prefixIcon: Icon(Icons.search_rounded, color: primaryColor),
           suffixIcon: IconButton(
@@ -626,7 +626,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: gradientColors[0].withOpacity(0.3),
+                      color: gradientColors[0].withValues(alpha: 0.3),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     ),
@@ -642,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Icon(
                           promo['icon'] as IconData,
                           size: 150,
-                          color: Colors.white.withOpacity(0.08),
+                          color: Colors.white.withValues(alpha: 0.08),
                         ),
                       ),
                       Padding(
@@ -654,7 +654,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
+                                color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
@@ -682,7 +682,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.white.withOpacity(0.9),
+                                color: Colors.white.withValues(alpha: 0.9),
                               ),
                             ),
                           ],
@@ -706,7 +706,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 6,
               width: isCurrent ? 18 : 6,
               decoration: BoxDecoration(
-                color: isCurrent ? primaryColor : primaryColor.withOpacity(0.2),
+                color: isCurrent ? primaryColor : primaryColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(3),
               ),
             );

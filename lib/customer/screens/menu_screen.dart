@@ -262,11 +262,11 @@ class _MenuScreenState extends State<MenuScreen> {
                   const SizedBox(height: 16),
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withOpacity(0.06),
+                          color: primaryColor.withValues(alpha: 0.06),
                           blurRadius: 15,
                           offset: const Offset(0, 4),
                         ),
@@ -284,7 +284,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         hintText: "Search delicacies...",
                         hintStyle: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: secondaryColor.withOpacity(0.4),
+                          color: secondaryColor.withValues(alpha: 0.4),
                         ),
                         prefixIcon: Icon(Icons.search_rounded, color: primaryColor),
                         suffixIcon: _searchController.text.isNotEmpty
@@ -330,7 +330,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withOpacity(0.1)),
+                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.1)),
                             ),
                             showCheckmark: false,
                           ),
@@ -346,7 +346,7 @@ class _MenuScreenState extends State<MenuScreen> {
                         "${filteredItems.length} items",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: secondaryColor.withOpacity(0.6),
+                          color: secondaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                       Row(
@@ -483,7 +483,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       onPressed: () => favorites.toggleFavorite(item),
                       icon: Icon(
                         isFav ? Icons.favorite : Icons.favorite_border,
-                        color: isFav ? primary : Colors.grey.withOpacity(0.3),
+                        color: isFav ? primary : Colors.grey.withValues(alpha: 0.3),
                         size: 20,
                       ),
                     );
@@ -528,7 +528,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10)],
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10)],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -577,7 +577,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   onPressed: () => favorites.toggleFavorite(item),
                   icon: Icon(
                     isFav ? Icons.favorite : Icons.favorite_border,
-                    color: isFav ? primary : Colors.grey.withOpacity(0.3),
+                    color: isFav ? primary : Colors.grey.withValues(alpha: 0.3),
                     size: 18,
                   ),
                   visualDensity: VisualDensity.compact,

@@ -133,7 +133,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: primary.withOpacity(0.1),
+                            color: primary.withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -161,7 +161,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     "Just a few details to personalize your premium patisserie experience.",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
-                      color: berry.withOpacity(0.6),
+                      color: berry.withValues(alpha: 0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -177,7 +177,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
-                        color: berry.withOpacity(0.5),
+                        color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your first and last name",
                       prefixIcon: const Icon(Icons.person_outline, color: primary),
@@ -211,7 +211,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
-                        color: berry.withOpacity(0.5),
+                        color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your phone number",
                       prefixText: "+91 ",
@@ -252,7 +252,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
-                        color: berry.withOpacity(0.5),
+                        color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your address for accurate delivery",
                       prefixIcon: const Padding(
@@ -286,7 +286,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           borderRadius: BorderRadius.circular(28),
                         ),
                         elevation: 4,
-                        shadowColor: primary.withOpacity(0.3),
+                        shadowColor: primary.withValues(alpha: 0.3),
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)

@@ -280,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withOpacity(0.1),
+                      color: primary.withValues(alpha: 0.1),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     )
@@ -307,7 +307,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "Sign in to track orders, customize delivery addresses, earn Bronze, Silver, or Gold rewards, and get personal recommendations.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondary.withOpacity(0.6),
+                  color: secondary.withValues(alpha: 0.6),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -338,7 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: 5,
-                    shadowColor: primary.withOpacity(0.3),
+                    shadowColor: primary.withValues(alpha: 0.3),
                   ),
                   child: Text(
                     "SIGN IN OR REGISTER",
@@ -402,7 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: surfaceContainerHigh, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: secondary.withOpacity(0.1),
+                                color: secondary.withValues(alpha: 0.1),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -414,7 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _avatarUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Container(
-                                color: primary.withOpacity(0.1),
+                                color: primary.withValues(alpha: 0.1),
                                 child: const Icon(Icons.person, color: primary, size: 40),
                               ),
                             ),
@@ -452,9 +452,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: primary.withOpacity(0.1),
+                      color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: primary.withOpacity(0.2)),
+                      border: Border.all(color: primary.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -549,7 +549,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withOpacity(0.06),
+                          color: secondary.withValues(alpha: 0.06),
                           blurRadius: 40,
                           offset: const Offset(0, 10),
                         ),
@@ -595,7 +595,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: secondary.withOpacity(0.4),
+                                  color: secondary.withValues(alpha: 0.4),
                                 ),
                               ),
                             ],
@@ -637,7 +637,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             errorBuilder: (_, __, ___) => Container(
                                               height: 100,
                                               width: 100,
-                                              color: primary.withOpacity(0.05),
+                                              color: primary.withValues(alpha: 0.05),
                                               child: const Icon(Icons.cake, color: primary),
                                             ),
                                           ),
@@ -696,7 +696,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Text(
                               "No recent activity found",
                               style: GoogleFonts.plusJakartaSans(
-                                color: outline.withOpacity(0.5),
+                                color: outline.withValues(alpha: 0.5),
                                 fontSize: 14,
                               ),
                             ),
@@ -756,14 +756,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: secondary.withOpacity(0.05)),
+                        border: Border.all(color: secondary.withValues(alpha: 0.05)),
                       ),
                       child: Center(
                         child: Text(
                           "No saved addresses yet.",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: secondary.withOpacity(0.5),
+                            color: secondary.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -783,7 +783,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isDefault ? primary : secondary.withOpacity(0.05),
+                              color: isDefault ? primary : secondary.withValues(alpha: 0.05),
                               width: isDefault ? 1.5 : 1,
                             ),
                           ),
@@ -792,7 +792,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Icon(
                                 isDefault ? Icons.stars_rounded : Icons.location_on_rounded,
-                                color: isDefault ? primary : secondary.withOpacity(0.4),
+                                color: isDefault ? primary : secondary.withValues(alpha: 0.4),
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -819,7 +819,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         fontSize: 12,
                                         height: 1.5,
                                         fontWeight: FontWeight.w600,
-                                        color: secondary.withOpacity(0.8),
+                                        color: secondary.withValues(alpha: 0.8),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -904,12 +904,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withOpacity(0.04),
+                          color: secondary.withValues(alpha: 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
-                      border: Border.all(color: secondary.withOpacity(0.05)),
+                      border: Border.all(color: secondary.withValues(alpha: 0.05)),
                     ),
                     child: Column(
                       children: [
@@ -975,7 +975,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withOpacity(0.3),
+                          color: primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -1023,7 +1023,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
-                        color: outline.withOpacity(0.5),
+                        color: outline.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -1046,7 +1046,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
-            color: labelColor.withOpacity(0.6),
+            color: labelColor.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 4),
@@ -1086,7 +1086,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF701235).withOpacity(0.06), blurRadius: 40, offset: const Offset(0, 10)),
+          BoxShadow(color: const Color(0xFF701235).withValues(alpha: 0.06), blurRadius: 40, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -1110,11 +1110,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withOpacity(0.6))),
+                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: statusBg.withOpacity(0.4), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: statusBg.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(4)),
                       child: Text(status, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: primary)),
                     ),
                   ],
@@ -1129,7 +1129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSettingTile(IconData icon, String title, Color onSurface, Color outline, BuildContext context, {VoidCallback? onTap}) {
     return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withOpacity(0.1)))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withValues(alpha: 0.1)))),
       child: ListTile(
         onTap: onTap ?? () {},
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
@@ -1154,19 +1154,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: secondaryColor.withOpacity(0.04),
+            color: secondaryColor.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: secondaryColor.withOpacity(0.05)),
+        border: Border.all(color: secondaryColor.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -1181,7 +1181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 8,
                     fontWeight: FontWeight.w800,
-                    color: secondaryColor.withOpacity(0.4),
+                    color: secondaryColor.withValues(alpha: 0.4),
                     letterSpacing: 1,
                   ),
                 ),
@@ -1224,7 +1224,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: secondaryColor.withOpacity(0.5),
+                  color: secondaryColor.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -1233,7 +1233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: activeColor,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: Colors.grey.shade300,

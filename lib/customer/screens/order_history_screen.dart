@@ -80,7 +80,7 @@ class _CustomerOrderHistoryScreenState
                       ? Center(
                           child: Text("No orders yet",
                               style: GoogleFonts.plusJakartaSans(
-                                  color: berryText.withOpacity(0.5))))
+                                  color: berryText.withValues(alpha: 0.5))))
                       : ListView.builder(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 20),
@@ -141,11 +141,11 @@ class _CustomerOrderHistoryScreenState
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: primary.withOpacity(0.03),
+              color: primary.withValues(alpha: 0.03),
               blurRadius: 20,
               offset: const Offset(0, 8))
         ],
-        border: Border.all(color: primary.withOpacity(0.05)),
+        border: Border.all(color: primary.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -174,7 +174,7 @@ class _CustomerOrderHistoryScreenState
                           decoration: BoxDecoration(
                             color: source == 'WHATSAPP'
                                 ? Colors.green.shade50
-                                : primary.withOpacity(0.07),
+                                : primary.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -192,7 +192,7 @@ class _CustomerOrderHistoryScreenState
                           padding: const EdgeInsets.symmetric(
                               horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
+                            color: statusColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -221,7 +221,7 @@ class _CustomerOrderHistoryScreenState
                         itemsText.isEmpty ? "Exquisite Creation" : itemsText,
                         style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: berryText.withOpacity(0.7)),
+                            color: berryText.withValues(alpha: 0.7)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -250,7 +250,7 @@ class _CustomerOrderHistoryScreenState
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.02),
+              color: primary.withValues(alpha: 0.02),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(20)),
             ),
@@ -264,14 +264,14 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: berryText.withOpacity(0.5)),
+                          color: berryText.withValues(alpha: 0.5)),
                     ),
                   ),
                 ),
                 Container(
                     width: 1,
                     height: 20,
-                    color: primary.withOpacity(0.1)),
+                    color: primary.withValues(alpha: 0.1)),
                 Expanded(
                   child: TextButton(
                     onPressed: () {
