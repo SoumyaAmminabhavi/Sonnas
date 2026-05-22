@@ -184,11 +184,11 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_bag_outlined, size: 64, color: secondary.withOpacity(0.1)),
+          Icon(Icons.shopping_bag_outlined, size: 64, color: secondary.withValues(alpha: 0.1)),
           const SizedBox(height: 24),
           Text(
             "No active orders found",
-            style: GoogleFonts.plusJakartaSans(fontSize: 16, color: secondary.withOpacity(0.4)),
+            style: GoogleFonts.plusJakartaSans(fontSize: 16, color: secondary.withValues(alpha: 0.4)),
           ),
         ],
       ),
@@ -227,7 +227,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: secondary.withOpacity(0.06),
+            color: secondary.withValues(alpha: 0.06),
             blurRadius: 40,
             offset: const Offset(0, 20),
           ),
@@ -255,7 +255,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                           ),
                           child: Icon(
                             stages[index]['icon'] as IconData,
-                            color: isCompleted ? Colors.white : secondary.withOpacity(0.3),
+                            color: isCompleted ? Colors.white : secondary.withValues(alpha: 0.3),
                             size: 18,
                           ),
                         ),
@@ -265,7 +265,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 9,
                             fontWeight: isCompleted ? FontWeight.w800 : FontWeight.w600,
-                            color: isCompleted ? secondary : secondary.withOpacity(0.3),
+                            color: isCompleted ? secondary : secondary.withValues(alpha: 0.3),
                           ),
                         ),
                       ],
@@ -315,7 +315,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: secondary.withOpacity(0.05)),
+        border: Border.all(color: secondary.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,7 +326,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 2,
-              color: secondary.withOpacity(0.4),
+              color: secondary.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 24),
@@ -366,12 +366,12 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   Widget _buildHelpCard() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: secondary.withOpacity(0.05))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: secondary.withValues(alpha: 0.05))),
       child: Row(
         children: [
           const Icon(Icons.headset_mic_outlined, color: primary, size: 20),
           const SizedBox(width: 16),
-          Expanded(child: Text("Need help with your order?", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: secondary.withOpacity(0.7)))),
+          Expanded(child: Text("Need help with your order?", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: secondary.withValues(alpha: 0.7)))),
           TextButton(
             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactScreen())),
             child: Text("Support", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
@@ -393,7 +393,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text("NO", style: TextStyle(color: secondary.withOpacity(0.5))),
+            child: Text("NO", style: TextStyle(color: secondary.withValues(alpha: 0.5))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -429,7 +429,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   Widget _buildCancelButton() {
     return TextButton(
       onPressed: _cancelOrder,
-      style: TextButton.styleFrom(foregroundColor: Colors.red.withOpacity(0.6)),
+      style: TextButton.styleFrom(foregroundColor: Colors.red.withValues(alpha: 0.6)),
       child: const Text("CANCEL ORDER", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }

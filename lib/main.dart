@@ -234,7 +234,7 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
           const SizedBox(width: 8),
         ],
       ) : AppBar(
-        backgroundColor: cs.surface.withOpacity(0.9),
+        backgroundColor: cs.surface.withValues(alpha: 0.9),
         elevation: 0,
         scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: cs.primary),

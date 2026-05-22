@@ -33,8 +33,8 @@ class ProductDetailScreen extends StatefulWidget {
     required this.imageUrl,
     List<dynamic> rawOptions = const [],
   }) : options = rawOptions
-            .where((o) => o is Map<String, dynamic>)
-            .map((o) => ProductOption.fromJson(o as Map<String, dynamic>))
+            .whereType<Map<String, dynamic>>()
+            .map((o) => ProductOption.fromJson(o))
             .toList();
 
   @override
@@ -183,7 +183,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.brown.withOpacity(0.3)),
+                              border: Border.all(color: Colors.brown.withValues(alpha: 0.3)),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Icon(Icons.stop_circle_outlined, color: Colors.brown.shade800, size: 12),
@@ -310,7 +310,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF1F2F6),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: primaryColor.withOpacity(0.1)),
+                              border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
                             ),
                             child: Column(
                               children: [
@@ -389,11 +389,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   child: ActionChip(
                                     label: Text(tag, style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: primaryColor.withOpacity(0.8),
+                                      color: primaryColor.withValues(alpha: 0.8),
                                     )),
                                     backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    side: BorderSide(color: primaryColor.withOpacity(0.1)),
+                                    side: BorderSide(color: primaryColor.withValues(alpha: 0.1)),
                                     onPressed: () => _messageController.text = tag,
                                   ),
                                 )),
@@ -412,7 +412,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border(top: BorderSide(color: Colors.grey.shade200)),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5))],
                     ),
                     child: Row(
                       children: [
@@ -420,7 +420,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Container(
                           height: 50,
                           decoration: BoxDecoration(
-                            border: Border.all(color: accentRed.withOpacity(0.2)),
+                            border: Border.all(color: accentRed.withValues(alpha: 0.2)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(

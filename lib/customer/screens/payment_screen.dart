@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -40,7 +41,7 @@ class PaymentScreen extends StatefulWidget {
 
 class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedMethod = 'Razorpay';
-  bool _showSuccess = false;
+  final bool _showSuccess = false;
   bool _isLoading = false;
   String? _placedOrderId;
   double? _placedOrderTotal;
@@ -223,14 +224,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
       
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.of(context).pushReplacement(
+        unawaited(Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => OrderSuccessScreen(
               orderNumber: orderNumber,
               totalAmount: totalWithExtras / 100,
             ),
           ),
-        );
+        ));
       }
     } catch (e) {
       debugPrint("CRITICAL ERROR placing order: $e");
@@ -280,7 +281,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               width: 400,
               height: 400,
               decoration: BoxDecoration(
-                color: primaryContainerColor.withOpacity(0.05),
+                color: primaryContainerColor.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -293,14 +294,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: surfaceColor.withOpacity(0.8),
+                backgroundColor: surfaceColor.withValues(alpha: 0.8),
                 surfaceTintColor: Colors.transparent,
                 leading: IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
                 ),
                 title: Text(
-                  "Sonna’s Patisserie",
+                  "Sonnaâ€™s Patisserie",
                   style: GoogleFonts.notoSerif(
                     color: primaryColor,
                     fontSize: 20,
@@ -330,7 +331,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: primaryColor.withOpacity(0.7),
+                          color: primaryColor.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -344,9 +345,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           children: [
                             const TextSpan(text: "Complete Your\n"),
-                            TextSpan(
+                            const TextSpan(
                               text: "Savoury Experience",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: primaryColor,
                               ),
@@ -372,7 +373,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: secondaryColor.withOpacity(0.6),
+                          color: secondaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -415,7 +416,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: outlineVariantColor.withOpacity(0.1)),
+                                border: Border.all(color: outlineVariantColor.withValues(alpha: 0.1)),
                               ),
                               child: Column(
                                 children: [
@@ -431,7 +432,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: secondaryColor.withOpacity(0.6),
+                                      color: secondaryColor.withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ],
@@ -456,7 +457,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                     child: TextField(
                                       decoration: InputDecoration(
                                         hintText: "Enter UPI ID (e.g. user@bank)",
-                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withOpacity(0.3)),
+                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withValues(alpha: 0.3)),
                                         filled: true,
                                         fillColor: const Color(0xFFFFF1E9),
                                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
@@ -519,7 +520,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: secondaryColor.withOpacity(0.08),
+                          color: secondaryColor.withValues(alpha: 0.08),
                           blurRadius: 80,
                           offset: const Offset(0, 40),
                         ),
@@ -545,11 +546,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               Expanded(
                                 child: Text(
                                   "${item.name} (x${item.quantity})",
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withOpacity(0.7)),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withValues(alpha: 0.7)),
                                 ),
                               ),
                               Text(
-                                "₹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
+                                "â‚¹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurfaceColor),
                               ),
                             ],
@@ -574,14 +575,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
+                                  NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
                             ),
                             Text(
                               "Incl. all taxes",
-                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withOpacity(0.4)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -612,7 +613,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                               boxShadow: [
                                 if (!_isLoading)
                                   BoxShadow(
-                                    color: primaryColor.withOpacity(0.2),
+                                    color: primaryColor.withValues(alpha: 0.2),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -646,7 +647,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1,
-                                color: const Color(0xFF867277).withOpacity(0.4),
+                                color: const Color(0xFF867277).withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -688,10 +689,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isSelected ? primaryColor.withOpacity(0.2) : const Color(0xFFD8C1C6).withOpacity(0.1)),
+        border: Border.all(color: isSelected ? primaryColor.withValues(alpha: 0.2) : const Color(0xFFD8C1C6).withValues(alpha: 0.1)),
         boxShadow: [
           if (isSelected)
-            BoxShadow(color: secondaryColor.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: secondaryColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: InkWell(
@@ -704,7 +705,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFB6D3).withOpacity(0.2),
+                    color: const Color(0xFFFFB6D3).withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: primaryColor, size: 20),
@@ -721,7 +722,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       if (!isSelected)
                         Text(
                           subtitle,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: secondaryColor.withOpacity(0.6)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: secondaryColor.withValues(alpha: 0.6)),
                         ),
                     ],
                   ),
@@ -756,7 +757,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Center(
         child: Text(
           name,
-          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withOpacity(0.4)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withValues(alpha: 0.4)),
         ),
       ),
     );
@@ -768,7 +769,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     const Color surfaceColor = Color(0xFFFFF0F6);
 
     return Material(
-      color: surfaceColor.withOpacity(0.95),
+      color: surfaceColor.withValues(alpha: 0.95),
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
@@ -784,7 +785,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -806,7 +807,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               
               // Heading
               Text(
-                "Order Placed Successfully 🎉",
+                "Order Placed Successfully ðŸŽ‰",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
@@ -821,7 +822,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondaryColor.withOpacity(0.6),
+                  color: secondaryColor.withValues(alpha: 0.6),
                   height: 1.6,
                 ),
               ),
@@ -835,7 +836,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: secondaryColor.withOpacity(0.04),
+                      color: secondaryColor.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -848,7 +849,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
                     ),
-                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
+                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
@@ -880,7 +881,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 10,
-                    shadowColor: primaryColor.withOpacity(0.4),
+                    shadowColor: primaryColor.withValues(alpha: 0.4),
                   ),
                   child: Text(
                     "TRACK ORDER",
@@ -920,7 +921,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   "Back to Home",
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
-                    color: secondaryColor.withOpacity(0.5),
+                    color: secondaryColor.withValues(alpha: 0.5),
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -942,7 +943,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF701235).withOpacity(0.4),
+            color: const Color(0xFF701235).withValues(alpha: 0.4),
           ),
         ),
         Text(
@@ -957,3 +958,4 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 }
+

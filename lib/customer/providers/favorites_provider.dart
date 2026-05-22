@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 import 'dart:convert';
 import '../../services/haptic_service.dart';
 
@@ -32,7 +33,7 @@ class FavoritesProvider extends ChangeNotifier {
 
     if (index >= 0) {
       _favorites.removeAt(index);
-      HapticService.selection();
+      unawaited(HapticService.selection());
     } else {
       _favorites.add({
         'id': item['id'],
@@ -40,11 +41,11 @@ class FavoritesProvider extends ChangeNotifier {
         'price': item['price'],
         'image': item['image'],
       });
-      HapticService.light();
+      unawaited(HapticService.light());
     }
 
     notifyListeners();
-    _saveToDisk();
+    unawaited(_saveToDisk());
   }
 
   bool isFavorite(String? id, String title) {

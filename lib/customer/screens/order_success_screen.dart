@@ -52,7 +52,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withOpacity(0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -78,7 +78,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 "Thank you for choosing Sonna's Patisserie. Your sweet treats are being prepared with love.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondaryColor.withOpacity(0.6),
+                  color: secondaryColor.withValues(alpha: 0.6),
                   height: 1.6,
                 ),
                 textAlign: TextAlign.center,
@@ -92,7 +92,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: secondaryColor.withOpacity(0.04),
+                      color: secondaryColor.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -156,7 +156,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: secondaryColor.withOpacity(0.4),
+            color: secondaryColor.withValues(alpha: 0.4),
           ),
         ),
         Text(

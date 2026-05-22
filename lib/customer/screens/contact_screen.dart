@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -144,7 +145,7 @@ class _ContactScreenState extends State<ContactScreen> {
 
         if (!mounted) return;
         
-        showDialog(
+        unawaited(showDialog(
           context: context,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -163,7 +164,7 @@ class _ContactScreenState extends State<ContactScreen> {
               ),
             ],
           ),
-        );
+        ));
       } catch (e) {
         debugPrint("Report submission error: $e");
         if (!mounted) return;
@@ -195,7 +196,7 @@ class _ContactScreenState extends State<ContactScreen> {
       if (!mounted) return;
       setState(() => _userRating = rating);
       
-      showDialog(
+      unawaited(showDialog(
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -220,7 +221,7 @@ class _ContactScreenState extends State<ContactScreen> {
             ),
           ],
         ),
-      );
+      ));
     } catch (e) {
       debugPrint("Feedback submission error: $e");
       if (!mounted) return;
@@ -284,7 +285,7 @@ class _ContactScreenState extends State<ContactScreen> {
               child: Text(
                 "Sonna's Patisserie Support\nAvailable 9 AM - 9 PM",
                 textAlign: TextAlign.center,
-                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withOpacity(0.4)),
+                style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withValues(alpha: 0.4)),
               ),
             ),
             const SizedBox(height: 20),
@@ -300,7 +301,7 @@ class _ContactScreenState extends State<ContactScreen> {
       decoration: BoxDecoration(
         color: secondaryColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: secondaryColor.withOpacity(0.2), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: secondaryColor.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -339,7 +340,7 @@ class _ContactScreenState extends State<ContactScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: secondaryColor.withOpacity(0.05), blurRadius: 20, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: secondaryColor.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 4))],
       ),
       child: TextField(
         controller: _searchController,
@@ -369,7 +370,7 @@ class _ContactScreenState extends State<ContactScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(a, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withOpacity(0.6))),
+            child: Text(a, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withValues(alpha: 0.6))),
           ),
         ],
       ),
@@ -384,7 +385,7 @@ class _ContactScreenState extends State<ContactScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: primaryColor.withOpacity(0.1)),
+          border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -449,7 +450,7 @@ class _ContactScreenState extends State<ContactScreen> {
               Text("Visit Us", style: GoogleFonts.notoSerif(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: Colors.amber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                 child: Row(
                   children: [
                     const Icon(Icons.star, color: Colors.amber, size: 14),
@@ -462,7 +463,7 @@ class _ContactScreenState extends State<ContactScreen> {
           ),
           const SizedBox(height: 8),
           Text("Sonna's Patisserie and Cafe", style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold, color: secondaryColor)),
-          Text("Bakery and Cake Shop • ₹200–400 per person", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withOpacity(0.5))),
+          Text("Bakery and Cake Shop • ₹200–400 per person", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withValues(alpha: 0.5))),
           const SizedBox(height: 24),
           _buildInfoRow(Icons.location_on_outlined, "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Apartment, Akshay Colony, Unkal, Hubballi, Karnataka 580021"),
           const SizedBox(height: 16),
@@ -485,7 +486,7 @@ class _ContactScreenState extends State<ContactScreen> {
       children: [
         Icon(icon, color: primaryColor, size: 20),
         const SizedBox(width: 12),
-        Expanded(child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withOpacity(0.7)))),
+        Expanded(child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withValues(alpha: 0.7)))),
       ],
     );
   }
@@ -505,14 +506,14 @@ class _ContactScreenState extends State<ContactScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [primaryColor.withOpacity(0.1), Colors.white]),
+        gradient: LinearGradient(colors: [primaryColor.withValues(alpha: 0.1), Colors.white]),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
           Text("Your feedback matters!", style: GoogleFonts.notoSerif(fontSize: 16, fontWeight: FontWeight.bold, color: secondaryColor)),
           const SizedBox(height: 8),
-          Text("How was your experience today?", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withOpacity(0.5))),
+          Text("How was your experience today?", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withValues(alpha: 0.5))),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -547,9 +548,9 @@ class _ContactScreenState extends State<ContactScreen> {
       },
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: secondaryColor.withOpacity(0.3), fontSize: 14),
+        hintStyle: TextStyle(color: secondaryColor.withValues(alpha: 0.3), fontSize: 14),
         filled: true,
-        fillColor: backgroundColor.withOpacity(0.3),
+        fillColor: backgroundColor.withValues(alpha: 0.3),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
         errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: primaryColor)),
         contentPadding: const EdgeInsets.all(16),
@@ -557,3 +558,4 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 }
+

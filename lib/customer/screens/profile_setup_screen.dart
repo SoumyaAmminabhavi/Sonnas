@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -38,7 +39,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    HapticService.selection();
+    unawaited(HapticService.selection());
 
     try {
       final supabase = Supabase.instance.client;
@@ -87,10 +88,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         if (widget.onSuccess != null) {
           widget.onSuccess!();
         } else {
-          Navigator.pushReplacement(
+          unawaited(Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
-          );
+          ));
         }
       }
     } catch (e) {
@@ -133,7 +134,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: primary.withOpacity(0.1),
+                            color: primary.withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -161,7 +162,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     "Just a few details to personalize your premium patisserie experience.",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
-                      color: berry.withOpacity(0.6),
+                      color: berry.withValues(alpha: 0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -177,7 +178,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
-                        color: berry.withOpacity(0.5),
+                        color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your first and last name",
                       prefixIcon: const Icon(Icons.person_outline, color: primary),
@@ -211,7 +212,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
-                        color: berry.withOpacity(0.5),
+                        color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your phone number",
                       prefixText: "+91 ",
@@ -252,7 +253,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.5,
-                        color: berry.withOpacity(0.5),
+                        color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your address for accurate delivery",
                       prefixIcon: const Padding(
@@ -286,7 +287,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           borderRadius: BorderRadius.circular(28),
                         ),
                         elevation: 4,
-                        shadowColor: primary.withOpacity(0.3),
+                        shadowColor: primary.withValues(alpha: 0.3),
                       ),
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
@@ -309,3 +310,4 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 }
+

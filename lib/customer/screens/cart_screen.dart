@@ -30,7 +30,7 @@ class CartScreen extends StatelessWidget {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: surfaceColor.withOpacity(0.8),
+            backgroundColor: surfaceColor.withValues(alpha: 0.8),
             surfaceTintColor: Colors.transparent,
             leading: IconButton(
               onPressed: () => Navigator.pop(context),
@@ -93,14 +93,14 @@ class CartScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_bag_outlined, size: 64, color: secondaryColor.withOpacity(0.1)),
+                    Icon(Icons.shopping_bag_outlined, size: 64, color: secondaryColor.withValues(alpha: 0.1)),
                     const SizedBox(height: 24),
                     Text(
                       "Your bag is empty",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
-                        color: secondaryColor.withOpacity(0.4),
+                        color: secondaryColor.withValues(alpha: 0.4),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -144,7 +144,7 @@ class CartScreen extends StatelessWidget {
                       fontStyle: FontStyle.italic,
                       color: primaryColor,
                       decoration: TextDecoration.underline,
-                      decorationColor: primaryContainerColor.withOpacity(0.5),
+                      decorationColor: primaryContainerColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -175,7 +175,7 @@ class CartScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: outlineVariantColor.withOpacity(0.1)),
+          bottom: BorderSide(color: outlineVariantColor.withValues(alpha: 0.1)),
         ),
       ),
       child: Row(
@@ -234,7 +234,7 @@ class CartScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFD8C1C6).withOpacity(0.3)),
+          border: Border.all(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 12, color: const Color(0xFF701235)),
@@ -377,7 +377,7 @@ class CartScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: primaryColor.withOpacity(0.3)),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
               ),
               child: Center(
                 child: Text("IN-STORE SELF CHECKOUT", style: GoogleFonts.plusJakartaSans(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1)),
@@ -395,7 +395,7 @@ class CartScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
           Text(value, style: GoogleFonts.plusJakartaSans(fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),

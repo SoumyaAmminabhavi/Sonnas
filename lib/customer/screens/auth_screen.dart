@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -78,7 +79,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
     if (mounted) {
       if (!isSetupCompleted && !widget.isOwner) {
-        Navigator.pushReplacement(
+        unawaited(Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => ProfileSetupScreen(
@@ -86,23 +87,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               isOwner: widget.isOwner,
             ),
           ),
-        );
+        ));
       } else {
         if (widget.onSuccess != null) {
           widget.onSuccess!();
         } else if (widget.isOwner) {
           await owner_dashboard.loadLibrary();
           if (mounted) {
-            Navigator.pushReplacement(
+            unawaited(Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
-            );
+            ));
           }
         } else {
-          Navigator.pushReplacement(
+          unawaited(Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
-          );
+          ));
         }
       }
     }
@@ -190,12 +191,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           Positioned(
             top: -150,
             right: -100,
-            child: _buildCircle(400, accent.withOpacity(0.15)),
+            child: _buildCircle(400, accent.withValues(alpha: 0.15)),
           ),
           Positioned(
             bottom: -100,
             left: -50,
-            child: _buildCircle(300, primary.withOpacity(0.05)),
+            child: _buildCircle(300, primary.withValues(alpha: 0.05)),
           ),
           
           SafeArea(
@@ -246,7 +247,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       Autocomplete<String>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           final input = textEditingValue.text;
-                          if (input.isEmpty || input.length < 1) return const Iterable<String>.empty();
+                          if (input.isEmpty || input.isEmpty) return const Iterable<String>.empty();
                           final domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
                           final suggestions = <String>{};
                           if (input.contains('@')) {
@@ -335,12 +336,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         autofillHints: const [AutofillHints.password],
                         style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
                         decoration: _buildInputDecoration(
-                          "••••••••", 
+                          "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢", 
                           Icons.lock_outline,
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
                             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                            color: berry.withOpacity(0.5),
+                            color: berry.withValues(alpha: 0.5),
                           ),
                         ),
                         validator: (value) {
@@ -364,7 +365,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                               backgroundColor: primary,
                               foregroundColor: Colors.white,
                               elevation: 8,
-                              shadowColor: primary.withOpacity(0.4),
+                              shadowColor: primary.withValues(alpha: 0.4),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             ),
                             child: _isLoading 
@@ -395,7 +396,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           }),
                           child: RichText(
                             text: TextSpan(
-                              style: GoogleFonts.plusJakartaSans(color: berry.withOpacity(0.6), fontWeight: FontWeight.w500),
+                              style: GoogleFonts.plusJakartaSans(color: berry.withValues(alpha: 0.6), fontWeight: FontWeight.w500),
                               children: [
                                 TextSpan(text: _isSignUp ? "Already have an account? " : "New to Sonna's? "),
                                 TextSpan(
@@ -436,7 +437,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         fontSize: 12,
         fontWeight: FontWeight.w800,
         letterSpacing: 1.2,
-        color: berry.withOpacity(0.5),
+        color: berry.withValues(alpha: 0.5),
       ),
     );
   }
@@ -444,7 +445,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   InputDecoration _buildInputDecoration(String hint, IconData icon, {Widget? suffixIcon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.plusJakartaSans(color: berry.withOpacity(0.2)),
+      hintStyle: GoogleFonts.plusJakartaSans(color: berry.withValues(alpha: 0.2)),
       prefixIcon: Icon(icon, color: primary, size: 22),
       suffixIcon: suffixIcon,
       filled: true,
@@ -470,3 +471,4 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
   }
 }
+

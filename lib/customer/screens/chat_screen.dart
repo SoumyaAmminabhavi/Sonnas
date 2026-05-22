@@ -92,10 +92,10 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: surfaceContainerHighest,
-                image: const DecorationImage(
+                image: DecorationImage(
                   image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuCW4VX5enGAie3GkYPPdkamq4fQHv3lj8sSmMFCeKGncIWPGw2NHARgnOOW2j3je_VU9aHSOP8VuJ1LYAWt6Ez_KwQqQrJCyQS9c1NRVc1dcFGb1WkErJdj3FZ061YNmFJkRMnbxZ-4QNBayv6uAS6o0ufEqvlWfGJ8d1woBnaqg56KKXT9huUMdmlDVHKH4zlC5paYiO5G1RzogtALXXxTDzYGRRCE1tLgTCbLGMPSl0bNxkbLmT5S9iqwmoefCfT8xYLqFRWFaBe4"),
                   fit: BoxFit.cover,
                 ),
@@ -132,7 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
-                        color: secondary.withOpacity(0.65),
+                        color: secondary.withValues(alpha: 0.65),
                       ),
                     ),
                   ],
@@ -208,7 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               decoration: BoxDecoration(
                 color: background,
-                border: Border(top: BorderSide(color: secondary.withOpacity(0.1))),
+                border: Border(top: BorderSide(color: secondary.withValues(alpha: 0.1))),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -234,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 hintText: "Type your message...",
                                 hintStyle: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
-                                  color: secondary.withOpacity(0.4),
+                                  color: secondary.withValues(alpha: 0.4),
                                 ),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -243,7 +243,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.image_outlined, color: secondary.withOpacity(0.4)),
+                            icon: Icon(Icons.image_outlined, color: secondary.withValues(alpha: 0.4)),
                             onPressed: () {},
                           ),
                         ],
@@ -293,7 +293,7 @@ class _ChatScreenState extends State<ChatScreen> {
               constraints: const BoxConstraints(maxWidth: 300),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isBakery ? surfaceContainerLowest : primaryContainer.withOpacity(0.38),
+                color: isBakery ? surfaceContainerLowest : primaryContainer.withValues(alpha: 0.38),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(24),
                   topRight: const Radius.circular(24),
@@ -302,7 +302,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 boxShadow: isBakery ? [
                   BoxShadow(
-                    color: secondary.withOpacity(0.06),
+                    color: secondary.withValues(alpha: 0.06),
                     blurRadius: 20,
                     offset: const Offset(0, 4),
                   ),
@@ -324,7 +324,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 fontSize: 9,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1,
-                color: secondary.withOpacity(0.4),
+                color: secondary.withValues(alpha: 0.4),
               ),
             ),
           ],
@@ -342,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (label == "Track Order") {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CustomerTrackingScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerTrackingScreen()),
           );
         } else {
           _controller.text = label;
@@ -355,7 +355,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: surfaceContainerLowest,
           borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: const Color(0xFFD8C1C6).withOpacity(0.52)),
+          border: Border.all(color: const Color(0xFFD8C1C6).withValues(alpha: 0.52)),
         ),
         child: Text(
           label,

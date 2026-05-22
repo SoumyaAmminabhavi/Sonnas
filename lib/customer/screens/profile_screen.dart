@@ -1,3 +1,4 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -193,11 +194,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final count = data.length;
       final spentRupees = spentSum / 100.0;
 
-      String level = "Bronze Gourmet 🍰";
+      String level = "Bronze Gourmet ðŸ°";
       if (count >= 6) {
-        level = "Gold Patissier 👑";
+        level = "Gold Patissier ðŸ‘‘";
       } else if (count >= 3) {
-        level = "Silver Connoisseur ✨";
+        level = "Silver Connoisseur âœ¨";
       }
 
       if (mounted) {
@@ -280,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withOpacity(0.1),
+                      color: primary.withValues(alpha: 0.1),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     )
@@ -307,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 "Sign in to track orders, customize delivery addresses, earn Bronze, Silver, or Gold rewards, and get personal recommendations.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondary.withOpacity(0.6),
+                  color: secondary.withValues(alpha: 0.6),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -338,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: 5,
-                    shadowColor: primary.withOpacity(0.3),
+                    shadowColor: primary.withValues(alpha: 0.3),
                   ),
                   child: Text(
                     "SIGN IN OR REGISTER",
@@ -402,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: surfaceContainerHigh, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: secondary.withOpacity(0.1),
+                                color: secondary.withValues(alpha: 0.1),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -413,8 +414,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Image.network(
                               _avatarUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: primary.withOpacity(0.1),
+                              errorBuilder: (_, _, _) => Container(
+                                color: primary.withValues(alpha: 0.1),
                                 child: const Icon(Icons.person, color: primary, size: 40),
                               ),
                             ),
@@ -452,9 +453,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: primary.withOpacity(0.1),
+                      color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: primary.withOpacity(0.2)),
+                      border: Border.all(color: primary.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -492,7 +493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           child: _buildStatItem(
                             "Total Spent", 
-                            "₹${_totalSpent.toStringAsFixed(0)}", 
+                            "â‚¹${_totalSpent.toStringAsFixed(0)}", 
                             Icons.account_balance_wallet_rounded, 
                             Colors.orange.shade700,
                           ),
@@ -549,7 +550,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withOpacity(0.06),
+                          color: secondary.withValues(alpha: 0.06),
                           blurRadius: 40,
                           offset: const Offset(0, 10),
                         ),
@@ -595,7 +596,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: secondary.withOpacity(0.4),
+                                  color: secondary.withValues(alpha: 0.4),
                                 ),
                               ),
                             ],
@@ -634,10 +635,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             height: 100,
                                             width: 100,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Container(
+                                            errorBuilder: (_, _, _) => Container(
                                               height: 100,
                                               width: 100,
-                                              color: primary.withOpacity(0.05),
+                                              color: primary.withValues(alpha: 0.05),
                                               child: const Icon(Icons.cake, color: primary),
                                             ),
                                           ),
@@ -696,7 +697,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Text(
                               "No recent activity found",
                               style: GoogleFonts.plusJakartaSans(
-                                color: outline.withOpacity(0.5),
+                                color: outline.withValues(alpha: 0.5),
                                 fontSize: 14,
                               ),
                             ),
@@ -711,7 +712,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       
                       return _buildActivityItem(
                         "${latestOrder['customerName']?.toString().split(' ').first}'s Selection",
-                        "₹${priceVal.toStringAsFixed(2)}",
+                        "â‚¹${priceVal.toStringAsFixed(2)}",
                         "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
                         status.toUpperCase(),
                         latestOrder['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
@@ -756,14 +757,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: secondary.withOpacity(0.05)),
+                        border: Border.all(color: secondary.withValues(alpha: 0.05)),
                       ),
                       child: Center(
                         child: Text(
                           "No saved addresses yet.",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: secondary.withOpacity(0.5),
+                            color: secondary.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -773,7 +774,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _savedAddresses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final addr = _savedAddresses[index];
                         final isDefault = addr == _defaultAddress;
@@ -783,7 +784,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isDefault ? primary : secondary.withOpacity(0.05),
+                              color: isDefault ? primary : secondary.withValues(alpha: 0.05),
                               width: isDefault ? 1.5 : 1,
                             ),
                           ),
@@ -792,7 +793,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               Icon(
                                 isDefault ? Icons.stars_rounded : Icons.location_on_rounded,
-                                color: isDefault ? primary : secondary.withOpacity(0.4),
+                                color: isDefault ? primary : secondary.withValues(alpha: 0.4),
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -819,7 +820,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         fontSize: 12,
                                         height: 1.5,
                                         fontWeight: FontWeight.w600,
-                                        color: secondary.withOpacity(0.8),
+                                        color: secondary.withValues(alpha: 0.8),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -833,7 +834,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 _defaultAddress = addr;
                                                 _addressController.text = addr;
                                               });
-                                              _saveAddressesToPrefs();
+                                              unawaited(_saveAddressesToPrefs());
                                             },
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.zero,
@@ -859,7 +860,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 _addressController.text = _savedAddresses.first;
                                               }
                                             });
-                                            _saveAddressesToPrefs();
+                                            unawaited(_saveAddressesToPrefs());
                                           },
                                           style: TextButton.styleFrom(
                                             padding: EdgeInsets.zero,
@@ -904,12 +905,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withOpacity(0.04),
+                          color: secondary.withValues(alpha: 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
-                      border: Border.all(color: secondary.withOpacity(0.05)),
+                      border: Border.all(color: secondary.withValues(alpha: 0.05)),
                     ),
                     child: Column(
                       children: [
@@ -975,7 +976,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withOpacity(0.3),
+                          color: primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -987,10 +988,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onTap: () async {
                           await Supabase.instance.client.auth.signOut();
                           if (context.mounted) {
-                            Navigator.of(context).pushAndRemoveUntil(
+                            unawaited(Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(builder: (context) => const WelcomeScreen()),
                               (route) => false,
-                            );
+                            ));
                           }
                         },
                         borderRadius: BorderRadius.circular(12),
@@ -1023,7 +1024,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
-                        color: outline.withOpacity(0.5),
+                        color: outline.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -1046,7 +1047,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
-            color: labelColor.withOpacity(0.6),
+            color: labelColor.withValues(alpha: 0.6),
           ),
         ),
         const SizedBox(height: 4),
@@ -1059,9 +1060,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontWeight: FontWeight.w600,
               color: valueColor,
             ),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              contentPadding: EdgeInsets.symmetric(vertical: 8),
               focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFFF4D8D))),
             ),
           )
@@ -1086,7 +1087,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF701235).withOpacity(0.06), blurRadius: 40, offset: const Offset(0, 10)),
+          BoxShadow(color: const Color(0xFF701235).withValues(alpha: 0.06), blurRadius: 40, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -1110,11 +1111,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withOpacity(0.6))),
+                    Text(orderId, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, color: outline.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: statusBg.withOpacity(0.4), borderRadius: BorderRadius.circular(4)),
+                      decoration: BoxDecoration(color: statusBg.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(4)),
                       child: Text(status, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.w800, color: primary)),
                     ),
                   ],
@@ -1129,7 +1130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSettingTile(IconData icon, String title, Color onSurface, Color outline, BuildContext context, {VoidCallback? onTap}) {
     return Container(
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withOpacity(0.1)))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withValues(alpha: 0.1)))),
       child: ListTile(
         onTap: onTap ?? () {},
         contentPadding: const EdgeInsets.symmetric(vertical: 8),
@@ -1154,19 +1155,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: secondaryColor.withOpacity(0.04),
+            color: secondaryColor.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: secondaryColor.withOpacity(0.05)),
+        border: Border.all(color: secondaryColor.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -1181,7 +1182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 8,
                     fontWeight: FontWeight.w800,
-                    color: secondaryColor.withOpacity(0.4),
+                    color: secondaryColor.withValues(alpha: 0.4),
                     letterSpacing: 1,
                   ),
                 ),
@@ -1224,7 +1225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: secondaryColor.withOpacity(0.5),
+                  color: secondaryColor.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -1233,7 +1234,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: activeColor,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: Colors.grey.shade300,
@@ -1281,7 +1282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _addressController.text = newAddr;
         }
       });
-      _saveAddressesToPrefs();
+      unawaited(_saveAddressesToPrefs());
     }
   }
 
@@ -1295,7 +1296,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=120&h=120&fit=crop", // chef hat
     ];
 
-    showModalBottomSheet(
+    unawaited(showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
@@ -1354,6 +1355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
+
