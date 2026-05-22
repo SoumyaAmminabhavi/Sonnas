@@ -119,26 +119,4 @@ class SupabaseService {
       return null;
     }
   }
-
-  /// Fetch all categories from the database
-  static Future<List<String>> fetchCategories() async {
-    try {
-      final response = await client.from('Category').select('name');
-      return response.map<String>((cat) => cat['name'] as String? ?? '').where((n) => n.isNotEmpty).toList();
-    } catch (e) {
-      debugPrint('Error fetching categories: $e');
-      return [];
-    }
-  }
-
-  /// Fetch all menu items (cakes) from the database
-  static Future<List<Map<String, dynamic>>> fetchMenu() async {
-    try {
-      final response = await client.from('Cake').select('*').order('name');
-      return response;
-    } catch (e) {
-      debugPrint('Error fetching menu: $e');
-      return [];
-    }
-  }
 }
