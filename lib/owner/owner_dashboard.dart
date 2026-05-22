@@ -1,138 +1,165 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'menu_page.dart';
 import 'owner_settings.dart';
 import 'orders_page.dart';
 import 'payments_page.dart';
-import 'order_details_page.dart';
 import '../widgets/owner_sidebar.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/dashboard_provider.dart';
+import 'order_details_page.dart';
+import 'widgets/dashboard_content.dart';
+import 'widgets/owner_bottom_nav.dart';
 
-
-// Brand Colors - Sweet Pink Bakery Theme
-const Color _bgColor = Color(0xFFFFF0F6); // Ultra pale pink
-const Color _primaryColor = Color(0xFFFF4D8D); // Vibrant pink
-const Color _primaryContainer = Color(0xFFFFB6D3); // Pastel pink accent
-const Color _secondaryColor = Color(0xFF701235); // Deep berry for text/contrast
-const Color _surfaceLow = Color(0xFFFFF5F9); // Lighter surface
-
-// Images
-const _profileUrl =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuDDQvYGvn7S_J3DgscTQ2hNnlLJRhww-9vSDS-Wt5d8khGCywY2mEyOlidW86WQ0V1-AhQh2KWO60drIVHQJrfu3ZZJsuR_E8nsZl3mX6iruFwf9hK3oksVyq298bTGjeXEx8IDZExP5eyrE_JD3gnXSeAn_-OlWPTcgIxt2-_1AxMAYzTIfh8rIJHZXRYfbobtQI-IAL_PTkx9ufPCiigfWZlzIDGwO6FEA9kitgjTQc_lkka6tk007AMES6uXmk5vnYroLLKQz--4";
-const _imgOrder1 =
-    "https://lh3.googleusercontent.com/aida-public/AB6AXuByamhClb3gDhF3nngRFpLvkbtTTHarLWuqt4-agAtERKXjlvCqO0UX3yoFz8JcqTxXexzX6nYk_VgLcK0PhyPJcetaMu0wIt5XswIYgIbUVmdoLWucs7HsL6WEwnGYbjBT8Dju38uIOlCwkRSaksxz6v2pSSi1xjhD_tiuMHQWhwmm3o8mBSZGVB41NEqCjepzdUc_TgIx4FsF49JV6XFveVlL76uJKML55RWk6tpcySzc2TFE1MfrNg1sUXJ6BKv69tr904uK6oSO";
-// const _imgOrder2 =
-//     "https://lh3.googleusercontent.com/aida-public/AB6AXuBgLiZjc9axvI-eFs8vO1zzxXSfph_zKSHA9tUul1gcWpf1QEOdqEipFJuCWmE0P8H9Mq_9T6s6P2dAUoW4WGiI94z-4QrxdHl7AYmzfzGCy5GOgFQAo4TmUwJnSFPSTtkV8bBW20fV0MurGRSB4jnPK111Qxuv2yiTQ2CIfFHGRGyXA1CZbUmlIs-v6A3RHMYNqdsl0PoOJJxyZ_lFRObqOKAnKPqc_4mCp1DvHn01byvns9Mc3JHBquVh_j04E5LWBNRgrLU-tRzQ";
-// const _imgOrder3 =
-//     "https://lh3.googleusercontent.com/aida-public/AB6AXuCMggGL41lwe2i4Hoo75nPIBRKP9jNB-bpez1o15acouqD2kq9Xm2CMIC6RB-60FX1h5PUQijYrbv-QmjuvsF3lDd6U_RGEVfyriZZf28EktoAbAXV2gWj-r18jED5in5g8-4eXkBRTQ3p2wNkJ7zBsFW8BKvplp4rqngBkQvOcpFG8P9d92TuJRDGyFEBMaE1DFDT5ml-S7Os54bLBx8eVzGpeSDdAI0CRqWbjmGtA4TAJshbLFBBdabnvBVoFkbJlrlccy-WgIuv-";
-// const _imgOrder4 =
-//     "https://lh3.googleusercontent.com/aida-public/AB6AXuDGwlEwOUwOfvwwQYEI5N9MyD17EsoHebe0bo_ito0-cXuFY8odZg1uyWA-bpYULaxCXVb80y5fRsfUby-NaopwuLqXGs3Px7imIUA_AKJvqfZl6T6f-aZiYROl1_aPAOKt73Msdakj8PV84o8TMZ6Am7lwqTViaBG0ea75y0znTDi5-I4dRwFHp88lf1cE16C8jxp0ISgJMnZtAPjFf3z31n-Cb_fGxq-1iLfIB_Vywk7VDDLQoChnHEXjIUHzNwVnust_mYR_Uqp2";
-
-
-class OwnerDashboard extends StatefulWidget {
+class OwnerDashboard extends ConsumerStatefulWidget {
   const OwnerDashboard({super.key});
 
   @override
-  State<OwnerDashboard> createState() => _OwnerDashboardState();
+  ConsumerState<OwnerDashboard> createState() => _OwnerDashboardState();
 }
 
-class _OwnerDashboardState extends State<OwnerDashboard> {
+class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
   int _selectedIndex = 0;
+  SalesRange _selectedRange = SalesRange.weekly;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
+  late PageController _pageController;
+  int? _lastOrderCount;
+  int _settingsResetCounter = 0;
+  String? _lastNotifiedOrderId;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _handleNavigation(int index) {
+    setState(() {
+      if (_selectedIndex == index && index == 4) {
+        _settingsResetCounter++;
+      }
+      _selectedIndex = index;
+    });
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    }
+  }
+
+  void _showNewOrderNotification(Map<String, dynamic> order) {
+    final orderNumber = (order['orderNumber'] as String?) ?? '---';
+    final customerName = (order['customerName'] as String?) ?? 'Guest';
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
+
+    late OverlayEntry overlayEntry;
+    final child = Material(
+      color: Colors.transparent,
+      child: _NotificationWidget(
+        customerName: customerName,
+        orderNumber: orderNumber,
+        isMobile: isMobile,
+        onView: () async {
+          final String? orderId = order['id']?.toString();
+          if (orderId == null || orderId.isEmpty) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Invalid order ID')),
+            );
+            if (overlayEntry.mounted) overlayEntry.remove();
+            return;
+          }
+          await Navigator.push<void>(context, MaterialPageRoute<void>(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
+          if (overlayEntry.mounted) overlayEntry.remove();
+        },
+        onDismiss: () {
+          if (overlayEntry.mounted) overlayEntry.remove();
+        },
+      ),
+    );
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: isMobile ? 0 : null,
+        bottom: isMobile ? null : 24,
+        right: isMobile ? 16 : 24,
+        left: isMobile ? 16 : null,
+        width: isMobile ? null : 380,
+        child: isMobile
+            ? SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: child,
+                ),
+              )
+            : child,
+      ),
+    );
+
+    Overlay.of(context).insert(overlayEntry);
+  }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(recentOrdersProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        final orders = next.value!;
+        if (_lastOrderCount == null) {
+          _lastOrderCount = orders.length;
+          if (orders.isNotEmpty) {
+            _lastNotifiedOrderId = orders.first['id']?.toString();
+          }
+          return;
+        }
+        if (orders.isNotEmpty) {
+          final latestOrderId = orders.first['id']?.toString();
+          if (latestOrderId != null && latestOrderId != _lastNotifiedOrderId && orders.length > _lastOrderCount!) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _showNewOrderNotification(orders.first);
+              }
+            });
+            _lastNotifiedOrderId = latestOrderId;
+          }
+        }
+        _lastOrderCount = orders.length;
+      }
+    });
+    final cs = Theme.of(context).colorScheme;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 768;
 
         return Scaffold(
-          backgroundColor: _bgColor,
+          backgroundColor: cs.surface,
           appBar: AppBar(
-            backgroundColor: _bgColor.withOpacity(0.9),
+            backgroundColor: cs.surface.withValues(alpha: 0.9),
             elevation: 0,
             scrolledUnderElevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: _primaryColor),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: Text(
-              "Sonna's Patisserie & Cafe",
-              style: GoogleFonts.notoSerif(
-                color: const Color.fromARGB(255, 146, 6, 53),
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.5,
-              ),
-            ),
-            actions: [
-              if (isDesktop) ...[
-                const _TopNavText(text: "DASHBOARD", isSelected: true),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = 3),
-                  child: const _TopNavText(text: "MENU"),
-                ),
-                GestureDetector(
-                  onTap: () => setState(() => _selectedIndex = 4),
-                  child: const _TopNavText(text: "SETTINGS"),
-                ),
-              ],
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _primaryContainer, width: 2),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 16,
-                    backgroundImage: NetworkImage(_profileUrl),
-                  ),
-                ),
-              ),
-            ],
+            leading: isDesktop ? null : IconButton(icon: Icon(Icons.arrow_back, color: cs.primary), onPressed: () => Navigator.of(context).pop()),
+            title: Text("Sonna's Patisserie & Cafe", style: GoogleFonts.notoSerif(color: cs.primary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600, letterSpacing: -0.5)),
           ),
-          bottomNavigationBar: isDesktop
-              ? null
-              : _MobileBottomNav(
-                  currentIndex: _selectedIndex,
-                  onTap: (index) {
-                    setState(() => _selectedIndex = index);
-                  },
-                ),
-          floatingActionButton: _selectedIndex == 3
-              ? FloatingActionButton(
-                  backgroundColor: _primaryColor,
-                  onPressed: () {
-                    // Save menu item
-                  },
-                  elevation: 8,
-                  shape: const CircleBorder(),
-                  child: const Icon(Icons.check, color: Colors.white, size: 32),
-                )
-              : null,
+          bottomNavigationBar: isDesktop ? null : OwnerBottomNav(currentIndex: _selectedIndex, onTap: _handleNavigation),
           body: Row(
             children: [
-              if (isDesktop)
-                OwnerSidebar(
-                  currentIndex: _selectedIndex,
-                  onTap: (index) {
-                    setState(() => _selectedIndex = index);
-                  },
-                ),
+              if (isDesktop) OwnerSidebar(currentIndex: _selectedIndex, onTap: _handleNavigation),
               Expanded(
-                child: _selectedIndex == 1
-                    ? const ManageOrdersPage()
-                    : _selectedIndex == 2
-                    ? const PaymentsPage()
-                    : _selectedIndex == 3
-                    ? const MenuPage()
-                    : _selectedIndex == 4
-                    ? const OwnerSettingsPage()
-                    : _MainContent(
-                        isDesktop: isDesktop,
-                        onViewAllOrders: () =>
-                            setState(() => _selectedIndex = 1),
+                child: isDesktop
+                    ? _buildPage(_selectedIndex, isDesktop)
+                    : PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) => setState(() => _selectedIndex = index),
+                        children: List.generate(5, (i) => _buildPage(i, false)),
                       ),
               ),
             ],
@@ -141,605 +168,190 @@ class _OwnerDashboardState extends State<OwnerDashboard> {
       },
     );
   }
-}
 
-class _TopNavText extends StatelessWidget {
-  final String text;
-  final bool isSelected;
-
-  const _TopNavText({required this.text, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Center(
-        child: Text(
-          text,
-          style: GoogleFonts.plusJakartaSans(
-            color: isSelected
-                ? _primaryColor
-                : _secondaryColor.withOpacity(0.6),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 12,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ),
-    );
+  Widget _buildPage(int index, bool isDesktop) {
+    switch (index) {
+      case 1: return ManageOrdersPage(onTabChanged: _handleNavigation);
+      case 2: return const PaymentsPage();
+      case 3: return MenuPage(onTabChanged: _handleNavigation);
+      case 4: 
+        return OwnerSettingsPage(
+          key: ValueKey("settings_$_settingsResetCounter"),
+          onTabChanged: _handleNavigation
+        );
+      default:
+        return DashboardContent(
+          isDesktop: isDesktop,
+          selectedRange: _selectedRange,
+          selectedMonth: _selectedMonth,
+          selectedYear: _selectedYear,
+          onRangeChanged: (range) => setState(() => _selectedRange = range),
+          onMonthChanged: (m) => setState(() => _selectedMonth = m),
+          onYearChanged: (y) => setState(() => _selectedYear = y),
+          onViewAllOrders: () => _handleNavigation(1),
+        );
+    }
   }
 }
 
+class _NotificationWidget extends StatefulWidget {
+  final String customerName, orderNumber;
+  final VoidCallback onView;
+  final VoidCallback onDismiss;
+  final bool isMobile;
 
-class _MobileBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
-
-  const _MobileBottomNav({required this.currentIndex, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: _bgColor.withOpacity(0.95),
-      selectedItemColor: _primaryColor,
-      unselectedItemColor: _secondaryColor.withOpacity(0.6),
-      selectedLabelStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 9,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
-      ),
-      unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 9,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
-      ),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.grid_view),
-          label: "Dashboard",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Orders"),
-        BottomNavigationBarItem(icon: Icon(Icons.payments), label: "Payments"),
-        BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: "Menu"),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
-      ],
-    );
-  }
-}
-
-class _MainContent extends StatelessWidget {
-  final bool isDesktop;
-  final VoidCallback onViewAllOrders;
-
-  const _MainContent({required this.isDesktop, required this.onViewAllOrders});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: _bgColor, // Explicitly use the pink background for content
-      child: ListView(
-        padding: EdgeInsets.symmetric(
-          horizontal: isDesktop ? 48.0 : 24.0,
-          vertical: 32.0,
-        ),
-        children: [
-          // Welcome Header
-          Text(
-            "OWNER OVERVIEW",
-            style: GoogleFonts.plusJakartaSans(
-              color: _primaryColor,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              letterSpacing: 2.0,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Hello, Sonna.",
-            style: GoogleFonts.notoSerif(
-              color: _secondaryColor,
-              fontSize: isDesktop ? 48 : 36,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            width: 48,
-            height: 1,
-            color: _secondaryColor.withOpacity(0.3),
-          ),
-          const SizedBox(height: 48),
-          _buildPerformanceChart(context, isDesktop),
-          const SizedBox(height: 48),
-
-          // Recent Orders Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Recent Orders",
-                    style: GoogleFonts.notoSerif(
-                      color: _secondaryColor,
-                      fontSize: 24,
-                    ),
-                  ),
-                  Text(
-                    "Latest activity from the boutique",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withOpacity(0.6),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              InkWell(
-                onTap: onViewAllOrders,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: _primaryContainer, width: 2),
-                    ),
-                  ),
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    "View All Archives",
-                    style: GoogleFonts.notoSerif(
-                      color: _primaryColor,
-                      fontStyle: FontStyle.italic,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Orders List
-          StreamBuilder<List<Map<String, dynamic>>>(
-            stream: Supabase.instance.client
-                .from('Order')
-                .stream(primaryKey: ['id'])
-                .order('createdAt', ascending: false)
-                .limit(5),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.0),
-                    child: CircularProgressIndicator(color: _primaryColor),
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    "Error loading activity",
-                    style: GoogleFonts.plusJakartaSans(color: Colors.red),
-                  ),
-                );
-              }
-
-              final orderData = snapshot.data ?? [];
-
-              if (orderData.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(48.0),
-                    child: Text(
-                      "No recent activity yet.",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: _secondaryColor.withOpacity(0.4),
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              final List<_OrderCard> orders = orderData.map((o) {
-                final rawOrderId = o['id']?.toString() ?? '';
-                final safeOrderId = rawOrderId.trim();
-                final hasValidId = safeOrderId.isNotEmpty;
-                
-                final status = (o['status'] ?? 'PENDING').toString().toUpperCase();
-                
-                Color statusColor = _primaryColor;
-                Color statusBg = _primaryColor.withOpacity(0.1);
-                String statusText = status;
-
-                if (status == 'PREPARING') {
-                  statusText = "IN PREPARATION";
-                  statusColor = _primaryColor;
-                  statusBg = _surfaceLow;
-                } else if (status == 'PENDING') {
-                  statusText = "NEW ORDER";
-                  statusColor = const Color(0xFFFDBF97);
-                  statusBg = const Color(0xFFFDBF97).withOpacity(0.1);
-                } else if (status == 'CONFIRMED') {
-                  statusText = "PAID & CONFIRMED";
-                  statusColor = Colors.blue;
-                  statusBg = Colors.blue.withOpacity(0.1);
-                } else if (status == 'CANCELLED') {
-                  statusText = "CANCELLED";
-                  statusColor = Colors.red;
-                  statusBg = Colors.red.withOpacity(0.1);
-                } else if (status == 'DELIVERED' || status == 'SHIPPED') {
-                  statusText = "COMPLETED";
-                  statusColor = Colors.green;
-                  statusBg = Colors.green.withOpacity(0.1);
-                }
-
-                return _OrderCard(
-                  id: "#${o['orderNumber']?.toString().contains('-') == true ? o['orderNumber'].toString().split('-').last : (o['orderNumber']?.toString() ?? 'ORD-0000')}",
-                  orderId: hasValidId ? safeOrderId : 'unknown',
-                  status: statusText,
-                  statusColor: statusColor,
-                  statusBg: statusBg,
-                  title: o['customerName'] ?? "Boutique Order",
-                  customer: "Phone: ${o['customerPhone'] ?? 'Unknown'}\nAddr: ${o['address'] ?? 'Self-Pickup'}",
-                  imageUrl: o['customImageUrl'] ?? _imgOrder1,
-                  isEnabled: hasValidId,
-                );
-
-              }).toList();
-
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final crossAxisCount = constraints.maxWidth > 800 ? 2 : 1;
-                  final isTwoCols = crossAxisCount == 2;
-
-                  if (isTwoCols) {
-                    List<Widget> rows = [];
-                    for (int i = 0; i < orders.length; i += 2) {
-                      rows.add(
-                        Row(
-                          children: [
-                            Expanded(child: orders[i]),
-                            const SizedBox(width: 24),
-                            if (i + 1 < orders.length)
-                              Expanded(child: orders[i + 1])
-                            else
-                              const Expanded(child: SizedBox()),
-                          ],
-                        ),
-                      );
-                      if (i + 2 < orders.length) {
-                        rows.add(const SizedBox(height: 24));
-                      }
-                    }
-                    return Column(children: rows);
-                  } else {
-                    return Column(
-                      children: orders
-                          .map(
-                            (o) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: o,
-                            ),
-                          )
-                          .toList(),
-                    );
-                  }
-                },
-              );
-            },
-          ),
-
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPerformanceChart(BuildContext context, bool isDesktop) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: _secondaryColor.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Sales Performance",
-                    style: GoogleFonts.notoSerif(
-                      color: _secondaryColor,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    "Revenue trend for the past week",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: _secondaryColor.withOpacity(0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  "WEEKLY",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: _primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 10,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 40),
-          SizedBox(
-            height: 220,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 5,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: _secondaryColor.withOpacity(0.05),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        const days = [
-                          'MON',
-                          'TUE',
-                          'WED',
-                          'THU',
-                          'FRI',
-                          'SAT',
-                          'SUN',
-                        ];
-                        if (value.toInt() >= 0 && value.toInt() < days.length) {
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 10.0),
-                            child: Text(
-                              days[value.toInt()],
-                              style: GoogleFonts.plusJakartaSans(
-                                color: _secondaryColor.withOpacity(0.4),
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox();
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 0,
-                maxY: 25,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: const [
-                      FlSpot(0, 10),
-                      FlSpot(1, 14),
-                      FlSpot(2, 12),
-                      FlSpot(3, 20),
-                      FlSpot(4, 16),
-                      FlSpot(5, 22),
-                      FlSpot(6, 18),
-                    ],
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [_primaryColor, _primaryContainer],
-                    ),
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) =>
-                          FlDotCirclePainter(
-                            radius: 4,
-                            color: Colors.white,
-                            strokeWidth: 3,
-                            strokeColor: _primaryColor,
-                          ),
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [
-                          _primaryColor.withOpacity(0.2),
-                          _primaryColor.withOpacity(0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OrderCard extends StatelessWidget {
-  final String id;
-  final String orderId;
-  final String status;
-  final Color statusColor;
-  final Color statusBg;
-  final String title;
-  final String customer;
-  final String imageUrl;
-  final bool isEnabled;
-
-  const _OrderCard({
-    required this.id,
-    required this.orderId,
-    required this.status,
-    required this.statusColor,
-    required this.statusBg,
-    required this.title,
-    required this.customer,
-    required this.imageUrl,
-    this.isEnabled = true,
+  const _NotificationWidget({
+    required this.customerName,
+    required this.orderNumber,
+    required this.onView,
+    required this.onDismiss,
+    required this.isMobile,
   });
 
+  @override
+  State<_NotificationWidget> createState() => _NotificationWidgetState();
+}
+
+class _NotificationWidgetState extends State<_NotificationWidget> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  Timer? _autoDismissTimer;
+  bool _isDismissing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    
+    _slideAnimation = Tween<Offset>(
+      begin: widget.isMobile ? const Offset(0, -1.0) : const Offset(1.0, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _controller.forward();
+
+    _autoDismissTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted) {
+        _dismiss();
+      }
+    });
+  }
+
+  void _dismiss() {
+    if (_isDismissing) return;
+    setState(() {
+      _isDismissing = true;
+    });
+    _autoDismissTimer?.cancel();
+    _controller.reverse().then((_) {
+      if (mounted) {
+        widget.onDismiss();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoDismissTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: isEnabled ? () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OrderDetailsPage(orderId: orderId),
-          ),
-        );
-      } : null,
-      borderRadius: BorderRadius.circular(16),
-      child: Opacity(
-        opacity: isEnabled ? 1.0 : 0.6,
+    return SlideTransition(
+      position: _slideAnimation,
+      child: FadeTransition(
+        opacity: _fadeAnimation,
         child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              imageUrl,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFF4D8D),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF4D8D).withValues(alpha: 0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              )
+            ],
           ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        id,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: _secondaryColor.withOpacity(0.4),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2.0,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                    Text(
+                      "NEW ORDER RECEIVED",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          status,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: statusColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      "${widget.customerName} (#${widget.orderNumber})",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: GoogleFonts.notoSerif(
-                    color: _secondaryColor,
-                    fontSize: 18,
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: widget.onView,
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  customer,
+                child: Text(
+                  "VIEW",
                   style: GoogleFonts.plusJakartaSans(
-                    color: _secondaryColor.withOpacity(0.7),
-                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFFF4D8D),
+                    fontSize: 12,
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.close, size: 18, color: Colors.white),
+                onPressed: _dismiss,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                splashRadius: 20,
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Icon(Icons.chevron_right, color: _secondaryColor.withOpacity(0.3)),
-        ],
+        ),
       ),
-    ),
-   ),
-  );
+    );
   }
 }

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-const Color _primaryColor = Color(0xFFFF4D8D);
-
 class OwnerSidebar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -15,13 +13,14 @@ class OwnerSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: 250,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainer,
         boxShadow: [
           BoxShadow(
-            color: _primaryColor.withOpacity(0.08),
+            color: cs.primary.withValues(alpha: 0.08),
             blurRadius: 30,
             offset: const Offset(10, 0),
           ),
@@ -40,7 +39,7 @@ class OwnerSidebar extends StatelessWidget {
             child: Text(
               "Menu",
               style: GoogleFonts.notoSerif(
-                color: _primaryColor,
+                color: cs.primary,
                 fontStyle: FontStyle.italic,
                 fontSize: 18,
               ),
@@ -60,7 +59,7 @@ class OwnerSidebar extends StatelessWidget {
             onTap: () => onTap(1),
           ),
           _DrawerEntry(
-            icon: Icons.payments,
+            icon: Icons.payment,
             title: "PAYMENTS",
             isSelected: currentIndex == 2,
             onTap: () => onTap(2),
@@ -98,19 +97,19 @@ class _DrawerEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             gradient: isSelected
-                ? const LinearGradient(
-                    colors: [Color(0xFFFF85B3), Color(0xFFFFB6D3)],
-                  )
+                ? LinearGradient(colors: [cs.primary, cs.primaryContainer])
                 : null,
           ),
           child: Row(
@@ -118,18 +117,23 @@ class _DrawerEntry extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isSelected ? Colors.white : const Color(0xFF701235),
+                color: isSelected ? Colors.white : cs.secondary,
               ),
               const SizedBox(width: 16),
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                  color: isSelected ? Colors.white : const Color(0xFF701235),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    letterSpacing: 1.5,
+                    color: isSelected ? Colors.white : cs.secondary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+
             ],
           ),
         ),

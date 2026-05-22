@@ -56,7 +56,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             .order('createdAt', ascending: false)
             .limit(1)
             .maybeSingle();
-        id = recentOrder?['id'];
+        id = recentOrder?['id'] as String?;
       }
 
       if (id != null) {
@@ -196,7 +196,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   }
 
   Widget _buildStatusTracker(bool isSelfCheckout) {
-    final status = orderData?['status'] ?? 'PENDING';
+    final String status = (orderData?['status'] as String?) ?? 'PENDING';
     
     // Unified Status Stages
     final List<Map<String, dynamic>> stages = [

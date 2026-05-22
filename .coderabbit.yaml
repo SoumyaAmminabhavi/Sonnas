@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# .coderabbit.yaml
 language: "en-US"
 reviews:
   profile: "assertive"
