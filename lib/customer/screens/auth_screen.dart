@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -78,31 +79,31 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
     if (mounted) {
       if (!isSetupCompleted && !widget.isOwner) {
-        Navigator.pushReplacement(
+        unawaited(Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
+          MaterialPageRoute<void>(
             builder: (context) => ProfileSetupScreen(
               onSuccess: widget.onSuccess,
               isOwner: widget.isOwner,
             ),
           ),
-        );
+        ));
       } else {
         if (widget.onSuccess != null) {
           widget.onSuccess!();
         } else if (widget.isOwner) {
           await owner_dashboard.loadLibrary();
           if (mounted) {
-            Navigator.pushReplacement(
+            unawaited(Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
-            );
+              MaterialPageRoute<void>(builder: (context) => owner_dashboard.OwnerDashboard()),
+            ));
           }
         } else {
-          Navigator.pushReplacement(
+          unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
-          );
+            MaterialPageRoute<void>(builder: (context) => const CustomerMainScreen()),
+          ));
         }
       }
     }
@@ -246,7 +247,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       Autocomplete<String>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           final input = textEditingValue.text;
-                          if (input.isEmpty || input.length < 1) return const Iterable<String>.empty();
+                          if (input.isEmpty) return const Iterable<String>.empty();
                           final domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
                           final suggestions = <String>{};
                           if (input.contains('@')) {

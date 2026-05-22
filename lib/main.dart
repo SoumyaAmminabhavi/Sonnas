@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:provider/provider.dart';
 
+import 'owner/menu_page.dart';
 import 'services/supabase_service.dart';
+import 'widgets/landing_page.dart';
+import 'widgets/modern_drawer.dart';
+import 'widgets/glass_bottom_nav.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
-import 'customer/main.dart';
-import 'customer/providers/cart_provider.dart' as customer_cart;
-import 'customer/providers/favorites_provider.dart' as customer_fav;
+import 'services/cart_provider.dart';
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
 
@@ -20,30 +21,37 @@ class ThemeNotifier extends Notifier<ThemeMode> {
   void setTheme(ThemeMode mode) => state = mode;
 }
 
+
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-
+    
+    // Load environment variables from .env file (development only)
+    // Production builds should use --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
     try {
       await dotenv.load(fileName: ".env");
     } catch (e) {
       debugPrint('⚠️ .env file not found — using --dart-define values for production build');
     }
-
+    
+    // Initialize Supabase
     await SupabaseService.initialize();
-
+    
+    // Pre-warm owner authentication (fetches PIN hash early for instant login)
     unawaited(AuthService.prewarmOwnerAuth().catchError((Object e) {
       debugPrint('⚠️ Prewarm Owner Auth failed: $e');
     }));
-
+    
+    // Load saved theme
     try {
       final savedTheme = await ThemeService.getThemeMode();
+      // Will be set via themeProvider after app starts
       _initialThemeMode = savedTheme;
     } catch (e) {
       debugPrint('Theme Loading Error: $e');
       _initialThemeMode = ThemeMode.system;
     }
-
+    
     runApp(
       const ProviderScope(
         child: PatisserieApp(),
@@ -130,13 +138,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
         ),
         textTheme: _textTheme(const Color(0xFFFFF0F6)),
       ),
-      home: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => customer_cart.CartProvider()),
-          ChangeNotifierProvider(create: (_) => customer_fav.FavoritesProvider()),
-        ],
-        child: const CustomerMainScreen(),
-      ),
+      home: const AppNavigation(),
     );
   }
 
@@ -146,6 +148,107 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
       headlineLarge: GoogleFonts.notoSerif(color: color, fontWeight: FontWeight.w400),
       bodyLarge: GoogleFonts.plusJakartaSans(color: color),
       labelSmall: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 2.0),
+    );
+  }
+}
+
+class AppNavigation extends ConsumerStatefulWidget {
+  const AppNavigation({super.key});
+
+  @override
+  ConsumerState<AppNavigation> createState() => _AppNavigationState();
+}
+
+class _AppNavigationState extends ConsumerState<AppNavigation> {
+  int _currentIndex = 0;
+
+  void _onTabSelected(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+
+  void _openCheckout() {
+    final cart = ref.read(cartProvider);
+    if (cart.items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Your cart is empty")),
+      );
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Checkout coming soon")),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final cart = ref.watch(cartProvider);
+    
+    return Scaffold(
+      extendBody: true,
+      drawer: const ModernDrawer(),
+      appBar: _currentIndex == 0 ? AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: cs.primary),
+        title: const Text(" "),
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_bag_outlined),
+                onPressed: _openCheckout,
+              ),
+              if (cart.itemCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: cs.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      cart.itemCount.toString(),
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
+      ) : AppBar(
+        backgroundColor: cs.surface.withValues(alpha: 0.9),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: cs.primary),
+        title: Text(
+          _currentIndex == 1 ? "MENU" : _currentIndex == 2 ? "ORDERS" : "PROFILE",
+          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 2),
+        ),
+      ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          LandingPage(onViewMenu: () => _onTabSelected(1)),
+          const MenuPage(),
+          const Placeholder(), // Orders
+          const Placeholder(), // Profile
+        ],
+      ),
+      bottomNavigationBar: _currentIndex == 0 
+          ? null 
+          : GlassBottomNav(
+              currentIndex: _currentIndex,
+              onTap: _onTabSelected,
+            ),
     );
   }
 }

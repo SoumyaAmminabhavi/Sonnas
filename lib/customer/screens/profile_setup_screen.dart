@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -87,10 +88,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         if (widget.onSuccess != null) {
           widget.onSuccess!();
         } else {
-          Navigator.pushReplacement(
+          unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
-          );
+            MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()),
+          ));
         }
       }
     } catch (e) {

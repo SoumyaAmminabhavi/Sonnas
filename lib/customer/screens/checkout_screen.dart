@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
@@ -14,15 +14,15 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-class CustomerCheckoutScreen extends StatefulWidget {
+class CustomerCheckoutScreen extends ConsumerStatefulWidget {
   final bool isSelfCheckout;
   const CustomerCheckoutScreen({super.key, this.isSelfCheckout = false});
 
   @override
-  State<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
+  ConsumerState<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
 }
 
-class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
+class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen> {
   String selectedPayment = "UPI";
   DateTime? selectedDate;
   String? selectedTimeSlot;
@@ -53,13 +53,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     if (user != null && user.userMetadata != null) {
       final meta = user.userMetadata!;
       if (meta['full_name'] != null) {
-        _nameController.text = meta['full_name'];
-      }
-      if (meta['phone'] != null) {
-        _phoneController.text = meta['phone'];
-      }
-      if (meta['default_address'] != null) {
-        _addressController.text = meta['default_address'];
+        _nameController.text = meta['full_name']?.toString() ?? '';
+        _phoneController.text = meta['phone']?.toString() ?? '';
+        _addressController.text = meta['default_address']?.toString() ?? '';
       }
     }
   }
@@ -87,7 +83,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         throw 'Location permissions are permanently denied';
       }
 
-      final Position position = await Geolocator.getCurrentPosition();
+      final Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
 
       String? finalAddress;
 
@@ -99,7 +97,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          finalAddress = data['display_name'];
+          finalAddress = data['display_name']?.toString();
         }
       } else {
         // Native platforms can use the geocoding package
@@ -156,7 +154,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context);
+    final cart = ref.watch(customerCartProvider);
 
     return Scaffold(
       backgroundColor: background,
@@ -293,7 +291,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
 
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (context) => PaymentScreen(
                         customerName: trimmedName,
                         phone: trimmedPhone,
@@ -394,7 +392,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         final response = await http.get(url, headers: {'User-Agent': 'SonnaPatisserieApp'});
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          finalAddress = data['display_name'];
+          finalAddress = data['display_name']?.toString();
         }
       } else {
         try {

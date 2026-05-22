@@ -1,30 +1,31 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import 'product_detail_screen.dart';
 import 'contact_screen.dart';
-import 'welcome_screen.dart';
 import 'auth_screen.dart';
+import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoading = true;
 
-  final TextEditingController _nameController = TextEditingController(text: "Sonnas Cafe");
-  final TextEditingController _emailController = TextEditingController(text: "soonas@gmail.com");
-  final TextEditingController _phoneController = TextEditingController(text: "09113231424");
-  final TextEditingController _addressController = TextEditingController(text: "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021");
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   String _avatarUrl = "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=120&h=120&fit=crop";
   List<String> _savedAddresses = [];
@@ -131,7 +132,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() {
         if (addressJson != null) {
-          final List<dynamic> decoded = jsonDecode(addressJson);
+          final List<dynamic> decoded = jsonDecode(addressJson) as List<dynamic>;
           _savedAddresses = decoded.map((e) => e.toString()).toList();
         } else if (cloudAddress != null && cloudAddress.isNotEmpty) {
           _savedAddresses = [cloudAddress];
@@ -320,7 +321,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                         builder: (context) => AuthScreen(
                           isOwner: false,
                           onSuccess: () {
@@ -413,7 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Image.network(
                               _avatarUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (_, _, _) => Container(
                                 color: primary.withValues(alpha: 0.1),
                                 child: const Icon(Icons.person, color: primary, size: 40),
                               ),
@@ -572,9 +573,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 32),
                   
                   // My Wishlist Section
-                  Consumer<FavoritesProvider>(
-                    builder: (context, favorites, _) {
-                      if (favorites.favorites.isEmpty) return const SizedBox.shrink();
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final favorites = ref.watch(customerFavoritesProvider);
+                      if (favorites.items.isEmpty) return const SizedBox.shrink();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -591,7 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ),
                               Text(
-                                "${favorites.favorites.length} ITEMS",
+                                "${favorites.items.length} ITEMS",
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -605,9 +607,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             height: 140,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              itemCount: favorites.favorites.length,
+                              itemCount: favorites.items.length,
                               itemBuilder: (context, index) {
-                                final item = favorites.favorites[index];
+                                final item = favorites.items[index];
                                 return Container(
                                   width: 100,
                                   margin: const EdgeInsets.only(right: 16),
@@ -615,11 +617,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute(
+                                        MaterialPageRoute<void>(
                                           builder: (context) => ProductDetailScreen(
-                                            title: item['title'],
-                                            price: item['price'],
-                                            imageUrl: item['image'],
+                                            title: item['title']?.toString() ?? '',
+                                            price: item['price']?.toString() ?? '',
+                                            imageUrl: item['image']?.toString() ?? '',
                                           ),
                                         ),
                                       );
@@ -630,11 +632,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(12),
                                           child: Image.network(
-                                            item['image'],
+                                            item['image']?.toString() ?? '',
                                             height: 100,
                                             width: 100,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (_, _, _) => Container(
                                               height: 100,
                                               width: 100,
                                               color: primary.withValues(alpha: 0.05),
@@ -644,7 +646,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          item['title'],
+                                          item['title']?.toString() ?? '',
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
@@ -705,7 +707,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       }
 
                       final latestOrder = data.first;
-                      final String status = latestOrder['status'] ?? 'PENDING';
+                      final String status = latestOrder['status']?.toString() ?? 'PENDING';
                       final String rawPrice = latestOrder['totalPrice']?.toString() ?? '0';
                       final double priceVal = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
                       
@@ -714,7 +716,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         "₹${priceVal.toStringAsFixed(2)}",
                         "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
                         status.toUpperCase(),
-                        latestOrder['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
+                        latestOrder['customImageUrl']?.toString() ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
                         primary, outline, onSurface, surfaceContainerHigh
                       );
                     },
@@ -773,7 +775,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _savedAddresses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final addr = _savedAddresses[index];
                         final isDefault = addr == _defaultAddress;
@@ -833,7 +835,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 _defaultAddress = addr;
                                                 _addressController.text = addr;
                                               });
-                                              _saveAddressesToPrefs();
+      unawaited(_saveAddressesToPrefs());
                                             },
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.zero,
@@ -859,7 +861,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 _addressController.text = _savedAddresses.first;
                                               }
                                             });
-                                            _saveAddressesToPrefs();
+      unawaited(_saveAddressesToPrefs());
                                           },
                                           style: TextButton.styleFrom(
                                             padding: EdgeInsets.zero,
@@ -958,7 +960,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildSettingTile(Icons.help_center_outlined, "Help & Support", onSurface, outline, context, onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactScreen()));
+                    Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const ContactScreen()));
                   }),
 
                   const SizedBox(height: 64),
@@ -984,15 +986,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () async {
-                          await Supabase.instance.client.auth.signOut();
-                          if (context.mounted) {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-                              (route) => false,
-                            );
-                          }
-                        },
+                          onTap: () async {
+                            await Supabase.instance.client.auth.signOut();
+                            if (context.mounted) {
+                              unawaited(Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute<void>(
+                                  builder: (context) => HomeScreen(onViewMenu: (_) {}),
+                                ),
+                                (route) => false,
+                              ));
+                            }
+                          },
                         borderRadius: BorderRadius.circular(12),
                         child: Center(
                           child: Row(
@@ -1059,9 +1063,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontWeight: FontWeight.w600,
               color: valueColor,
             ),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              contentPadding: EdgeInsets.symmetric(vertical: 8),
               focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFFF4D8D))),
             ),
           )
@@ -1281,7 +1285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _addressController.text = newAddr;
         }
       });
-      _saveAddressesToPrefs();
+      unawaited(_saveAddressesToPrefs());
     }
   }
 
@@ -1295,7 +1299,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=120&h=120&fit=crop", // chef hat
     ];
 
-    showModalBottomSheet(
+    unawaited(showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
@@ -1354,6 +1358,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

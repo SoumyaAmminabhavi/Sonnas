@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
@@ -61,8 +62,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
             String imageUrl = "";
 
             if (items != null && items.isNotEmpty) {
-              firstItemTitle = items[0]['cakeName'];
-              imageUrl = order['customImageUrl'] ??
+              firstItemTitle = items[0]['cakeName']?.toString() ?? firstItemTitle;
+              imageUrl = order['customImageUrl']?.toString() ?? 
                   "https://images.unsplash.com/photo-1578985545062-69928b1d9587";
             }
 
@@ -71,7 +72,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             return {
               "id": order['orderNumber'] ?? order['id'],
               "uuid": order['id'],
-              "date": _formatDate(order['createdAt']),
+              "date": _formatDate(order['createdAt']?.toString() ?? ''),
               "title": firstItemTitle,
               // totalPrice is stored in paise → convert to rupees
               "price": "₹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
@@ -141,7 +142,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 content: Text("Cancellation request sent"),
                 backgroundColor: Colors.red),
           );
-          _fetchOrders();
+          unawaited(_fetchOrders());
         }
       } catch (e) {
         if (mounted) {
@@ -156,7 +157,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     double rating = 5;
     final commentController = TextEditingController();
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -337,12 +338,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                         builder: (context) => AuthScreen(
                           isOwner: false,
                           onSuccess: () {
                             Navigator.pop(context);
-                            _fetchOrders();
+          unawaited(_fetchOrders());
                           },
                         ),
                       ),
@@ -432,7 +433,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: InkWell(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                           builder: (_) => const CustomerTrackingScreen()),
                     ),
                     child: Container(
@@ -464,7 +465,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 ),
                                 Text(
                                   orders.firstWhere(
-                                      (o) => o['isActive'] == 'true')['title'],
+                                      (o) => o['isActive'] == 'true')['title']?.toString() ?? '',
                                   style: GoogleFonts.notoSerif(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -486,7 +487,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(24),
                   itemCount: orders.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, _) => const SizedBox(height: 16),
                   itemBuilder: (context, index) =>
                       _buildCompactOrderCard(context, orders[index]),
                 ),
@@ -542,11 +543,11 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              order['imageUrl']!,
+              order['imageUrl']?.toString() ?? '',
               width: 80,
               height: 80,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, _, _) => Container(
                 width: 80,
                 height: 80,
                 color: primary.withValues(alpha: 0.1),
@@ -563,7 +564,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      order['date']!.toUpperCase(),
+                      order['date']?.toString().toUpperCase() ?? '',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
@@ -617,7 +618,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  order['title']!,
+                  order['title']?.toString() ?? '',
                   style: GoogleFonts.notoSerif(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -626,7 +627,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  order['price']!,
+                  order['price']?.toString() ?? '',
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
@@ -640,7 +641,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     // Cancel — only for PENDING or CONFIRMED
                     if (status == 'PENDING' || status == 'CONFIRMED')
                       TextButton(
-                        onPressed: () => _cancelOrder(order['uuid']),
+                        onPressed: () => _cancelOrder(order['uuid']?.toString() ?? ''),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.only(right: 16),
                           minimumSize: Size.zero,

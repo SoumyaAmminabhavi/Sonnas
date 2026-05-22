@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
-class SelfCheckoutScreen extends StatefulWidget {
+class SelfCheckoutScreen extends ConsumerStatefulWidget {
   const SelfCheckoutScreen({super.key});
 
   @override
-  State<SelfCheckoutScreen> createState() => _SelfCheckoutScreenState();
+  ConsumerState<SelfCheckoutScreen> createState() => _SelfCheckoutScreenState();
 }
 
-class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
+class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
@@ -28,7 +28,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
     const primary = Color(0xFFFF4D8D);
     const background = Color(0xFFFFF0F6);
     const berryText = Color(0xFF701235);
-    final cart = Provider.of<CartProvider>(context);
+    final cart = ref.watch(customerCartProvider);
 
     return Scaffold(
       backgroundColor: background,
@@ -82,7 +82,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
               ),
               child: Column(
                 children: [
-                  ...cart.items.map((item) => Padding(
+                  ...cart.itemList.map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -146,7 +146,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                   
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
+                    MaterialPageRoute<void>(
                       builder: (context) => PaymentScreen(
                         customerName: _nameController.text,
                         phone: _phoneController.text,

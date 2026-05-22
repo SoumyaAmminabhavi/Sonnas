@@ -24,8 +24,8 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
     _triggerSuccessFeedback();
   }
 
-  void _triggerSuccessFeedback() {
-    HapticService.success();
+  Future<void> _triggerSuccessFeedback() async {
+    await HapticService.success();
   }
 
   @override
@@ -116,7 +116,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     HapticService.selection();
-                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,

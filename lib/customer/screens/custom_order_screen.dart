@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -63,7 +64,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
       });
 
       if (mounted) {
-        showDialog(
+        unawaited(showDialog<void>(
           context: context,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -80,9 +81,9 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                 },
                 child: const Text("EXQUISITE", style: TextStyle(color: Color(0xFFFF4D8D))),
               ),
-            ],
-          ),
-        );
+          ],
+        ),
+      ));
         if (mounted) setState(() => _isSubmitting = false);
       }
     } catch (e) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,12 +9,12 @@ import 'checkout_screen.dart';
 import 'self_checkout_screen.dart';
 import 'auth_screen.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends ConsumerWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cart = ref.watch(customerCartProvider);
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
     const Color surfaceColor = Color(0xFFFFF0F6);
@@ -86,7 +86,7 @@ class CartScreen extends StatelessWidget {
             ),
           ),
 
-          if (cart.items.isEmpty)
+          if (cart.itemList.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
@@ -124,14 +124,14 @@ class CartScreen extends StatelessWidget {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final item = cart.items[index];
-                  return _buildCartItem(context, item, cart);
+                  final item = cart.itemList[index];
+                  return _buildCartItem(context, ref, item, cart);
                 },
-                childCount: cart.items.length,
+                childCount: cart.itemList.length,
               ),
             ),
 
-          if (cart.items.isNotEmpty)
+          if (cart.itemList.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -151,7 +151,7 @@ class CartScreen extends StatelessWidget {
               ),
             ),
 
-          if (cart.items.isNotEmpty)
+          if (cart.itemList.isNotEmpty)
             SliverToBoxAdapter(
               child: _buildFulfillmentSection(context, cart),
             ),
@@ -163,7 +163,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCartItem(BuildContext context, CartItem item, CartProvider cart) {
+  Widget _buildCartItem(BuildContext context, WidgetRef ref, CartItem item, CustomerCartState cart) {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color onSurfaceColor = Color(0xFF701235);
     const Color outlineVariantColor = Color(0xFFD8C1C6);
@@ -211,7 +211,7 @@ class CartScreen extends StatelessWidget {
           ),
           Row(
             children: [
-              _buildQtyIcon(Icons.remove, () => cart.decrementItem(item.id)),
+              _buildQtyIcon(Icons.remove, () => ref.read(customerCartProvider.notifier).decrementItem(item.id)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -219,7 +219,7 @@ class CartScreen extends StatelessWidget {
                   style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                 ),
               ),
-              _buildQtyIcon(Icons.add, () => cart.addItem(item.id, item.name, item.price, item.imageUrl)),
+              _buildQtyIcon(Icons.add, () => ref.read(customerCartProvider.notifier).addItem(item.id, item.name, item.price, item.imageUrl)),
             ],
           ),
         ],
@@ -242,7 +242,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFulfillmentSection(BuildContext context, CartProvider cart) {
+  Widget _buildFulfillmentSection(BuildContext context, CustomerCartState cart) {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
 
@@ -281,7 +281,7 @@ class CartScreen extends StatelessWidget {
               if (currentUser == null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  MaterialPageRoute<void>(
                     builder: (context) => AuthScreen(
                       isOwner: false,
                       onSuccess: () {
@@ -307,14 +307,13 @@ class CartScreen extends StatelessWidget {
 
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
+                          MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()),
                         );
                       },
                     ),
-                  ),
-                );
-              } else {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()));
+                  ));
+                } else {
+                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()));
               }
             },
             child: Container(
@@ -336,7 +335,7 @@ class CartScreen extends StatelessWidget {
               if (currentUser == null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
+                  MaterialPageRoute<void>(
                     builder: (context) => AuthScreen(
                       isOwner: false,
                       onSuccess: () {
@@ -362,14 +361,13 @@ class CartScreen extends StatelessWidget {
 
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()),
+                          MaterialPageRoute<void>(builder: (context) => const SelfCheckoutScreen()),
                         );
                       },
                     ),
-                  ),
-                );
-              } else {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()));
+                  ));
+                } else {
+                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const SelfCheckoutScreen()));
               }
             },
             child: Container(

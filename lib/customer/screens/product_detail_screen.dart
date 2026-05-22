@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/cart_provider.dart';
 
@@ -18,7 +18,7 @@ class ProductOption {
   }
 }
 
-class ProductDetailScreen extends StatefulWidget {
+class ProductDetailScreen extends ConsumerStatefulWidget {
   final String? cakeId;
   final String title;
   final String price;
@@ -33,15 +33,15 @@ class ProductDetailScreen extends StatefulWidget {
     required this.imageUrl,
     List<dynamic> rawOptions = const [],
   }) : options = rawOptions
-            .where((o) => o is Map<String, dynamic>)
-            .map((o) => ProductOption.fromJson(o as Map<String, dynamic>))
+            .whereType<Map<String, dynamic>>()
+            .map(ProductOption.fromJson)
             .toList();
 
   @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+  ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   String selectedSize = "";
   double currentPriceValue = 0.0;
   String currentPriceDisplay = "";
@@ -203,11 +203,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                 ),
                               ),
-                               Consumer<FavoritesProvider>(
-                                builder: (context, favorites, _) {
+                                Consumer(
+                                builder: (context, ref, _) {
+                                  final favorites = ref.watch(customerFavoritesProvider);
                                   final isFav = favorites.isFavorite(null, widget.title);
                                   return GestureDetector(
-                                    onTap: () => favorites.toggleFavorite({
+                                    onTap: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite({
                                       'id': null,
                                       'title': widget.title,
                                       'price': widget.price,
@@ -369,6 +370,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               value: isSel,
                               title: Text(addon, style: GoogleFonts.plusJakartaSans(fontSize: 14)),
                               subtitle: Text("+ ₹${(addonPrices[addon]! / 100).toStringAsFixed(2)}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                              activeColor: primaryColor,
                               contentPadding: EdgeInsets.zero,
                               onChanged: (val) {
                                 setState(() {
@@ -460,7 +462,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   .where((e) => e.value)
                                   .fold(0.0, (prev, e) => prev + (addonPrices[e.key]! / 100.0));
 
-                              context.read<CartProvider>().addItem(
+                              ref.read(customerCartProvider.notifier).addItem(
                                 "${widget.title}_${DateTime.now().millisecondsSinceEpoch}", 
                                 fullDescription, 
                                 (currentPriceValue + addonsTotal) * 100, 

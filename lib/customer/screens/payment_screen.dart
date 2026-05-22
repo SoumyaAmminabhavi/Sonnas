@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,7 +15,7 @@ import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
 
 
-class PaymentScreen extends StatefulWidget {
+class PaymentScreen extends ConsumerStatefulWidget {
   final String? customerName;
   final String? phone;
   final String? address;
@@ -35,12 +36,12 @@ class PaymentScreen extends StatefulWidget {
   });
 
   @override
-  State<PaymentScreen> createState() => _PaymentScreenState();
+  ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   String _selectedMethod = 'Razorpay';
-  bool _showSuccess = false;
+  final bool _showSuccess = false;
   bool _isLoading = false;
   String? _placedOrderId;
   double? _placedOrderTotal;
@@ -63,7 +64,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     debugPrint("Razorpay Payment Success: ${response.paymentId}");
-    final cart = context.read<CartProvider>();
+    final cart = ref.read(customerCartProvider);
     _placeOrder(cart, paymentId: response.paymentId);
   }
 
@@ -82,7 +83,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     debugPrint("External Wallet: ${response.walletName}");
   }
 
-  void _startRazorpayPayment(CartProvider cart) {
+  void _startRazorpayPayment(CustomerCartState cart) {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -128,8 +129,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return (subtotalCents + packagingCents + taxCents).toDouble();
   }
 
-  Future<void> _placeOrder(CartProvider cart, {String? paymentId}) async {
-    if (cart.items.isEmpty) return;
+  Future<void> _placeOrder(CustomerCartState cart, {String? paymentId}) async {
+    if (cart.itemList.isEmpty) return;
     
     setState(() => _isLoading = true);
     try {
@@ -152,7 +153,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             .eq('phone', customerPhone)
             .maybeSingle();
         
-        conversationId = existingConv?['id'] ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
+        conversationId = (existingConv?['id'] as String?) ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
         
         await supabase.from('WhatsAppConversation').upsert({
           'id': conversationId,
@@ -185,8 +186,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'source': 'APP',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
-        'isCustom': cart.items.any((item) => item.imageUrl.contains('custom')),
-        'customImageUrl': cart.items.isNotEmpty ? cart.items.first.imageUrl : null,
+        'isCustom': cart.itemList.any((item) => item.imageUrl.contains('custom')),
+        'customImageUrl': cart.itemList.isNotEmpty ? cart.itemList.first.imageUrl : null,
       });
 
       // Update user metadata with phone if logged in
@@ -200,7 +201,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
       try {
         // 3. Insert Items
-        final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
+        final List<Map<String, dynamic>> itemsToInsert = cart.itemList.asMap().entries.map((entry) => {
           'id': "ITEM-$orderId-${entry.key}",
           'orderId': orderId,
           'cakeId': entry.value.cakeId ?? entry.value.id,
@@ -219,18 +220,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
       
       // 4. Clear Cart
-      cart.clear();
+      ref.read(customerCartProvider.notifier).clear();
       
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
+        unawaited(Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(
             builder: (context) => OrderSuccessScreen(
               orderNumber: orderNumber,
               totalAmount: totalWithExtras / 100,
             ),
           ),
-        );
+        ));
       }
     } catch (e) {
       debugPrint("CRITICAL ERROR placing order: $e");
@@ -260,7 +261,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+    final cart = ref.watch(customerCartProvider);
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
     const Color surfaceColor = Color(0xFFFFF0F6);
@@ -344,9 +345,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           children: [
                             const TextSpan(text: "Complete Your\n"),
-                            TextSpan(
+                            const TextSpan(
                               text: "Savoury Experience",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: primaryColor,
                               ),
@@ -537,7 +538,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ...cart.items.map((item) => Padding(
+                        ...cart.itemList.map((item) => Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -866,7 +867,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
+                      MaterialPageRoute<void>(
                         builder: (context) => CustomerTrackingScreen(
                           orderId: _placedOrderId,
                           isSelfCheckout: widget.isSelfCheckout,
@@ -904,14 +905,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     owner_dashboard.loadLibrary().then((_) {
                       if (context.mounted) {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
+                          MaterialPageRoute<void>(builder: (context) => owner_dashboard.OwnerDashboard()),
                           (route) => false,
                         );
                       }
                     });
                   } else {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+                      MaterialPageRoute<void>(builder: (context) => const CustomerMainScreen()),
                       (route) => false,
                     );
                   }

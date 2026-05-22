@@ -92,10 +92,10 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: surfaceContainerHighest,
-                image: const DecorationImage(
+                image: DecorationImage(
                   image: NetworkImage("https://lh3.googleusercontent.com/aida-public/AB6AXuCW4VX5enGAie3GkYPPdkamq4fQHv3lj8sSmMFCeKGncIWPGw2NHARgnOOW2j3je_VU9aHSOP8VuJ1LYAWt6Ez_KwQqQrJCyQS9c1NRVc1dcFGb1WkErJdj3FZ061YNmFJkRMnbxZ-4QNBayv6uAS6o0ufEqvlWfGJ8d1woBnaqg56KKXT9huUMdmlDVHKH4zlC5paYiO5G1RzogtALXXxTDzYGRRCE1tLgTCbLGMPSl0bNxkbLmT5S9iqwmoefCfT8xYLqFRWFaBe4"),
                   fit: BoxFit.cover,
                 ),
@@ -220,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
+              decoration: BoxDecoration(
                         color: const Color(0xFFFFF1E9),
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -342,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (label == "Track Order") {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CustomerTrackingScreen()),
+            MaterialPageRoute<void>(builder: (context) => const CustomerTrackingScreen()),
           );
         } else {
           _controller.text = label;

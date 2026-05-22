@@ -1,19 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 
-class CustomerOrderHistoryScreen extends StatefulWidget {
+class CustomerOrderHistoryScreen extends ConsumerStatefulWidget {
   const CustomerOrderHistoryScreen({super.key});
 
   @override
-  State<CustomerOrderHistoryScreen> createState() =>
+  ConsumerState<CustomerOrderHistoryScreen> createState() =>
       _CustomerOrderHistoryScreenState();
 }
 
 class _CustomerOrderHistoryScreenState
-    extends State<CustomerOrderHistoryScreen> {
+    extends ConsumerState<CustomerOrderHistoryScreen> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
 
@@ -122,12 +123,12 @@ class _CustomerOrderHistoryScreenState
         statusColor = Colors.orange;
     }
 
-    final List items = order['items'] as List? ?? [];
-    final itemsText = items.map((i) => i['cakeName']).join(", ");
+    final List<dynamic> items = order['items'] as List? ?? [];
+    final itemsText = items.map((i) => i['cakeName']?.toString() ?? '').join(", ");
 
     String formattedDate = "No Date";
     try {
-      final date = DateTime.parse(order['createdAt']);
+      final date = DateTime.parse(order['createdAt'] as String);
       formattedDate =
           "${date.day} ${_getMonth(date.month)} ${date.year}";
     } catch (_) {}
@@ -275,11 +276,10 @@ class _CustomerOrderHistoryScreenState
                 Expanded(
                   child: TextButton(
                     onPressed: () {
-                      final cart = context.read<CartProvider>();
                       for (var item in items) {
-                        cart.addItem(
+                        ref.read(customerCartProvider.notifier).addItem(
                           "reorder_${item['cakeName']}_${DateTime.now().millisecondsSinceEpoch}",
-                          item['cakeName'] ?? "Exquisite Creation",
+                          item['cakeName']?.toString() ?? "Exquisite Creation",
                           (double.tryParse(item['price'].toString()) ?? 0.0) /
                               100.0,
                           '',
@@ -318,9 +318,9 @@ class _CustomerOrderHistoryScreenState
       BuildContext context, Map<String, dynamic> order) {
     const berryText = Color(0xFF4A152C);
     const primary = Color(0xFFC2185B);
-    final List items = order['items'] as List? ?? [];
+    final List<dynamic> items = order['items'] as List? ?? [];
 
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
@@ -339,8 +339,8 @@ class _CustomerOrderHistoryScreenState
             const SizedBox(height: 24),
             _detailRow("Order ID",
                 "#${order['orderNumber']?.toString().split('-').last ?? 'ORD'}"),
-            _detailRow("Status", order['status'] ?? 'PENDING'),
-            _detailRow("Source", order['source'] ?? 'APP'),
+            _detailRow("Status", order['status']?.toString() ?? 'PENDING'),
+            _detailRow("Source", order['source']?.toString() ?? 'APP'),
             _detailRow(
                 "Items",
                 items
@@ -351,7 +351,7 @@ class _CustomerOrderHistoryScreenState
               _detailRow("Delivery Date",
                   order['deliveryDate'].toString().split('T')[0]),
             if (order['deliverySlot'] != null)
-              _detailRow("Delivery Slot", order['deliverySlot']),
+              _detailRow("Delivery Slot", order['deliverySlot']?.toString() ?? ''),
             const Divider(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -389,7 +389,7 @@ class _CustomerOrderHistoryScreenState
   }
 
   void _confirmCancellation(BuildContext context, Map<String, dynamic> order) {
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Cancel Order?"),
@@ -426,7 +426,7 @@ class _CustomerOrderHistoryScreenState
       await supabase
           .from('Order')
           .update(updates)
-          .eq('id', order['id']);
+          .eq('id', order['id'] as Object);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -436,7 +436,7 @@ class _CustomerOrderHistoryScreenState
           ),
         );
         Navigator.pop(context); // Close the details sheet
-        _fetchOrders(); // Refresh the list
+        unawaited(_fetchOrders()); // Refresh the list
       }
     } catch (e) {
       debugPrint("Error cancelling order: $e");

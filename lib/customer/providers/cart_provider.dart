@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/haptic_service.dart';
 
@@ -39,18 +40,29 @@ class CartItem {
   );
 }
 
-class CartProvider with ChangeNotifier {
-  final Map<String, CartItem> _items = {};
-  static const String _cartKey = 'persistent_cart_items';
+class CustomerCartState {
+  final Map<String, CartItem> items;
 
-  List<CartItem> get items => _items.values.toList();
+  const CustomerCartState({this.items = const {}});
+
+  List<CartItem> get itemList => items.values.toList();
 
   double get total {
-    return _items.values.fold(0, (sum, item) => sum + (item.price * item.quantity));
+    return items.values.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
-  CartProvider() {
+  CustomerCartState copyWith({Map<String, CartItem>? items}) {
+    return CustomerCartState(items: items ?? this.items);
+  }
+}
+
+class CustomerCartNotifier extends Notifier<CustomerCartState> {
+  static const String _cartKey = 'persistent_cart_items';
+
+  @override
+  CustomerCartState build() {
     _loadCartFromStorage();
+    return const CustomerCartState();
   }
 
   Future<void> _loadCartFromStorage() async {
@@ -59,12 +71,12 @@ class CartProvider with ChangeNotifier {
       final cartJson = prefs.getString(_cartKey);
       if (cartJson != null) {
         final List<dynamic> decodedList = jsonDecode(cartJson) as List<dynamic>;
-        _items.clear();
-        for (final itemMap in decodedList) {
+        final loaded = <String, CartItem>{};
+        for (var itemMap in decodedList) {
           final item = CartItem.fromJson(itemMap as Map<String, dynamic>);
-          _items[item.id] = item;
+          loaded[item.id] = item;
         }
-        notifyListeners();
+        state = CustomerCartState(items: loaded);
       }
     } catch (e) {
       debugPrint("Error loading persistent cart: $e");
@@ -74,7 +86,7 @@ class CartProvider with ChangeNotifier {
   Future<void> _saveCartToStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cartList = _items.values.map((item) => item.toJson()).toList();
+      final cartList = state.items.values.map((item) => item.toJson()).toList();
       await prefs.setString(_cartKey, jsonEncode(cartList));
     } catch (e) {
       debugPrint("Error saving cart: $e");
@@ -83,10 +95,11 @@ class CartProvider with ChangeNotifier {
 
   void addItem(String id, String name, double price, String imageUrl, {int quantity = 1, String? cakeId}) {
     if (quantity <= 0) throw ArgumentError("Quantity must be greater than zero");
-    if (_items.containsKey(id)) {
-      _items[id]!.quantity += quantity;
+    final updated = Map<String, CartItem>.from(state.items);
+    if (updated.containsKey(id)) {
+      updated[id]!.quantity += quantity;
     } else {
-      _items[id] = CartItem(
+      updated[id] = CartItem(
         id: id,
         cakeId: cakeId,
         name: name,
@@ -96,33 +109,36 @@ class CartProvider with ChangeNotifier {
       );
     }
     HapticService.light();
+    state = CustomerCartState(items: updated);
     _saveCartToStorage();
-    notifyListeners();
   }
 
   void removeItem(String id) {
-    _items.remove(id);
+    final updated = Map<String, CartItem>.from(state.items);
+    updated.remove(id);
     HapticService.selection();
+    state = CustomerCartState(items: updated);
     _saveCartToStorage();
-    notifyListeners();
   }
 
   void decrementItem(String id) {
-    if (_items.containsKey(id)) {
-      if (_items[id]!.quantity > 1) {
-        _items[id]!.quantity--;
+    final updated = Map<String, CartItem>.from(state.items);
+    if (updated.containsKey(id)) {
+      if (updated[id]!.quantity > 1) {
+        updated[id]!.quantity--;
       } else {
-        _items.remove(id);
+        updated.remove(id);
       }
       HapticService.selection();
+      state = CustomerCartState(items: updated);
       _saveCartToStorage();
-      notifyListeners();
     }
   }
 
   void clear() {
-    _items.clear();
+    state = const CustomerCartState();
     _saveCartToStorage();
-    notifyListeners();
   }
 }
+
+final customerCartProvider = NotifierProvider<CustomerCartNotifier, CustomerCartState>(CustomerCartNotifier.new);

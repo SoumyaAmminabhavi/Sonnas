@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/order_service.dart' as service;
-import '../customer/catalog_page.dart';
+import '../customer/main.dart';
 
 class LandingPage extends StatelessWidget {
   final VoidCallback onViewMenu;
@@ -158,7 +158,9 @@ class LandingPage extends StatelessWidget {
                           onPressed: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute<void>(builder: (context) => const CustomerCatalogPage()),
+                              MaterialPageRoute<void>(
+                                builder: (context) => const CustomerMainScreen(),
+                              ),
                             );
                           },
                           style: TextButton.styleFrom(

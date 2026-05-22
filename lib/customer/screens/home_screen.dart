@@ -4,19 +4,19 @@ import 'tracking_screen.dart';
 import 'contact_screen.dart';
 import 'product_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import 'dart:async';
 
-class HomeScreen extends StatefulWidget {
-  final Function(String?) onViewMenu;
+class HomeScreen extends ConsumerStatefulWidget {
+  final void Function(String?) onViewMenu;
   const HomeScreen({super.key, required this.onViewMenu});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<Map<String, dynamic>> featuredCakes = [];
   bool _isLoading = true;
 
@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'title': "TODAY'S PICK",
       'subtitle': "White Chocolate Raspberry Gateau",
       'discount': "15% OFF today only! Use code SONNA15",
-      'bgGradient': [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
+      'bgGradient': [const Color(0xFFFF4D8D), const Color(0xFFFFB6D3)],
       'icon': Icons.star_rounded,
       'code': "SONNA15",
     },
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'title': "WEEKEND SPECIAL",
       'subtitle': "Signature French Macarons Box",
       'discount': "Buy 1 Get 1 Free on all boxes!",
-      'bgGradient': [Color(0xFF701235), Color(0xFFC2185B)],
+      'bgGradient': [const Color(0xFF701235), const Color(0xFFC2185B)],
       'icon': Icons.card_giftcard_rounded,
       'code': "MACARONBOGO",
     },
@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'title': "CUSTOM CREATIONS",
       'subtitle': "Premium Birthday & Anniversary Cakes",
       'discount': "Book 3 days ahead for free delivery!",
-      'bgGradient': [Color(0xFFE26D5C), Color(0xFFF0A202)],
+      'bgGradient': [const Color(0xFFE26D5C), const Color(0xFFF0A202)],
       'icon': Icons.palette_rounded,
       'code': "FREEDELIVERY",
     }
@@ -147,21 +147,21 @@ class _HomeScreenState extends State<HomeScreen> {
               'title': "Classic Chocolate",
               'price': "₹ 650",
               'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
-              'rawOptions': [],
+              'rawOptions': <dynamic>[],
             },
             {
               'id': '2',
               'title': "Strawberry Bliss",
               'price': "₹ 720",
               'image': 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
-              'rawOptions': [],
+              'rawOptions': <dynamic>[],
             },
             {
               'id': '3',
               'title': "Red Velvet",
               'price': "₹ 680",
               'image': 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?q=80&w=1000&auto=format&fit=crop',
-              'rawOptions': [],
+              'rawOptions': <dynamic>[],
             },
           ];
           _isLoading = false;
@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => CustomerTrackingScreen()),
+            MaterialPageRoute<void>(builder: (context) => const CustomerTrackingScreen()),
           );
         },
         backgroundColor: primaryColor,
@@ -341,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
+                          MaterialPageRoute<void>(
                             builder: (context) => ProductDetailScreen(
                               cakeId: cake['id'] as String,
                               title: cake['title'] as String,
@@ -367,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
-                                  cake['image']!,
+                                  cake['image']?.toString() ?? '',
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
                                     color: primaryColor.withValues(alpha: 0.1),
@@ -384,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        cake['title']!,
+                                        cake['title']?.toString() ?? '',
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -394,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
-                                        cake['price']!,
+                                        cake['price']?.toString() ?? '',
                                         style: GoogleFonts.notoSerif(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
@@ -404,11 +404,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ],
                                   ),
                                 ),
-                                Consumer<FavoritesProvider>(
-                                  builder: (context, favorites, _) {
-                                    final isFav = favorites.isFavorite(null, cake['title']!);
+                                Consumer(
+                                  builder: (context, ref, _) {
+                                    final favorites = ref.watch(customerFavoritesProvider);
+                                    final isFav = favorites.isFavorite(null, cake['title']?.toString() ?? '');
                                     return IconButton(
-                                      onPressed: () => favorites.toggleFavorite(cake),
+                                      onPressed: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite(cake),
                                       icon: Icon(
                                         isFav ? Icons.favorite : Icons.favorite_border,
                                         color: isFav ? primaryColor : Colors.grey.withValues(alpha: 0.4),
@@ -447,7 +448,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _buildMainButton(
                       "CONTACT SONNA'S PATISSERIE",
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactScreen()));
+                        Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const ContactScreen()));
                       },
                       isGradient: false,
                     ),
