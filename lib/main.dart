@@ -148,7 +148,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
         '/home': (context) => const CustomerMainScreen(),
         '/welcome': (context) => const WelcomeScreen(),
       },
-      home: const CustomerMainScreen(),
+      home: LandingPage(onViewMenu: () {}),
     );
   }
 
