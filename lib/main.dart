@@ -148,7 +148,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
         '/home': (context) => const CustomerMainScreen(),
         '/welcome': (context) => const WelcomeScreen(),
       },
-      home: LandingPage(onViewMenu: () {}),
+      home: const AppNavigation(),
     );
   }
 
@@ -196,6 +196,7 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
     
     return Scaffold(
       extendBody: true,
+      extendBodyBehindAppBar: _currentIndex == 0,
       drawer: const ModernDrawer(),
       appBar: _currentIndex == 0 ? AppBar(
         backgroundColor: Colors.transparent,
