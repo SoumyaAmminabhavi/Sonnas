@@ -233,371 +233,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     });
   }
 
-  void _showEditVersionDialog() {
-    if (_selectedVersionDetails == null) return;
-
-    final formKey = GlobalKey<FormState>();
-    final bodyController = TextEditingController(text: _selectedVersionDetails!['bodyText'] as String? ?? '');
-    final headerController = TextEditingController(text: _selectedVersionDetails!['headerText'] as String? ?? '');
-    final footerController = TextEditingController(text: _selectedVersionDetails!['footerText'] as String? ?? '');
-    final mediaUrlController = TextEditingController(text: _selectedVersionDetails!['mediaUrl'] as String? ?? '');
-    final ctaTitleController = TextEditingController(text: _selectedVersionDetails!['ctaButtonTitle'] as String? ?? '');
-    final ctaUrlController = TextEditingController(text: _selectedVersionDetails!['ctaButtonUrl'] as String? ?? '');
-    final listBtnController = TextEditingController(text: _selectedVersionDetails!['listButtonTitle'] as String? ?? '');
-    final listTitleController = TextEditingController(text: _selectedVersionDetails!['listTitle'] as String? ?? '');
-
-    String mediaType = (_selectedVersionDetails!['mediaType'] as String?) ?? 'NONE';
-    String interactiveType = (_selectedVersionDetails!['interactiveType'] as String?) ?? 'NONE';
-    bool isSubmitting = false;
-
-    final List<Map<String, dynamic>> dynamicButtons = (_selectedVersionDetails!['buttons'] as List?)?.whereType<Map>().map((b) => Map<String, dynamic>.from(b)).toList() ?? [];
-    final List<Map<String, dynamic>> dynamicSections = (_selectedVersionDetails!['listSections'] as List?)?.whereType<Map>().map((s) => Map<String, dynamic>.from(s)).toList() ?? [];
-
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        final cs = Theme.of(context).colorScheme;
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text(
-                "Edit Version v${_selectedVersionDetails!['versionNumber']}",
-                style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
-              ),
-              content: Form(
-                key: formKey,
-                child: SizedBox(
-                  width: 500,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: bodyController,
-                          maxLines: 4,
-                          decoration: InputDecoration(
-                            labelText: "Message Body",
-                            hintText: "Use *bold* or _italics_ formatting.",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          validator: (val) => (val == null || val.trim().isEmpty) ? "Body text is required" : null,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: headerController,
-                          decoration: InputDecoration(
-                            labelText: "Header Text (Optional)",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: footerController,
-                          decoration: InputDecoration(
-                            labelText: "Footer Text (Optional)",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: mediaType,
-                          decoration: InputDecoration(
-                            labelText: "Media Attachment Type",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'NONE', child: Text('No Media')),
-                            DropdownMenuItem(value: 'IMAGE', child: Text('Image')),
-                            DropdownMenuItem(value: 'VIDEO', child: Text('Video')),
-                            DropdownMenuItem(value: 'DOCUMENT', child: Text('Document')),
-                          ],
-                          onChanged: isSubmitting ? null : (val) { if (val != null) setDialogState(() => mediaType = val); },
-                        ),
-                        if (mediaType != 'NONE') ...[
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: mediaUrlController,
-                            decoration: InputDecoration(
-                              labelText: "Media URL",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        DropdownButtonFormField<String>(
-                          initialValue: interactiveType,
-                          decoration: InputDecoration(
-                            labelText: "Interactive Action Controls",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          items: const [
-                            DropdownMenuItem(value: 'NONE', child: Text('Plain Text')),
-                            DropdownMenuItem(value: 'BUTTONS', child: Text('Quick Reply Buttons')),
-                            DropdownMenuItem(value: 'CTA_URL', child: Text('Call to Action Link')),
-                            DropdownMenuItem(value: 'LIST', child: Text('Interactive List Menu')),
-                          ],
-                          onChanged: isSubmitting ? null : (val) { if (val != null) setDialogState(() => interactiveType = val); },
-                        ),
-                        if (interactiveType == 'CTA_URL') ...[
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: ctaTitleController,
-                            decoration: InputDecoration(
-                              labelText: "Link Button Title",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: ctaUrlController,
-                            decoration: InputDecoration(
-                              labelText: "Redirect URL",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
-                        if (interactiveType == 'BUTTONS') ...[
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Quick Reply Buttons (${dynamicButtons.length}/3)", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                              if (dynamicButtons.length < 3)
-                                TextButton.icon(
-                                  icon: const Icon(Icons.add, size: 16),
-                                  label: const Text("Add Button"),
-                                  onPressed: isSubmitting ? null : () {
-                                    setDialogState(() => dynamicButtons.add({'title': 'Button ${dynamicButtons.length + 1}'}));
-                                  },
-                                ),
-                            ],
-                          ),
-                          ...dynamicButtons.asMap().entries.map((entry) {
-                            final idx = entry.key;
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      initialValue: entry.value['title'] as String?,
-                                      decoration: InputDecoration(labelText: "Button ${idx + 1} Text", isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
-                                      onChanged: isSubmitting ? null : (val) => dynamicButtons[idx]['title'] = val,
-                                    ),
-                                  ),
-                                  if (!isSubmitting)
-                                    IconButton(
-                                      icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                                      onPressed: () => setDialogState(() => dynamicButtons.removeAt(idx)),
-                                    ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                        if (interactiveType == 'LIST') ...[
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: listBtnController,
-                            decoration: InputDecoration(
-                              labelText: "Menu Selector Button Text",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: listTitleController,
-                            decoration: InputDecoration(
-                              labelText: "List Main Header Title",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text("Menu Sections (${dynamicSections.length})", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                              TextButton.icon(
-                                icon: const Icon(Icons.add_box, size: 16),
-                                label: const Text("Add Section"),
-                                onPressed: isSubmitting ? null : () {
-                                  setDialogState(() => dynamicSections.add({
-                                    'title': 'Section ${dynamicSections.length + 1}',
-                                    'dataSource': 'STATIC',
-                                    'rows': [{'title': 'Option 1', 'description': ''}]
-                                  }));
-                                },
-                              ),
-                            ],
-                          ),
-                          ...dynamicSections.asMap().entries.map((sEntry) {
-                            final sIdx = sEntry.key;
-                            final section = sEntry.value;
-                            return Card(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              color: cs.surfaceContainerHigh,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextFormField(
-                                            initialValue: section['title'] as String?,
-                                            decoration: const InputDecoration(labelText: "Section Title", isDense: true),
-                                            onChanged: isSubmitting ? null : (val) => dynamicSections[sIdx]['title'] = val,
-                                          ),
-                                        ),
-                                        if (!isSubmitting)
-                                          IconButton(
-                                            icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                                            onPressed: () => setDialogState(() => dynamicSections.removeAt(sIdx)),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    DropdownButtonFormField<String>(
-                                      initialValue: section['dataSource'] as String?,
-                                      decoration: const InputDecoration(labelText: "Data Source Mode", isDense: true),
-                                      items: const [
-                                        DropdownMenuItem(value: 'STATIC', child: Text('Static Text Rows')),
-                                        DropdownMenuItem(value: 'CATEGORIES', child: Text('Dynamic: Bakery Categories')),
-                                        DropdownMenuItem(value: 'TOP_FAVORITES', child: Text('Dynamic: Best Sellers')),
-                                        DropdownMenuItem(value: 'PRODUCT_LIST', child: Text('Dynamic: Full Menu Catalog')),
-                                      ],
-                                      onChanged: isSubmitting ? null : (val) { if (val != null) setDialogState(() => dynamicSections[sIdx]['dataSource'] = val); },
-                                    ),
-                                    if (section['dataSource'] == 'STATIC') ...[
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text("Static Items:", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                          if (!isSubmitting)
-                                            TextButton(
-                                              onPressed: () {
-                                                setDialogState(() {
-                                                  (dynamicSections[sIdx]['rows'] as List).add({'title': 'New Option', 'description': ''});
-                                                });
-                                              },
-                                              child: const Text("Add Row", style: TextStyle(fontSize: 12)),
-                                            ),
-                                        ],
-                                      ),
-                                      ...(section['rows'] as List).asMap().entries.map((rEntry) {
-                                        final rIdx = rEntry.key;
-                                        final row = rEntry.value;
-                                        return Padding(
-                                          padding: const EdgeInsets.only(bottom: 8.0),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: TextFormField(
-                                                  initialValue: row['title'] as String?,
-                                                  decoration: const InputDecoration(labelText: "Title", isDense: true),
-                                                  onChanged: isSubmitting ? null : (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['title'] = val,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: TextFormField(
-                                                  initialValue: row['description'] as String?,
-                                                  decoration: const InputDecoration(labelText: "Description", isDense: true),
-                                                  onChanged: isSubmitting ? null : (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['description'] = val,
-                                                ),
-                                              ),
-                                              if (!isSubmitting)
-                                                IconButton(
-                                                  icon: const Icon(Icons.remove, size: 16),
-                                                  onPressed: () => setDialogState(() => (dynamicSections[sIdx]['rows'] as List).removeAt(rIdx)),
-                                                ),
-                                            ],
-                                          ),
-                                        );
-                                      }),
-                                    ]
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                  child: const Text("Cancel"),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
-                    foregroundColor: cs.onPrimary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  onPressed: isSubmitting ? null : () async {
-                    if (formKey.currentState?.validate() == true) {
-                      setDialogState(() => isSubmitting = true);
-                      final navigator = Navigator.of(context);
-                      final messenger = ScaffoldMessenger.of(context);
-                      try {
-                        await WhatsAppService.createTemplateVersion(
-                          templateId: _selectedTemplate!['id'] as String,
-                          versionNumber: (_selectedVersionDetails!['versionNumber'] as int) + 1,
-                          bodyText: bodyController.text,
-                          headerText: headerController.text.isNotEmpty ? headerController.text : null,
-                          footerText: footerController.text.isNotEmpty ? footerController.text : null,
-                          mediaUrl: mediaUrlController.text.isNotEmpty ? mediaUrlController.text : null,
-                          mediaType: mediaType,
-                          interactiveType: interactiveType,
-                          ctaButtonTitle: ctaTitleController.text.isNotEmpty ? ctaTitleController.text : null,
-                          ctaButtonUrl: ctaUrlController.text.isNotEmpty ? ctaUrlController.text : null,
-                          listButtonTitle: listBtnController.text.isNotEmpty ? listBtnController.text : null,
-                          listTitle: listTitleController.text.isNotEmpty ? listTitleController.text : null,
-                          buttons: dynamicButtons,
-                          listSections: dynamicSections,
-                        );
-                        if (!mounted) return;
-                        navigator.pop();
-                        await _loadTemplateVersions(_selectedTemplate!['id'] as String);
-                        messenger.showSnackBar(const SnackBar(content: Text('Version updated successfully!')));
-                      } catch (e) {
-                        debugPrint('Error updating version: $e');
-                        if (!mounted) return;
-                        setDialogState(() => isSubmitting = false);
-                        messenger.showSnackBar(const SnackBar(content: Text('Error updating version')));
-                      }
-                    }
-                  },
-                  child: isSubmitting
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text("Save Changes"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    ).then((_) {
-      bodyController.dispose();
-      headerController.dispose();
-      footerController.dispose();
-      mediaUrlController.dispose();
-      ctaTitleController.dispose();
-      ctaUrlController.dispose();
-      listBtnController.dispose();
-      listTitleController.dispose();
-    });
-  }
-
   void _showCreateVersionDialog() {
     if (_selectedTemplate == null) return;
 
@@ -881,7 +516,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                           TextButton(
                                             onPressed: () {
                                               setDialogState(() {
-                                                (dynamicSections[sIdx]['rows'] as List).add({
+                                                (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>).add({
                                                   'title': 'New Option',
                                                   'description': ''
                                                 });
@@ -891,7 +526,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                           ),
                                         ],
                                       ),
-                                      ...(section['rows'] as List).asMap().entries.map((rEntry) {
+                                      ...(section['rows'] as List<Map<String, dynamic>>).asMap().entries.map((rEntry) {
                                         final rIdx = rEntry.key;
                                         final row = rEntry.value;
                                         return Padding(
@@ -902,7 +537,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                                 child: TextFormField(
                                                   initialValue: row['title'] as String?,
                                                   decoration: const InputDecoration(labelText: "Title", isDense: true),
-                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['title'] = val,
+                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['title'] = val,
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
@@ -910,7 +545,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                                                 child: TextFormField(
                                                   initialValue: row['description'] as String?,
                                                   decoration: const InputDecoration(labelText: "Description", isDense: true),
-                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List)[rIdx]['description'] = val,
+                                                  onChanged: (val) => (dynamicSections[sIdx]['rows'] as List<Map<String, dynamic>>)[rIdx]['description'] = val,
                                                 ),
                                               ),
                                               IconButton(
@@ -1433,6 +1068,11 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                     runSpacing: 8,
                     children: [
                       Text("Historical Drafts", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                      TextButton.icon(
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text("New Draft Version"),
+                        onPressed: _showCreateVersionDialog,
+                      ),
                     ],
                   ),
                 ),
@@ -1495,21 +1135,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                         Text(
                           "Draft Layout Config (v${_selectedVersionDetails!['versionNumber']})",
                           style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TextButton.icon(
-                              icon: const Icon(Icons.edit, size: 14),
-                              label: const Text("Edit", style: TextStyle(fontSize: 12)),
-                              onPressed: _showEditVersionDialog,
-                            ),
-                            TextButton.icon(
-                              icon: const Icon(Icons.add, size: 14),
-                              label: const Text("New Draft", style: TextStyle(fontSize: 12)),
-                              onPressed: _showCreateVersionDialog,
-                            ),
-                          ],
                         ),
                         if (_selectedTemplate?['activeVersionId'] != _selectedVersionDetails!['id'])
                           OutlinedButton.icon(
