@@ -12,6 +12,7 @@ export default tseslint.config(
       "generated/**",
       "scripts/**",
       "prisma/**",
+      "lib/**",
       "*.config.js",
       "*.config.ts",
       "next-env.d.ts",

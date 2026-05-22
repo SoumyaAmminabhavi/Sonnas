@@ -1,66 +1,127 @@
-# dependencies
-/node_modules
+# ─────────────────────────────────────────────────────────────
+#  Sonna Patisserie & Cafe — Unified Workspace .gitignore
+# ─────────────────────────────────────────────────────────────
+
+# ── Dependencies & Node.js (Web & Server Tooling) ────────────
+node_modules/
+/node_modules/
 /.pnp
 .pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-/dist
-
-# misc
-.DS_Store
-*.pem
-*.log
-.eslintcache
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# local env files
+# ── Flutter / Dart / Pub ─────────────────────────────────────
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+app.*.symbols
+app.*.map.json
+
+# ── Android Studio / Gradle / Build Artifacts ─────────────────
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+
+# ── Next.js ───────────────────────────────────────────────────
+/.next/
+/out/
+/dist
+
+# ── Environment Variables & Secret Credentials ────────────────
+# Ignore all .env files; whitelist only example/template files
 .env
+.env*
+!.env.example
+!.env.*.example
 .env*.local
 .env.test
 .env.production
 .env.development
+*.secret
+*.pem
+*.p12
+*.keystore
+key.properties
+android/key.properties
 
-# vercel
+# ── Vercel ────────────────────────────────────────────────────
 .vercel
 
-# typescript
+# ── TypeScript & Linting ──────────────────────────────────────
 *.tsbuildinfo
 next-env.d.ts
+.eslintcache
 
-# prisma
+# ── Prisma Database & Migrations ──────────────────────────────
 /generated
+lib/generated/
 /prisma/*.db
 /prisma/*.db-journal
+prisma.config.js
+lib/services/db_migration.sql
 
-# custom scratch/temp
+# ── Custom Scratch & Temporary Files ──────────────────────────
 /scratch
 /tmp
 .temp
+migrate_working_dir/
+run_log.txt
 
-# IDE / Editors
+# ── IDE & Editor Configurations ───────────────────────────────
+# IntelliJ & Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (Allow shared settings/launch configs)
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
 !.vscode/launch.json
-.idea/
+
+# Text editors & miscellaneous
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.class
+*.pyc
+*.log
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
 
-# OS metadata
+# ── OS Metadata & Trash ───────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+$RECYCLE.BIN/
+
+# ── AI, Agents & Workspace Research Tooling ──────────────────
+.agents/
+.cursor/
+.jetro/
+.mcp.json
+.windsurfrules
+AGENT.md
+CLAUDE.md
+artifacts/
+data/
+projects/
+issues.txt
