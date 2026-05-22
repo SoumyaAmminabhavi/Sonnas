@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/haptic_service.dart';
-import '../main.dart';
+import 'checkout_screen.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback? onSuccess;
@@ -88,7 +89,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
           );
         }
       }
@@ -199,6 +200,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     cursorColor: primary,
                     decoration: InputDecoration(
                       labelText: "MOBILE NUMBER",
@@ -209,6 +214,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         color: berry.withOpacity(0.5),
                       ),
                       hintText: "Enter your phone number",
+                      prefixText: "+91 ",
+                      prefixStyle: GoogleFonts.plusJakartaSans(
+                        color: berry,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
                       prefixIcon: const Icon(Icons.phone_outlined, color: primary),
                       filled: true,
                       fillColor: Colors.white,
@@ -221,7 +232,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         borderSide: const BorderSide(color: primary, width: 1.5),
                       ),
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? "Please enter your mobile number" : null,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return "Please enter your mobile number";
+                      if (v.length != 10) return "Phone number must be 10 digits";
+                      if (!RegExp(r'^[6-9]').hasMatch(v)) return "Invalid phone number";
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 20),
 

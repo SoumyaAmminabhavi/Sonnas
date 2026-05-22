@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
 
 class CustomOrderScreen extends StatefulWidget {
   const CustomOrderScreen({super.key});
@@ -16,9 +15,6 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   String? selectedSize = "Petit (4-6 guests)";
   String? selectedFlavor = "Valrhona Dark Chocolate";
   final _narrativeController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _flavorController = TextEditingController();
-  final _designController = TextEditingController();
   String? selectedOccasion;
 
   bool _isSubmitting = false;

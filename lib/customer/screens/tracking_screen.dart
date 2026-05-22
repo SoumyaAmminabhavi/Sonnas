@@ -239,7 +239,6 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(stages.length, (index) {
               final isCompleted = index <= currentIndex;
-              final isActive = index == currentIndex;
               final isLast = index == stages.length - 1;
               
               return Expanded(

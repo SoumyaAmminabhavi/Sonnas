@@ -240,21 +240,87 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       ),
                       const SizedBox(height: 48),
                       
-                      // Email Field
+                      // Email Field with autocomplete suggestions
                       _buildLabel("Email Address"),
                       const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
-                        decoration: _buildInputDecoration("yourname@email.com", Icons.email_outlined),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return "Email is required";
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
-                            return "Enter a valid email address";
+                      Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          final input = textEditingValue.text;
+                          if (input.isEmpty || input.length < 1) return const Iterable<String>.empty();
+                          final domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+                          final suggestions = <String>{};
+                          if (input.contains('@')) {
+                            final parts = input.split('@');
+                            final local = parts[0];
+                            final domainPart = parts.length > 1 ? parts[1] : '';
+                            for (var d in domains) {
+                              if (d.startsWith(domainPart)) suggestions.add('$local@$d');
+                            }
+                          } else {
+                            for (var d in domains) {
+                              suggestions.add('$input@$d');
+                            }
+                            // Offer saved typed email if it matches
+                            if (_emailController.text.isNotEmpty && _emailController.text.startsWith(input)) {
+                              suggestions.add(_emailController.text);
+                            }
                           }
-                          return null;
+                          return suggestions;
+                        },
+                        onSelected: (String selection) {
+                          setState(() {
+                            _emailController.text = selection;
+                          });
+                        },
+                        fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                          // Keep the original controller in sync with the Autocomplete field controller
+                          textEditingController.text = _emailController.text;
+                          textEditingController.selection = _emailController.selection;
+                          textEditingController.addListener(() {
+                            if (_emailController.text != textEditingController.text) {
+                              _emailController.text = textEditingController.text;
+                              _emailController.selection = textEditingController.selection;
+                            }
+                          });
+                          return TextFormField(
+                            controller: textEditingController,
+                            focusNode: focusNode,
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [AutofillHints.email],
+                            style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
+                            decoration: _buildInputDecoration("yourname@email.com", Icons.email_outlined),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) return "Email is required";
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                return "Enter a valid email address";
+                              }
+                              return null;
+                            },
+                          );
+                        },
+                        optionsViewBuilder: (context, onSelected, options) {
+                          return Align(
+                            alignment: Alignment.topLeft,
+                            child: Material(
+                              elevation: 4.0,
+                              borderRadius: BorderRadius.circular(8),
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(maxWidth: 600),
+                                child: ListView.builder(
+                                  padding: EdgeInsets.zero,
+                                  shrinkWrap: true,
+                                  itemCount: options.length,
+                                  itemBuilder: (BuildContext context, int index) {
+                                    final String option = options.elementAt(index);
+                                    return ListTile(
+                                      title: Text(option, style: GoogleFonts.plusJakartaSans()),
+                                      onTap: () => onSelected(option),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
                         },
                       ),
                       

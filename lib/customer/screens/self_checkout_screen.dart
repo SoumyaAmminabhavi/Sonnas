@@ -60,6 +60,8 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+              prefixText: "+91 ",
+              prefixStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF701235), fontWeight: FontWeight.w600, fontSize: 14),
             ),
             
             const SizedBox(height: 40),
@@ -135,9 +137,9 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                     return;
                   }
                   
-                  if (phone.length != 10) {
+                  if (phone.length != 10 || !RegExp(r'^[6-9]').hasMatch(phone)) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please enter a valid 10-digit contact number")),
+                      const SnackBar(content: Text("Please enter a valid 10-digit Indian contact number starting with 6-9")),
                     );
                     return;
                   }
@@ -196,6 +198,8 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
     TextEditingController? controller,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    String? prefixText,
+    TextStyle? prefixStyle,
   }) {
     return TextField(
       controller: controller,
@@ -205,6 +209,8 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
+        prefixText: prefixText,
+        prefixStyle: prefixStyle,
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFFFF4D8D)),
         filled: true,
         fillColor: Colors.white,

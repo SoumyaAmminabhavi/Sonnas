@@ -1,32 +1,20 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:app/main.dart';
+import 'package:app/customer/screens/welcome_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const PatisserieApp());
+  testWidgets('Welcome screen UI renders correctly', (WidgetTester tester) async {
+    // Build WelcomeScreen wrapped in MaterialApp
+    await tester.pumpWidget(const MaterialApp(
+      home: WelcomeScreen(),
+    ));
 
+    // Verify that the title and description are present
+    expect(find.text("Sonna's Patisserie"), findsOneWidget);
+    expect(find.text("Cakes & desserts"), findsOneWidget);
 
-    // Verify that our app starts. (Logic updated to avoid counter failure)
-    // expect(find.text('0'), findsOneWidget);
-    // expect(find.text('1'), findsNothing);
-
-
-    // Tap the '+' icon and trigger a frame.
-    // await tester.tap(find.byIcon(Icons.add));
-    // await tester.pump();
-
-    // Verify that our counter has incremented.
-    // expect(find.text('0'), findsNothing);
-    // expect(find.text('1'), findsOneWidget);
-
+    // Verify the buttons are rendered
+    expect(find.text("ENTER PATISSERIE"), findsOneWidget);
+    expect(find.text("Staff & Management Portal"), findsOneWidget);
   });
 }

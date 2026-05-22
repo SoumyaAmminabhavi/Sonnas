@@ -185,14 +185,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .eq('customerPhone', userPhone);
 
       double spentSum = 0;
-      if (data != null) {
-        for (var row in data) {
-          final price = double.tryParse(row['totalPrice']?.toString() ?? '0') ?? 0.0;
-          spentSum += price;
-        }
+      for (var row in data) {
+        final price = double.tryParse(row['totalPrice']?.toString() ?? '0') ?? 0.0;
+        spentSum += price;
       }
 
-      final count = data?.length ?? 0;
+      final count = data.length;
       final spentRupees = spentSum / 100.0;
 
       String level = "Bronze Gourmet 🍰";

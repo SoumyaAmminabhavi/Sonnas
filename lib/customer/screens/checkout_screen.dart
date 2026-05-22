@@ -42,6 +42,28 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   bool _isGiftWrapping = false;
   static const int wrappingFeePaise = 25000; // ₹250 for premium wrapping
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && user.userMetadata != null) {
+      final meta = user.userMetadata!;
+      if (meta['full_name'] != null) {
+        _nameController.text = meta['full_name'];
+      }
+      if (meta['phone'] != null) {
+        _phoneController.text = meta['phone'];
+      }
+      if (meta['default_address'] != null) {
+        _addressController.text = meta['default_address'];
+      }
+    }
+  }
+
   Future<void> _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
     try {
@@ -156,7 +178,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             const SizedBox(height: 16),
             _buildTextField("Recipient Name", Icons.person_outline, controller: _nameController),
             const SizedBox(height: 12),
-            _buildTextField("Contact Number", Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]),
+            _buildTextField("Contact Number", Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)], prefixText: "+91 ", prefixStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF4A152C), fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 12),
             _buildMapView(),
             const SizedBox(height: 12),
@@ -248,9 +270,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                   final trimmedPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
                   final trimmedAddress = _addressController.text.trim();
                   
-                  if (trimmedName.isEmpty || trimmedPhone.length < 10 || trimmedAddress.isEmpty) {
+                  if (trimmedName.isEmpty || trimmedPhone.length != 10 || !RegExp(r'^[6-9]').hasMatch(trimmedPhone) || trimmedAddress.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please provide valid name, phone, and address")),
+                      const SnackBar(content: Text("Please provide valid name, a 10-digit phone number starting with 6-9, and address")),
                     );
                     return;
                   }
@@ -270,8 +292,6 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                     return;
                   }
                   
-                  final supabase = Supabase.instance.client;
-                  final user = supabase.auth.currentUser;
 
                   Navigator.push(
                     context,
@@ -307,7 +327,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: const Color(0xFF4A152C).withOpacity(0.5)));
   }
 
-  Widget _buildTextField(String hint, IconData icon, {int maxLines = 1, TextEditingController? controller, TextInputType? keyboardType, List<TextInputFormatter>? inputFormatters}) {
+  Widget _buildTextField(String hint, IconData icon, {int maxLines = 1, TextEditingController? controller, TextInputType? keyboardType, List<TextInputFormatter>? inputFormatters, String? prefixText, TextStyle? prefixStyle}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -316,6 +336,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
+        prefixText: prefixText,
+        prefixStyle: prefixStyle,
         prefixIcon: Icon(icon, size: 20, color: const Color(0xFFC2185B)),
         filled: true,
         fillColor: Colors.white,
