@@ -47,25 +47,25 @@ export async function getConversation(phone: string, name?: string, force = fals
 
     const result = convo as unknown as WhatsAppConversation;
 
-    // Stale cart cleanup logic (older than 24 hours)
+    // Stale cart cleanup logic (older than 1 hour)
     if (result.cart && result.cart.length > 0) {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
       const hasStaleItems = result.cart.some((item) => {
         if (!item.createdAt) return false;
-        return new Date(item.createdAt) < oneDayAgo;
+        return new Date(item.createdAt) < oneHourAgo;
       });
 
       if (hasStaleItems) {
         void db.whatsAppCartItem.deleteMany({
           where: {
             phone,
-            createdAt: { lt: oneDayAgo }
+            createdAt: { lt: oneHourAgo }
           }
         }).catch(() => null);
 
         result.cart = result.cart.filter((item) => {
           if (!item.createdAt) return true;
-          return new Date(item.createdAt) >= oneDayAgo;
+          return new Date(item.createdAt) >= oneHourAgo;
         });
       }
     }

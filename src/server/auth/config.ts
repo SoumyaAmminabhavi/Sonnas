@@ -44,6 +44,9 @@ export const authConfig = {
      */
   ],
   adapter: PrismaAdapter(db),
+  session: {
+    maxAge: 24 * 60 * 60, // 24 hours in seconds
+  },
   callbacks: {
     session: ({ session, user }) => ({
       ...session,
