@@ -375,8 +375,18 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (msg.type === "location" && state !== ConversationState.INPUTTING_ADDRESS) {
     if (msg.location) {
+      await sendTextMessage(msg.from, "📍 _Processing your location..._");
+      const { reverseGeocode } = await import("./delivery");
       const mapsUrl = `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}`;
-      const addr = msg.location.address ?? msg.location.name ?? `GPS: ${msg.location.latitude}, ${msg.location.longitude}`;
+      let addr = msg.location.address ?? msg.location.name;
+
+      if (!addr || addr.length < 5) {
+        const geocoded = await reverseGeocode(msg.location.latitude, msg.location.longitude);
+        if (geocoded) addr = geocoded;
+      }
+
+      addr ??= `GPS: ${msg.location.latitude}, ${msg.location.longitude}`;
+
       await updateState(msg.from, state, { selectedAddress: `${addr}\n🔗 ${mapsUrl}` });
     }
     await sendTextMessage(msg.from, "📍 Location saved! I'll use this when you're ready to place an order. ✨\n\nReply *Menu* to browse our cakes!");
