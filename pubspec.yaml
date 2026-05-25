@@ -1,3 +1,4 @@
+
 name: app
 description: "Artisan Patisserie & Cafe Boutique"
 # The following line prevents the package from being accidentally published to
@@ -85,7 +86,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
     - assets/
     - assets/images/
 
