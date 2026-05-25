@@ -360,3 +360,22 @@ export async function markAsRead(messageId: string) {
     }
   }
 }
+
+export async function sendTypingIndicator(to: string) {
+  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) return;
+
+  try {
+    await fetchWithTimeout(getMessagesUrl(), {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to,
+        sender_action: "typing_on",
+      }),
+    });
+  } catch {
+    // Best-effort non-blocking fall-through
+  }
+}

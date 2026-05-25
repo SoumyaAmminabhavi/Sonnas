@@ -220,16 +220,41 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
   }
 
   if (interactiveId === "btn_clear_cart") {
-    await Promise.all([
-      clearCart(msg.from),
-      updateState(msg.from, ConversationState.IDLE, RESET_STATE),
-      sendTextMessage(msg.from, "✨ *Selection cleared!*"),
-    ]);
+    await sendInteractiveButtons(
+      msg.from,
+      "⚠️ *Are you sure you want to clear your cart?*\n\nThis will remove all your selected cakes.",
+      [
+        { id: "btn_confirm_clear", title: "🗑️ Yes, Clear All" },
+        { id: "btn_cancel_clear", title: "🧁 No, Keep Items" }
+      ]
+    );
+    return;
+  }
+
+  if (interactiveId === "btn_confirm_clear") {
+    await clearCart(msg.from);
+    await updateState(msg.from, ConversationState.IDLE, RESET_STATE);
+    await sendTextMessage(msg.from, "✨ *Cart selection cleared!*");
     await sendMenu(msg.from);
     return;
   }
 
+  if (interactiveId === "btn_cancel_clear") {
+    await sendTextMessage(msg.from, "Cart preserved! 🍰");
+    await handleCartActions(msg, convo);
+    return;
+  }
+
   if (interactiveId === "btn_back") {
+    if (state === ConversationState.SELECTING_SIZE && convo.lastCategoryId) {
+      const fakeMsg = {
+        ...msg,
+        interactiveId: `cat_${convo.lastCategoryId}`
+      };
+      await updateState(msg.from, ConversationState.SELECTING_CATEGORY);
+      await handleCategorySelection(fakeMsg);
+      return;
+    }
     let targetState: ConversationState = ConversationState.IDLE;
     switch (state) {
       case ConversationState.SELECTING_SIZE: targetState = ConversationState.BROWSING_MENU; break;
@@ -291,16 +316,21 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
   }
 
   if (interactiveId === "saved_addr_yes") {
+    const activeAddress = convo.selectedAddress;
+    if (activeAddress && !activeAddress.includes("Store Pickup")) {
+      await updateState(msg.from, ConversationState.ADDING_NOTES, { selectedAddress: activeAddress });
+      await sendInteractiveButtons(msg.from, `✅ *Address set!*\n\n✍️ *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! 🎉\")_\n\nReply *Skip* if no message needed.`, [{ id: "btn_back", title: "⬅️ Back" }]);
+      return;
+    }
+
     const lastOrder = await db.order.findFirst({
       where: { OR: [{ whatsappPhone: msg.from }, { customerPhone: msg.from }], status: { not: "CANCELLED" }, address: { not: "" } },
       orderBy: { createdAt: "desc" },
       select: { address: true }
     });
     if (lastOrder?.address) {
-      await Promise.all([
-        updateState(msg.from, ConversationState.ADDING_NOTES, { selectedAddress: lastOrder.address }),
-        sendInteractiveButtons(msg.from, `✅ *Address set!* (📍 Previous used)\n\n✍️ *Personalize Your Cake*\n\nWhat message would you like on your cake?`, [{ id: "btn_back", title: "⬅️ Back" }])
-      ]);
+      await updateState(msg.from, ConversationState.ADDING_NOTES, { selectedAddress: lastOrder.address });
+      await sendInteractiveButtons(msg.from, `✅ *Address set!* (📍 Previously used)\n\n✍️ *Personalize Your Cake*\n\nWhat message would you like on your cake?\n_(e.g., \"Happy Birthday Priya! 🎉\")_\n\nReply *Skip* if no message needed.`, [{ id: "btn_back", title: "⬅️ Back" }]);
       return;
     }
   }
@@ -345,8 +375,18 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (msg.type === "location" && state !== ConversationState.INPUTTING_ADDRESS) {
     if (msg.location) {
+      await sendTextMessage(msg.from, "📍 _Processing your location..._");
+      const { reverseGeocode } = await import("./delivery");
       const mapsUrl = `https://www.google.com/maps?q=${msg.location.latitude},${msg.location.longitude}`;
-      const addr = msg.location.address ?? msg.location.name ?? `GPS: ${msg.location.latitude}, ${msg.location.longitude}`;
+      let addr = msg.location.address ?? msg.location.name;
+
+      if (!addr || addr.length < 5) {
+        const geocoded = await reverseGeocode(msg.location.latitude, msg.location.longitude);
+        if (geocoded) addr = geocoded;
+      }
+
+      addr ??= `GPS: ${msg.location.latitude}, ${msg.location.longitude}`;
+
       await updateState(msg.from, state, { selectedAddress: `${addr}\n🔗 ${mapsUrl}` });
     }
     await sendTextMessage(msg.from, "📍 Location saved! I'll use this when you're ready to place an order. ✨\n\nReply *Menu* to browse our cakes!");

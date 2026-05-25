@@ -4,6 +4,7 @@ import { sendTextMessage, sendInteractiveButtons } from "~/server/whatsapp";
 import { validateAndSanitize } from "./validation";
 import { createCustomOrder } from "./orders";
 import { ConversationState } from "../../../../generated/prisma";
+import { RESET_STATE } from "./constants";
 
 export async function handleCustomRequest(
   msg: IncomingMessage,
@@ -15,14 +16,17 @@ export async function handleCustomRequest(
 
     const orderNumber = await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
 
-    await sendInteractiveButtons(
-      msg.from,
-      `📸 *Reference Photo Received!* 🍰\n\nYour request has been logged as *#${orderNumber}*.\n\nOur team will review your design and call you shortly to provide a quote and confirm details. 📞\n\nWould you like to explore our signature cakes while you wait?`,
-      [
-        { id: "btn_menu", title: "📋 View Menu" },
-        { id: "btn_status", title: "📦 My Orders" },
-      ]
-    );
+    await Promise.all([
+      updateState(msg.from, ConversationState.IDLE, RESET_STATE),
+      sendInteractiveButtons(
+        msg.from,
+        `📸 *Reference Photo Received!* 🍰\n\nYour request has been logged as *#${orderNumber}*.\n\nOur team will review your design and call you shortly to provide a quote and confirm details. 📞\n\nWould you like to explore our signature cakes while you wait?`,
+        [
+          { id: "btn_menu", title: "📋 View Menu" },
+          { id: "btn_status", title: "📦 My Orders" },
+        ]
+      )
+    ]);
     return;
   }
 
@@ -38,7 +42,7 @@ export async function handleCustomRequest(
 
     if (looksLikeAddress || convo.selectedNotes) {
       await Promise.all([
-        updateState(msg.from, ConversationState.INPUTTING_ADDRESS, { selectedAddress: sanitizedText }),
+        updateState(msg.from, ConversationState.CUSTOM_ORDER_IMAGE, { selectedAddress: sanitizedText }),
         sendTextMessage(msg.from, "📍 *Address received!* \n\nPlease share a **Reference Photo** 📸 to help us understand your design better.")
       ]);
     } else {
@@ -61,14 +65,17 @@ export async function handleReferenceImageUpload(
 
     const orderNumber = await createCustomOrder(msg, convo, publicUrl ?? undefined, msg.image.id, msg.image.caption ?? "");
 
-    await sendInteractiveButtons(
-      msg.from,
-      `📸 *Reference Photo Received!* 🍰\n\nYour request has been logged as *#${orderNumber}*.\n\nOur team will review your design and call you shortly to provide a quote and confirm details. 📞\n\nWould you like to explore our signature cakes while you wait?`,
-      [
-        { id: "btn_menu", title: "📋 View Menu" },
-        { id: "btn_status", title: "📦 My Orders" },
-      ]
-    );
+    await Promise.all([
+      updateState(msg.from, ConversationState.IDLE, RESET_STATE),
+      sendInteractiveButtons(
+        msg.from,
+        `📸 *Reference Photo Received!* 🍰\n\nYour request has been logged as *#${orderNumber}*.\n\nOur team will review your design and call you shortly to provide a quote and confirm details. 📞\n\nWould you like to explore our signature cakes while you wait?`,
+        [
+          { id: "btn_menu", title: "📋 View Menu" },
+          { id: "btn_status", title: "📦 My Orders" },
+        ]
+      )
+    ]);
   } else {
     await sendTextMessage(msg.from, "Please upload a **Reference Photo** 📸 to proceed.\n\n(We need an image to understand your design! ✨)");
   }

@@ -33,6 +33,10 @@ export async function checkRateLimit(phone: string, convo: WhatsAppConversation)
       if (currentCount === RATE_LIMIT_MAX_MSGS + 1) {
         await sendTextMessage(phone, "⚠️ *Slow down!* You've reached the message limit. Please wait a minute.");
       }
+      updateConvoCache(phone, {
+        rateLimitCount: currentCount,
+        rateLimitWindowStart: windowStart
+      });
       return false;
     }
   }
