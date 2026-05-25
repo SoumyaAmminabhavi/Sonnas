@@ -17,10 +17,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
   List<Map<String, dynamic>> orders = [];
   bool _isLoading = true;
 
-  static const Color primary = Color(0xFFFF4D8D);
-  static const Color background = Color(0xFFFFF0F6);
-  static const Color onSurface = Color(0xFF701235);
-  static const Color secondary = Color(0xFF701235);
+  Color get primary => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get background => Theme.of(context).colorScheme.surface;
+  Color get onSurface => Theme.of(context).colorScheme.onSurface;
+  Color get secondary => Theme.of(context).colorScheme.onSurface;
 
   @override
   void initState() {
@@ -248,9 +248,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       if (context.mounted) {
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                               content:
-                                  Text("Thank you for your feedback! 💖"),
+                                  const Text("Thank you for your feedback! 💖"),
                               backgroundColor: primary),
                         );
                       }
@@ -304,7 +304,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     )
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.receipt_long_rounded,
                   size: 80,
                   color: primary,
@@ -416,7 +416,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
             ),
 
             if (_isLoading)
-              const Expanded(
+              Expanded(
                   child: Center(
                       child: CircularProgressIndicator(color: primary)))
             else if (orders.isEmpty)
@@ -439,8 +439,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [primary, Color(0xFFFFB6D3)],
+                        gradient: LinearGradient(
+                          colors: [primary, Theme.of(context).colorScheme.primaryContainer],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -551,7 +551,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 width: 80,
                 height: 80,
                 color: primary.withValues(alpha: 0.1),
-                child: const Icon(Icons.cake, color: primary),
+                child: Icon(Icons.cake, color: primary),
               ),
             ),
           ),

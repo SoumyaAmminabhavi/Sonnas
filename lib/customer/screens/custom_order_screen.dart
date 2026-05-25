@@ -23,9 +23,9 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   Future<void> _submitQuoteRequest() async {
     if (selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select a pick-up date for your creation"),
-          backgroundColor: Color(0xFFFF4D8D),
+        SnackBar(
+          content: const Text("Please select a pick-up date for your creation"),
+          backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -34,9 +34,9 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
 
     if (_narrativeController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please share some details about your vision"),
-          backgroundColor: Color(0xFFFF4D8D),
+        SnackBar(
+          content: const Text("Please share some details about your vision"),
+          backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -79,7 +79,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                   Navigator.pop(context);
                   Navigator.pop(context); // Go back to home/menu
                 },
-                child: const Text("EXQUISITE", style: TextStyle(color: Color(0xFFFF4D8D))),
+                child: Text("EXQUISITE", style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ),
           ],
         ),
@@ -91,9 +91,9 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Failed to submit quote request. Please try again later."),
-            backgroundColor: Color(0xFFFF4D8D),
+          SnackBar(
+            content: const Text("Failed to submit quote request. Please try again later."),
+            backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -109,12 +109,13 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color primaryContainerColor = Color(0xFFFFB6D3);
-    const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color onSurfaceColor = Color(0xFF701235);
-    const Color secondaryColor = Color(0xFF701235);
-    const Color outlineVariantColor = Color(0xFFD8C1C6);
+    final cs = Theme.of(context).colorScheme;
+    final Color primaryColor = cs.onSurfaceVariant;
+    final Color primaryContainerColor = cs.secondaryContainer;
+    final Color surfaceColor = cs.surface;
+    final Color onSurfaceColor = cs.onSurface;
+    final Color secondaryColor = cs.onSurface;
+    final Color outlineVariantColor = const Color(0xFFD8C1C6);
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -127,8 +128,8 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             elevation: 0,
             backgroundColor: surfaceColor.withValues(alpha: 0.9),
             surfaceTintColor: Colors.transparent,
-            leading: const Padding(
-              padding: EdgeInsets.all(12.0),
+            leading: Padding(
+              padding: const EdgeInsets.all(12.0),
               child: Icon(Icons.bakery_dining, color: primaryColor),
             ),
             centerTitle: true,
@@ -144,7 +145,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             actions: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.account_circle_outlined, color: primaryColor),
+                icon: Icon(Icons.account_circle_outlined, color: primaryColor),
               ),
               const SizedBox(width: 8),
             ],
@@ -209,7 +210,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.cloud_upload_outlined, size: 40, color: Color(0xFFFF4D8D)),
+                      Icon(Icons.cloud_upload_outlined, size: 40, color: primaryColor),
                       const SizedBox(height: 16),
                       Text(
                         "Drop your references here",
@@ -291,7 +292,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                         child: DropdownButton<String>(
                           value: selectedSize,
                           isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down, size: 20, color: secondaryColor),
+                          icon: Icon(Icons.keyboard_arrow_down, size: 20, color: secondaryColor),
                           style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor, fontWeight: FontWeight.w500),
                           items: ["Petit (4-6 guests)", "Moyen (8-12 guests)", "Grand (15-20 guests)", "Royal (25+ guests)"].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                           onChanged: (val) => setState(() => selectedSize = val),
@@ -341,7 +342,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                               color: primaryContainerColor.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.info_outline, color: primaryColor),
+                            child: Icon(Icons.info_outline, color: primaryColor),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -530,6 +531,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   }
 
   Widget _buildSectionHeader(String title, String label) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -538,7 +540,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
           style: GoogleFonts.notoSerif(
             fontSize: 22,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF701235),
+            color: cs.onSurface,
           ),
         ),
         const SizedBox(height: 4),
@@ -548,7 +550,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.5,
-            color: const Color(0xFF701235).withValues(alpha: 0.6),
+            color: cs.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -556,6 +558,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   }
 
   Widget _buildSelectorTile({required IconData icon, required String label, required Widget child, VoidCallback? onTap}) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -567,7 +570,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: const Color(0xFFFF4D8D)),
+            Icon(icon, color: cs.onSurfaceVariant),
             const SizedBox(height: 12),
             Text(
               label.toUpperCase(),
@@ -575,7 +578,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.5,
-                color: const Color(0xFF701235).withValues(alpha: 0.7),
+                color: cs.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 12),
@@ -595,13 +598,14 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
   }
 
   Widget _buildFooterLink(String text) {
+    final cs = Theme.of(context).colorScheme;
     return Text(
       text,
       style: GoogleFonts.plusJakartaSans(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         letterSpacing: 1.5,
-        color: const Color(0xFF701235),
+        color: cs.onSurface,
       ),
     );
   }

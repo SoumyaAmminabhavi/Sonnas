@@ -71,8 +71,8 @@ class WelcomeScreen extends StatelessWidget {
                       height: 58,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        gradient: const LinearGradient(
-                          colors: [Colors.pink, Color(0xFFFF4D8D)],
+                        gradient: LinearGradient(
+                          colors: [Colors.pink, Theme.of(context).colorScheme.onSurfaceVariant],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),

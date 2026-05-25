@@ -27,10 +27,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  static const Color primary = Color(0xFFFF4D8D);
-  static const Color accent = Color(0xFFFFB6D3);
-  static const Color background = Color(0xFFFFF0F6);
-  static const Color berry = Color(0xFF701235);
+  Color get primary => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get accent => Theme.of(context).colorScheme.primaryContainer;
+  Color get background => Theme.of(context).colorScheme.surface;
+  Color get berry => Theme.of(context).colorScheme.onSurface;
   static const String _emailKey = 'saved_email';
 
   @override
@@ -169,8 +169,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       debugPrint("Authentication error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Authentication failed. Please try again later."),
+          SnackBar(
+            content: const Text("Authentication failed. Please try again later."),
             backgroundColor: primary,
             behavior: SnackBarBehavior.floating,
           ),
@@ -211,7 +211,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_ios_new, color: berry),
+                        icon: Icon(Icons.arrow_back_ios_new, color: berry),
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           padding: const EdgeInsets.all(12),
@@ -401,7 +401,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                 TextSpan(text: _isSignUp ? "Already have an account? " : "New to Sonna's? "),
                                 TextSpan(
                                   text: _isSignUp ? "Sign In" : "Create one",
-                                  style: const TextStyle(color: primary, fontWeight: FontWeight.w800),
+                                  style: TextStyle(color: primary, fontWeight: FontWeight.w800),
                                 ),
                               ],
                             ),
@@ -461,12 +461,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(color: primary, width: 1.5),
+        borderSide: BorderSide(color: primary, width: 1.5),
       ),
       errorStyle: GoogleFonts.plusJakartaSans(color: primary, fontWeight: FontWeight.w600),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
-        borderSide: const BorderSide(color: primary, width: 1),
+        borderSide: BorderSide(color: primary, width: 1),
       ),
     );
   }

@@ -63,13 +63,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    debugPrint("Razorpay Payment Success: ${response.paymentId}");
+    debugPrint("Razorpay Payment Success: ${response.paymentId?.substring(0, 8)}...");
     final cart = ref.read(customerCartProvider);
     _placeOrder(cart, paymentId: response.paymentId);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
-    debugPrint("Razorpay Payment Error: ${response.code} - ${response.message}");
+    debugPrint("Razorpay Payment Error: ${response.code}");
     setState(() => _isLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -84,11 +84,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   void _startRazorpayPayment(CustomerCartState cart) {
+    final cs = Theme.of(context).colorScheme;
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text("Online payments via Razorpay are only supported on Android & iOS mobile devices."),
-          backgroundColor: Color(0xFFFF4D8D),
+          backgroundColor: cs.primary,
         ),
       );
       return;
@@ -130,6 +131,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Future<void> _placeOrder(CustomerCartState cart, {String? paymentId}) async {
+    final cs = Theme.of(context).colorScheme;
     if (cart.itemList.isEmpty) return;
     
     setState(() => _isLoading = true);
@@ -244,7 +246,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            backgroundColor: const Color(0xFFFF4D8D),
+            backgroundColor: cs.primary,
             duration: const Duration(seconds: 10),
             action: paymentId != null ? SnackBarAction(
               label: "COPY ID",
@@ -262,15 +264,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = ref.watch(customerCartProvider);
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color primaryContainerColor = Color(0xFFFFB6D3);
-    const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color onSurfaceColor = Color(0xFF701235);
-    const Color secondaryColor = Color(0xFF701235);
-    const Color outlineVariantColor = Color(0xFFD8C1C6);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: surfaceColor,
+        backgroundColor: cs.surface,
       body: Stack(
         children: [
           // Background Decoration
@@ -281,7 +278,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               width: 400,
               height: 400,
               decoration: BoxDecoration(
-                color: primaryContainerColor.withValues(alpha: 0.05),
+                color: cs.primaryContainer.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -294,16 +291,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: surfaceColor.withValues(alpha: 0.8),
+                backgroundColor: cs.surface.withValues(alpha: 0.8),
                 surfaceTintColor: Colors.transparent,
                 leading: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
+                  icon: Icon(Icons.arrow_back_ios_new, color: cs.primary, size: 20),
                 ),
                 title: Text(
                   "Sonna’s Patisserie",
                   style: GoogleFonts.notoSerif(
-                    color: primaryColor,
+                    color: cs.primary,
                     fontSize: 20,
                     fontWeight: FontWeight.w400,
                     fontStyle: FontStyle.italic,
@@ -312,7 +309,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 actions: [
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(Icons.account_circle_outlined, color: primaryColor),
+                    icon: Icon(Icons.account_circle_outlined, color: cs.primary),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -331,7 +328,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: primaryColor.withValues(alpha: 0.7),
+                          color: cs.primary.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -340,16 +337,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           style: GoogleFonts.notoSerif(
                             fontSize: 40,
                             fontWeight: FontWeight.w300,
-                            color: onSurfaceColor,
+                            color: cs.onSurface,
                             height: 1.1,
                           ),
                           children: [
                             const TextSpan(text: "Complete Your\n"),
-                            const TextSpan(
+                            TextSpan(
                               text: "Savoury Experience",
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: primaryColor,
+                                color: cs.primary,
                               ),
                             ),
                           ],
@@ -373,7 +370,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: secondaryColor.withValues(alpha: 0.6),
+                          color: cs.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -416,7 +413,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: outlineVariantColor.withValues(alpha: 0.1)),
+                                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.1)),
                               ),
                               child: Column(
                                 children: [
@@ -432,10 +429,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: secondaryColor.withValues(alpha: 0.6),
+                                      color: cs.onSurface.withValues(alpha: 0.6),
                                     ),
-                                  ),
-                                ],
+                                  ],
                               ),
                             ),
                           ],
@@ -457,9 +453,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                     child: TextField(
                                       decoration: InputDecoration(
                                         hintText: "Enter UPI ID (e.g. user@bank)",
-                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withValues(alpha: 0.3)),
+                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.3)),
                                         filled: true,
-                                        fillColor: const Color(0xFFFFF1E9),
+                                        fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
                                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                       ),
@@ -470,7 +466,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                     height: 48,
                                     padding: const EdgeInsets.symmetric(horizontal: 20),
                                     decoration: BoxDecoration(
-                                      color: primaryColor,
+                                color: cs.primary,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Center(
@@ -520,7 +516,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: secondaryColor.withValues(alpha: 0.08),
+                          color: cs.onSurface.withValues(alpha: 0.08),
                           blurRadius: 80,
                           offset: const Offset(0, 40),
                         ),
@@ -534,7 +530,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           style: GoogleFonts.notoSerif(
                             fontSize: 24,
                             fontWeight: FontWeight.w400,
-                            color: onSurfaceColor,
+                            color: cs.onSurface,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -546,20 +542,20 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               Expanded(
                                 child: Text(
                                   "${item.name} (x${item.quantity})",
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withValues(alpha: 0.7)),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: cs.onSurface.withValues(alpha: 0.7)),
                                 ),
                               ),
                               Text(
                                 "₹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
-                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurfaceColor),
+                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: cs.onSurface),
                               ),
                             ],
                           ),
                         )),
                         
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Divider(color: Color(0xFFD8C1C6), thickness: 0.5),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Divider(color: cs.outlineVariant, thickness: 0.5),
                         ),
                         
                         Row(
@@ -571,18 +567,18 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               children: [
                                 Text(
                                   "TOTAL AMOUNT",
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: primaryColor, letterSpacing: 1),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: cs.primary, letterSpacing: 1),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
-                                  style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
+                                  style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: cs.onSurface),
                                 ),
                               ],
                             ),
                             Text(
                               "Incl. all taxes",
-                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withValues(alpha: 0.4)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: cs.onSurface.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -605,7 +601,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               gradient: LinearGradient(
                                 colors: _isLoading 
                                   ? [Colors.grey, Colors.grey] 
-                                  : [primaryColor, primaryContainerColor],
+                                  : [cs.primary, cs.primaryContainer],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -613,7 +609,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               boxShadow: [
                                 if (!_isLoading)
                                   BoxShadow(
-                                    color: primaryColor.withValues(alpha: 0.2),
+                                    color: cs.primary.withValues(alpha: 0.2),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -639,7 +635,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.lock_outline, size: 14, color: Color(0xFF867277)),
+                            Icon(Icons.lock_outline, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                             const SizedBox(width: 8),
                             Text(
                               "SECURE SSL ENCRYPTED CHECKOUT",
@@ -647,7 +643,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1,
-                                color: const Color(0xFF867277).withValues(alpha: 0.4),
+                                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -678,9 +674,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     Widget? child,
   }) {
     final bool isSelected = _selectedMethod == id;
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color onSurfaceColor = Color(0xFF701235);
-    const Color secondaryColor = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -689,10 +683,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isSelected ? primaryColor.withValues(alpha: 0.2) : const Color(0xFFD8C1C6).withValues(alpha: 0.1)),
+        border: Border.all(color: isSelected ? cs.primary.withValues(alpha: 0.2) : cs.outlineVariant.withValues(alpha: 0.1)),
         boxShadow: [
           if (isSelected)
-            BoxShadow(color: secondaryColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: cs.onSurface.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: InkWell(
@@ -705,10 +699,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFB6D3).withValues(alpha: 0.2),
+                    color: cs.primaryContainer.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: primaryColor, size: 20),
+                  child: Icon(icon, color: cs.primary, size: 20),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -717,12 +711,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     children: [
                       Text(
                         title,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: onSurfaceColor),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: cs.onSurface),
                       ),
                       if (!isSelected)
                         Text(
                           subtitle,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: secondaryColor.withValues(alpha: 0.6)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.6)),
                         ),
                     ],
                   ),
@@ -732,8 +726,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: isSelected ? primaryColor : const Color(0xFFD8C1C6), width: 2),
-                    color: isSelected ? primaryColor : Colors.transparent,
+                    border: Border.all(color: isSelected ? cs.primary : cs.outlineVariant, width: 2),
+                    color: isSelected ? cs.primary : Colors.transparent,
                   ),
                   child: isSelected ? const Center(child: Icon(Icons.check, size: 12, color: Colors.white)) : null,
                 ),
@@ -747,29 +741,28 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Widget _buildAppLogo(String name) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1E9),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
         child: Text(
           name,
-          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withValues(alpha: 0.4)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.onSurface.withValues(alpha: 0.4)),
         ),
       ),
     );
   }
 
   Widget _buildSuccessOverlay(BuildContext context) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color secondaryColor = Color(0xFF701235);
-    const Color surfaceColor = Color(0xFFFFF0F6);
+    final cs = Theme.of(context).colorScheme;
 
     return Material(
-      color: surfaceColor.withValues(alpha: 0.95),
+      color: cs.surface.withValues(alpha: 0.95),
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
@@ -785,7 +778,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withValues(alpha: 0.15),
+                      color: cs.primary.withValues(alpha: 0.15),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -812,7 +805,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: secondaryColor,
+                  color: cs.onSurface,
                   height: 1.2,
                 ),
               ),
@@ -822,7 +815,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondaryColor.withValues(alpha: 0.6),
+                  color: cs.onSurface.withValues(alpha: 0.6),
                   height: 1.6,
                 ),
               ),
@@ -836,7 +829,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: secondaryColor.withValues(alpha: 0.04),
+                      color: cs.onSurface.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -876,12 +869,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: cs.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 10,
-                    shadowColor: primaryColor.withValues(alpha: 0.4),
+                    shadowColor: cs.primary.withValues(alpha: 0.4),
                   ),
                   child: Text(
                     "TRACK ORDER",
@@ -921,7 +914,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   "Back to Home",
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
-                    color: secondaryColor.withValues(alpha: 0.5),
+                    color: cs.onSurface.withValues(alpha: 0.5),
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -935,6 +928,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Widget _buildInfoRow(String label, String value) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -943,7 +937,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF701235).withValues(alpha: 0.4),
+            color: cs.onSurface.withValues(alpha: 0.4),
           ),
         ),
         Text(
@@ -951,7 +945,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF701235),
+            color: cs.onSurface,
           ),
         ),
       ],

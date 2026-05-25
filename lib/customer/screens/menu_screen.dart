@@ -181,11 +181,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           _filterByCategory();
           _isLoading = false;
         });
+        final snackCs = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Backend Restricted: Please check Supabase RLS Policies"),
-            backgroundColor: Color(0xFF701235),
-            duration: Duration(seconds: 5),
+          SnackBar(
+            content: const Text("Backend Restricted: Please check Supabase RLS Policies"),
+            backgroundColor: snackCs.onSurface,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -235,13 +236,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color background = Color(0xFFFFF0F6);
-    const Color secondaryColor = Color(0xFF701235);
-    const Color onSurface = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: cs.surface,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -256,7 +254,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2,
-                      color: primaryColor,
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -266,7 +264,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: primaryColor.withValues(alpha: 0.06),
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.06),
                           blurRadius: 15,
                           offset: const Offset(0, 4),
                         ),
@@ -276,7 +274,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       controller: _searchController,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: secondaryColor,
+                        color: cs.onSurface,
                         fontWeight: FontWeight.w600,
                       ),
                       onChanged: (_) => _filterByCategory(),
@@ -284,12 +282,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         hintText: "Search delicacies...",
                         hintStyle: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: secondaryColor.withValues(alpha: 0.4),
+                          color: cs.onSurface.withValues(alpha: 0.4),
                         ),
-                        prefixIcon: const Icon(Icons.search_rounded, color: primaryColor),
+                        prefixIcon: Icon(Icons.search_rounded, color: cs.onSurfaceVariant),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, color: primaryColor),
+                                icon: Icon(Icons.clear_rounded, color: cs.onSurfaceVariant),
                                 onPressed: () {
                                   _searchController.clear();
                                   _filterByCategory();
@@ -324,13 +322,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             labelStyle: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : onSurface,
+                              color: isSelected ? Colors.white : cs.onSurface,
                             ),
-                            selectedColor: primaryColor,
+                            selectedColor: cs.onSurfaceVariant,
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.1)),
+                              side: BorderSide(color: isSelected ? cs.onSurfaceVariant : cs.onSurfaceVariant.withValues(alpha: 0.1)),
                             ),
                             showCheckmark: false,
                           ),
@@ -346,7 +344,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         "${filteredItems.length} items",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: secondaryColor.withValues(alpha: 0.6),
+                          color: cs.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                       Row(
@@ -361,10 +359,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: onSurface,
+                                      color: cs.onSurface,
+                                    ),
                                   ),
-                                ),
-                                const Icon(Icons.keyboard_arrow_down, size: 20),
+                                  const Icon(Icons.keyboard_arrow_down, size: 20),
                               ],
                             ),
                             itemBuilder: (context) => [
@@ -379,7 +377,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             onPressed: () => setState(() => _isGridView = true),
                             icon: Icon(Icons.grid_view_rounded, 
                               size: 20, 
-                              color: _isGridView ? onSurface : Colors.grey.shade400
+                              color: _isGridView ? cs.onSurface : Colors.grey.shade400
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -389,7 +387,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             onPressed: () => setState(() => _isGridView = false),
                             icon: Icon(Icons.list_rounded, 
                               size: 24, 
-                              color: !_isGridView ? onSurface : Colors.grey.shade400
+                              color: !_isGridView ? cs.onSurface : Colors.grey.shade400
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -404,15 +402,15 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           ),
 
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator(color: primaryColor)),
+            SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator(color: cs.onSurfaceVariant)),
             )
           else if (filteredItems.isEmpty)
             const SliverFillRemaining(
               child: Center(child: Text("No delicacies found.")),
             )
           else
-            _isGridView ? _buildGrid(primaryColor, secondaryColor, onSurface) : _buildList(primaryColor, secondaryColor, onSurface),
+            _isGridView ? _buildGrid(cs.onSurfaceVariant, cs.onSurface, cs.onSurface) : _buildList(cs.onSurfaceVariant, cs.onSurface, cs.onSurface),
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],

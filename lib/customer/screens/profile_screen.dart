@@ -8,6 +8,7 @@ import 'product_detail_screen.dart';
 import 'contact_screen.dart';
 import 'auth_screen.dart';
 import 'home_screen.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -121,13 +122,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _loadSavedAddresses() async {
-    final prefs = await SharedPreferences.getInstance();
+    final storage = FlutterSecureStorage();
     final user = Supabase.instance.client.auth.currentUser;
     final metadata = user?.userMetadata ?? {};
     final cloudAddress = metadata['default_address']?.toString();
     
-    final addressJson = prefs.getString('saved_addresses');
-    final defAddr = prefs.getString('default_address') ?? cloudAddress ?? _addressController.text;
+    final addressJson = await storage.read(key: 'saved_addresses');
+    final defAddr = await storage.read(key: 'default_address') ?? cloudAddress ?? _addressController.text;
     
     if (mounted) {
       setState(() {
@@ -150,9 +151,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _saveAddressesToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('saved_addresses', jsonEncode(_savedAddresses));
-    await prefs.setString('default_address', _defaultAddress);
+    final storage = FlutterSecureStorage();
+    await storage.write(key: 'saved_addresses', value: jsonEncode(_savedAddresses));
+    await storage.write(key: 'default_address', value: _defaultAddress);
   }
 
   Future<void> _loadNotificationPrefs() async {
@@ -229,14 +230,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       );
       
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('default_address', _addressController.text.trim());
+      final storage = FlutterSecureStorage();
+      await storage.write(key: 'default_address', value: _addressController.text.trim());
       
       if (mounted) {
+        final snackCs = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Profile updated successfully"),
-            backgroundColor: Color(0xFFFF4D8D),
+          SnackBar(
+            content: const Text("Profile updated successfully"),
+            backgroundColor: snackCs.primary,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -261,13 +263,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildGuestView() {
-    const Color primary = Color(0xFFFF4D8D);
-    const Color background = Color(0xFFFFF0F6);
-    const Color onSurface = Color(0xFF701235);
-    const Color secondary = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: cs.surface,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -281,16 +280,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withValues(alpha: 0.1),
+                      color: cs.primary.withValues(alpha: 0.1),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     )
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.person_outline_rounded,
                   size: 80,
-                  color: primary,
+                  color: cs.primary,
                 ),
               ),
               const SizedBox(height: 32),
@@ -299,7 +298,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
                   fontWeight: FontWeight.w600,
-                  color: onSurface,
+                  color: cs.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -308,7 +307,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 "Sign in to track orders, customize delivery addresses, earn Bronze, Silver, or Gold rewards, and get personal recommendations.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondary.withValues(alpha: 0.6),
+                  color: cs.onSurface.withValues(alpha: 0.6),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -333,13 +332,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
+                    backgroundColor: cs.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: 5,
-                    shadowColor: primary.withValues(alpha: 0.3),
+                    shadowColor: cs.primary.withValues(alpha: 0.3),
                   ),
                   child: Text(
                     "SIGN IN OR REGISTER",
@@ -360,13 +359,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFFFF4D8D);
-    const Color background = Color(0xFFFFF0F6);
-    const Color onSurface = Color(0xFF701235);
-    const Color secondary = Color(0xFF701235);
-    const Color primaryContainer = Color(0xFFFFB6D3);
-    const Color surfaceContainerHigh = Color(0xFFFFDCC5);
-    const Color outline = Color(0xFF867277);
+    final cs = Theme.of(context).colorScheme;
 
     final currentUser = Supabase.instance.client.auth.currentUser;
     if (currentUser == null) {
@@ -374,14 +367,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
 
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: background,
-        body: Center(child: CircularProgressIndicator(color: primary)),
+      return Scaffold(
+        backgroundColor: cs.surface,
+        body: Center(child: CircularProgressIndicator(color: cs.primary)),
       );
     }
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: cs.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -400,10 +393,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           height: 112,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: surfaceContainerHigh, width: 4),
+                            border: Border.all(color: cs.surfaceContainer, width: 4),
                             boxShadow: [
                               BoxShadow(
-                                color: secondary.withValues(alpha: 0.1),
+                                color: cs.onSurface.withValues(alpha: 0.1),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -415,8 +408,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               _avatarUrl,
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) => Container(
-                                color: primary.withValues(alpha: 0.1),
-                                child: const Icon(Icons.person, color: primary, size: 40),
+                                color: cs.primary.withValues(alpha: 0.1),
+                                child: Icon(Icons.person, color: cs.primary, size: 40),
                               ),
                             ),
                           ),
@@ -428,7 +421,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: primary,
+                              color: cs.primary,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 2),
                             ),
@@ -445,7 +438,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       fontSize: 32,
                       fontStyle: FontStyle.italic,
                       fontWeight: FontWeight.w400,
-                      color: onSurface,
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -453,14 +446,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.1),
+                      color: cs.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: primary.withValues(alpha: 0.2)),
+                      border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.emoji_events_rounded, color: primary, size: 18),
+                        Icon(Icons.emoji_events_rounded, color: cs.primary, size: 18),
                         const SizedBox(width: 8),
                         Text(
                           _loyaltyLevel.toUpperCase(),
@@ -468,7 +461,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1.5,
-                            color: secondary,
+                            color: cs.onSurface,
                           ),
                         ),
                       ],
@@ -486,7 +479,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             "Total Orders", 
                             "$_totalOrders", 
                             Icons.local_mall_rounded, 
-                            primary,
+                            cs.primary,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -518,7 +511,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         "Personal Information",
                         style: GoogleFonts.notoSerif(
                           fontSize: 20,
-                          color: onSurface,
+                          color: cs.onSurface,
                         ),
                       ),
                       TextButton(
@@ -535,7 +528,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1,
-                            color: primary,
+                            color: cs.primary,
                           ),
                         ),
                       ),
@@ -550,7 +543,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withValues(alpha: 0.06),
+                          color: cs.onSurface.withValues(alpha: 0.06),
                           blurRadius: 40,
                           offset: const Offset(0, 10),
                         ),
@@ -559,13 +552,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildEditableInfoItem("FULL NAME", _nameController, outline, onSurface),
+                        _buildEditableInfoItem("FULL NAME", _nameController, cs.outline, cs.onSurface),
                         const SizedBox(height: 24),
-                        _buildEditableInfoItem("EMAIL ADDRESS", _emailController, outline, onSurface, isEnabled: false),
+                        _buildEditableInfoItem("EMAIL ADDRESS", _emailController, cs.outline, cs.onSurface, isEnabled: false),
                         const SizedBox(height: 24),
-                        _buildEditableInfoItem("PHONE NUMBER", _phoneController, outline, onSurface),
+                        _buildEditableInfoItem("PHONE NUMBER", _phoneController, cs.outline, cs.onSurface),
                         const SizedBox(height: 24),
-                        _buildEditableInfoItem("DEFAULT DELIVERY", _addressController, outline, onSurface, maxLines: 2),
+                        _buildEditableInfoItem("DEFAULT DELIVERY", _addressController, cs.outline, cs.onSurface, maxLines: 2),
                       ],
                     ),
                   ),
@@ -589,7 +582,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 2,
-                                  color: primary,
+                                  color: cs.primary,
                                 ),
                               ),
                               Text(
@@ -597,7 +590,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
-                                  color: secondary.withValues(alpha: 0.4),
+                                  color: cs.onSurface.withValues(alpha: 0.4),
                                 ),
                               ),
                             ],
@@ -639,8 +632,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               errorBuilder: (_, _, _) => Container(
                                               height: 100,
                                               width: 100,
-                                              color: primary.withValues(alpha: 0.05),
-                                              child: const Icon(Icons.cake, color: primary),
+                                              color: cs.primary.withValues(alpha: 0.05),
+                                              child: Icon(Icons.cake, color: cs.primary),
                                             ),
                                           ),
                                         ),
@@ -650,7 +643,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
-                                            color: secondary,
+                                            color: cs.onSurface,
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
@@ -673,7 +666,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     "Recent Activity",
                     style: GoogleFonts.notoSerif(
                       fontSize: 20,
-                      color: onSurface,
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -698,7 +691,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: Text(
                               "No recent activity found",
                               style: GoogleFonts.plusJakartaSans(
-                                color: outline.withValues(alpha: 0.5),
+                                color: cs.outline.withValues(alpha: 0.5),
                                 fontSize: 14,
                               ),
                             ),
@@ -717,7 +710,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
                         status.toUpperCase(),
                         latestOrder['customImageUrl']?.toString() ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
-                        primary, outline, onSurface, surfaceContainerHigh
+                        cs.primary, cs.outline, cs.onSurface, cs.surfaceContainer
                       );
                     },
                   ),
@@ -732,19 +725,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         "Saved Addresses",
                         style: GoogleFonts.notoSerif(
                           fontSize: 20,
-                          color: onSurface,
+                          color: cs.onSurface,
                         ),
                       ),
                       TextButton.icon(
                         onPressed: _addNewAddressDialog,
-                        icon: const Icon(Icons.add_rounded, size: 16, color: primary),
+                        icon: Icon(Icons.add_rounded, size: 16, color: cs.primary),
                         label: Text(
                           "ADD NEW",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 1,
-                            color: primary,
+                            color: cs.primary,
                           ),
                         ),
                       ),
@@ -758,14 +751,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: secondary.withValues(alpha: 0.05)),
+                        border: Border.all(color: cs.onSurface.withValues(alpha: 0.05)),
                       ),
                       child: Center(
                         child: Text(
                           "No saved addresses yet.",
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: secondary.withValues(alpha: 0.5),
+                            color: cs.onSurface.withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -785,7 +778,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: isDefault ? primary : secondary.withValues(alpha: 0.05),
+                              color: isDefault ? cs.primary : cs.onSurface.withValues(alpha: 0.05),
                               width: isDefault ? 1.5 : 1,
                             ),
                           ),
@@ -794,7 +787,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             children: [
                               Icon(
                                 isDefault ? Icons.stars_rounded : Icons.location_on_rounded,
-                                color: isDefault ? primary : secondary.withValues(alpha: 0.4),
+                                color: isDefault ? cs.primary : cs.onSurface.withValues(alpha: 0.4),
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -810,7 +803,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 8,
                                             fontWeight: FontWeight.w800,
-                                            color: primary,
+                                            color: cs.primary,
                                             letterSpacing: 1,
                                           ),
                                         ),
@@ -821,7 +814,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         fontSize: 12,
                                         height: 1.5,
                                         fontWeight: FontWeight.w600,
-                                        color: secondary.withValues(alpha: 0.8),
+                                        color: cs.onSurface.withValues(alpha: 0.8),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -847,7 +840,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                               style: GoogleFonts.plusJakartaSans(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
-                                                color: primary,
+                              color: cs.primary,
                                               ),
                                             ),
                                           ),
@@ -894,7 +887,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     "Notification Preferences",
                     style: GoogleFonts.notoSerif(
                       fontSize: 20,
-                      color: onSurface,
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -906,16 +899,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: secondary.withValues(alpha: 0.04),
+                          color: cs.onSurface.withValues(alpha: 0.04),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
-                      border: Border.all(color: secondary.withValues(alpha: 0.05)),
+                      border: Border.all(color: cs.onSurface.withValues(alpha: 0.05)),
                     ),
                     child: Column(
                       children: [
-                        _buildSwitchTile(
+                          _buildSwitchTile(
                           "Order Status Tracking",
                           "Realtime alerts when your cake status changes",
                           _notifOrderTracking,
@@ -923,7 +916,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             setState(() => _notifOrderTracking = val);
                             _saveNotificationPref('notif_order_tracking', val);
                           },
-                          primary,
+                          cs.primary,
                         ),
                         const Divider(height: 24, thickness: 0.5),
                         _buildSwitchTile(
@@ -934,7 +927,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             setState(() => _notifStockAlerts = val);
                             _saveNotificationPref('notif_stock_alerts', val);
                           },
-                          primary,
+                          cs.primary,
                         ),
                         const Divider(height: 24, thickness: 0.5),
                         _buildSwitchTile(
@@ -945,7 +938,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             setState(() => _notifSpecialOffers = val);
                             _saveNotificationPref('notif_special_offers', val);
                           },
-                          primary,
+                          cs.primary,
                         ),
                       ],
                     ),
@@ -956,10 +949,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Account Settings
                   Text(
                     "Account Settings",
-                    style: GoogleFonts.notoSerif(fontSize: 20, color: onSurface),
+                    style: GoogleFonts.notoSerif(fontSize: 20, color: cs.onSurface),
                   ),
                   const SizedBox(height: 24),
-                  _buildSettingTile(Icons.help_center_outlined, "Help & Support", onSurface, outline, context, onTap: () {
+                  _buildSettingTile(Icons.help_center_outlined, "Help & Support", cs.onSurface, cs.outline, context, onTap: () {
                     Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const ContactScreen()));
                   }),
 
@@ -970,14 +963,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     height: 56,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      gradient: const LinearGradient(
-                        colors: [primary, primaryContainer],
+                      gradient: LinearGradient(
+                        colors: [cs.primary, cs.primaryContainer],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withValues(alpha: 0.3),
+                          color: cs.primary.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -1027,7 +1020,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 2,
-                        color: outline.withValues(alpha: 0.5),
+                        color: cs.outline.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -1041,6 +1034,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildEditableInfoItem(String label, TextEditingController controller, Color labelColor, Color valueColor, {int maxLines = 1, bool isEnabled = true}) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1063,10 +1057,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               fontWeight: FontWeight.w600,
               color: valueColor,
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.symmetric(vertical: 8),
-              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFFF4D8D))),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: cs.primary)),
             ),
           )
         else
@@ -1090,7 +1084,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF701235).withValues(alpha: 0.06), blurRadius: 40, offset: const Offset(0, 10)),
+          BoxShadow(color: onSurface.withValues(alpha: 0.06), blurRadius: 40, offset: const Offset(0, 10)),
         ],
       ),
       child: Row(
@@ -1132,6 +1126,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildSettingTile(IconData icon, String title, Color onSurface, Color outline, BuildContext context, {VoidCallback? onTap}) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: outline.withValues(alpha: 0.1)))),
       child: ListTile(
@@ -1140,17 +1135,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         leading: Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: const Color(0xFFFFF1E9), borderRadius: BorderRadius.circular(12)),
-          child: Icon(icon, color: const Color(0xFF701235), size: 20),
+          decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: onSurface, size: 20),
         ),
         title: Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600, color: onSurface)),
-        trailing: const Icon(Icons.chevron_right, size: 20, color: Color(0xFFD8C1C6)),
+        trailing: Icon(Icons.chevron_right, size: 20, color: cs.outline),
       ),
     );
   }
 
   Widget _buildStatItem(String label, String value, IconData icon, Color iconColor) {
-    const Color secondaryColor = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1158,12 +1153,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: secondaryColor.withValues(alpha: 0.04),
+            color: cs.onSurface.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: secondaryColor.withValues(alpha: 0.05)),
+        border: Border.all(color: cs.onSurface.withValues(alpha: 0.05)),
       ),
       child: Row(
         children: [
@@ -1185,7 +1180,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 8,
                     fontWeight: FontWeight.w800,
-                    color: secondaryColor.withValues(alpha: 0.4),
+                    color: cs.onSurface.withValues(alpha: 0.4),
                     letterSpacing: 1,
                   ),
                 ),
@@ -1195,7 +1190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   style: GoogleFonts.notoSerif(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: secondaryColor,
+                    color: cs.onSurface,
                   ),
                 ),
               ],
@@ -1207,7 +1202,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildSwitchTile(String title, String subtitle, bool value, ValueChanged<bool> onChanged, Color activeColor) {
-    const Color secondaryColor = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
@@ -1219,7 +1214,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: secondaryColor,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -1228,7 +1223,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: secondaryColor.withValues(alpha: 0.5),
+                  color: cs.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -1250,30 +1245,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final controller = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Add Delivery Address", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: "Enter complete address...",
-            filled: true,
-            fillColor: const Color(0xFFFFF0F6),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+      builder: (context) {
+        final dlgCs = Theme.of(context).colorScheme;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text("Add Delivery Address", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: "Enter complete address...",
+              filled: true,
+              fillColor: dlgCs.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("CANCEL")),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("ADD ADDRESS", style: TextStyle(color: Color(0xFFFF4D8D))),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("CANCEL")),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text("ADD ADDRESS", style: TextStyle(color: dlgCs.primary)),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed == true && controller.text.trim().isNotEmpty) {
@@ -1302,62 +1300,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     unawaited(showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Choose Your Bakery Avatar",
-              style: GoogleFonts.notoSerif(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF701235),
+      builder: (context) {
+        final avCs = Theme.of(context).colorScheme;
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Choose Your Bakery Avatar",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: avCs.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
-              itemCount: avatars.length,
-              itemBuilder: (context, index) {
-                final url = avatars[index];
-                final isSelected = url == _avatarUrl;
-                return InkWell(
-                  onTap: () {
-                    _updateAvatar(url);
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFFFF4D8D) : Colors.transparent,
-                        width: 3,
+              const SizedBox(height: 20),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: avatars.length,
+                itemBuilder: (context, index) {
+                  final url = avatars[index];
+                  final isSelected = url == _avatarUrl;
+                  return InkWell(
+                    onTap: () {
+                      _updateAvatar(url);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? avCs.primary : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        backgroundImage: NetworkImage(url),
+                        radius: 36,
                       ),
                     ),
-                    child: CircleAvatar(
-                      backgroundImage: NetworkImage(url),
-                      radius: 36,
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
     ));
   }
 }

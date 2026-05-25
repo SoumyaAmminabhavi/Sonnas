@@ -25,8 +25,9 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFFC2185B);
-    const berryText = Color(0xFF4A152C);
+    final cs = Theme.of(context).colorScheme;
+    final primary = cs.primary;
+    final berryText = cs.onSurface;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -141,7 +142,7 @@ class _ProductCardState extends State<ProductCard> {
                                     color: primary.withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.add, size: 14, color: primary),
+                                  child: Icon(Icons.add, size: 14, color: primary),
                                 ),
                               ),
                           ],

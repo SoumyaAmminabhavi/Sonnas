@@ -10,6 +10,7 @@ import 'screens/cart_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/profile_screen.dart';
 import '../services/haptic_service.dart';
+import '../main.dart' show themeProvider;
 import 'providers/favorites_provider.dart';
 import 'providers/cart_provider.dart';
 import 'theme.dart';
@@ -184,11 +185,12 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeProvider);
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color surfaceColor = Color(0xFFFFF0F6);
 
     return Theme(
-      data: CustomerTheme.theme,
+      data: themeMode == ThemeMode.dark ? CustomerTheme.darkTheme : CustomerTheme.lightTheme,
       child: LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth > 900;

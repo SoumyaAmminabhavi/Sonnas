@@ -57,11 +57,10 @@ class _CustomerOrderHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
-    const background = Color(0xFFFFF0F5);
-    const berryText = Color(0xFF4A152C);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +70,7 @@ class _CustomerOrderHistoryScreenState
               child: Text(
                 "Your Orders",
                 style:
-                    GoogleFonts.dmSerifDisplay(fontSize: 32, color: berryText),
+                    GoogleFonts.dmSerifDisplay(fontSize: 32, color: cs.onSurface),
               ),
             ),
             Expanded(
@@ -81,7 +80,7 @@ class _CustomerOrderHistoryScreenState
                       ? Center(
                           child: Text("No orders yet",
                               style: GoogleFonts.plusJakartaSans(
-                                  color: berryText.withValues(alpha: 0.5))))
+                                  color: cs.onSurface.withValues(alpha: 0.5))))
                       : ListView.builder(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 20),
@@ -98,8 +97,7 @@ class _CustomerOrderHistoryScreenState
 
   Widget _buildOrderCard(
       BuildContext context, Map<String, dynamic> order) {
-    const primary = Color(0xFFC2185B);
-    const berryText = Color(0xFF4A152C);
+    final cs = Theme.of(context).colorScheme;
 
     final status = (order['status'] ?? 'PENDING').toString().toUpperCase();
 
@@ -142,11 +140,11 @@ class _CustomerOrderHistoryScreenState
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: primary.withValues(alpha: 0.03),
+              color: cs.primary.withValues(alpha: 0.03),
               blurRadius: 20,
               offset: const Offset(0, 8))
         ],
-        border: Border.all(color: primary.withValues(alpha: 0.05)),
+        border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -163,7 +161,7 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: berryText),
+                          color: cs.onSurface),
                     ),
                     Row(
                       children: [
@@ -175,7 +173,7 @@ class _CustomerOrderHistoryScreenState
                           decoration: BoxDecoration(
                             color: source == 'WHATSAPP'
                                 ? Colors.green.shade50
-                                : primary.withValues(alpha: 0.07),
+                                : cs.primary.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -183,7 +181,7 @@ class _CustomerOrderHistoryScreenState
                             style: TextStyle(
                                 color: source == 'WHATSAPP'
                                     ? Colors.green.shade700
-                                    : primary,
+                                    : cs.primary,
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold),
                           ),
@@ -214,15 +212,15 @@ class _CustomerOrderHistoryScreenState
                 const Divider(height: 32),
                 Row(
                   children: [
-                    const Icon(Icons.shopping_bag_outlined,
-                        size: 16, color: primary),
+                    Icon(Icons.shopping_bag_outlined,
+                        size: 16, color: cs.primary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         itemsText.isEmpty ? "Exquisite Creation" : itemsText,
                         style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: berryText.withValues(alpha: 0.7)),
+                            color: cs.onSurface.withValues(alpha: 0.7)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -241,7 +239,7 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: berryText),
+                          color: cs.onSurface),
                     ),
                   ],
                 ),
@@ -251,7 +249,7 @@ class _CustomerOrderHistoryScreenState
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.02),
+              color: cs.primary.withValues(alpha: 0.02),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(20)),
             ),
@@ -265,14 +263,14 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: berryText.withValues(alpha: 0.5)),
+                          color: cs.onSurface.withValues(alpha: 0.5)),
                     ),
                   ),
                 ),
                 Container(
                     width: 1,
                     height: 20,
-                    color: primary.withValues(alpha: 0.1)),
+                    color: cs.primary.withValues(alpha: 0.1)),
                 Expanded(
                   child: TextButton(
                     onPressed: () {
@@ -292,7 +290,7 @@ class _CustomerOrderHistoryScreenState
                         SnackBar(
                           content:
                               Text('${items.length} items added to bag'),
-                          backgroundColor: primary,
+                          backgroundColor: cs.primary,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -302,7 +300,7 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: primary),
+                          color: cs.primary),
                     ),
                   ),
                 ),
@@ -316,8 +314,7 @@ class _CustomerOrderHistoryScreenState
 
   void _showOrderDetails(
       BuildContext context, Map<String, dynamic> order) {
-    const berryText = Color(0xFF4A152C);
-    const primary = Color(0xFFC2185B);
+    final cs = Theme.of(context).colorScheme;
     final List<dynamic> items = order['items'] as List? ?? [];
 
     showModalBottomSheet<void>(
@@ -335,7 +332,7 @@ class _CustomerOrderHistoryScreenState
           children: [
             Text("Order Details",
                 style: GoogleFonts.dmSerifDisplay(
-                    fontSize: 24, color: berryText)),
+                    fontSize: 24, color: cs.onSurface)),
             const SizedBox(height: 24),
             _detailRow("Order ID",
                 "#${order['orderNumber']?.toString().split('-').last ?? 'ORD'}"),
@@ -360,9 +357,9 @@ class _CustomerOrderHistoryScreenState
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   "₹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: primary,
+                      color: cs.primary,
                       fontSize: 18),
                 ),
               ],

@@ -30,12 +30,10 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color background = Color(0xFFFFF0F6);
-    const Color secondaryColor = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -52,7 +50,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: primaryColor.withValues(alpha: 0.15),
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.15),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -69,7 +67,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 style: GoogleFonts.notoSerif(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: secondaryColor,
+                  color: cs.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -78,7 +76,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 "Thank you for choosing Sonna's Patisserie. Your sweet treats are being prepared with love.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: secondaryColor.withValues(alpha: 0.6),
+                  color: cs.onSurface.withValues(alpha: 0.6),
                   height: 1.6,
                 ),
                 textAlign: TextAlign.center,
@@ -92,7 +90,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: secondaryColor.withValues(alpha: 0.04),
+                      color: cs.onSurface.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -119,7 +117,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
+                    backgroundColor: cs.onSurfaceVariant,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -145,8 +143,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
   }
 
   Widget _buildSummaryRow(String label, String value, {bool isStatus = false}) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color secondaryColor = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,7 +153,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: secondaryColor.withValues(alpha: 0.4),
+            color: cs.onSurface.withValues(alpha: 0.4),
           ),
         ),
         Text(
@@ -164,7 +161,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isStatus ? primaryColor : secondaryColor,
+            color: isStatus ? cs.onSurfaceVariant : cs.onSurface,
           ),
         ),
       ],

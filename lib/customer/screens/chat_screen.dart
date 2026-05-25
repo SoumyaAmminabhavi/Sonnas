@@ -63,11 +63,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primary = Color(0xFFFF4D8D);
-    const Color background = Color(0xFFFFF0F6);
-    const Color secondary = Color(0xFF701235);
-    const Color primaryContainer = Color(0xFFFFB6D3);
-    const Color surfaceContainerHighest = Color(0xFFFFDCC5);
+    final cs = Theme.of(context).colorScheme;
+    final Color primary = cs.onSurfaceVariant;
+    final Color background = cs.surface;
+    final Color secondary = cs.onSurface;
+    final Color primaryContainer = cs.secondaryContainer;
+    final Color surfaceContainerHighest = const Color(0xFFFFDCC5);
 
     return Scaffold(
       backgroundColor: background,
@@ -77,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: primary, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: primary, size: 20),
           onPressed: () {
             if (widget.onBack != null) {
               widget.onBack!();
@@ -143,7 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.fiber_manual_record, color: primary, size: 12),
+            icon: Icon(Icons.fiber_manual_record, color: primary, size: 12),
             onPressed: () {},
           ),
           const SizedBox(width: 8),
@@ -214,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: secondary),
+                    icon: Icon(Icons.add_circle_outline, color: secondary),
                     onPressed: () {},
                   ),
                   Expanded(
@@ -277,10 +278,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildMessage({required bool isBakery, required String text, required String time}) {
-    const Color primary = Color(0xFFFF4D8D);
-    const Color secondary = Color(0xFF701235);
-    const Color primaryContainer = Color(0xFFFFB6D3);
-    const Color surfaceContainerLowest = Color(0xFFFFFFFF);
+    final cs = Theme.of(context).colorScheme;
+    final Color primary = cs.onSurfaceVariant;
+    final Color secondary = cs.onSurface;
+    final Color primaryContainer = cs.secondaryContainer;
+    final Color surfaceContainerLowest = Colors.white;
 
     return Align(
       alignment: isBakery ? Alignment.centerLeft : Alignment.centerRight,
@@ -334,8 +336,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildQuickReplyChip(String label) {
-    const Color primary = Color(0xFFFF4D8D);
-    const Color surfaceContainerLowest = Color(0xFFFFFFFF);
+    final cs = Theme.of(context).colorScheme;
+    final Color primary = cs.onSurfaceVariant;
+    final Color surfaceContainerLowest = Colors.white;
 
     return InkWell(
       onTap: () {

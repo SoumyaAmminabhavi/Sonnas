@@ -25,32 +25,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentPromoPage = 0;
   Timer? _promoTimer;
 
-  final List<Map<String, dynamic>> _promoOffers = [
-    {
-      'title': "TODAY'S PICK",
-      'subtitle': "White Chocolate Raspberry Gateau",
-      'discount': "15% OFF today only! Use code SONNA15",
-      'bgGradient': [const Color(0xFFFF4D8D), const Color(0xFFFFB6D3)],
-      'icon': Icons.star_rounded,
-      'code': "SONNA15",
-    },
-    {
-      'title': "WEEKEND SPECIAL",
-      'subtitle': "Signature French Macarons Box",
-      'discount': "Buy 1 Get 1 Free on all boxes!",
-      'bgGradient': [const Color(0xFF701235), const Color(0xFFC2185B)],
-      'icon': Icons.card_giftcard_rounded,
-      'code': "MACARONBOGO",
-    },
-    {
-      'title': "CUSTOM CREATIONS",
-      'subtitle': "Premium Birthday & Anniversary Cakes",
-      'discount': "Book 3 days ahead for free delivery!",
-      'bgGradient': [const Color(0xFFE26D5C), const Color(0xFFF0A202)],
-      'icon': Icons.palette_rounded,
-      'code': "FREEDELIVERY",
-    }
-  ];
+  List<Map<String, dynamic>> get _promoOffers {
+    final cs = Theme.of(context).colorScheme;
+    return [
+      {
+        'title': "TODAY'S PICK",
+        'subtitle': "White Chocolate Raspberry Gateau",
+        'discount': "15% OFF today only! Use code SONNA15",
+        'bgGradient': [cs.primary, cs.primaryContainer],
+        'icon': Icons.star_rounded,
+        'code': "SONNA15",
+      },
+      {
+        'title': "WEEKEND SPECIAL",
+        'subtitle': "Signature French Macarons Box",
+        'discount': "Buy 1 Get 1 Free on all boxes!",
+        'bgGradient': [cs.onSurface, cs.primary],
+        'icon': Icons.card_giftcard_rounded,
+        'code': "MACARONBOGO",
+      },
+      {
+        'title': "CUSTOM CREATIONS",
+        'subtitle': "Premium Birthday & Anniversary Cakes",
+        'discount': "Book 3 days ahead for free delivery!",
+        'bgGradient': [const Color(0xFFE26D5C), const Color(0xFFF0A202)],
+        'icon': Icons.palette_rounded,
+        'code': "FREEDELIVERY",
+      }
+    ];
+  }
 
   @override
   void initState() {
@@ -166,8 +169,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ];
           _isLoading = false;
         });
+        final cs = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Using local cache (Backend restricted)"), backgroundColor: Color(0xFFFF4D8D)),
+          SnackBar(content: const Text("Using local cache (Backend restricted)"), backgroundColor: cs.primary),
         );
       }
     }
@@ -175,9 +179,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color background = Color(0xFFFFF0F6);
-
+    final cs = Theme.of(context).colorScheme;
+    final Color primaryColor = cs.primary;
+    final Color background = cs.surface;
 
     return Scaffold(
       backgroundColor: background,
@@ -254,7 +258,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           "Sonna's Patisserie",
                           style: GoogleFonts.notoSerif(
                             fontSize: 40,
-                            color: const Color(0xFFFF4D8D),
+                            color: cs.primary,
                             fontWeight: FontWeight.w400,
                           ),
                           textAlign: TextAlign.center,
@@ -317,7 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 20),
             if (_isLoading)
-              const SizedBox(
+              SizedBox(
                 height: 240,
                 child: Center(child: CircularProgressIndicator(color: primaryColor)),
               )
@@ -371,7 +375,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
                                     color: primaryColor.withValues(alpha: 0.1),
-                                    child: const Icon(Icons.cake, color: primaryColor),
+                                    child: Icon(Icons.cake, color: primaryColor),
                                   ),
                                 ),
                               ),
@@ -388,7 +392,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0xFFFF4D8D),
+                                          color: cs.primary,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -464,15 +468,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildMainButton(String text, {required VoidCallback onPressed, bool isGradient = false}) {
-    const Color primaryColor = Color(0xFFFF4D8D);
+    final cs = Theme.of(context).colorScheme;
+    final Color primaryColor = cs.primary;
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: isGradient
-            ? const LinearGradient(
-                colors: [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
+            ? LinearGradient(
+                colors: [cs.primary, cs.primaryContainer],
               )
             : null,
         border: isGradient ? null : Border.all(color: primaryColor.withValues(alpha: 0.2)),
@@ -500,7 +505,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildCategoryItem(String name, IconData icon) {
-    const Color primaryColor = Color(0xFFFF4D8D);
+    final cs = Theme.of(context).colorScheme;
+    final Color primaryColor = cs.primary;
     return Padding(
       padding: const EdgeInsets.only(right: 20),
       child: InkWell(
@@ -538,6 +544,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
   Widget _buildSearchBar(Color primaryColor) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       decoration: BoxDecoration(
@@ -556,13 +563,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         style: GoogleFonts.plusJakartaSans(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF701235),
+          color: cs.onSurface,
         ),
         decoration: InputDecoration(
           hintText: "Search for chocolates, custom cakes...",
           hintStyle: GoogleFonts.plusJakartaSans(
             fontSize: 13,
-            color: const Color(0xFF701235).withValues(alpha: 0.4),
+            color: cs.onSurface.withValues(alpha: 0.4),
           ),
           prefixIcon: Icon(Icons.search_rounded, color: primaryColor),
           suffixIcon: IconButton(

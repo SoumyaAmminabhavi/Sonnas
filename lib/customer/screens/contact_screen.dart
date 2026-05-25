@@ -23,9 +23,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   final TextEditingController _subjectController = TextEditingController();
   
   // Brand Colors
-  final Color primaryColor = const Color(0xFFFF4D8D);
-  final Color secondaryColor = const Color(0xFF701235);
-  final Color backgroundColor = const Color(0xFFFFF0F6);
+  Color get primaryColor => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get secondaryColor => Theme.of(context).colorScheme.onSurface;
+  Color get backgroundColor => Theme.of(context).colorScheme.surface;
 
   List<Map<String, dynamic>> _realCakes = [];
   bool _isFetchingCakes = true;
@@ -90,7 +90,8 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
   Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
-    if (!await launchUrl(uri)) debugPrint('Could not launch $url');
+    if (!['tel', 'https', 'mailto'].contains(uri.scheme)) return;
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) debugPrint('Could not launch $url');
   }
 
   void _handleOrderAgain() {

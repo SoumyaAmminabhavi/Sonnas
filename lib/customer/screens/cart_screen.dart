@@ -15,14 +15,10 @@ class CartScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cart = ref.watch(customerCartProvider);
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color primaryContainerColor = Color(0xFFFFB6D3);
-    const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color onSurfaceColor = Color(0xFF701235);
-    const Color secondaryColor = Color(0xFF701235);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: surfaceColor,
+      backgroundColor: cs.surface,
       body: CustomScrollView(
         slivers: [
           // Top App Bar
@@ -30,17 +26,17 @@ class CartScreen extends ConsumerWidget {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: surfaceColor.withValues(alpha: 0.8),
+            backgroundColor: cs.surface.withValues(alpha: 0.8),
             surfaceTintColor: Colors.transparent,
             leading: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
+              icon: Icon(Icons.arrow_back_ios_new, color: cs.primary, size: 20),
             ),
             centerTitle: true,
             title: Text(
               "Sonna’s Patisserie",
               style: GoogleFonts.notoSerif(
-                color: primaryColor,
+                color: cs.primary,
                 fontSize: 22,
                 fontWeight: FontWeight.w400,
                 fontStyle: FontStyle.italic,
@@ -49,7 +45,7 @@ class CartScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 onPressed: () {},
-                icon: const Icon(Icons.account_circle_outlined, color: primaryColor),
+                icon: Icon(Icons.account_circle_outlined, color: cs.primary),
               ),
               const SizedBox(width: 8),
             ],
@@ -68,7 +64,7 @@ class CartScreen extends ConsumerWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
-                      color: const Color(0xFF867277),
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -77,7 +73,7 @@ class CartScreen extends ConsumerWidget {
                     style: GoogleFonts.notoSerif(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
-                      color: onSurfaceColor,
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -93,14 +89,14 @@ class CartScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_bag_outlined, size: 64, color: secondaryColor.withValues(alpha: 0.1)),
+                    Icon(Icons.shopping_bag_outlined, size: 64, color: cs.onSurface.withValues(alpha: 0.1)),
                     const SizedBox(height: 24),
                     Text(
                       "Your bag is empty",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
-                        color: secondaryColor.withValues(alpha: 0.4),
+                        color: cs.onSurface.withValues(alpha: 0.4),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -112,7 +108,7 @@ class CartScreen extends ConsumerWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.5,
-                          color: primaryColor,
+                          color: cs.primary,
                         ),
                       ),
                     ),
@@ -142,9 +138,9 @@ class CartScreen extends ConsumerWidget {
                     style: GoogleFonts.notoSerif(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
-                      color: primaryColor,
+                      color: cs.primary,
                       decoration: TextDecoration.underline,
-                      decorationColor: primaryContainerColor.withValues(alpha: 0.5),
+                      decorationColor: cs.primaryContainer.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -164,9 +160,7 @@ class CartScreen extends ConsumerWidget {
   }
 
   Widget _buildCartItem(BuildContext context, WidgetRef ref, CartItem item, CustomerCartState cart) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color onSurfaceColor = Color(0xFF701235);
-    const Color outlineVariantColor = Color(0xFFD8C1C6);
+    final cs = Theme.of(context).colorScheme;
 
     String imageUrl = item.imageUrl;
 
@@ -175,7 +169,7 @@ class CartScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: outlineVariantColor.withValues(alpha: 0.1)),
+          bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.1)),
         ),
       ),
       child: Row(
@@ -194,7 +188,7 @@ class CartScreen extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: onSurfaceColor,
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -203,7 +197,7 @@ class CartScreen extends ConsumerWidget {
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: primaryColor,
+                    color: cs.primary,
                   ),
                 ),
               ],
@@ -211,7 +205,7 @@ class CartScreen extends ConsumerWidget {
           ),
           Row(
             children: [
-              _buildQtyIcon(Icons.remove, () => ref.read(customerCartProvider.notifier).decrementItem(item.id)),
+              _buildQtyIcon(Icons.remove, () => ref.read(customerCartProvider.notifier).decrementItem(item.id), cs: cs),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -219,7 +213,7 @@ class CartScreen extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                 ),
               ),
-              _buildQtyIcon(Icons.add, () => ref.read(customerCartProvider.notifier).addItem(item.id, item.name, item.price, item.imageUrl)),
+              _buildQtyIcon(Icons.add, () => ref.read(customerCartProvider.notifier).addItem(item.id, item.name, item.price, item.imageUrl), cs: cs),
             ],
           ),
         ],
@@ -228,23 +222,22 @@ class CartScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildQtyIcon(IconData icon, VoidCallback onTap) {
+  Widget _buildQtyIcon(IconData icon, VoidCallback onTap, {required ColorScheme cs}) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
+          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 12, color: const Color(0xFF701235)),
+        child: Icon(icon, size: 12, color: cs.onPrimaryContainer),
       ),
     );
   }
 
   Widget _buildFulfillmentSection(BuildContext context, CustomerCartState cart) {
-    const Color primaryColor = Color(0xFFFF4D8D);
-    const Color primaryContainerColor = Color(0xFFFFB6D3);
+    final cs = Theme.of(context).colorScheme;
 
     final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
     // Source delivery fee from a central service/config in production
@@ -256,7 +249,7 @@ class CartScreen extends ConsumerWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1E9),
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -270,7 +263,7 @@ class CartScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total", style: GoogleFonts.notoSerif(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(currencyFormatter.format(total / 100), style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor)),
+              Text(currencyFormatter.format(total / 100), style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: cs.primary)),
             ],
           ),
           const SizedBox(height: 24),
@@ -299,7 +292,7 @@ class CartScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            backgroundColor: primaryColor,
+                            backgroundColor: cs.primary,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -319,7 +312,7 @@ class CartScreen extends ConsumerWidget {
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [primaryColor, primaryContainerColor]),
+                gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Center(
@@ -353,7 +346,7 @@ class CartScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            backgroundColor: primaryColor,
+                            backgroundColor: cs.primary,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -375,10 +368,10 @@ class CartScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
               ),
               child: Center(
-                child: Text("IN-STORE SELF CHECKOUT", style: GoogleFonts.plusJakartaSans(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1)),
+                child: Text("IN-STORE SELF CHECKOUT", style: GoogleFonts.plusJakartaSans(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1)),
               ),
             ),
           ),
