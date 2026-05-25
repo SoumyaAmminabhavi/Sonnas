@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { db } from "./prisma";
 import type { IncomingMessage, WhatsAppConversation } from "./types";
 import { convoCache } from "./cache";
@@ -18,7 +19,7 @@ export function generateOrderNumber(): string {
   const prefix = "SPC";
   const now = new Date();
   const dateStr = `${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}`;
-  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+  const random = randomBytes(3).toString("hex").toUpperCase();
   return `${prefix}-${dateStr}-${random}`;
 }
 

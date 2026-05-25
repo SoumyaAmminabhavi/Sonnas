@@ -34,7 +34,7 @@ export async function safeGetCategories(): Promise<DBCategory[]> {
 
   try {
     const result = await db.category.findMany({
-      orderBy: { createdAt: "asc" }
+      orderBy: { sortOrder: "asc" }
     });
     const categories = result as unknown as DBCategory[];
     setCaches(cakeCache, categories, now);
@@ -389,11 +389,9 @@ export async function handleCategorySelection(msg: IncomingMessage) {
   });
 
   if (filtered.length === 0) {
-    await Promise.all([
-      updateState(msg.from, ConversationState.BROWSING_MENU),
-      sendTextMessage(msg.from, `No cakes found in *${catName}* at the moment.`),
-      sendMenu(msg.from),
-    ]);
+    await updateState(msg.from, ConversationState.BROWSING_MENU);
+    await sendTextMessage(msg.from, `No cakes found in *${catName}* at the moment.`);
+    await sendMenu(msg.from);
     return;
   }
 
@@ -505,7 +503,8 @@ export async function handleCakeSelection(msg: IncomingMessage) {
 
   const tasks: Promise<unknown>[] = [
     updateState(msg.from, ConversationState.SELECTING_SIZE, {
-      selectedCakeId: selectedProduct.id as string,
+      selectedCakeId: selectedProduct.id.toString(),
+      lastCategoryId: selectedProduct.categoryId ?? null,
     })
   ];
 
@@ -595,21 +594,21 @@ export async function handleSizeSelection(
     return;
   }
 
-  const updatedConvo = {
-    ...convo,
-    selectedSize: selectedOption.size,
-    selectedPrice: selectedOption.price,
-    selectedQuantity: 1,
-  };
-
   await updateState(msg.from, ConversationState.SELECTING_QUANTITY, {
     selectedSize: selectedOption.size,
     selectedPrice: selectedOption.price,
     selectedQuantity: 1,
   });
 
-  const { handleCartActions } = await import("./cart");
-  await handleCartActions(msg, updatedConvo as unknown as WhatsAppConversation);
+  await sendInteractiveButtons(
+    msg.from,
+    `How many *${cake.name}* (${selectedOption.size} — ${formatPrice(selectedOption.price)}) would you like? 🎂\n\n_Or reply by typing a number (1-20)._`,
+    [
+      { id: "qty_1", title: "1" },
+      { id: "qty_2", title: "2" },
+      { id: "qty_3", title: "3+" }
+    ]
+  );
 }
 
 export async function handleQuantitySelection(
@@ -624,7 +623,10 @@ export async function handleQuantitySelection(
     const validation = validateAndSanitize("quantity", msg.text);
     if (!validation.success) {
       const { GREETINGS } = await import("./constants");
-      if (GREETINGS.includes(msg.text.toLowerCase())) return;
+      if (GREETINGS.includes(msg.text.toLowerCase())) {
+        await sendTextMessage(msg.from, "Hey! 👋 Please enter a quantity (1-20) or tap a button above to choose how many you'd like! 🧁");
+        return;
+      }
       await sendTextMessage(msg.from, `⚠️ ${validation.error}. Please enter a number between 1 and 20.`);
       return;
     }

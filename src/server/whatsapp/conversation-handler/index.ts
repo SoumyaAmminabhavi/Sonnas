@@ -9,7 +9,7 @@ import { db } from "./prisma";
 import { getConversation, refreshActivity, getWhatsAppSetting } from "./session";
 import { checkRateLimit } from "./rate-limit";
 import { _internalHandleMessage } from "./state-machine";
-import { sendTextMessage } from "~/server/whatsapp";
+import { sendTextMessage, sendTypingIndicator } from "~/server/whatsapp";
 
 async function isBotPaused(): Promise<boolean> {
   try {
@@ -58,6 +58,9 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       }
 
       await refreshActivity(phone);
+
+      // Trigger typing indicator (best effort, async)
+      void sendTypingIndicator(phone).catch(() => null);
 
       // 5. Core Handling
       await _internalHandleMessage(msg);
