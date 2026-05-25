@@ -375,7 +375,7 @@ export async function sendTypingIndicator(to: string) {
         sender_action: "typing_on",
       }),
     });
-  } catch (e) {
+  } catch {
     // Best-effort non-blocking fall-through
   }
 }

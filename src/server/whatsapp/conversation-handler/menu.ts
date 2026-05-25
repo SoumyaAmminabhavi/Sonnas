@@ -503,8 +503,8 @@ export async function handleCakeSelection(msg: IncomingMessage) {
 
   const tasks: Promise<unknown>[] = [
     updateState(msg.from, ConversationState.SELECTING_SIZE, {
-      selectedCakeId: selectedProduct.id as string,
-      lastCategoryId: (selectedProduct.categoryId as string) || null,
+      selectedCakeId: selectedProduct.id.toString(),
+      lastCategoryId: selectedProduct.categoryId ?? null,
     })
   ];
 
