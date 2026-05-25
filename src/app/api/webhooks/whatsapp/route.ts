@@ -5,7 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { env } from "~/env";
-import { markAsRead } from "~/server/whatsapp";
+import { markAsRead, sendTextMessage } from "~/server/whatsapp";
 import { handleIncomingMessage } from "~/server/whatsapp/conversation-handler";
 
 import crypto from "crypto";
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
           // Mark as read immediately for good UX
           if (message.id) {
-            void markAsRead(message.id);
+            void markAsRead(message.id).catch(() => null);
           }
 
           // Build the message object
@@ -134,6 +134,11 @@ export async function POST(request: Request) {
 
           if (incomingMsg) {
             await handleIncomingMessage(incomingMsg);
+          } else if (message.from) {
+            await sendTextMessage(
+              message.from,
+              "I can read text messages, photos, and locations 📝\n\nPlease type your message or tap a button to continue! 🧁"
+            ).catch(() => null);
           }
         }
       }
@@ -142,7 +147,7 @@ export async function POST(request: Request) {
     return new NextResponse("OK", { status: 200 });
   } catch (err) {
     console.error("[WhatsApp] Webhook error:", err);
-    return new NextResponse("Error processing webhook", { status: 500 });
+    return new NextResponse("OK", { status: 200 }); // Always 200 to prevent retries
   }
 }
 

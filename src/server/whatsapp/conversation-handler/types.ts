@@ -77,6 +77,7 @@ export interface WhatsAppConversation {
   rateLimitCount?: number;
   rateLimitWindowStart?: number;
   menuOffset?: number;
+  lastCategoryId?: string | null;
 }
 
 export interface IncomingMessage {

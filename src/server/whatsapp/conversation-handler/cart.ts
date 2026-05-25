@@ -159,7 +159,7 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
       const summary = getCartSummary(updatedConvo.cart ?? []);
 
       const cartButtons = [
-        { id: "btn_checkout", title: "💳 confirm Order" },
+        { id: "btn_checkout", title: "💳 Confirm Order" },
         { id: "btn_menu", title: "➕ Add More" },
       ];
 
@@ -169,16 +169,14 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
         cartButtons.push({ id: "btn_clear_cart", title: "🔄 Clear Cart" });
       }
 
-      await Promise.all([
-        sendTextMessage(msg.from, `✨ *${cakeName}* added to your order!`),
-        sendInteractiveButtons(msg.from, summary, cartButtons),
-        updateState(msg.from, ConversationState.IDLE, {
-          selectedCakeId: null,
-          selectedSize: null,
-          selectedPrice: null,
-          selectedQuantity: null
-        })
-      ]);
+      await updateState(msg.from, ConversationState.IDLE, {
+        selectedCakeId: null,
+        selectedSize: null,
+        selectedPrice: null,
+        selectedQuantity: null
+      });
+      await sendTextMessage(msg.from, `✨ *${cakeName}* added to your order!`);
+      await sendInteractiveButtons(msg.from, summary, cartButtons);
       return;
     }
 
@@ -190,6 +188,20 @@ export async function handleCartActions(msg: IncomingMessage, convo: WhatsAppCon
       if (cart.length === 0) {
         await sendTextMessage(msg.from, "Your selection is empty! Let me show you our cakes 🧁");
         await sendMenu(msg.from);
+        return;
+      }
+
+      if (updatedConvo.selectedAddress && !updatedConvo.selectedAddress.includes("Store Pickup")) {
+        await sendInteractiveButtons(
+          msg.from,
+          `📍 *Use your shared location?*\n\n_${updatedConvo.selectedAddress.split('\n')[0]}_`,
+          [
+            { id: "saved_addr_yes", title: "✅ Use This" },
+            { id: "btn_delivery", title: "🚚 New Address" },
+            { id: "btn_pickup", title: "🏪 Store Pickup" },
+          ]
+        );
+        await updateState(msg.from, ConversationState.INPUTTING_ADDRESS);
         return;
       }
 

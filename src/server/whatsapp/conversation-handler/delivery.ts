@@ -71,6 +71,11 @@ export async function getAvailableSlots() {
 
 export async function sendDeliverySlotOptions(to: string) {
   const slots = await getAvailableSlots();
+  slots.push({
+    id: "btn_back",
+    title: "⬅️ Go Back",
+    description: "Modify message / personalization notes"
+  });
   await sendInteractiveList(
     to,
     "🕒 Delivery Timing",
@@ -183,7 +188,7 @@ export async function handleInstructionsInput(msg: IncomingMessage, _convo: What
   const isSkip = ["none", "skip", "no"].includes(input.toLowerCase());
 
   if (!isSkip && (input.length < 2 || GREETINGS.includes(input.toLowerCase()))) {
-    await sendTextMessage(msg.from, "What message would you like on your cake? ✍️\n\n_(e.g., \"Happy Birthday Priya!\")_\n\nReply *Skip*or *No*if none.");
+    await sendTextMessage(msg.from, "What message would you like on your cake? ✍️\n\n_(e.g., \"Happy Birthday Priya!\")_\n\nReply *Skip* or *No* if none.");
     return;
   }
 
@@ -197,10 +202,6 @@ export async function handleInstructionsInput(msg: IncomingMessage, _convo: What
     notes = (validation.data as string) ?? null;
   }
 
-  await Promise.all([
-    updateState(msg.from, ConversationState.ASKING_DELIVERY_DATE, { selectedNotes: notes }),
-    sendDeliverySlotOptions(msg.from)
-  ]);
-
-  await sendInteractiveButtons(msg.from, "_Need to change something?_", [{ id: "btn_back", title: "⬅️ Back" }]);
+  await updateState(msg.from, ConversationState.ASKING_DELIVERY_DATE, { selectedNotes: notes });
+  await sendDeliverySlotOptions(msg.from);
 }

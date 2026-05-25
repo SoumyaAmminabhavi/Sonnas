@@ -87,7 +87,7 @@ export async function updateState(
   updateConvoCache(phone, { state, ...extra });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { cart, lastActivityAt: _, lastMessageAt: __, rateLimitCount, rateLimitWindowStart, selectedCake, ...otherExtra } = extra;
+  const { cart, lastActivityAt: _, lastMessageAt: __, rateLimitCount, rateLimitWindowStart, selectedCake, lastCategoryId, ...otherExtra } = extra;
 
   // Filter out any undefined/null fields that might cause issues with strict types
   const data: Prisma.WhatsAppConversationUpdateInput = { 
