@@ -5,6 +5,10 @@ class PriceConstants {
 
   static double normalizePrice(dynamic rawPrice) {
     if (rawPrice == null) return 0.0;
+    if (rawPrice is num) {
+      return rawPrice.toDouble() / minorUnitsPerMajor;
+    }
+    
     final rawStr = rawPrice.toString().trim();
     if (rawStr.isEmpty) return 0.0;
 
