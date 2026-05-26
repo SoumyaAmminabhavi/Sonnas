@@ -81,32 +81,44 @@ class DashboardContent extends ConsumerWidget {
 
     if (stats['isLoading'] == true) {
       return SkeletonWrapper(
-        child: Row(
-          children: List.generate(3, (index) => Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: index == 2 ? 0 : 16),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [Skeleton(height: 10, width: 60), SizedBox(height: 12), Skeleton(height: 24, width: 40)],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: List.generate(3, (index) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : (isDesktop ? 16 : 8)),
+                child: Container(
+                  padding: EdgeInsets.all(isDesktop ? 24 : 12),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Skeleton(height: isDesktop ? 20 : 16, width: isDesktop ? 20 : 16),
+                      SizedBox(height: isDesktop ? 16 : 8),
+                      Skeleton(height: isDesktop ? 28 : 24, width: isDesktop ? 80 : 50),
+                      const SizedBox(height: 4),
+                      Skeleton(height: isDesktop ? 10 : 8, width: isDesktop ? 60 : 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          )),
+            )),
+          ),
         ),
       );
     }
 
-    return Row(
-      children: [
-        _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
-        const SizedBox(width: 8),
-        _StatCard(title: "TOTAL REVENUE", value: OrderService.formatPrice((stats['totalRevenue'] as double) * PriceConstants.minorUnitsPerMajor), icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
-        const SizedBox(width: 8),
-        _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
+          SizedBox(width: isDesktop ? 16 : 8),
+          _StatCard(title: "TOTAL REVENUE", value: OrderService.formatPrice((stats['totalRevenue'] as double) * PriceConstants.minorUnitsPerMajor), icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
+          SizedBox(width: isDesktop ? 16 : 8),
+          _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
+        ],
+      ),
     );
   }
 
@@ -205,11 +217,37 @@ class _StatCard extends StatelessWidget {
         decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(24)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Icon(icon, color: cs.primary, size: isDesktop ? 20 : 16),
             SizedBox(height: isDesktop ? 16 : 8),
-            Text(value, style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: isDesktop ? 28 : 24, fontWeight: FontWeight.bold)),
-            Text(title, style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4), fontSize: isDesktop ? 10 : 8, fontWeight: FontWeight.bold)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: GoogleFonts.notoSerif(
+                  color: cs.secondary,
+                  fontSize: isDesktop ? 28 : 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.4),
+                  fontSize: isDesktop ? 10 : 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
       ),
