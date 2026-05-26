@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { navLinks } from "~/data/landing";
+import { navLinks } from "../data/landing";
 
 export const Navbar = () => (
   <nav className="fixed inset-x-0 top-0 z-50 bg-cream/80 backdrop-blur-md py-sm">

@@ -8,8 +8,8 @@ import {
 import { CACHE_TTL, DB_TIMEOUT } from "./constants";
 import { withTimeout } from "./helpers";
 import type { Cake, DBCake, DBCategory, IncomingMessage, WhatsAppConversation } from "./types";
-import { products } from "~/data/landing";
-import { formatPrice } from "~/lib/format";
+import { products } from "../../../data/landing";
+import { formatPrice } from "../../../lib/format";
 import natural from "natural";
 import {
   sendInteractiveList,
@@ -17,7 +17,7 @@ import {
   sendImageMessage,
   sendDocumentMessage,
   sendTextMessage
-} from "~/server/whatsapp";
+} from "../index";
 import { ConversationState } from "../../../../generated/prisma";
 import { updateState } from "./session";
 import { RESET_STATE } from "./constants";
