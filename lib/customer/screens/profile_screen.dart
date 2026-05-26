@@ -1,31 +1,31 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import 'product_detail_screen.dart';
 import 'contact_screen.dart';
+import 'welcome_screen.dart';
 import 'auth_screen.dart';
-import 'home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoading = true;
 
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController(text: "Sonnas Cafe");
+  final TextEditingController _emailController = TextEditingController(text: "soonas@gmail.com");
+  final TextEditingController _phoneController = TextEditingController(text: "09113231424");
+  final TextEditingController _addressController = TextEditingController(text: "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021");
 
   String _avatarUrl = "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=120&h=120&fit=crop";
   List<String> _savedAddresses = [];
@@ -132,7 +132,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (mounted) {
       setState(() {
         if (addressJson != null) {
-          final List<dynamic> decoded = jsonDecode(addressJson) as List<dynamic>;
+          final List<dynamic> decoded = jsonDecode(addressJson);
           _savedAddresses = decoded.map((e) => e.toString()).toList();
         } else if (cloudAddress != null && cloudAddress.isNotEmpty) {
           _savedAddresses = [cloudAddress];
@@ -194,11 +194,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final count = data.length;
       final spentRupees = spentSum / 100.0;
 
-      String level = "Bronze Gourmet 🍰";
+      String level = "Bronze Gourmet ðŸ°";
       if (count >= 6) {
-        level = "Gold Patissier 👑";
+        level = "Gold Patissier ðŸ‘‘";
       } else if (count >= 3) {
-        level = "Silver Connoisseur ✨";
+        level = "Silver Connoisseur âœ¨";
       }
 
       if (mounted) {
@@ -321,7 +321,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute<void>(
+                      MaterialPageRoute(
                         builder: (context) => AuthScreen(
                           isOwner: false,
                           onSuccess: () {
@@ -493,7 +493,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Expanded(
                           child: _buildStatItem(
                             "Total Spent", 
-                            "₹${_totalSpent.toStringAsFixed(0)}", 
+                            "â‚¹${_totalSpent.toStringAsFixed(0)}", 
                             Icons.account_balance_wallet_rounded, 
                             Colors.orange.shade700,
                           ),
@@ -573,10 +573,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 32),
                   
                   // My Wishlist Section
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final favorites = ref.watch(customerFavoritesProvider);
-                      if (favorites.items.isEmpty) return const SizedBox.shrink();
+                  Consumer<FavoritesProvider>(
+                    builder: (context, favorites, _) {
+                      if (favorites.favorites.isEmpty) return const SizedBox.shrink();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -593,7 +592,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ),
                               ),
                               Text(
-                                "${favorites.items.length} ITEMS",
+                                "${favorites.favorites.length} ITEMS",
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -607,9 +606,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             height: 140,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              itemCount: favorites.items.length,
+                              itemCount: favorites.favorites.length,
                               itemBuilder: (context, index) {
-                                final item = favorites.items[index];
+                                final item = favorites.favorites[index];
                                 return Container(
                                   width: 100,
                                   margin: const EdgeInsets.only(right: 16),
@@ -617,11 +616,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     onTap: () {
                                       Navigator.push(
                                         context,
-                                        MaterialPageRoute<void>(
+                                        MaterialPageRoute(
                                           builder: (context) => ProductDetailScreen(
-                                            title: item['title']?.toString() ?? '',
-                                            price: item['price']?.toString() ?? '',
-                                            imageUrl: item['image']?.toString() ?? '',
+                                            title: item['title'],
+                                            price: item['price'],
+                                            imageUrl: item['image'],
                                           ),
                                         ),
                                       );
@@ -632,11 +631,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         ClipRRect(
                                           borderRadius: BorderRadius.circular(12),
                                           child: Image.network(
-                                            item['image']?.toString() ?? '',
+                                            item['image'],
                                             height: 100,
                                             width: 100,
                                             fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Container(
+                                            errorBuilder: (_, _, _) => Container(
                                               height: 100,
                                               width: 100,
                                               color: primary.withValues(alpha: 0.05),
@@ -646,7 +645,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          item['title']?.toString() ?? '',
+                                          item['title'],
                                           style: GoogleFonts.plusJakartaSans(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
@@ -707,16 +706,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       }
 
                       final latestOrder = data.first;
-                      final String status = latestOrder['status']?.toString() ?? 'PENDING';
+                      final String status = latestOrder['status'] ?? 'PENDING';
                       final String rawPrice = latestOrder['totalPrice']?.toString() ?? '0';
                       final double priceVal = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
                       
                       return _buildActivityItem(
                         "${latestOrder['customerName']?.toString().split(' ').first}'s Selection",
-                        "₹${priceVal.toStringAsFixed(2)}",
+                        "â‚¹${priceVal.toStringAsFixed(2)}",
                         "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
                         status.toUpperCase(),
-                        latestOrder['customImageUrl']?.toString() ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
+                        latestOrder['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",
                         primary, outline, onSurface, surfaceContainerHigh
                       );
                     },
@@ -835,7 +834,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                 _defaultAddress = addr;
                                                 _addressController.text = addr;
                                               });
-      unawaited(_saveAddressesToPrefs());
+                                              unawaited(_saveAddressesToPrefs());
                                             },
                                             style: TextButton.styleFrom(
                                               padding: EdgeInsets.zero,
@@ -861,7 +860,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                 _addressController.text = _savedAddresses.first;
                                               }
                                             });
-      unawaited(_saveAddressesToPrefs());
+                                            unawaited(_saveAddressesToPrefs());
                                           },
                                           style: TextButton.styleFrom(
                                             padding: EdgeInsets.zero,
@@ -960,7 +959,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildSettingTile(Icons.help_center_outlined, "Help & Support", onSurface, outline, context, onTap: () {
-                    Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const ContactScreen()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactScreen()));
                   }),
 
                   const SizedBox(height: 64),
@@ -986,17 +985,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                          onTap: () async {
-                            await Supabase.instance.client.auth.signOut();
-                            if (context.mounted) {
-                              unawaited(Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute<void>(
-                                  builder: (context) => HomeScreen(onViewMenu: (_) {}),
-                                ),
-                                (route) => false,
-                              ));
-                            }
-                          },
+                        onTap: () async {
+                          await Supabase.instance.client.auth.signOut();
+                          if (context.mounted) {
+                            unawaited(Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                              (route) => false,
+                            ));
+                          }
+                        },
                         borderRadius: BorderRadius.circular(12),
                         child: Center(
                           child: Row(
@@ -1299,7 +1296,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=120&h=120&fit=crop", // chef hat
     ];
 
-    unawaited(showModalBottomSheet<void>(
+    unawaited(showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
@@ -1361,3 +1358,4 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     ));
   }
 }
+

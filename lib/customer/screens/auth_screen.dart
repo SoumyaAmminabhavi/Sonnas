@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -81,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       if (!isSetupCompleted && !widget.isOwner) {
         unawaited(Navigator.pushReplacement(
           context,
-          MaterialPageRoute<void>(
+          MaterialPageRoute(
             builder: (context) => ProfileSetupScreen(
               onSuccess: widget.onSuccess,
               isOwner: widget.isOwner,
@@ -96,13 +96,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           if (mounted) {
             unawaited(Navigator.pushReplacement(
               context,
-              MaterialPageRoute<void>(builder: (context) => owner_dashboard.OwnerDashboard()),
+              MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
             ));
           }
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute<void>(builder: (context) => const CustomerMainScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
           ));
         }
       }
@@ -247,7 +247,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       Autocomplete<String>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           final input = textEditingValue.text;
-                          if (input.isEmpty) return const Iterable<String>.empty();
+                          if (input.isEmpty || input.isEmpty) return const Iterable<String>.empty();
                           final domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
                           final suggestions = <String>{};
                           if (input.contains('@')) {
@@ -336,7 +336,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         autofillHints: const [AutofillHints.password],
                         style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
                         decoration: _buildInputDecoration(
-                          "••••••••", 
+                          "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢", 
                           Icons.lock_outline,
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
@@ -471,3 +471,4 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
   }
 }
+

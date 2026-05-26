@@ -220,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
+                      decoration: BoxDecoration(
                         color: const Color(0xFFFFF1E9),
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -342,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (label == "Track Order") {
           Navigator.push(
             context,
-            MaterialPageRoute<void>(builder: (context) => const CustomerTrackingScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerTrackingScreen()),
           );
         } else {
           _controller.text = label;

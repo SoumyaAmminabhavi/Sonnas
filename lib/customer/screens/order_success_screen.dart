@@ -116,7 +116,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     HapticService.selection();
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,

@@ -56,7 +56,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             .order('createdAt', ascending: false)
             .limit(1)
             .maybeSingle();
-        id = recentOrder?['id']?.toString();
+        id = recentOrder?['id'] as String?;
       }
 
       if (id != null) {
@@ -196,7 +196,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   }
 
   Widget _buildStatusTracker(bool isSelfCheckout) {
-    final String status = orderData?['status']?.toString() ?? 'PENDING';
+    final String status = (orderData?['status'] as String?) ?? 'PENDING';
     
     // Unified Status Stages
     final List<Map<String, dynamic>> stages = [
@@ -373,7 +373,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           const SizedBox(width: 16),
           Expanded(child: Text("Need help with your order?", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: secondary.withValues(alpha: 0.7)))),
           TextButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const ContactScreen())),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactScreen())),
             child: Text("Support", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
           ),
         ],

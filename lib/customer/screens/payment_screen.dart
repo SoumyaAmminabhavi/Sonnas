@@ -1,9 +1,9 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +15,7 @@ import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
 
 
-class PaymentScreen extends ConsumerStatefulWidget {
+class PaymentScreen extends StatefulWidget {
   final String? customerName;
   final String? phone;
   final String? address;
@@ -36,10 +36,10 @@ class PaymentScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
+  State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends ConsumerState<PaymentScreen> {
+class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedMethod = 'Razorpay';
   final bool _showSuccess = false;
   bool _isLoading = false;
@@ -64,7 +64,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     debugPrint("Razorpay Payment Success: ${response.paymentId}");
-    final cart = ref.read(customerCartProvider);
+    final cart = context.read<CartProvider>();
     _placeOrder(cart, paymentId: response.paymentId);
   }
 
@@ -83,7 +83,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     debugPrint("External Wallet: ${response.walletName}");
   }
 
-  void _startRazorpayPayment(CustomerCartState cart) {
+  void _startRazorpayPayment(CartProvider cart) {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -129,8 +129,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     return (subtotalCents + packagingCents + taxCents).toDouble();
   }
 
-  Future<void> _placeOrder(CustomerCartState cart, {String? paymentId}) async {
-    if (cart.itemList.isEmpty) return;
+  Future<void> _placeOrder(CartProvider cart, {String? paymentId}) async {
+    if (cart.items.isEmpty) return;
     
     setState(() => _isLoading = true);
     try {
@@ -153,7 +153,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             .eq('phone', customerPhone)
             .maybeSingle();
         
-        conversationId = (existingConv?['id'] as String?) ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
+        conversationId = existingConv?['id'] ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
         
         await supabase.from('WhatsAppConversation').upsert({
           'id': conversationId,
@@ -186,8 +186,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         'source': 'APP',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
-        'isCustom': cart.itemList.any((item) => item.imageUrl.contains('custom')),
-        'customImageUrl': cart.itemList.isNotEmpty ? cart.itemList.first.imageUrl : null,
+        'isCustom': cart.items.any((item) => item.imageUrl.contains('custom')),
+        'customImageUrl': cart.items.isNotEmpty ? cart.items.first.imageUrl : null,
       });
 
       // Update user metadata with phone if logged in
@@ -201,7 +201,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       try {
         // 3. Insert Items
-        final List<Map<String, dynamic>> itemsToInsert = cart.itemList.asMap().entries.map((entry) => {
+        final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
           'id': "ITEM-$orderId-${entry.key}",
           'orderId': orderId,
           'cakeId': entry.value.cakeId ?? entry.value.id,
@@ -220,12 +220,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       }
       
       // 4. Clear Cart
-      ref.read(customerCartProvider.notifier).clear();
+      cart.clear();
       
       if (mounted) {
         setState(() => _isLoading = false);
         unawaited(Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
+          MaterialPageRoute(
             builder: (context) => OrderSuccessScreen(
               orderNumber: orderNumber,
               totalAmount: totalWithExtras / 100,
@@ -261,7 +261,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = ref.watch(customerCartProvider);
+    final cart = context.watch<CartProvider>();
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
     const Color surfaceColor = Color(0xFFFFF0F6);
@@ -301,7 +301,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
                 ),
                 title: Text(
-                  "Sonna’s Patisserie",
+                  "Sonnaâ€™s Patisserie",
                   style: GoogleFonts.notoSerif(
                     color: primaryColor,
                     fontSize: 20,
@@ -538,7 +538,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ...cart.itemList.map((item) => Padding(
+                        ...cart.items.map((item) => Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -550,7 +550,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                 ),
                               ),
                               Text(
-                                "₹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
+                                "â‚¹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurfaceColor),
                               ),
                             ],
@@ -575,7 +575,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
+                                  NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
@@ -807,7 +807,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               
               // Heading
               Text(
-                "Order Placed Successfully 🎉",
+                "Order Placed Successfully ðŸŽ‰",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
@@ -849,7 +849,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
                     ),
-                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
+                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
@@ -867,7 +867,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute<void>(
+                      MaterialPageRoute(
                         builder: (context) => CustomerTrackingScreen(
                           orderId: _placedOrderId,
                           isSelfCheckout: widget.isSelfCheckout,
@@ -905,14 +905,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     owner_dashboard.loadLibrary().then((_) {
                       if (context.mounted) {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute<void>(builder: (context) => owner_dashboard.OwnerDashboard()),
+                          MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
                           (route) => false,
                         );
                       }
                     });
                   } else {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute<void>(builder: (context) => const CustomerMainScreen()),
+                      MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
                       (route) => false,
                     );
                   }
@@ -958,3 +958,4 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 }
+

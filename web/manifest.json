@@ -1,11 +1,11 @@
 {
-    "name": "app",
-    "short_name": "app",
+    "name": "Dine N Dash",
+    "short_name": "Dine N Dash",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Your favorite food delivered fast in Hubli",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

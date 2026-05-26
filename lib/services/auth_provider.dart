@@ -47,10 +47,14 @@ class AuthNotifier extends Notifier<AppAuthState> {
 
   @override
   AppAuthState build() {
-    // Listen for Supabase Auth changes
-    _listenToAuthChanges();
+    sb.User? currentUser;
+    try {
+      _listenToAuthChanges();
+      currentUser = sb.Supabase.instance.client.auth.currentUser;
+    } catch (_) {
+      // Supabase is not initialized (e.g. in test environment)
+    }
     
-    final currentUser = sb.Supabase.instance.client.auth.currentUser;
     return AppAuthState(
       isAuthenticated: currentUser != null,
       user: currentUser,
@@ -58,17 +62,21 @@ class AuthNotifier extends Notifier<AppAuthState> {
   }
 
   void _listenToAuthChanges() {
-    _authSubscription?.cancel();
-    _authSubscription = sb.Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      final session = data.session;
-      state = state.copyWith(
-        isAuthenticated: session != null,
-        user: session?.user,
-      );
-    });
+    try {
+      _authSubscription?.cancel();
+      _authSubscription = sb.Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        final session = data.session;
+        state = state.copyWith(
+          isAuthenticated: session != null,
+          user: session?.user,
+        );
+      });
 
-    // Cleanup subscription when provider is disposed
-    ref.onDispose(() => _authSubscription?.cancel());
+      // Cleanup subscription when provider is disposed
+      ref.onDispose(() => _authSubscription?.cancel());
+    } catch (_) {
+      // Supabase is not initialized (e.g. in test environment)
+    }
   }
 
   Future<bool> verifyOwnerPin(String pin) async {

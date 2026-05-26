@@ -1,20 +1,20 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 import 'cart_screen.dart';
 
-class ContactScreen extends ConsumerStatefulWidget {
+class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
 
   @override
-  ConsumerState<ContactScreen> createState() => _ContactScreenState();
+  State<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ContactScreenState extends ConsumerState<ContactScreen> {
+class _ContactScreenState extends State<ContactScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _orderIdController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
@@ -96,12 +96,13 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   void _handleOrderAgain() {
     if (_realCakes.isEmpty) return;
     
+    final cart = Provider.of<CartProvider>(context, listen: false);
     for (var item in _realCakes) {
-      final String name = item['name']?.toString() ?? 'Exquisite Creation';
-      final double price = (item['price'] as num?)?.toDouble() ?? 0.0;
-      final String image = item['image']?.toString() ?? '';
+      final String name = item['name'] ?? 'Exquisite Creation';
+      final double price = item['price'] ?? 0.0;
+      final String image = item['image'] ?? '';
       
-      ref.read(customerCartProvider.notifier).addItem(
+      cart.addItem(
         "reorder_$name", 
         name, 
         price, 
@@ -121,7 +122,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
       Navigator.push(
         context, 
-        MaterialPageRoute<void>(builder: (context) => const CartScreen())
+        MaterialPageRoute(builder: (context) => const CartScreen())
       );
     }
   }
@@ -144,7 +145,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
         if (!mounted) return;
         
-        unawaited(showDialog<void>(
+        unawaited(showDialog(
           context: context,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -195,7 +196,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
       if (!mounted) return;
       setState(() => _userRating = rating);
       
-      unawaited(showDialog<void>(
+      unawaited(showDialog(
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -557,3 +558,4 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
     );
   }
 }
+

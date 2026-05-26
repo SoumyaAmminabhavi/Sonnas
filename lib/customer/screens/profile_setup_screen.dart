@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -39,7 +39,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    HapticService.selection();
+    unawaited(HapticService.selection());
 
     try {
       final supabase = Supabase.instance.client;
@@ -90,7 +90,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
           ));
         }
       }
@@ -310,3 +310,4 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 }
+

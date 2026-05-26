@@ -1,30 +1,17 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
+import 'dart:convert';
 import '../../services/haptic_service.dart';
 
-class CustomerFavoritesState {
-  final List<Map<String, dynamic>> items;
-
-  const CustomerFavoritesState({this.items = const []});
-
-  bool isFavorite(String? id, String title) {
-    return items.any((f) => (f['id']?.toString() ?? f['title']) == (id ?? title));
-  }
-
-  CustomerFavoritesState copyWith({List<Map<String, dynamic>>? items}) {
-    return CustomerFavoritesState(items: items ?? this.items);
-  }
-}
-
-class CustomerFavoritesNotifier extends Notifier<CustomerFavoritesState> {
+class FavoritesProvider extends ChangeNotifier {
+  List<Map<String, dynamic>> _favorites = [];
   final String _storageKey = 'sonnas_favorites';
 
-  @override
-  CustomerFavoritesState build() {
+  List<Map<String, dynamic>> get favorites => _favorites;
+
+  FavoritesProvider() {
     _loadFavorites();
-    return const CustomerFavoritesState();
   }
 
   Future<void> _loadFavorites() async {
@@ -32,8 +19,8 @@ class CustomerFavoritesNotifier extends Notifier<CustomerFavoritesState> {
       final prefs = await SharedPreferences.getInstance();
       final String? favoritesJson = prefs.getString(_storageKey);
       if (favoritesJson != null) {
-        final loaded = List<Map<String, dynamic>>.from(json.decode(favoritesJson) as List<dynamic>);
-        state = CustomerFavoritesState(items: loaded);
+        _favorites = List<Map<String, dynamic>>.from(json.decode(favoritesJson));
+        notifyListeners();
       }
     } catch (e) {
       debugPrint("Error loading favorites: $e");
@@ -41,35 +28,36 @@ class CustomerFavoritesNotifier extends Notifier<CustomerFavoritesState> {
   }
 
   Future<void> toggleFavorite(Map<String, dynamic> item) async {
-    final String itemId = item['id']?.toString() ?? item['title']?.toString() ?? '';
-    final index = state.items.indexWhere((f) => (f['id']?.toString() ?? f['title']) == itemId);
+    final String itemId = item['id']?.toString() ?? item['title'];
+    final int index = _favorites.indexWhere((f) => (f['id']?.toString() ?? f['title']) == itemId);
 
-    final updated = List<Map<String, dynamic>>.from(state.items);
     if (index >= 0) {
-      updated.removeAt(index);
-      HapticService.selection();
+      _favorites.removeAt(index);
+      unawaited(HapticService.selection());
     } else {
-      updated.add({
+      _favorites.add({
         'id': item['id'],
         'title': item['title'],
         'price': item['price'],
         'image': item['image'],
       });
-      HapticService.light();
+      unawaited(HapticService.light());
     }
 
-    state = CustomerFavoritesState(items: updated);
-    await _saveToDisk();
+    notifyListeners();
+    unawaited(_saveToDisk());
+  }
+
+  bool isFavorite(String? id, String title) {
+    return _favorites.any((f) => (f['id']?.toString() ?? f['title']) == (id ?? title));
   }
 
   Future<void> _saveToDisk() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_storageKey, json.encode(state.items));
+      await prefs.setString(_storageKey, json.encode(_favorites));
     } catch (e) {
       debugPrint("Error saving favorites: $e");
     }
   }
 }
-
-final customerFavoritesProvider = NotifierProvider<CustomerFavoritesNotifier, CustomerFavoritesState>(CustomerFavoritesNotifier.new);

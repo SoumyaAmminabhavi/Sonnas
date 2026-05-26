@@ -4,19 +4,19 @@ import 'tracking_screen.dart';
 import 'contact_screen.dart';
 import 'product_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import 'dart:async';
 
-class HomeScreen extends ConsumerStatefulWidget {
-  final void Function(String?) onViewMenu;
+class HomeScreen extends StatefulWidget {
+  final Function(String?) onViewMenu;
   const HomeScreen({super.key, required this.onViewMenu});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> featuredCakes = [];
   bool _isLoading = true;
 
@@ -147,21 +147,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               'title': "Classic Chocolate",
               'price': "₹ 650",
               'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
-              'rawOptions': <dynamic>[],
+              'rawOptions': [],
             },
             {
               'id': '2',
               'title': "Strawberry Bliss",
               'price': "₹ 720",
               'image': 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
-              'rawOptions': <dynamic>[],
+              'rawOptions': [],
             },
             {
               'id': '3',
               'title': "Red Velvet",
               'price': "₹ 680",
               'image': 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?q=80&w=1000&auto=format&fit=crop',
-              'rawOptions': <dynamic>[],
+              'rawOptions': [],
             },
           ];
           _isLoading = false;
@@ -185,7 +185,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute<void>(builder: (context) => const CustomerTrackingScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerTrackingScreen()),
           );
         },
         backgroundColor: primaryColor,
@@ -341,7 +341,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute<void>(
+                          MaterialPageRoute(
                             builder: (context) => ProductDetailScreen(
                               cakeId: cake['id'] as String,
                               title: cake['title'] as String,
@@ -367,7 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: Image.network(
-                                  cake['image']?.toString() ?? '',
+                                  cake['image']!,
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) => Container(
                                     color: primaryColor.withValues(alpha: 0.1),
@@ -384,7 +384,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        cake['title']?.toString() ?? '',
+                                        cake['title']!,
                                         style: GoogleFonts.plusJakartaSans(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -394,7 +394,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                       Text(
-                                        cake['price']?.toString() ?? '',
+                                        cake['price']!,
                                         style: GoogleFonts.notoSerif(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
@@ -404,12 +404,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ],
                                   ),
                                 ),
-                                Consumer(
-                                  builder: (context, ref, _) {
-                                    final favorites = ref.watch(customerFavoritesProvider);
-                                    final isFav = favorites.isFavorite(null, cake['title']?.toString() ?? '');
+                                Consumer<FavoritesProvider>(
+                                  builder: (context, favorites, _) {
+                                    final isFav = favorites.isFavorite(null, cake['title']!);
                                     return IconButton(
-                                      onPressed: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite(cake),
+                                      onPressed: () => favorites.toggleFavorite(cake),
                                       icon: Icon(
                                         isFav ? Icons.favorite : Icons.favorite_border,
                                         color: isFav ? primaryColor : Colors.grey.withValues(alpha: 0.4),
@@ -448,7 +447,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     _buildMainButton(
                       "CONTACT SONNA'S PATISSERIE",
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const ContactScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactScreen()));
                       },
                       isGradient: false,
                     ),

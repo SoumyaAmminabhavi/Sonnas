@@ -48,12 +48,21 @@ class DashboardContent extends ConsumerWidget {
           // Welcome Header
           Text(
             "Hello, Sonna.",
-            style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: isDesktop ? 48 : 36, height: 1.1),
+            style: GoogleFonts.notoSerif(
+              color: cs.secondary,
+              fontSize: isDesktop ? 48 : 36,
+              height: 1.1,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             "OWNER OVERVIEW",
-            style: GoogleFonts.plusJakartaSans(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 2.0),
+            style: GoogleFonts.plusJakartaSans(
+              color: cs.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              letterSpacing: 2.0,
+            ),
           ),
           const SizedBox(height: 48),
 
@@ -66,7 +75,11 @@ class DashboardContent extends ConsumerWidget {
           const SizedBox(height: 48),
 
           // Recent Orders Header
-          _RecentOrdersHeader(isDesktop: isDesktop, cs: cs, onViewAll: onViewAllOrders),
+          _RecentOrdersHeader(
+            isDesktop: isDesktop,
+            cs: cs,
+            onViewAll: onViewAllOrders,
+          ),
           const SizedBox(height: 24),
 
           // Orders List (Using Riverpod)
@@ -81,32 +94,44 @@ class DashboardContent extends ConsumerWidget {
 
     if (stats['isLoading'] == true) {
       return SkeletonWrapper(
-        child: Row(
-          children: List.generate(3, (index) => Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(right: index == 2 ? 0 : 16),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [Skeleton(height: 10, width: 60), SizedBox(height: 12), Skeleton(height: 24, width: 40)],
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: List.generate(3, (index) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : (isDesktop ? 16 : 8)),
+                child: Container(
+                  padding: EdgeInsets.all(isDesktop ? 24 : 12),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Skeleton(height: isDesktop ? 20 : 16, width: isDesktop ? 20 : 16),
+                      SizedBox(height: isDesktop ? 16 : 8),
+                      Skeleton(height: isDesktop ? 28 : 24, width: isDesktop ? 80 : 50),
+                      const SizedBox(height: 4),
+                      Skeleton(height: isDesktop ? 10 : 8, width: isDesktop ? 60 : 40),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          )),
+            )),
+          ),
         ),
       );
     }
 
-    return Row(
-      children: [
-        _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
-        const SizedBox(width: 8),
-        _StatCard(title: "TOTAL REVENUE", value: OrderService.formatPrice((stats['totalRevenue'] as double) * PriceConstants.minorUnitsPerMajor), icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
-        const SizedBox(width: 8),
-        _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
+          SizedBox(width: isDesktop ? 16 : 8),
+          _StatCard(title: "TOTAL REVENUE", value: OrderService.formatPrice((stats['totalRevenue'] as double) * PriceConstants.minorUnitsPerMajor), icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
+          SizedBox(width: isDesktop ? 16 : 8),
+          _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
+        ],
+      ),
     );
   }
 
@@ -128,12 +153,20 @@ class DashboardContent extends ConsumerWidget {
             mainAxisExtent: isDesktop ? 140 : 136,
           ),
           itemCount: orders.length,
-          itemBuilder: (context, index) => OrderCardReactive(data: orders[index]),
+          itemBuilder:
+              (context, index) => OrderCardReactive(data: orders[index]),
         );
       },
-      loading: () => Column(
-        children: List.generate(3, (_) => const Padding(padding: EdgeInsets.only(bottom: 16), child: Skeleton(height: 122, width: double.infinity))),
-      ),
+      loading:
+          () => Column(
+            children: List.generate(
+              3,
+              (_) => const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Skeleton(height: 122, width: double.infinity),
+              ),
+            ),
+          ),
       error: (err, st) {
         debugPrint('Failed to load orders: $err\n$st');
         return const Center(child: Text("Failed to load orders"));
@@ -141,11 +174,19 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildPerformanceChart(BuildContext context, WidgetRef ref, ColorScheme cs) {
+  Widget _buildPerformanceChart(
+    BuildContext context,
+    WidgetRef ref,
+    ColorScheme cs,
+  ) {
     final chartParam = SalesChartParam(
       range: selectedRange.name,
       targetMonth: (selectedRange == SalesRange.monthly) ? selectedMonth : null,
-      targetYear: (selectedRange == SalesRange.monthly || selectedRange == SalesRange.yearly) ? selectedYear : null,
+      targetYear:
+          (selectedRange == SalesRange.monthly ||
+                  selectedRange == SalesRange.yearly)
+              ? selectedYear
+              : null,
     );
     final salesChartAsync = ref.watch(salesChartProvider(chartParam));
 
@@ -159,9 +200,14 @@ class DashboardContent extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _ChartHeader(
-            isDesktop: isDesktop, selectedRange: selectedRange, cs: cs,
-            selectedMonth: selectedMonth, selectedYear: selectedYear,
-            onRangeChanged: onRangeChanged, onMonthChanged: onMonthChanged, onYearChanged: onYearChanged,
+            isDesktop: isDesktop,
+            selectedRange: selectedRange,
+            cs: cs,
+            selectedMonth: selectedMonth,
+            selectedYear: selectedYear,
+            onRangeChanged: onRangeChanged,
+            onMonthChanged: onMonthChanged,
+            onYearChanged: onYearChanged,
           ),
           const SizedBox(height: 40),
           SizedBox(
@@ -195,21 +241,56 @@ class _StatCard extends StatelessWidget {
   final ColorScheme cs;
   final bool isDesktop;
 
-  const _StatCard({required this.title, required this.value, required this.icon, required this.cs, required this.isDesktop});
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.cs,
+    required this.isDesktop,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
         padding: EdgeInsets.all(isDesktop ? 24 : 12),
-        decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(24)),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainer,
+          borderRadius: BorderRadius.circular(24),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Icon(icon, color: cs.primary, size: isDesktop ? 20 : 16),
             SizedBox(height: isDesktop ? 16 : 8),
-            Text(value, style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: isDesktop ? 28 : 24, fontWeight: FontWeight.bold)),
-            Text(title, style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4), fontSize: isDesktop ? 10 : 8, fontWeight: FontWeight.bold)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                maxLines: 1,
+                style: GoogleFonts.notoSerif(
+                  color: cs.secondary,
+                  fontSize: isDesktop ? 28 : 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                maxLines: 1,
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.4),
+                  fontSize: isDesktop ? 10 : 8,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -222,7 +303,11 @@ class _RecentOrdersHeader extends StatelessWidget {
   final ColorScheme cs;
   final VoidCallback onViewAll;
 
-  const _RecentOrdersHeader({required this.isDesktop, required this.cs, required this.onViewAll});
+  const _RecentOrdersHeader({
+    required this.isDesktop,
+    required this.cs,
+    required this.onViewAll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -233,13 +318,29 @@ class _RecentOrdersHeader extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Recent Orders", style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: 24)),
-            Text("Latest activity from the boutique", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6), fontSize: 14)),
+            Text(
+              "Recent Orders",
+              style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: 24),
+            ),
+            Text(
+              "Latest activity from the boutique",
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.6),
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
         InkWell(
           onTap: onViewAll,
-          child: Text("View All Archives", style: GoogleFonts.notoSerif(color: cs.primary, fontStyle: FontStyle.italic, fontSize: 14)),
+          child: Text(
+            "View All Archives",
+            style: GoogleFonts.notoSerif(
+              color: cs.primary,
+              fontStyle: FontStyle.italic,
+              fontSize: 14,
+            ),
+          ),
         ),
       ],
     );
@@ -256,9 +357,14 @@ class _ChartHeader extends StatelessWidget {
   final void Function(int) onYearChanged;
 
   const _ChartHeader({
-    required this.isDesktop, required this.selectedRange, required this.cs,
-    required this.selectedMonth, required this.selectedYear,
-    required this.onRangeChanged, required this.onMonthChanged, required this.onYearChanged,
+    required this.isDesktop,
+    required this.selectedRange,
+    required this.cs,
+    required this.selectedMonth,
+    required this.selectedYear,
+    required this.onRangeChanged,
+    required this.onMonthChanged,
+    required this.onYearChanged,
   });
 
   @override
@@ -271,14 +377,32 @@ class _ChartHeader extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Sales Performance", style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: isDesktop ? 20 : 18, fontWeight: FontWeight.bold)),
-            Text("Revenue trend analysis", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5), fontSize: 12)),
+            Text(
+              "Orders Performance",
+              style: GoogleFonts.notoSerif(
+                color: cs.secondary,
+                fontSize: isDesktop ? 20 : 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              "Order count trend analysis",
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.5),
+                fontSize: 12,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
         _ChartControls(
-          selectedRange: selectedRange, cs: cs, selectedMonth: selectedMonth, selectedYear: selectedYear,
-          onRangeChanged: onRangeChanged, onMonthChanged: onMonthChanged, onYearChanged: onYearChanged,
+          selectedRange: selectedRange,
+          cs: cs,
+          selectedMonth: selectedMonth,
+          selectedYear: selectedYear,
+          onRangeChanged: onRangeChanged,
+          onMonthChanged: onMonthChanged,
+          onYearChanged: onYearChanged,
         ),
       ],
     );
@@ -294,8 +418,13 @@ class _ChartControls extends StatelessWidget {
   final void Function(int) onYearChanged;
 
   const _ChartControls({
-    required this.selectedRange, required this.cs, required this.selectedMonth, required this.selectedYear,
-    required this.onRangeChanged, required this.onMonthChanged, required this.onYearChanged,
+    required this.selectedRange,
+    required this.cs,
+    required this.selectedMonth,
+    required this.selectedYear,
+    required this.onRangeChanged,
+    required this.onMonthChanged,
+    required this.onYearChanged,
   });
 
   @override
@@ -304,22 +433,40 @@ class _ChartControls extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Container(
-          decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: cs.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Row(
-            children: SalesRange.values.map((range) {
-              final isSelected = selectedRange == range;
-              return GestureDetector(
-                onTap: () => onRangeChanged(range),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(color: isSelected ? cs.primary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-                  child: Text(range.name.toUpperCase(), style: GoogleFonts.plusJakartaSans(color: isSelected ? Colors.white : cs.primary, fontWeight: FontWeight.bold, fontSize: 9)),
-                ),
-              );
-            }).toList(),
+            children:
+                SalesRange.values.map((range) {
+                  final isSelected = selectedRange == range;
+                  return GestureDetector(
+                    onTap: () => onRangeChanged(range),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? cs.primary : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        range.name.toUpperCase(),
+                        style: GoogleFonts.plusJakartaSans(
+                          color: isSelected ? Colors.white : cs.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 9,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
           ),
         ),
-        if (selectedRange == SalesRange.monthly || selectedRange == SalesRange.yearly)
+        if (selectedRange == SalesRange.monthly ||
+            selectedRange == SalesRange.yearly)
           Padding(
             padding: const EdgeInsets.only(top: 12.0),
             child: Row(
@@ -327,17 +474,56 @@ class _ChartControls extends StatelessWidget {
               children: [
                 if (selectedRange == SalesRange.monthly)
                   DropdownButton<int>(
-                    value: selectedMonth, underline: const SizedBox(),
-                    style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                    value: selectedMonth,
+                    underline: const SizedBox(),
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                     onChanged: (m) => m != null ? onMonthChanged(m) : null,
-                    items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(value: m, child: Text(['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][m - 1]))).toList(),
+                    items:
+                        List.generate(12, (i) => i + 1)
+                            .map(
+                              (m) => DropdownMenuItem(
+                                value: m,
+                                child: Text(
+                                  [
+                                    'JAN',
+                                    'FEB',
+                                    'MAR',
+                                    'APR',
+                                    'MAY',
+                                    'JUN',
+                                    'JUL',
+                                    'AUG',
+                                    'SEP',
+                                    'OCT',
+                                    'NOV',
+                                    'DEC',
+                                  ][m - 1],
+                                ),
+                              ),
+                            )
+                            .toList(),
                   ),
                 const SizedBox(width: 8),
                 DropdownButton<int>(
-                  value: selectedYear, underline: const SizedBox(),
-                  style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                  value: selectedYear,
+                  underline: const SizedBox(),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                   onChanged: (y) => y != null ? onYearChanged(y) : null,
-                  items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
+                  items:
+                      List.generate(5, (i) => DateTime.now().year - i)
+                          .map(
+                            (y) =>
+                                DropdownMenuItem(value: y, child: Text("$y")),
+                          )
+                          .toList(),
                 ),
               ],
             ),
@@ -348,23 +534,33 @@ class _ChartControls extends StatelessWidget {
 }
 
 class _SalesLineChart extends StatelessWidget {
-  final Map<int, double> data;
+  final Map<int, SalesChartDataPoint> data;
   final SalesRange selectedRange;
   final ColorScheme cs;
   final int? selectedMonth;
   final int? selectedYear;
 
-  const _SalesLineChart({required this.data, required this.selectedRange, required this.cs, this.selectedMonth, this.selectedYear});
+  const _SalesLineChart({
+    required this.data,
+    required this.selectedRange,
+    required this.cs,
+    this.selectedMonth,
+    this.selectedYear,
+  });
 
   @override
   Widget build(BuildContext context) {
-    double maxRevenue = 1000;
-    for (var v in data.values) { if (v > maxRevenue) maxRevenue = v; }
-    maxRevenue = (maxRevenue / 100).ceil() * 100.0 + 100.0;
+    double maxOrders = 5.0;
+    for (var v in data.values) {
+      if (v.count > maxOrders) maxOrders = v.count.toDouble();
+    }
+    // Round up maxOrders for clean grid lines
+    maxOrders = (maxOrders / 5).ceil() * 5.0;
+    if (maxOrders == 0) maxOrders = 5.0;
 
     final List<FlSpot> spots = [];
     final sortedKeys = data.keys.toList()..sort();
-    
+
     // Add a starting zero point if the first data point isn't at the start of the range
     final minX = _getMinX();
     if (!data.containsKey(minX.toInt())) {
@@ -372,27 +568,124 @@ class _SalesLineChart extends StatelessWidget {
     }
 
     for (var key in sortedKeys) {
-      spots.add(FlSpot(key.toDouble(), data[key] ?? 0.0));
+      spots.add(FlSpot(key.toDouble(), (data[key]?.count ?? 0).toDouble()));
     }
 
     return LineChart(
       LineChartData(
-        gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: maxRevenue / 4, getDrawingHorizontalLine: (_) => FlLine(color: cs.secondary.withValues(alpha: 0.05), strokeWidth: 1)),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxOrders / 5,
+          getDrawingHorizontalLine:
+              (_) => FlLine(
+                color: cs.secondary.withValues(alpha: 0.05),
+                strokeWidth: 1,
+              ),
+        ),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => cs.surfaceContainerHigh,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((barSpot) {
+                final point = data[barSpot.x.toInt()];
+                final count = point?.count ?? 0;
+                final amount = point?.amount ?? 0.0;
+                final formattedAmount = OrderService.formatPrice(amount * PriceConstants.minorUnitsPerMajor);
+                return LineTooltipItem(
+                  'Orders: $count\nAmount: $formattedAmount',
+                  GoogleFonts.plusJakartaSans(
+                    color: cs.secondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
         titlesData: FlTitlesData(
           show: true,
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              interval: maxOrders / 5,
+              getTitlesWidget: (value, meta) {
+                if (value == meta.max || value == meta.min) return const SizedBox();
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Text(
+                    value.toInt().toString(),
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.secondary.withValues(alpha: 0.4),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                );
+              },
+            ),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
-              showTitles: true, reservedSize: 30, interval: selectedRange == SalesRange.monthly ? 5 : 1,
+              showTitles: true,
+              reservedSize: 30,
+              interval: selectedRange == SalesRange.monthly ? 5 : 1,
               getTitlesWidget: (value, meta) {
                 String text = '';
-                if (selectedRange == SalesRange.today) { if (value % 4 == 0) text = "${value.toInt()}h"; }
-                else if (selectedRange == SalesRange.weekly) { text = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][(value.toInt() - 1) % 7]; }
-                else if (selectedRange == SalesRange.monthly) { if (value % 5 == 0) text = "D${value.toInt()}"; }
-                else if (selectedRange == SalesRange.yearly) { text = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][(value.toInt() - 1) % 12]; }
-                return text.isEmpty ? const SizedBox() : Padding(padding: const EdgeInsets.only(top: 10.0), child: Text(text, style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.4), fontSize: 8, fontWeight: FontWeight.bold)));
+                if (selectedRange == SalesRange.today) {
+                  if (value % 4 == 0) text = "${value.toInt()}h";
+                } else if (selectedRange == SalesRange.weekly) {
+                  text =
+                      [
+                        'MON',
+                        'TUE',
+                        'WED',
+                        'THU',
+                        'FRI',
+                        'SAT',
+                        'SUN',
+                      ][(value.toInt() - 1) % 7];
+                } else if (selectedRange == SalesRange.monthly) {
+                  if (value % 5 == 0) text = "D${value.toInt()}";
+                } else if (selectedRange == SalesRange.yearly) {
+                  text =
+                      [
+                        'JAN',
+                        'FEB',
+                        'MAR',
+                        'APR',
+                        'MAY',
+                        'JUN',
+                        'JUL',
+                        'AUG',
+                        'SEP',
+                        'OCT',
+                        'NOV',
+                        'DEC',
+                      ][(value.toInt() - 1) % 12];
+                }
+                return text.isEmpty
+                    ? const SizedBox()
+                    : Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Text(
+                        text,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: cs.secondary.withValues(alpha: 0.4),
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
               },
             ),
           ),
@@ -400,7 +693,8 @@ class _SalesLineChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         minX: _getMinX(),
         maxX: _getMaxX(),
-        minY: 0, maxY: maxRevenue,
+        minY: 0,
+        maxY: maxOrders,
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -414,7 +708,10 @@ class _SalesLineChart extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [cs.primary.withValues(alpha: 0.15), cs.primary.withValues(alpha: 0.0)],
+                colors: [
+                  cs.primary.withValues(alpha: 0.15),
+                  cs.primary.withValues(alpha: 0.0),
+                ],
               ),
             ),
           ),
@@ -462,9 +759,18 @@ class _NoOrdersView extends StatelessWidget {
         padding: const EdgeInsets.all(48.0),
         child: Column(
           children: [
-            Icon(Icons.auto_awesome_outlined, color: cs.primary.withValues(alpha: 0.1), size: 48),
+            Icon(
+              Icons.auto_awesome_outlined,
+              color: cs.primary.withValues(alpha: 0.1),
+              size: 48,
+            ),
             const SizedBox(height: 16),
-            Text("No active creations.", style: GoogleFonts.notoSerif(color: cs.secondary.withValues(alpha: 0.5))),
+            Text(
+              "No active creations.",
+              style: GoogleFonts.notoSerif(
+                color: cs.secondary.withValues(alpha: 0.5),
+              ),
+            ),
           ],
         ),
       ),

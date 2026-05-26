@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/cart_provider.dart';
 
@@ -18,7 +18,7 @@ class ProductOption {
   }
 }
 
-class ProductDetailScreen extends ConsumerStatefulWidget {
+class ProductDetailScreen extends StatefulWidget {
   final String? cakeId;
   final String title;
   final String price;
@@ -34,14 +34,14 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
     List<dynamic> rawOptions = const [],
   }) : options = rawOptions
             .whereType<Map<String, dynamic>>()
-            .map(ProductOption.fromJson)
+            .map((o) => ProductOption.fromJson(o))
             .toList();
 
   @override
-  ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String selectedSize = "";
   double currentPriceValue = 0.0;
   String currentPriceDisplay = "";
@@ -203,12 +203,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   ),
                                 ),
                               ),
-                                Consumer(
-                                builder: (context, ref, _) {
-                                  final favorites = ref.watch(customerFavoritesProvider);
+                               Consumer<FavoritesProvider>(
+                                builder: (context, favorites, _) {
                                   final isFav = favorites.isFavorite(null, widget.title);
                                   return GestureDetector(
-                                    onTap: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite({
+                                    onTap: () => favorites.toggleFavorite({
                                       'id': null,
                                       'title': widget.title,
                                       'price': widget.price,
@@ -462,7 +461,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   .where((e) => e.value)
                                   .fold(0.0, (prev, e) => prev + (addonPrices[e.key]! / 100.0));
 
-                              ref.read(customerCartProvider.notifier).addItem(
+                              context.read<CartProvider>().addItem(
                                 "${widget.title}_${DateTime.now().millisecondsSinceEpoch}", 
                                 fullDescription, 
                                 (currentPriceValue + addonsTotal) * 100, 

@@ -1,205 +1,154 @@
 # Sonna's Patisserie & Cafe 🍰✨
 
-A production-ready, full-stack Flutter application for a luxury artisan bakery. Features a multi-role architecture (Owner · Staff · Customer), real-time Supabase backend, biometric authentication, and cross-platform support (Android, Web).
+Welcome to the unified workspace repository for **Sonna's Patisserie & Cafe** — a luxury artisan bakery. This repository co-locates two main components in a streamlined monorepo setup, sharing a unified database schema:
+
+1.  **Web Admin Portal & WhatsApp Order Bot Backend** (Next.js · Tailwind v4 · Prisma ^6.6.0 · tRPC · Node.js)
+2.  **Mobile & Desktop Application** (Flutter · Riverpod · Material 3 · Supabase SDK)
 
 ---
 
-## ✨ Feature Overview
+## 📂 Repository Structure
 
-### 👑 Owner Portal
-
-| Feature                       | Description                                                        |
-| ----------------------------- | ------------------------------------------------------------------ |
-| **Dashboard**           | Live KPIs — daily revenue, pending orders, staff on shift         |
-| **Order Management**    | Full lifecycle tracking with WhatsApp dispatch integration         |
-| **Menu Management**     | Add / edit products with Supabase Storage image uploads            |
-| **Sales Reports**       | `fl_chart` spline charts for weekly & monthly revenue trends     |
-| **Expense Reports**     | Log and categorise operational expenses                            |
-| **Inventory Analytics** | Stock-level monitoring and low-stock alerts                        |
-| **Payments**            | Transaction history with PDF/CSV export via `printing` & `csv` |
-| **Staff Control**       | Add / deactivate staff, assign roles, reset PINs                   |
-| **Settings**            | Theme persistence (light/dark/pink), biometric lock toggle         |
-
-### 👷 Staff Portal
-
-| Feature              | Description                                                 |
-| -------------------- | ----------------------------------------------------------- |
-| **Auth**       | PIN + biometric (fingerprint/face) login via `local_auth` |
-| **Dashboard**  | Today's queue, shift summary                                |
-| **Operations** | Accept, prepare, and complete orders                        |
-| **Inventory**  | Update stock counts                                         |
-| **Profile**    | Change PIN, toggle biometrics, personal preferences         |
-
-### 🛍️ Customer Catalog
-
-| Feature                  | Description                                  |
-| ------------------------ | -------------------------------------------- |
-| **Catalog**        | Browsable menu with `cached_network_image` |
-| **Product Detail** | Ingredient info, weight, pricing             |
-| **Checkout**       | Cart → order submission flow                |
-
----
-
-## 🎨 Design System
-
-| Token        | Value                                                        |
-| ------------ | ------------------------------------------------------------ |
-| Primary      | `#FF4D8D` — Signature Pink                                |
-| Background   | `#FFF0F6` — Blush White                                   |
-| Gold Accent  | `#D9B87A` — Luxury Gold                                   |
-| Heading Font | **Noto Serif**                                         |
-| Body Font    | **Plus Jakarta Sans**                                  |
-| UI Kit       | Material 3 + custom `ThemeData`                            |
-| Theme Modes  | Light · Dark · Pink (persisted via `shared_preferences`) |
-
----
-
-## 🛠️ Technical Stack
-
-| Layer            | Technology                                               |
-| ---------------- | -------------------------------------------------------- |
-| Framework        | Flutter (Dart `^3.11.0`, Material 3)                    |
-| State Management | `flutter_riverpod`                                     |
-| Backend          | Supabase (Postgres + Auth + Storage + RLS)               |
-| Schema Tooling   | Prisma (schema definition & migrations only — not used at runtime by Flutter) |
-| Hosting (Web)    | Vercel                                                   |
-| Auth             | PIN (bcrypt via `dbcrypt`) + `local_auth` biometrics |
-| Charts           | `fl_chart`                                             |
-| PDF / Export     | `pdf` + `printing` + `csv`                         |
-| Networking       | `supabase_flutter`, `http`                           |
-| Storage          | `flutter_secure_storage`, `shared_preferences`       |
-| Images           | `image_picker`, `cached_network_image`               |
-| Config           | `flutter_dotenv` (`.env` file)                       |
-
----
-
-## 🗄️ Database Schema
-
-The database schema is defined in `lib/services/schema.prisma` using Prisma syntax. This file serves as the **single source of truth** for the Supabase PostgreSQL schema. The Flutter app connects directly to Supabase via `supabase_flutter` — Prisma is **not** used at runtime by the app. It is used only for:
-- Schema documentation and modeling
-- Running migrations (`npm run db:migrate`)
-- Generating a TypeScript client for any future Node.js/Next.js backend
-
-To apply schema changes (requires a privileged `DATABASE_URL` set in your server-only environment file (e.g. `.env.server.example`)):
-
-```bash
-npm install          # install prisma + @prisma/client
-npm run db:migrate   # or: npx prisma migrate dev
-```
-
-The `vercel.json` configures SPA routing for the Flutter web build only. There is no Node.js backend in this repository.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Flutter SDK `>=3.19.0` (stable channel)
-- Dart SDK `>=3.11.0` (bundled with Flutter)
-- A [Supabase](https://supabase.com) project with the schema applied (see `lib/services/schema.prisma`)
-
-### 1 — Clone & install dependencies
-
-```bash
-git clone <repo-url>
-cd Cake
-flutter pub get
-```
-
-### 2 — Configure environment
-
-Copy the template and fill in your credentials:
-
-```bash
-cp .env.example .env
-```
-
-```dotenv
-# .env
-SUPABASE_URL=https://<your-project-ref>.supabase.co
-SUPABASE_ANON_KEY=<your-anon-key>
-NEXT_PUBLIC_WHATSAPP_NUMBER=91...
-NEXT_PUBLIC_WHATSAPP_NUMBER_FORMATTED=+919999999999
-```
-
-> **Never commit `.env`.** It is listed in `.gitignore`.
-
-For server-side operations (webhooks, Edge Functions), also configure:
-
-```bash
-cp .env.server.example .env.server
-```
-
-```dotenv
-# .env.server (server-only secrets)
-DATABASE_URL=postgresql://postgres:...
-WHATSAPP_VERIFY_TOKEN=your-webhook-verify-token
-WHATSAPP_TOKEN=your-permanent-access-token
-RAZORPAY_KEY_SECRET=your-secret
-```
-
-> **Server-only secrets** like `WHATSAPP_VERIFY_TOKEN` should NEVER be bundled in client builds.
-
-### 3 — Run
-
-```bash
-# Android
-flutter run
-
-# Web (Chrome)
-flutter run -d chrome
-
-# Release APK
-flutter build apk --release
-```
-
----
-
-## 📂 Project Structure
+Both projects coexist at the root of this repository, organized as follows:
 
 ```text
-lib/
-├── main.dart                 # App entry — theme, routing, Riverpod providers
-├── models/                   # Shared data models
-├── services/
-│   ├── supabase_service.dart # Supabase client initialisation
-│   ├── auth_service.dart     # PIN hashing, login, staff registration
-│   ├── auth_provider.dart    # Riverpod auth state
-│   ├── biometric_service.dart# local_auth wrapper (strict — no PIN fallback)
-│   ├── session_service.dart  # Secure session persistence
-│   ├── theme_service.dart    # Theme persistence (shared_preferences)
-│   ├── order_service.dart    # Order CRUD + real-time subscriptions
-│   ├── menu_service.dart     # Menu & product management
-│   ├── staff_service.dart    # Staff CRUD
-│   ├── inventory_service.dart# Stock management
-│   ├── finance_service.dart  # Revenue & expense queries
-│   ├── report_service.dart   # PDF/CSV report generation
-│   ├── dashboard_provider.dart
-│   ├── cart_provider.dart
-│   └── schema.prisma         # Supabase schema reference
-├── owner/                    # Owner portal screens & widgets
-├── staff/                    # Staff portal (auth, dashboard, operations, profile)
-├── customer/                 # Customer catalog, product detail, checkout
-└── widgets/                  # Shared UI components
+├── android/, ios/, macos/, windows/, linux/, web/  # Flutter platform-specific native directories
+├── lib/                                           # Flutter application codebase (Dart)
+├── lib/main.dart                                  # Flutter app entry point
+├── lib/models/                                    # Flutter shared data models
+├── lib/services/                                  # Flutter services (Supabase service, local auth, etc.)
+└── lib/customer/, owner/, staff/, widgets/        # Flutter portal screens and modular UI
+│
+├── prisma/                                        # Next.js / Server Prisma directory
+│   ├── schema.prisma                              # Next.js Prisma Database Schema (Source of truth)
+│   └── migrations/, seed.ts                       # Next.js migrations and seed script
+│
+├── public/                                        # Next.js public assets (Cakes, static media)
+├── src/                                           # Next.js web application codebase (TypeScript/React)
+│   ├── app/                                       # Next.js Admin and WhatsApp Router Pages
+│   ├── components/                                # Next.js React UI Components (Tailwind v4)
+│   ├── server/                                    # Next.js backend & WhatsApp Bot state machine handlers
+│   └── styles/                                    # Global Tailwind stylesheet
+│
+├── .env.example                                   # Combined environment template for both platforms
+├── package.json                                   # Root configuration, Next.js build scripts, and DB utilities
+└── pubspec.yaml                                   # Flutter project configuration & dependency list
 ```
 
 ---
 
-## 🔐 Security Notes
+## 🤖 Sub-Project 1: Web Admin Portal & WhatsApp Order Bot (Next.js)
 
-- **Biometric authentication** is enforced strictly — PIN-based OS fallback is disabled.
-- **Passwords / PINs** are stored as bcrypt hashes (`dbcrypt`); plaintext is never persisted.
-- **Sensitive tokens** are stored in `flutter_secure_storage` (Android Keystore / iOS Keychain).
-- **Row-Level Security (RLS)** is enabled on all Supabase tables.
-- **`.env`** is used for local development only; never bundle secrets or private keys in app assets. Store server-only secrets in a secrets manager or CI/CD vault for production.
+The root workspace operates a robust **Next.js 15 Web Application** designed for the admin dashboard and back-end automation. It houses the **WhatsApp Automated Ordering Bot** that processes conversation-based orders in real-time, compiles customer carts, takes delivery dates, and dispatches Razorpay payment links dynamically.
+
+### ✨ Next.js Feature Highlights
+*   **WhatsApp Dynamic Template Engine:** Manage localized interactive greeting templates, lists, and button menus in Supabase dynamically.
+*   **Administrative Dashboard:** Manage menu items, view real-time WhatsApp conversations, customize bakery slots, and monitor orders.
+*   **Integrated Payment Pipeline:** Real-time Razorpay webhooks dynamically update Supabase transaction records and trigger automated WhatsApp order confirmations upon payment completion.
+
+### 🛠️ Web Tech Stack
+*   **Framework:** Next.js 15 (App Router, React 19)
+*   **Styling:** Tailwind CSS v4
+*   **Database:** Prisma Client `^6.6.0` (with Supabase PostgreSQL)
+*   **API & State:** tRPC (fully type-safe client-to-server RPCs)
+*   **Authentication:** NextAuth.js v5 (Beta)
+
+### 🚀 Getting Started (Web & Server)
+
+1.  **Install Node Dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Configure Environment:**
+    Copy `.env.example` to `.env` and fill in your Supabase connection strings, WhatsApp tokens, Razorpay keys, and administrative secrets:
+    ```bash
+    cp .env.example .env
+    ```
+3.  **Run Database Migrations & Seeds:**
+    ```bash
+    npm run db:generate   # Runs local prisma schema migrations
+    npm run db:push       # Synchronizes the DB schema with Supabase
+    ```
+4.  **Launch the Development Server:**
+    ```bash
+    npm run dev
+    ```
+    The Next.js admin interface will be active at `http://localhost:3000`.
 
 ---
 
-## 📜 License
+## 📱 Sub-Project 2: Mobile & Desktop Application (Flutter)
 
-MIT — see [LICENSE](LICENSE).
+Inside `/lib` is a production-ready, full-stack **Flutter Application** optimized for tablet and mobile viewports. It features a multi-role layout (Owner · Staff · Customer) built with Material 3 design and interacts directly with the Supabase database.
+
+### ✨ Flutter Feature Highlights
+
+#### 👑 Owner Portal
+*   **Live Dashboard:** KPIs including daily revenue, active orders, and active staff.
+*   **Operational Reports:** Interactive spline charts using `fl_chart` for revenue analytics and expense tracking.
+*   **Staff & Settings:** Onboard staff members, assign roles, reset PIN credentials, and enforce biometric locks.
+
+#### 👷 Staff Portal
+*   **Secure Access:** Lockout-protected PIN authentication + Biometric login via `local_auth`.
+*   **Preparations Queue:** Real-time order fulfillment pipeline (Accept -> Prepare -> Complete).
+
+#### 🛍️ Customer Catalog
+*   **Interactive Menu:** Highly responsive cake catalog with ingredient listings, custom sizes, weight pickers, and checkout flows.
+
+### 🎨 Design Tokens & UI Kit
+*   **Primary Accent:** `#FF4D8D` (Signature Pink)
+*   **Background Base:** `#FFF0F6` (Blush White)
+*   **Typography:** *Noto Serif* (Headings) & *Plus Jakarta Sans* (UI Body)
+*   **Themes:** Persisted Light, Dark, and Pink themes via `shared_preferences`.
+
+### 🚀 Getting Started (Flutter Client)
+
+1.  **Prerequisites:** Ensure Flutter SDK `>=3.19.0` and Dart SDK `>=3.11.0` are installed.
+2.  **Fetch Flutter Packages:**
+    ```bash
+    flutter pub get
+    ```
+3.  **Environment Setup:** Create a `.env` file in the root matching the Supabase public API endpoints:
+    ```dotenv
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_ANON_KEY=your-anon-key
+    ```
+4.  **Run the Client:**
+    ```bash
+    # Run on default connected emulator or device
+    flutter run
+    
+    # Run in Chrome for Web testing
+    flutter run -d chrome
+    
+    # Build a production-ready Android APK
+    flutter build apk --release
+    ```
+
+---
+
+## 🗄️ Database & Prisma Schema Co-Existence
+
+This project utilizes Prisma to define its schemas. To prevent conflicts between the React backend and Flutter client:
+*   **Web/Root Schema:** Defined in `prisma/schema.prisma`. It is the master schema used for database migrations and generates the root TypeScript client (`npm run db:*`).
+*   **Flutter/Client Schema:** Located in `lib/services/schema.prisma`. It represents the direct Supabase access models used by the client services.
+*   **Flutter Prisma CLI Utilities:** To help Flutter developers manage their client-specific schemas without clashing with the Web Portal, special commands are provided in `package.json`:
+    ```bash
+    npm run db:flutter:generate  # Generates Prisma models under lib/generated/
+    npm run db:flutter:push      # Pushes Flutter schema changes to target database
+    npm run db:flutter:migrate   # Applies and tests schema migrations
+    npm run db:flutter:studio    # Starts Prisma Studio pointing to lib/services/schema.prisma
+    ```
+
+---
+
+## 🔐 Security & Operations
+
+*   **Row-Level Security (RLS):** Enabled on all Supabase tables. The client performs operations matching security policies set in migrations.
+*   **Biometric Integrity:** Mobile biometric login strictly bypasses OS keyguard fallbacks to prevent security bypasses on shared staff devices.
+*   **Production Credentials:** Server keys like `WHATSAPP_TOKEN` and `RAZORPAY_KEY_SECRET` are handled purely on the Next.js server/vercel runtime and are never bundled inside client mobile builds.
 
 ---
 
 *Made with ❤️ for Sonna's Patisserie & Cafe*
+

@@ -1,29 +1,25 @@
-import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class HapticService {
-  static void light() {
-    if (!kIsWeb) {
-      HapticFeedback.lightImpact();
-    }
+  static Future<void> light() async {
+    await HapticFeedback.lightImpact();
   }
 
-  static void selection() {
-    if (!kIsWeb) {
-      unawaited(HapticFeedback.selectionClick());
-    }
+  static Future<void> medium() async {
+    await HapticFeedback.mediumImpact();
+  }
+
+  static Future<void> heavy() async {
+    await HapticFeedback.heavyImpact();
   }
 
   static Future<void> success() async {
-    if (!kIsWeb) {
-      unawaited(HapticFeedback.mediumImpact());
-    }
+    await HapticFeedback.vibrate();
+    await Future.delayed(const Duration(milliseconds: 100));
+    await HapticFeedback.vibrate();
   }
 
-  static void heavy() {
-    if (!kIsWeb) {
-      HapticFeedback.heavyImpact();
-    }
+  static Future<void> selection() async {
+    await HapticFeedback.selectionClick();
   }
 }

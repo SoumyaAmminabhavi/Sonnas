@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
@@ -62,8 +62,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
             String imageUrl = "";
 
             if (items != null && items.isNotEmpty) {
-              firstItemTitle = items[0]['cakeName']?.toString() ?? firstItemTitle;
-              imageUrl = order['customImageUrl']?.toString() ?? 
+              firstItemTitle = items[0]['cakeName'];
+              imageUrl = order['customImageUrl'] ??
                   "https://images.unsplash.com/photo-1578985545062-69928b1d9587";
             }
 
@@ -72,10 +72,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
             return {
               "id": order['orderNumber'] ?? order['id'],
               "uuid": order['id'],
-              "date": _formatDate(order['createdAt']?.toString() ?? ''),
+              "date": _formatDate(order['createdAt']),
               "title": firstItemTitle,
-              // totalPrice is stored in paise → convert to rupees
-              "price": "₹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
+              // totalPrice is stored in paise â†’ convert to rupees
+              "price": "â‚¹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
               "status": status,
               "source": order['source']?.toString() ?? 'APP',
               "imageUrl": imageUrl,
@@ -157,7 +157,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     double rating = 5;
     final commentController = TextEditingController();
 
-    showModalBottomSheet<void>(
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -250,7 +250,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content:
-                                  Text("Thank you for your feedback! 💖"),
+                                  Text("Thank you for your feedback! ðŸ’–"),
                               backgroundColor: primary),
                         );
                       }
@@ -338,12 +338,12 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute<void>(
+                      MaterialPageRoute(
                         builder: (context) => AuthScreen(
                           isOwner: false,
                           onSuccess: () {
                             Navigator.pop(context);
-          unawaited(_fetchOrders());
+                            _fetchOrders();
                           },
                         ),
                       ),
@@ -433,7 +433,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: InkWell(
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute<void>(
+                      MaterialPageRoute(
                           builder: (_) => const CustomerTrackingScreen()),
                     ),
                     child: Container(
@@ -465,7 +465,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 ),
                                 Text(
                                   orders.firstWhere(
-                                      (o) => o['isActive'] == 'true')['title']?.toString() ?? '',
+                                      (o) => o['isActive'] == 'true')['title'],
                                   style: GoogleFonts.notoSerif(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -504,7 +504,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
     final String status = order['status']?.toString() ?? 'PENDING';
     final String source = order['source']?.toString() ?? 'APP';
 
-    // Map status → color
+    // Map status â†’ color
     Color statusColor;
     switch (status) {
       case 'CONFIRMED':
@@ -543,7 +543,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              order['imageUrl']?.toString() ?? '',
+              order['imageUrl']!,
               width: 80,
               height: 80,
               fit: BoxFit.cover,
@@ -564,7 +564,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      order['date']?.toString().toUpperCase() ?? '',
+                      order['date']!.toUpperCase(),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
@@ -584,7 +584,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            source == 'WHATSAPP' ? '💬 WA' : '📲 APP',
+                            source == 'WHATSAPP' ? 'ðŸ’¬ WA' : 'ðŸ“² APP',
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 8,
                               fontWeight: FontWeight.bold,
@@ -618,7 +618,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  order['title']?.toString() ?? '',
+                  order['title']!,
                   style: GoogleFonts.notoSerif(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -627,7 +627,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  order['price']?.toString() ?? '',
+                  order['price']!,
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
@@ -638,10 +638,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Cancel — only for PENDING or CONFIRMED
+                    // Cancel â€” only for PENDING or CONFIRMED
                     if (status == 'PENDING' || status == 'CONFIRMED')
                       TextButton(
-                        onPressed: () => _cancelOrder(order['uuid']?.toString() ?? ''),
+                        onPressed: () => _cancelOrder(order['uuid']),
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.only(right: 16),
                           minimumSize: Size.zero,
@@ -657,7 +657,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                       ),
-                    // Review — for DELIVERED or COMPLETED
+                    // Review â€” for DELIVERED or COMPLETED
                     if (status == 'DELIVERED' || status == 'COMPLETED')
                       TextButton(
                         onPressed: () => _showReviewDialog(order),
@@ -686,3 +686,4 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 }
+
