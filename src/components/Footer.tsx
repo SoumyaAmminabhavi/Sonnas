@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { navLinks } from "~/data/landing";
+import { navLinks } from "../data/landing";
 
 export const Footer = () => (
   <footer id="footer" className="bg-beige/20 pt-2xl pb-lg border-t border-cream">

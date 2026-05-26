@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../services/supabase_service.dart';
 import '../../services/order_service.dart';
 import '../../services/dashboard_provider.dart';
@@ -86,7 +87,15 @@ class OrderCardReactive extends ConsumerWidget {
               : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
                   ? imageUrl
                   : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
-          deliveryDate: (data['deliveryDate'] as String?) ?? 'Not scheduled',
+          deliveryDate: (() {
+            final rawDate = data['deliveryDate']?.toString();
+            if (rawDate == null || rawDate.isEmpty) return 'Not scheduled';
+            final parsed = OrderService.parseDate(rawDate);
+            if (parsed != null) {
+              return DateFormat('MMMM d, y').format(parsed);
+            }
+            return rawDate;
+          })(),
           deliveryTime: data['deliverySlot']?.toString() ?? data['deliveryTime']?.toString(),
           orderSubtitle: orderSubtitle,
           onWhatsAppPressed: () async {

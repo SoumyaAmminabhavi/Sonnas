@@ -40,7 +40,10 @@ class OrderService {
     return controller.stream;
   }
 
-  static Stream<R> _switchMapAsync<T, R>(Stream<T> source, Future<R> Function(T) mapper) {
+  static Stream<R> _switchMapAsync<T, R>(
+    Stream<T> source,
+    Future<R> Function(T) mapper,
+  ) {
     StreamSubscription<T>? sub;
     final controller = StreamController<R>.broadcast();
     int latestRequestId = 0;
@@ -75,8 +78,13 @@ class OrderService {
   }
 
   /// Real-time stream for orders (limited to recent 90 days to prevent memory bloat)
-  static Stream<List<Map<String, dynamic>>> getAllOrdersStream({int limit = OrderConstants.defaultOrderLimit}) {
-    final cutoff = DateTime.now().subtract(OrderConstants.orderHistoryWindow).toIso8601String();
+  static Stream<List<Map<String, dynamic>>> getAllOrdersStream({
+    int limit = OrderConstants.defaultOrderLimit,
+  }) {
+    final cutoff =
+        DateTime.now()
+            .subtract(OrderConstants.orderHistoryWindow)
+            .toIso8601String();
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
@@ -88,7 +96,9 @@ class OrderService {
   /// Launch Google Maps for a delivery address
   static Future<void> launchMaps(String address) async {
     final query = Uri.encodeComponent(address);
-    final url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
+    final url = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=$query",
+    );
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       debugPrint("Could not launch maps");
     }
@@ -109,37 +119,48 @@ class OrderService {
   }
 
   /// Fetch a single order by ID or Order Number.
-  static Future<Map<String, dynamic>?> fetchOrderByIdOrNumber(String idOrNumber) async {
+  static Future<Map<String, dynamic>?> fetchOrderByIdOrNumber(
+    String idOrNumber,
+  ) async {
     try {
-      final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+      final cleanInput = idOrNumber.replaceAll(
+        RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'),
+        '',
+      );
       if (cleanInput.isEmpty) return null;
-      
-      final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
-      
-      // Try ID, then OrderNumber
-      var res = await _client
-          .from('Order')
-          .select('*, WhatsAppConversation(*)')
-          .eq('id', idOrNumber)
-          .maybeSingle();
 
-      res ??= await _client
-          .from('Order')
-          .select('*, WhatsAppConversation(*)')
-          .eq('orderNumber', cleanInput)
-          .maybeSingle();
+      final escapedInput = cleanInput
+          .replaceAll('%', '\\%')
+          .replaceAll('_', '\\_');
+
+      // Try ID, then OrderNumber
+      var res =
+          await _client
+              .from('Order')
+              .select('*, WhatsAppConversation(*)')
+              .eq('id', idOrNumber)
+              .maybeSingle();
+
+      res ??=
+          await _client
+              .from('Order')
+              .select('*, WhatsAppConversation(*)')
+              .eq('orderNumber', cleanInput)
+              .maybeSingle();
 
       if (res == null) {
-        final matches = List<Map<String, dynamic>>.from(await _client
-            .from('Order')
-            .select('*, WhatsAppConversation(*)')
-            .ilike('orderNumber', '%$escapedInput%')
-            .limit(2));
+        final matches = List<Map<String, dynamic>>.from(
+          await _client
+              .from('Order')
+              .select('*, WhatsAppConversation(*)')
+              .ilike('orderNumber', '%$escapedInput%')
+              .limit(2),
+        );
         if (matches.length == 1) {
           res = matches.first;
         }
       }
-      
+
       return res;
     } catch (e) {
       debugPrint('⚠️ Fetch Order Failed: $e');
@@ -147,33 +168,44 @@ class OrderService {
     }
   }
 
-  static Stream<Map<String, dynamic>?> getSingleOrderStream(String idOrNumber) async* {
-    final cleanInput = idOrNumber.replaceAll(RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'), '');
+  static Stream<Map<String, dynamic>?> getSingleOrderStream(
+    String idOrNumber,
+  ) async* {
+    final cleanInput = idOrNumber.replaceAll(
+      RegExp(r'^(SN-|SPC |SPC-|ORD-|#)'),
+      '',
+    );
     if (cleanInput.isEmpty) {
       yield null;
       return;
     }
-    final escapedInput = cleanInput.replaceAll('%', '\\%').replaceAll('_', '\\_');
+    final escapedInput = cleanInput
+        .replaceAll('%', '\\%')
+        .replaceAll('_', '\\_');
 
     try {
-      var resolved = await _client
-          .from('Order')
-          .select('id')
-          .eq('id', idOrNumber)
-          .maybeSingle();
+      var resolved =
+          await _client
+              .from('Order')
+              .select('id')
+              .eq('id', idOrNumber)
+              .maybeSingle();
 
-      resolved ??= await _client
-          .from('Order')
-          .select('id')
-          .eq('orderNumber', cleanInput)
-          .maybeSingle();
+      resolved ??=
+          await _client
+              .from('Order')
+              .select('id')
+              .eq('orderNumber', cleanInput)
+              .maybeSingle();
 
       if (resolved == null) {
-        final matches = List<Map<String, dynamic>>.from(await _client
-            .from('Order')
-            .select('id')
-            .ilike('orderNumber', '%$escapedInput%')
-            .limit(2));
+        final matches = List<Map<String, dynamic>>.from(
+          await _client
+              .from('Order')
+              .select('id')
+              .ilike('orderNumber', '%$escapedInput%')
+              .limit(2),
+        );
         if (matches.length == 1) {
           resolved = matches.first;
         }
@@ -217,21 +249,26 @@ class OrderService {
   }
 
   /// Bulk fetch items for multiple orders
-  static Future<List<Map<String, dynamic>>> fetchBulkOrderItems(List<String> orderIds) async {
+  static Future<List<Map<String, dynamic>>> fetchBulkOrderItems(
+    List<String> orderIds,
+  ) async {
     if (orderIds.isEmpty) return [];
-    final res = await _client.from('OrderItem').select().inFilter('orderId', orderIds);
+    final res = await _client
+        .from('OrderItem')
+        .select()
+        .inFilter('orderId', orderIds);
     return List<Map<String, dynamic>>.from(res);
   }
 
   /// Fetch all orders (Unified)
   static Future<List<Map<String, dynamic>>> fetchOrders() async {
     try {
-      final res = await _client.from('Order').select().order('createdAt', ascending: false);
+      final res = await _client
+          .from('Order')
+          .select()
+          .order('createdAt', ascending: false);
       return List<Map<String, dynamic>>.from(res).map((o) {
-        return {
-          ...o,
-          'orderType': o['source']?.toString() ?? 'APP',
-        };
+        return {...o, 'orderType': o['source']?.toString() ?? 'APP'};
       }).toList();
     } catch (e) {
       debugPrint('❌ Order Fetch failed: $e');
@@ -240,9 +277,14 @@ class OrderService {
   }
 
   /// Fetch items for any order (Unified)
-  static Future<List<Map<String, dynamic>>> fetchOrderItems(String orderId) async {
+  static Future<List<Map<String, dynamic>>> fetchOrderItems(
+    String orderId,
+  ) async {
     try {
-      final res = await _client.from('OrderItem').select().eq('orderId', orderId);
+      final res = await _client
+          .from('OrderItem')
+          .select()
+          .eq('orderId', orderId);
       return List<Map<String, dynamic>>.from(res);
     } catch (e) {
       debugPrint('⚠️ Fetch Order Items failed: $e');
@@ -251,83 +293,102 @@ class OrderService {
   }
 
   /// Stats stream for dashboard charts
-  static Stream<Map<int, double>> getSalesChartStream({required String range, int? targetMonth, int? targetYear}) {
-    return _client.from('Order').stream(primaryKey: ['id']).eq('paymentStatus', 'PAID').map((orders) {
-      final Map<int, double> chartData = {};
-      
-      final now = DateTime.now();
-      DateTime windowStart;
-      DateTime windowEnd;
-      
-      if (range == 'today') {
-        windowStart = DateTime(now.year, now.month, now.day);
-        windowEnd = windowStart.add(const Duration(days: 1));
-      } else if (range == 'weekly') {
-        windowStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
-        windowEnd = windowStart.add(const Duration(days: 7));
-      } else if (range == 'monthly') {
-        final year = targetYear ?? now.year;
-        final month = targetMonth ?? now.month;
-        windowStart = DateTime(year, month, 1);
-        windowEnd = DateTime(year, month + 1, 1);
-      } else {
-        final year = targetYear ?? now.year;
-        if (targetMonth != null) {
-          windowStart = DateTime(year, targetMonth, 1);
-          windowEnd = DateTime(year, targetMonth + 1, 1);
-        } else {
-          windowStart = DateTime(year, 1, 1);
-          windowEnd = DateTime(year + 1, 1, 1);
-        }
-      }
-      
-      for (final order in orders) {
-        final dateStr = order['createdAt']?.toString();
-        if (dateStr == null) continue;
-        final date = DateTime.tryParse(dateStr);
-        if (date == null) continue;
+  static Stream<Map<int, SalesChartDataPoint>> getSalesChartStream({
+    required String range,
+    int? targetMonth,
+    int? targetYear,
+  }) {
+    return _client
+        .from('Order')
+        .stream(primaryKey: ['id'])
+        .eq('paymentStatus', 'PAID')
+        .map((orders) {
+          final Map<int, SalesChartDataPoint> chartData = {};
 
-        if (date.isBefore(windowStart) || date.isAtSameMomentAs(windowEnd) || date.isAfter(windowEnd)) continue;
+          final now = DateTime.now();
+          DateTime windowStart;
+          DateTime windowEnd;
 
-        // Apply Month/Year filters if provided
-        if (targetMonth != null && date.month != targetMonth) continue;
-        if (targetYear != null && date.year != targetYear) continue;
-        
-        // Only count PAID orders in revenue
-        if ((order['paymentStatus']?.toString().toUpperCase()) != 'PAID') continue;
+          if (range == 'today') {
+            windowStart = DateTime(now.year, now.month, now.day);
+            windowEnd = windowStart.add(const Duration(days: 1));
+          } else if (range == 'weekly') {
+            windowStart = DateTime(
+              now.year,
+              now.month,
+              now.day,
+            ).subtract(Duration(days: now.weekday - 1));
+            windowEnd = windowStart.add(const Duration(days: 7));
+          } else if (range == 'monthly') {
+            final year = targetYear ?? now.year;
+            final month = targetMonth ?? now.month;
+            windowStart = DateTime(year, month, 1);
+            windowEnd = DateTime(year, month + 1, 1);
+          } else {
+            final year = targetYear ?? now.year;
+            if (targetMonth != null) {
+              windowStart = DateTime(year, targetMonth, 1);
+              windowEnd = DateTime(year, targetMonth + 1, 1);
+            } else {
+              windowStart = DateTime(year, 1, 1);
+              windowEnd = DateTime(year + 1, 1, 1);
+            }
+          }
 
-        final amount = PriceConstants.normalizePrice(order['totalPrice']);
+          for (final order in orders) {
+            final dateStr = order['createdAt']?.toString();
+            if (dateStr == null) continue;
+            final date = DateTime.tryParse(dateStr);
+            if (date == null) continue;
 
-        int key;
-        if (range == 'today') {
-          key = date.hour;
-        } else if (range == 'weekly') {
-          key = date.weekday;
-        } else if (range == 'monthly') {
-          key = date.day;
-        } else {
-          key = date.month;
-        }
+            if (date.isBefore(windowStart) ||
+                date.isAtSameMomentAs(windowEnd) ||
+                date.isAfter(windowEnd)) {
+              continue;
+            }
 
-        chartData[key] = (chartData[key] ?? 0) + amount;
-      }
-      return chartData;
-    });
+            // Apply Month/Year filters if provided
+            if (targetMonth != null && date.month != targetMonth) continue;
+            if (targetYear != null && date.year != targetYear) continue;
+
+            // Only count PAID orders
+            if ((order['paymentStatus']?.toString().toUpperCase()) != 'PAID') {
+              continue;
+            }
+
+            int key;
+            if (range == 'today') {
+              key = date.hour;
+            } else if (range == 'weekly') {
+              key = date.weekday;
+            } else if (range == 'monthly') {
+              key = date.day;
+            } else {
+              key = date.month;
+            }
+
+            final price = PriceConstants.normalizePrice(order['totalPrice']);
+            final current = chartData[key] ?? const SalesChartDataPoint(count: 0, amount: 0.0);
+            chartData[key] = SalesChartDataPoint(
+              count: current.count + 1,
+              amount: current.amount + price,
+            );
+          }
+          return chartData;
+        });
   }
 
   /// Update order status
   static Future<void> updateOrderStatus(String orderId, String status) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final normalizedStatus = status.toUpperCase();
-    final Map<String, dynamic> payload = {
-      'status': normalizedStatus,
-    };
-    
+    final Map<String, dynamic> payload = {'status': normalizedStatus};
+
     if (normalizedStatus == 'CONFIRMED') payload['confirmedAt'] = now;
     if (normalizedStatus == 'DELIVERED') payload['deliveredAt'] = now;
     if (normalizedStatus == 'COMPLETED') payload['completedAt'] = now;
     if (normalizedStatus == 'CANCELLED') payload['cancelledAt'] = now;
-    
+
     try {
       await _client.from('Order').update(payload).eq('id', orderId);
     } catch (e) {
@@ -340,16 +401,14 @@ class OrderService {
   static Future<void> updatePaymentStatus(String orderId, String status) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final normalizedStatus = status.toUpperCase();
-    final Map<String, dynamic> payload = {
-      'paymentStatus': normalizedStatus,
-    };
-    
+    final Map<String, dynamic> payload = {'paymentStatus': normalizedStatus};
+
     if (normalizedStatus == 'PAID') {
       payload['paidAt'] = now;
     } else {
       payload['paidAt'] = null;
     }
-    
+
     try {
       await _client.from('Order').update(payload).eq('id', orderId);
     } catch (e) {
@@ -369,9 +428,7 @@ class OrderService {
 
   /// Real-time stream for kitchen with joined data (debounced to prevent query storms)
   static Stream<List<Map<String, dynamic>>> getKitchenOrdersStream() {
-    final rawStream = _client
-        .from('Order')
-        .stream(primaryKey: ['id']);
+    final rawStream = _client.from('Order').stream(primaryKey: ['id']);
 
     return _switchMapAsync(
       _debounceStream(rawStream, OrderConstants.streamDebounce),
@@ -389,9 +446,9 @@ class OrderService {
   /// Submit a public order atomically via RPC.
   static Future<void> submitPublicOrder(Map<String, dynamic> data) async {
     final orderData = Map<String, dynamic>.from(data);
-    
+
     orderData['source'] = OrderConstants.defaultSource;
-    
+
     try {
       final rawItems = orderData.remove('items');
       if (rawItems is! List) {
@@ -400,17 +457,15 @@ class OrderService {
       if (rawItems.isEmpty) {
         throw ArgumentError('items must not be empty');
       }
-      final items = rawItems.map((e) {
-        if (e is! Map) throw ArgumentError('Each item must be a Map');
-        return Map<String, dynamic>.from(e);
-      }).toList();
-      
+      final items =
+          rawItems.map((e) {
+            if (e is! Map) throw ArgumentError('Each item must be a Map');
+            return Map<String, dynamic>.from(e);
+          }).toList();
+
       await _client.rpc<void>(
         'create_order_with_items',
-        params: {
-          'p_order_data': orderData,
-          'p_items_data': items,
-        },
+        params: {'p_order_data': orderData, 'p_items_data': items},
       );
     } catch (e) {
       debugPrint('❌ Submit Order failed: $e');
@@ -426,7 +481,7 @@ class OrderService {
 
     final query = Uri.encodeComponent(message);
     final url = Uri.parse("https://wa.me/$cleanPhone?text=$query");
-    
+
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       debugPrint("Could not launch WhatsApp");
     }
@@ -441,10 +496,24 @@ class OrderService {
       try {
         final parts = dateStr.split('/');
         if (parts.length == 3) {
-          return DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+          return DateTime(
+            int.parse(parts[2]),
+            int.parse(parts[1]),
+            int.parse(parts[0]),
+          );
         }
       } catch (_) {}
       return null;
     }
   }
+}
+
+class SalesChartDataPoint {
+  final int count;
+  final double amount;
+
+  const SalesChartDataPoint({
+    required this.count,
+    required this.amount,
+  });
 }

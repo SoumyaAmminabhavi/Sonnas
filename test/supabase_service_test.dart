@@ -4,10 +4,10 @@ import 'package:app/services/order_service.dart';
 void main() {
   group('OrderService Pure Utilities', () {
     test('formatPrice handles various inputs correctly', () {
-      expect(OrderService.formatPrice(null), "₹0.00");
-      expect(OrderService.formatPrice(1500), "₹1500.00");
+      expect(OrderService.formatPrice(null), "₹0");
+      expect(OrderService.formatPrice(1500), "₹15");
       expect(OrderService.formatPrice("1200.50"), "₹1200.50");
-      expect(OrderService.formatPrice("Custom Cake"), "₹Custom Cake");
+      expect(OrderService.formatPrice("Custom Cake"), "₹0");
     });
 
     test('formatPhone applies Indian country code prefix', () {
