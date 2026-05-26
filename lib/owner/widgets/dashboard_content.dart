@@ -97,42 +97,25 @@ class DashboardContent extends ConsumerWidget {
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: List.generate(
-              3,
-              (index) => Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: index == 2 ? 0 : (isDesktop ? 16 : 8),
-                  ),
-                  child: Container(
-                    padding: EdgeInsets.all(isDesktop ? 24 : 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Skeleton(
-                          height: isDesktop ? 20 : 16,
-                          width: isDesktop ? 20 : 16,
-                        ),
-                        SizedBox(height: isDesktop ? 16 : 8),
-                        Skeleton(
-                          height: isDesktop ? 28 : 24,
-                          width: isDesktop ? 80 : 50,
-                        ),
-                        const SizedBox(height: 4),
-                        Skeleton(
-                          height: isDesktop ? 10 : 8,
-                          width: isDesktop ? 60 : 40,
-                        ),
-                      ],
-                    ),
+            children: List.generate(3, (index) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : (isDesktop ? 16 : 8)),
+                child: Container(
+                  padding: EdgeInsets.all(isDesktop ? 24 : 12),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Skeleton(height: isDesktop ? 20 : 16, width: isDesktop ? 20 : 16),
+                      SizedBox(height: isDesktop ? 16 : 8),
+                      Skeleton(height: isDesktop ? 28 : 24, width: isDesktop ? 80 : 50),
+                      const SizedBox(height: 4),
+                      Skeleton(height: isDesktop ? 10 : 8, width: isDesktop ? 60 : 40),
+                    ],
                   ),
                 ),
               ),
-            ),
+            )),
           ),
         ),
       );
@@ -142,32 +125,11 @@ class DashboardContent extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _StatCard(
-            title: "TOTAL ORDERS",
-            value: stats['totalOrders'].toString(),
-            icon: Icons.shopping_bag_outlined,
-            cs: cs,
-            isDesktop: isDesktop,
-          ),
+          _StatCard(title: "TOTAL ORDERS", value: stats['totalOrders'].toString(), icon: Icons.shopping_bag_outlined, cs: cs, isDesktop: isDesktop),
           SizedBox(width: isDesktop ? 16 : 8),
-          _StatCard(
-            title: "TOTAL REVENUE",
-            value: OrderService.formatPrice(
-              (stats['totalRevenue'] as double) *
-                  PriceConstants.minorUnitsPerMajor,
-            ),
-            icon: Icons.payments_outlined,
-            cs: cs,
-            isDesktop: isDesktop,
-          ),
+          _StatCard(title: "TOTAL REVENUE", value: OrderService.formatPrice((stats['totalRevenue'] as double) * PriceConstants.minorUnitsPerMajor), icon: Icons.payments_outlined, cs: cs, isDesktop: isDesktop),
           SizedBox(width: isDesktop ? 16 : 8),
-          _StatCard(
-            title: "CUSTOMERS",
-            value: stats['activeCustomers'].toString(),
-            icon: Icons.people_outline,
-            cs: cs,
-            isDesktop: isDesktop,
-          ),
+          _StatCard(title: "CUSTOMERS", value: stats['activeCustomers'].toString(), icon: Icons.people_outline, cs: cs, isDesktop: isDesktop),
         ],
       ),
     );
