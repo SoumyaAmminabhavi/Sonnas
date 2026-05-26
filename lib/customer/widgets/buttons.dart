@@ -21,7 +21,7 @@ class GradientButton extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        gradient: CustomerTheme.primaryGradient(context),
+        gradient: CustomerTheme.primaryGradient,
         borderRadius: BorderRadius.circular(26),
       ),
       child: ElevatedButton(
@@ -63,24 +63,22 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return SizedBox(
       width: width,
       height: height,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: isDark ? theme.colorScheme.surface : Colors.white,
-          side: BorderSide(color: theme.colorScheme.primary, width: 1),
+          backgroundColor: Colors.white,
+          side: const BorderSide(color: CustomerTheme.accent, width: 1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
           ),
         ),
         child: Text(
           text.toUpperCase(),
-          style: TextStyle(
-            color: theme.colorScheme.primary,
+          style: const TextStyle(
+            color: CustomerTheme.accent,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.0,
             fontSize: 14,

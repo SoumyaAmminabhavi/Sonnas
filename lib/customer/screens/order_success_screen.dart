@@ -30,10 +30,12 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color background = Color(0xFFFFF0F6);
+    const Color secondaryColor = Color(0xFF701235);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -50,7 +52,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: cs.onSurfaceVariant.withValues(alpha: 0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -67,7 +69,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 style: GoogleFonts.notoSerif(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
+                  color: secondaryColor,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -76,7 +78,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 "Thank you for choosing Sonna's Patisserie. Your sweet treats are being prepared with love.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: cs.onSurface.withValues(alpha: 0.6),
+                  color: secondaryColor.withValues(alpha: 0.6),
                   height: 1.6,
                 ),
                 textAlign: TextAlign.center,
@@ -90,7 +92,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: cs.onSurface.withValues(alpha: 0.04),
+                      color: secondaryColor.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -114,10 +116,10 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     HapticService.selection();
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.onSurfaceVariant,
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
@@ -143,7 +145,8 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
   }
 
   Widget _buildSummaryRow(String label, String value, {bool isStatus = false}) {
-    final cs = Theme.of(context).colorScheme;
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color secondaryColor = Color(0xFF701235);
     
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,7 +156,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: cs.onSurface.withValues(alpha: 0.4),
+            color: secondaryColor.withValues(alpha: 0.4),
           ),
         ),
         Text(
@@ -161,7 +164,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isStatus ? cs.onSurfaceVariant : cs.onSurface,
+            color: isStatus ? primaryColor : secondaryColor,
           ),
         ),
       ],

@@ -1,20 +1,20 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 
-class CustomerOrderHistoryScreen extends ConsumerStatefulWidget {
+class CustomerOrderHistoryScreen extends StatefulWidget {
   const CustomerOrderHistoryScreen({super.key});
 
   @override
-  ConsumerState<CustomerOrderHistoryScreen> createState() =>
+  State<CustomerOrderHistoryScreen> createState() =>
       _CustomerOrderHistoryScreenState();
 }
 
 class _CustomerOrderHistoryScreenState
-    extends ConsumerState<CustomerOrderHistoryScreen> {
+    extends State<CustomerOrderHistoryScreen> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
 
@@ -57,10 +57,11 @@ class _CustomerOrderHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    const background = Color(0xFFFFF0F5);
+    const berryText = Color(0xFF4A152C);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +71,7 @@ class _CustomerOrderHistoryScreenState
               child: Text(
                 "Your Orders",
                 style:
-                    GoogleFonts.dmSerifDisplay(fontSize: 32, color: cs.onSurface),
+                    GoogleFonts.dmSerifDisplay(fontSize: 32, color: berryText),
               ),
             ),
             Expanded(
@@ -80,7 +81,7 @@ class _CustomerOrderHistoryScreenState
                       ? Center(
                           child: Text("No orders yet",
                               style: GoogleFonts.plusJakartaSans(
-                                  color: cs.onSurface.withValues(alpha: 0.5))))
+                                  color: berryText.withValues(alpha: 0.5))))
                       : ListView.builder(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 20),
@@ -97,7 +98,8 @@ class _CustomerOrderHistoryScreenState
 
   Widget _buildOrderCard(
       BuildContext context, Map<String, dynamic> order) {
-    final cs = Theme.of(context).colorScheme;
+    const primary = Color(0xFFC2185B);
+    const berryText = Color(0xFF4A152C);
 
     final status = (order['status'] ?? 'PENDING').toString().toUpperCase();
 
@@ -121,12 +123,12 @@ class _CustomerOrderHistoryScreenState
         statusColor = Colors.orange;
     }
 
-    final List<dynamic> items = order['items'] as List? ?? [];
-    final itemsText = items.map((i) => i['cakeName']?.toString() ?? '').join(", ");
+    final List items = order['items'] as List? ?? [];
+    final itemsText = items.map((i) => i['cakeName']).join(", ");
 
     String formattedDate = "No Date";
     try {
-      final date = DateTime.parse(order['createdAt'] as String);
+      final date = DateTime.parse(order['createdAt']);
       formattedDate =
           "${date.day} ${_getMonth(date.month)} ${date.year}";
     } catch (_) {}
@@ -140,11 +142,11 @@ class _CustomerOrderHistoryScreenState
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: cs.primary.withValues(alpha: 0.03),
+              color: primary.withValues(alpha: 0.03),
               blurRadius: 20,
               offset: const Offset(0, 8))
         ],
-        border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
+        border: Border.all(color: primary.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
@@ -161,7 +163,7 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          color: cs.onSurface),
+                          color: berryText),
                     ),
                     Row(
                       children: [
@@ -173,7 +175,7 @@ class _CustomerOrderHistoryScreenState
                           decoration: BoxDecoration(
                             color: source == 'WHATSAPP'
                                 ? Colors.green.shade50
-                                : cs.primary.withValues(alpha: 0.07),
+                                : primary.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -181,7 +183,7 @@ class _CustomerOrderHistoryScreenState
                             style: TextStyle(
                                 color: source == 'WHATSAPP'
                                     ? Colors.green.shade700
-                                    : cs.primary,
+                                    : primary,
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold),
                           ),
@@ -212,15 +214,15 @@ class _CustomerOrderHistoryScreenState
                 const Divider(height: 32),
                 Row(
                   children: [
-                    Icon(Icons.shopping_bag_outlined,
-                        size: 16, color: cs.primary),
+                    const Icon(Icons.shopping_bag_outlined,
+                        size: 16, color: primary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         itemsText.isEmpty ? "Exquisite Creation" : itemsText,
                         style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
-                            color: cs.onSurface.withValues(alpha: 0.7)),
+                            color: berryText.withValues(alpha: 0.7)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -239,7 +241,7 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: cs.onSurface),
+                          color: berryText),
                     ),
                   ],
                 ),
@@ -249,7 +251,7 @@ class _CustomerOrderHistoryScreenState
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.02),
+              color: primary.withValues(alpha: 0.02),
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(20)),
             ),
@@ -263,21 +265,22 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: cs.onSurface.withValues(alpha: 0.5)),
+                          color: berryText.withValues(alpha: 0.5)),
                     ),
                   ),
                 ),
                 Container(
                     width: 1,
                     height: 20,
-                    color: cs.primary.withValues(alpha: 0.1)),
+                    color: primary.withValues(alpha: 0.1)),
                 Expanded(
                   child: TextButton(
                     onPressed: () {
+                      final cart = context.read<CartProvider>();
                       for (var item in items) {
-                        ref.read(customerCartProvider.notifier).addItem(
+                        cart.addItem(
                           "reorder_${item['cakeName']}_${DateTime.now().millisecondsSinceEpoch}",
-                          item['cakeName']?.toString() ?? "Exquisite Creation",
+                          item['cakeName'] ?? "Exquisite Creation",
                           (double.tryParse(item['price'].toString()) ?? 0.0) /
                               100.0,
                           '',
@@ -290,7 +293,7 @@ class _CustomerOrderHistoryScreenState
                         SnackBar(
                           content:
                               Text('${items.length} items added to bag'),
-                          backgroundColor: cs.primary,
+                          backgroundColor: primary,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -300,7 +303,7 @@ class _CustomerOrderHistoryScreenState
                       style: GoogleFonts.plusJakartaSans(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: cs.primary),
+                          color: primary),
                     ),
                   ),
                 ),
@@ -314,10 +317,11 @@ class _CustomerOrderHistoryScreenState
 
   void _showOrderDetails(
       BuildContext context, Map<String, dynamic> order) {
-    final cs = Theme.of(context).colorScheme;
-    final List<dynamic> items = order['items'] as List? ?? [];
+    const berryText = Color(0xFF4A152C);
+    const primary = Color(0xFFC2185B);
+    final List items = order['items'] as List? ?? [];
 
-    showModalBottomSheet<void>(
+    showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
@@ -332,12 +336,12 @@ class _CustomerOrderHistoryScreenState
           children: [
             Text("Order Details",
                 style: GoogleFonts.dmSerifDisplay(
-                    fontSize: 24, color: cs.onSurface)),
+                    fontSize: 24, color: berryText)),
             const SizedBox(height: 24),
             _detailRow("Order ID",
                 "#${order['orderNumber']?.toString().split('-').last ?? 'ORD'}"),
-            _detailRow("Status", order['status']?.toString() ?? 'PENDING'),
-            _detailRow("Source", order['source']?.toString() ?? 'APP'),
+            _detailRow("Status", order['status'] ?? 'PENDING'),
+            _detailRow("Source", order['source'] ?? 'APP'),
             _detailRow(
                 "Items",
                 items
@@ -348,7 +352,7 @@ class _CustomerOrderHistoryScreenState
               _detailRow("Delivery Date",
                   order['deliveryDate'].toString().split('T')[0]),
             if (order['deliverySlot'] != null)
-              _detailRow("Delivery Slot", order['deliverySlot']?.toString() ?? ''),
+              _detailRow("Delivery Slot", order['deliverySlot']),
             const Divider(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,9 +361,9 @@ class _CustomerOrderHistoryScreenState
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   "₹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: cs.primary,
+                      color: primary,
                       fontSize: 18),
                 ),
               ],
@@ -386,7 +390,7 @@ class _CustomerOrderHistoryScreenState
   }
 
   void _confirmCancellation(BuildContext context, Map<String, dynamic> order) {
-    showDialog<void>(
+    showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Cancel Order?"),
@@ -423,7 +427,7 @@ class _CustomerOrderHistoryScreenState
       await supabase
           .from('Order')
           .update(updates)
-          .eq('id', order['id'] as Object);
+          .eq('id', order['id']);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -473,3 +477,4 @@ class _CustomerOrderHistoryScreenState
     return months[month - 1];
   }
 }
+

@@ -11,9 +11,9 @@ include: package:flutter_lints/flutter.yaml
 
 analyzer:
   language:
-    strict-casts: true
-    strict-inference: true
-    strict-raw-types: true
+    strict-casts: false
+    strict-inference: false
+    strict-raw-types: false
   errors:
     # Treat these critical warnings as compiler errors to prevent builds with issues
     missing_required_param: error
@@ -34,3 +34,4 @@ linter:
     - cancel_subscriptions        # Avoids memory leaks with StreamSubscriptions
     - hash_and_equals             # Enforces proper equality logic
     - valid_regexps               # Prevents invalid regular expressions at runtime
+

@@ -18,11 +18,11 @@ class CustomerTrackingScreen extends StatefulWidget {
 }
 
 class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
-  Color get primary => Theme.of(context).colorScheme.onSurfaceVariant;
-  Color get background => Theme.of(context).colorScheme.surface;
-  Color get onSurface => Theme.of(context).colorScheme.onSurface;
-  Color get secondary => Theme.of(context).colorScheme.onSurface;
-  Color get surfaceContainerLow => Theme.of(context).colorScheme.surfaceContainerLow;
+  static const Color primary = Color(0xFFFF4D8D);
+  static const Color background = Color(0xFFFFF0F6);
+  static const Color onSurface = Color(0xFF701235);
+  static const Color secondary = Color(0xFF701235);
+  static const Color surfaceContainerLow = Color(0xFFFFF1E9);
 
   Map<String, dynamic>? orderData;
   List<dynamic> orderItems = [];
@@ -56,7 +56,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
             .order('createdAt', ascending: false)
             .limit(1)
             .maybeSingle();
-        id = recentOrder?['id']?.toString();
+        id = recentOrder?['id'] as String?;
       }
 
       if (id != null) {
@@ -86,7 +86,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: background,
         body: Center(child: CircularProgressIndicator(color: primary)),
       );
@@ -136,7 +136,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           backgroundColor: background,
           appBar: _buildAppBar(context),
           body: orderData == null && snapshot.connectionState == ConnectionState.waiting
-              ? Center(child: CircularProgressIndicator(color: primary))
+              ? const Center(child: CircularProgressIndicator(color: primary))
               : SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: Column(
@@ -163,7 +163,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios_new, color: secondary, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new, color: secondary, size: 20),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -196,7 +196,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   }
 
   Widget _buildStatusTracker(bool isSelfCheckout) {
-    final String status = orderData?['status']?.toString() ?? 'PENDING';
+    final String status = (orderData?['status'] as String?) ?? 'PENDING';
     
     // Unified Status Stages
     final List<Map<String, dynamic>> stages = [
@@ -369,11 +369,11 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: secondary.withValues(alpha: 0.05))),
       child: Row(
         children: [
-          Icon(Icons.headset_mic_outlined, color: primary, size: 20),
+          const Icon(Icons.headset_mic_outlined, color: primary, size: 20),
           const SizedBox(width: 16),
           Expanded(child: Text("Need help with your order?", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w600, color: secondary.withValues(alpha: 0.7)))),
           TextButton(
-            onPressed: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const ContactScreen())),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactScreen())),
             child: Text("Support", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
           ),
         ],

@@ -18,15 +18,14 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           persist-credentials: false
 
       - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@e938fdf56512cc96ef2f93601a5a40bde3801046  # v2.18.0
         with:
           channel: stable
-          cache: true
 
       - name: Install Dependencies
         run: flutter pub get
@@ -59,10 +58,9 @@ jobs:
           flutter build web --release --base-href "/"
           --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
           --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
-          --no-wasm-dry-run
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel
 
       - name: Deploy to Vercel
         run: |
@@ -70,11 +68,7 @@ jobs:
           vercel deploy build/web \
           --prod \
           --token="${{ secrets.VERCEL_TOKEN }}" \
-          --yes || {
-            echo "::error::Vercel deployment failed. Verify VERCEL_ORG_ID and VERCEL_PROJECT_ID secrets match your Vercel project."
-            echo "::error::Get correct IDs from: https://vercel.com/dashboard → Project Settings → General"
-            exit 1
-          }
+          --yes
         env:
           VERCEL_ORG_ID: "${{ secrets.VERCEL_ORG_ID }}"
           VERCEL_PROJECT_ID: "${{ secrets.VERCEL_PROJECT_ID }}"

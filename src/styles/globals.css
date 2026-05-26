@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-blush: #f4c2c2;
+  --color-rose: #e8a9a9;
+  --color-rose-dark: #d88c8c;
+  --color-cream: #f7f3ef;
+  --color-beige: #e8ded4;
+  --color-ivory: #fff9f7;
+  --color-text-primary: #2b2b2b;
+  --color-text-secondary: #6e6e6e;
+  --color-text-muted: #9a9a9a;
+  --color-gold: #c9a27e;
+  --color-cocoa: #5a3e36;
+  --color-border: #f0ebe4;
+
+  /* Typography */
+  --font-heading: "Playfair Display", serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Spacing Scale */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* Shadows */
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.02);
+  --shadow-premium: 0 10px 30px rgba(90, 62, 54, 0.05);
+
+  /* Transitions */
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-default: 0.3s ease;
+}
+
+@utility transition-slow {
+  transition: all var(--transition-slow);
+}
+
+@utility transition-default {
+  transition: all var(--transition-default);
+}
+
+@layer base {
+  body {
+    @apply bg-cream text-text-primary font-body antialiased;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-beige) transparent;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-tight;
+  }
+
+  /* Custom Scrollbar for Webkit */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-beige);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-gold);
+  }
+}
+
+@layer utilities {
+  .luxury-card {
+    @apply bg-white rounded-lg shadow-soft border border-border/50 hover:shadow-premium transition-slow;
+  }
+  .glass-ivory {
+    @apply bg-ivory/80 backdrop-blur-md border-b border-border/40;
+  }
+  .text-luxury {
+    @apply font-heading italic text-gold;
+  }
+}

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,10 +27,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  Color get primary => Theme.of(context).colorScheme.onSurfaceVariant;
-  Color get accent => Theme.of(context).colorScheme.primaryContainer;
-  Color get background => Theme.of(context).colorScheme.surface;
-  Color get berry => Theme.of(context).colorScheme.onSurface;
+  static const Color primary = Color(0xFFFF4D8D);
+  static const Color accent = Color(0xFFFFB6D3);
+  static const Color background = Color(0xFFFFF0F6);
+  static const Color berry = Color(0xFF701235);
   static const String _emailKey = 'saved_email';
 
   @override
@@ -81,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       if (!isSetupCompleted && !widget.isOwner) {
         unawaited(Navigator.pushReplacement(
           context,
-          MaterialPageRoute<void>(
+          MaterialPageRoute(
             builder: (context) => ProfileSetupScreen(
               onSuccess: widget.onSuccess,
               isOwner: widget.isOwner,
@@ -96,13 +96,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           if (mounted) {
             unawaited(Navigator.pushReplacement(
               context,
-              MaterialPageRoute<void>(builder: (context) => owner_dashboard.OwnerDashboard()),
+              MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
             ));
           }
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute<void>(builder: (context) => const CustomerMainScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
           ));
         }
       }
@@ -169,8 +169,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       debugPrint("Authentication error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Authentication failed. Please try again later."),
+          const SnackBar(
+            content: Text("Authentication failed. Please try again later."),
             backgroundColor: primary,
             behavior: SnackBarBehavior.floating,
           ),
@@ -211,7 +211,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.arrow_back_ios_new, color: berry),
+                        icon: const Icon(Icons.arrow_back_ios_new, color: berry),
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           padding: const EdgeInsets.all(12),
@@ -247,7 +247,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       Autocomplete<String>(
                         optionsBuilder: (TextEditingValue textEditingValue) {
                           final input = textEditingValue.text;
-                          if (input.isEmpty) return const Iterable<String>.empty();
+                          if (input.isEmpty || input.isEmpty) return const Iterable<String>.empty();
                           final domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
                           final suggestions = <String>{};
                           if (input.contains('@')) {
@@ -336,7 +336,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         autofillHints: const [AutofillHints.password],
                         style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
                         decoration: _buildInputDecoration(
-                          "••••••••", 
+                          "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢", 
                           Icons.lock_outline,
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
@@ -401,7 +401,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                 TextSpan(text: _isSignUp ? "Already have an account? " : "New to Sonna's? "),
                                 TextSpan(
                                   text: _isSignUp ? "Sign In" : "Create one",
-                                  style: TextStyle(color: primary, fontWeight: FontWeight.w800),
+                                  style: const TextStyle(color: primary, fontWeight: FontWeight.w800),
                                 ),
                               ],
                             ),
@@ -461,13 +461,14 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide(color: primary, width: 1.5),
+        borderSide: const BorderSide(color: primary, width: 1.5),
       ),
       errorStyle: GoogleFonts.plusJakartaSans(color: primary, fontWeight: FontWeight.w600),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(20),
-        borderSide: BorderSide(color: primary, width: 1),
+        borderSide: const BorderSide(color: primary, width: 1),
       ),
     );
   }
 }
+

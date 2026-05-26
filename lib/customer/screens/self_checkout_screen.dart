@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
-class SelfCheckoutScreen extends ConsumerStatefulWidget {
+class SelfCheckoutScreen extends StatefulWidget {
   const SelfCheckoutScreen({super.key});
 
   @override
-  ConsumerState<SelfCheckoutScreen> createState() => _SelfCheckoutScreenState();
+  State<SelfCheckoutScreen> createState() => _SelfCheckoutScreenState();
 }
 
-class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
+class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
@@ -25,21 +25,23 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final cart = ref.watch(customerCartProvider);
+    const primary = Color(0xFFFF4D8D);
+    const background = Color(0xFFFFF0F6);
+    const berryText = Color(0xFF701235);
+    final cart = Provider.of<CartProvider>(context);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface),
+          icon: const Icon(Icons.arrow_back_ios_new, color: berryText),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           "In-Store Self Checkout",
-          style: GoogleFonts.notoSerif(color: cs.onSurfaceVariant, fontStyle: FontStyle.italic),
+          style: GoogleFonts.notoSerif(color: primary, fontStyle: FontStyle.italic),
         ),
         centerTitle: true,
       ),
@@ -59,7 +61,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
               keyboardType: TextInputType.phone,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
               prefixText: "+91 ",
-              prefixStyle: GoogleFonts.plusJakartaSans(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 14),
+              prefixStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF701235), fontWeight: FontWeight.w600, fontSize: 14),
             ),
             
             const SizedBox(height: 40),
@@ -72,7 +74,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: cs.onSurface.withValues(alpha: 0.05),
+                    color: berryText.withValues(alpha: 0.05),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -80,14 +82,14 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
               ),
               child: Column(
                 children: [
-                  ...cart.itemList.map((item) => Padding(
+                  ...cart.items.map((item) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           "${item.name} (x${item.quantity})",
-                          style: GoogleFonts.plusJakartaSans(fontSize: 14, color: cs.onSurface.withValues(alpha: 0.7)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 14, color: berryText.withValues(alpha: 0.7)),
                         ),
                         Text(
                           "₹${((item.price * item.quantity) / 100).toStringAsFixed(2)}",
@@ -113,7 +115,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
                         style: GoogleFonts.notoSerif(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
-                          color: cs.onSurfaceVariant,
+                          color: primary,
                         ),
                       ),
                     ],
@@ -144,7 +146,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
                   
                   Navigator.push(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute(
                       builder: (context) => PaymentScreen(
                         customerName: _nameController.text,
                         phone: _phoneController.text,
@@ -158,7 +160,7 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.onSurfaceVariant,
+                  backgroundColor: primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -178,14 +180,13 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
   }
 
   Widget _sectionTitle(String title) {
-    final sectionCs = Theme.of(context).colorScheme;
     return Text(
       title,
       style: GoogleFonts.plusJakartaSans(
         fontSize: 11,
         fontWeight: FontWeight.bold,
         letterSpacing: 1.5,
-        color: sectionCs.onSurface.withValues(alpha: 0.5),
+        color: const Color(0xFF701235).withValues(alpha: 0.5),
       ),
     );
   }
@@ -200,7 +201,6 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
     String? prefixText,
     TextStyle? prefixStyle,
   }) {
-    final fieldCs = Theme.of(context).colorScheme;
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -211,16 +211,16 @@ class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
         hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: Colors.grey),
         prefixText: prefixText,
         prefixStyle: prefixStyle,
-        prefixIcon: Icon(icon, size: 20, color: fieldCs.onSurfaceVariant),
+        prefixIcon: Icon(icon, size: 20, color: const Color(0xFFFF4D8D)),
         filled: true,
         fillColor: Colors.white,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: fieldCs.onSurfaceVariant.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: const Color(0xFFFF4D8D).withValues(alpha: 0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: fieldCs.onSurfaceVariant),
+          borderSide: const BorderSide(color: Color(0xFFFF4D8D)),
         ),
       ),
     );
