@@ -1,9 +1,9 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/haptic_service.dart';
 import 'checkout_screen.dart';
 
@@ -23,9 +23,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final _addressController = TextEditingController();
   bool _isLoading = false;
 
-  Color get primary => Theme.of(context).colorScheme.onSurfaceVariant;
-  Color get background => Theme.of(context).colorScheme.surface;
-  Color get berry => Theme.of(context).colorScheme.onSurface;
+  static const Color primary = Color(0xFFFF4D8D);
+  static const Color background = Color(0xFFFFF0F6);
+  static const Color berry = Color(0xFF701235);
 
   @override
   void dispose() {
@@ -39,7 +39,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    HapticService.selection();
+    unawaited(HapticService.selection());
 
     try {
       final supabase = Supabase.instance.client;
@@ -56,10 +56,10 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         ),
       );
 
-      // Save locally for fast, offline access
-      final storage = FlutterSecureStorage();
-      await storage.write(key: 'default_address', value: _addressController.text.trim());
-      await storage.write(key: 'saved_addresses', value: Uri.encodeComponent(_addressController.text.trim()));
+      // Save locally to SharedPreferences for fast, offline access
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('default_address', _addressController.text.trim());
+      await prefs.setString('saved_addresses', Uri.encodeComponent(_addressController.text.trim()));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +90,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()),
+            MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
           ));
         }
       }
@@ -140,7 +140,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.celebration_rounded,
                         size: 50,
                         color: primary,
@@ -181,7 +181,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your first and last name",
-                      prefixIcon: Icon(Icons.person_outline, color: primary),
+                      prefixIcon: const Icon(Icons.person_outline, color: primary),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -190,7 +190,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: primary, width: 1.5),
+                        borderSide: const BorderSide(color: primary, width: 1.5),
                       ),
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty) ? "Please enter your name" : null,
@@ -221,7 +221,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
-                      prefixIcon: Icon(Icons.phone_outlined, color: primary),
+                      prefixIcon: const Icon(Icons.phone_outlined, color: primary),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -230,7 +230,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: primary, width: 1.5),
+                        borderSide: const BorderSide(color: primary, width: 1.5),
                       ),
                     ),
                     validator: (v) {
@@ -256,8 +256,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                         color: berry.withValues(alpha: 0.5),
                       ),
                       hintText: "Enter your address for accurate delivery",
-                      prefixIcon: Padding(
-                        padding: const EdgeInsets.only(bottom: 40),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 40),
                         child: Icon(Icons.location_on_outlined, color: primary),
                       ),
                       filled: true,
@@ -268,7 +268,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: primary, width: 1.5),
+                        borderSide: const BorderSide(color: primary, width: 1.5),
                       ),
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty) ? "Please enter your delivery address" : null,
@@ -310,3 +310,4 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 }
+

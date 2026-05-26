@@ -1,9 +1,9 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +15,7 @@ import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
 
 
-class PaymentScreen extends ConsumerStatefulWidget {
+class PaymentScreen extends StatefulWidget {
   final String? customerName;
   final String? phone;
   final String? address;
@@ -36,10 +36,10 @@ class PaymentScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
+  State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends ConsumerState<PaymentScreen> {
+class _PaymentScreenState extends State<PaymentScreen> {
   String _selectedMethod = 'Razorpay';
   final bool _showSuccess = false;
   bool _isLoading = false;
@@ -63,13 +63,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
-    debugPrint("Razorpay Payment Success: ${response.paymentId?.substring(0, 8)}...");
-    final cart = ref.read(customerCartProvider);
+    debugPrint("Razorpay Payment Success: ${response.paymentId}");
+    final cart = context.read<CartProvider>();
     _placeOrder(cart, paymentId: response.paymentId);
   }
 
   void _handlePaymentError(PaymentFailureResponse response) {
-    debugPrint("Razorpay Payment Error: ${response.code}");
+    debugPrint("Razorpay Payment Error: ${response.code} - ${response.message}");
     setState(() => _isLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -83,13 +83,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     debugPrint("External Wallet: ${response.walletName}");
   }
 
-  void _startRazorpayPayment(CustomerCartState cart) {
-    final cs = Theme.of(context).colorScheme;
+  void _startRazorpayPayment(CartProvider cart) {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text("Online payments via Razorpay are only supported on Android & iOS mobile devices."),
-          backgroundColor: cs.primary,
+          backgroundColor: Color(0xFFFF4D8D),
         ),
       );
       return;
@@ -130,9 +129,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     return (subtotalCents + packagingCents + taxCents).toDouble();
   }
 
-  Future<void> _placeOrder(CustomerCartState cart, {String? paymentId}) async {
-    final cs = Theme.of(context).colorScheme;
-    if (cart.itemList.isEmpty) return;
+  Future<void> _placeOrder(CartProvider cart, {String? paymentId}) async {
+    if (cart.items.isEmpty) return;
     
     setState(() => _isLoading = true);
     try {
@@ -155,7 +153,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             .eq('phone', customerPhone)
             .maybeSingle();
         
-        conversationId = (existingConv?['id'] as String?) ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
+        conversationId = existingConv?['id'] ?? "CONV-${DateTime.now().millisecondsSinceEpoch}";
         
         await supabase.from('WhatsAppConversation').upsert({
           'id': conversationId,
@@ -188,8 +186,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         'source': 'APP',
         'updatedAt': DateTime.now().toUtc().toIso8601String(),
         'createdAt': DateTime.now().toUtc().toIso8601String(),
-        'isCustom': cart.itemList.any((item) => item.imageUrl.contains('custom')),
-        'customImageUrl': cart.itemList.isNotEmpty ? cart.itemList.first.imageUrl : null,
+        'isCustom': cart.items.any((item) => item.imageUrl.contains('custom')),
+        'customImageUrl': cart.items.isNotEmpty ? cart.items.first.imageUrl : null,
       });
 
       // Update user metadata with phone if logged in
@@ -203,7 +201,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       try {
         // 3. Insert Items
-        final List<Map<String, dynamic>> itemsToInsert = cart.itemList.asMap().entries.map((entry) => {
+        final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
           'id': "ITEM-$orderId-${entry.key}",
           'orderId': orderId,
           'cakeId': entry.value.cakeId ?? entry.value.id,
@@ -222,12 +220,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       }
       
       // 4. Clear Cart
-      ref.read(customerCartProvider.notifier).clear();
+      cart.clear();
       
       if (mounted) {
         setState(() => _isLoading = false);
         unawaited(Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
+          MaterialPageRoute(
             builder: (context) => OrderSuccessScreen(
               orderNumber: orderNumber,
               totalAmount: totalWithExtras / 100,
@@ -246,7 +244,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            backgroundColor: cs.primary,
+            backgroundColor: const Color(0xFFFF4D8D),
             duration: const Duration(seconds: 10),
             action: paymentId != null ? SnackBarAction(
               label: "COPY ID",
@@ -263,11 +261,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = ref.watch(customerCartProvider);
-    final cs = Theme.of(context).colorScheme;
+    final cart = context.watch<CartProvider>();
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color primaryContainerColor = Color(0xFFFFB6D3);
+    const Color surfaceColor = Color(0xFFFFF0F6);
+    const Color onSurfaceColor = Color(0xFF701235);
+    const Color secondaryColor = Color(0xFF701235);
+    const Color outlineVariantColor = Color(0xFFD8C1C6);
 
     return Scaffold(
-        backgroundColor: cs.surface,
+      backgroundColor: surfaceColor,
       body: Stack(
         children: [
           // Background Decoration
@@ -278,7 +281,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               width: 400,
               height: 400,
               decoration: BoxDecoration(
-                color: cs.primaryContainer.withValues(alpha: 0.05),
+                color: primaryContainerColor.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -291,16 +294,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 floating: true,
                 pinned: true,
                 elevation: 0,
-                backgroundColor: cs.surface.withValues(alpha: 0.8),
+                backgroundColor: surfaceColor.withValues(alpha: 0.8),
                 surfaceTintColor: Colors.transparent,
                 leading: IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: Icon(Icons.arrow_back_ios_new, color: cs.primary, size: 20),
+                  icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
                 ),
                 title: Text(
-                  "Sonna’s Patisserie",
+                  "Sonnaâ€™s Patisserie",
                   style: GoogleFonts.notoSerif(
-                    color: cs.primary,
+                    color: primaryColor,
                     fontSize: 20,
                     fontWeight: FontWeight.w400,
                     fontStyle: FontStyle.italic,
@@ -309,7 +312,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 actions: [
                   IconButton(
                     onPressed: () {},
-                    icon: Icon(Icons.account_circle_outlined, color: cs.primary),
+                    icon: const Icon(Icons.account_circle_outlined, color: primaryColor),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -328,7 +331,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: cs.primary.withValues(alpha: 0.7),
+                          color: primaryColor.withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -337,16 +340,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           style: GoogleFonts.notoSerif(
                             fontSize: 40,
                             fontWeight: FontWeight.w300,
-                            color: cs.onSurface,
+                            color: onSurfaceColor,
                             height: 1.1,
                           ),
                           children: [
                             const TextSpan(text: "Complete Your\n"),
-                            TextSpan(
+                            const TextSpan(
                               text: "Savoury Experience",
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: cs.primary,
+                                color: primaryColor,
                               ),
                             ),
                           ],
@@ -370,7 +373,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,
-                          color: cs.onSurface.withValues(alpha: 0.6),
+                          color: secondaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -413,7 +416,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.1)),
+                                border: Border.all(color: outlineVariantColor.withValues(alpha: 0.1)),
                               ),
                               child: Column(
                                 children: [
@@ -429,9 +432,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: cs.onSurface.withValues(alpha: 0.6),
+                                      color: secondaryColor.withValues(alpha: 0.6),
                                     ),
-                                  ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -453,9 +457,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                     child: TextField(
                                       decoration: InputDecoration(
                                         hintText: "Enter UPI ID (e.g. user@bank)",
-                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.onSurface.withValues(alpha: 0.3)),
+                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withValues(alpha: 0.3)),
                                         filled: true,
-                                        fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
+                                        fillColor: const Color(0xFFFFF1E9),
                                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                       ),
@@ -466,7 +470,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                     height: 48,
                                     padding: const EdgeInsets.symmetric(horizontal: 20),
                                     decoration: BoxDecoration(
-                                color: cs.primary,
+                                      color: primaryColor,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Center(
@@ -516,7 +520,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: cs.onSurface.withValues(alpha: 0.08),
+                          color: secondaryColor.withValues(alpha: 0.08),
                           blurRadius: 80,
                           offset: const Offset(0, 40),
                         ),
@@ -530,11 +534,11 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                           style: GoogleFonts.notoSerif(
                             fontSize: 24,
                             fontWeight: FontWeight.w400,
-                            color: cs.onSurface,
+                            color: onSurfaceColor,
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ...cart.itemList.map((item) => Padding(
+                        ...cart.items.map((item) => Padding(
                           padding: const EdgeInsets.only(bottom: 16),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -542,20 +546,20 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               Expanded(
                                 child: Text(
                                   "${item.name} (x${item.quantity})",
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: cs.onSurface.withValues(alpha: 0.7)),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withValues(alpha: 0.7)),
                                 ),
                               ),
                               Text(
-                                "₹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
-                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: cs.onSurface),
+                                "â‚¹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
+                                style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurfaceColor),
                               ),
                             ],
                           ),
                         )),
                         
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Divider(color: cs.outlineVariant, thickness: 0.5),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Divider(color: Color(0xFFD8C1C6), thickness: 0.5),
                         ),
                         
                         Row(
@@ -567,18 +571,18 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               children: [
                                 Text(
                                   "TOTAL AMOUNT",
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: cs.primary, letterSpacing: 1),
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: primaryColor, letterSpacing: 1),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
-                                  style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: cs.onSurface),
+                                  NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
+                                  style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
                             ),
                             Text(
                               "Incl. all taxes",
-                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: cs.onSurface.withValues(alpha: 0.4)),
+                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -601,7 +605,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               gradient: LinearGradient(
                                 colors: _isLoading 
                                   ? [Colors.grey, Colors.grey] 
-                                  : [cs.primary, cs.primaryContainer],
+                                  : [primaryColor, primaryContainerColor],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -609,7 +613,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                               boxShadow: [
                                 if (!_isLoading)
                                   BoxShadow(
-                                    color: cs.primary.withValues(alpha: 0.2),
+                                    color: primaryColor.withValues(alpha: 0.2),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -635,7 +639,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.lock_outline, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            const Icon(Icons.lock_outline, size: 14, color: Color(0xFF867277)),
                             const SizedBox(width: 8),
                             Text(
                               "SECURE SSL ENCRYPTED CHECKOUT",
@@ -643,7 +647,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                                color: const Color(0xFF867277).withValues(alpha: 0.4),
                               ),
                             ),
                           ],
@@ -674,7 +678,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     Widget? child,
   }) {
     final bool isSelected = _selectedMethod == id;
-    final cs = Theme.of(context).colorScheme;
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color onSurfaceColor = Color(0xFF701235);
+    const Color secondaryColor = Color(0xFF701235);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -683,10 +689,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isSelected ? cs.primary.withValues(alpha: 0.2) : cs.outlineVariant.withValues(alpha: 0.1)),
+        border: Border.all(color: isSelected ? primaryColor.withValues(alpha: 0.2) : const Color(0xFFD8C1C6).withValues(alpha: 0.1)),
         boxShadow: [
           if (isSelected)
-            BoxShadow(color: cs.onSurface.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
+            BoxShadow(color: secondaryColor.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: InkWell(
@@ -699,10 +705,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: cs.primaryContainer.withValues(alpha: 0.2),
+                    color: const Color(0xFFFFB6D3).withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: cs.primary, size: 20),
+                  child: Icon(icon, color: primaryColor, size: 20),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -711,12 +717,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     children: [
                       Text(
                         title,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: cs.onSurface),
+                        style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w600, color: onSurfaceColor),
                       ),
                       if (!isSelected)
                         Text(
                           subtitle,
-                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.6)),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 11, color: secondaryColor.withValues(alpha: 0.6)),
                         ),
                     ],
                   ),
@@ -726,8 +732,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: isSelected ? cs.primary : cs.outlineVariant, width: 2),
-                    color: isSelected ? cs.primary : Colors.transparent,
+                    border: Border.all(color: isSelected ? primaryColor : const Color(0xFFD8C1C6), width: 2),
+                    color: isSelected ? primaryColor : Colors.transparent,
                   ),
                   child: isSelected ? const Center(child: Icon(Icons.check, size: 12, color: Colors.white)) : null,
                 ),
@@ -741,28 +747,29 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Widget _buildAppLogo(String name) {
-    final cs = Theme.of(context).colorScheme;
     return Container(
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        color: const Color(0xFFFFF1E9),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
         child: Text(
           name,
-          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.onSurface.withValues(alpha: 0.4)),
+          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withValues(alpha: 0.4)),
         ),
       ),
     );
   }
 
   Widget _buildSuccessOverlay(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color secondaryColor = Color(0xFF701235);
+    const Color surfaceColor = Color(0xFFFFF0F6);
 
     return Material(
-      color: cs.surface.withValues(alpha: 0.95),
+      color: surfaceColor.withValues(alpha: 0.95),
       child: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
@@ -778,7 +785,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: cs.primary.withValues(alpha: 0.15),
+                      color: primaryColor.withValues(alpha: 0.15),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -800,12 +807,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               
               // Heading
               Text(
-                "Order Placed Successfully 🎉",
+                "Order Placed Successfully ðŸŽ‰",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
+                  color: secondaryColor,
                   height: 1.2,
                 ),
               ),
@@ -815,7 +822,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
-                  color: cs.onSurface.withValues(alpha: 0.6),
+                  color: secondaryColor.withValues(alpha: 0.6),
                   height: 1.6,
                 ),
               ),
@@ -829,7 +836,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: cs.onSurface.withValues(alpha: 0.04),
+                      color: secondaryColor.withValues(alpha: 0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -842,7 +849,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
                     ),
-                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
+                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
@@ -860,7 +867,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute<void>(
+                      MaterialPageRoute(
                         builder: (context) => CustomerTrackingScreen(
                           orderId: _placedOrderId,
                           isSelfCheckout: widget.isSelfCheckout,
@@ -869,12 +876,12 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
+                    backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     elevation: 10,
-                    shadowColor: cs.primary.withValues(alpha: 0.4),
+                    shadowColor: primaryColor.withValues(alpha: 0.4),
                   ),
                   child: Text(
                     "TRACK ORDER",
@@ -898,14 +905,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     owner_dashboard.loadLibrary().then((_) {
                       if (context.mounted) {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute<void>(builder: (context) => owner_dashboard.OwnerDashboard()),
+                          MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
                           (route) => false,
                         );
                       }
                     });
                   } else {
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute<void>(builder: (context) => const CustomerMainScreen()),
+                      MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
                       (route) => false,
                     );
                   }
@@ -914,7 +921,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   "Back to Home",
                   style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
-                    color: cs.onSurface.withValues(alpha: 0.5),
+                    color: secondaryColor.withValues(alpha: 0.5),
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -928,7 +935,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   }
 
   Widget _buildInfoRow(String label, String value) {
-    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -937,7 +943,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: cs.onSurface.withValues(alpha: 0.4),
+            color: const Color(0xFF701235).withValues(alpha: 0.4),
           ),
         ),
         Text(
@@ -945,10 +951,11 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            color: cs.onSurface,
+            color: const Color(0xFF701235),
           ),
         ),
       ],
     );
   }
 }
+

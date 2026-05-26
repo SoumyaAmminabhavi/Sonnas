@@ -1,8 +1,7 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io' if (dart.library.html) 'platform_file_stub.dart' as io show File;
-import 'package:app/services/menu_service.dart';
 
 /// Core Supabase Configuration & Shared Storage Utilities
 class SupabaseService {
@@ -42,6 +41,51 @@ class SupabaseService {
 
   static SupabaseClient get client => Supabase.instance.client;
 
+  // Fetching Orders
+  static Future<List<Map<String, dynamic>>> fetchOrders() async {
+    try {
+      final data = await client
+          .from('Order')
+          .select()
+          .order('createdAt', ascending: false);
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Error fetching orders: $e');
+      return [];
+    }
+  }
+
+  // Fetching Menu Items (Cakes) as per Prisma Schema
+  static Future<List<Map<String, dynamic>>> fetchMenu() async {
+    try {
+      final data = await client
+          .from('Cake')
+          .select('*, options:CakeOption(*), category:Category(name)');
+      return List<Map<String, dynamic>>.from(data);
+    } catch (e) {
+      debugPrint('Error fetching menu: $e');
+      return [];
+    }
+  }
+
+  // Fetching Categories
+  static Future<List<String>> fetchCategories() async {
+    try {
+      final data = await client
+          .from('Category')
+          .select('name');
+      
+      final List<String> cats = List<Map<String, dynamic>>.from(data)
+          .map((item) => item['name'].toString())
+          .toList();
+      
+      return cats;
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+      return [];
+    }
+  }
+
   /// Unified helper to get public URL for a file in Supabase storage
   /// Note: Resize parameters (width/height) are not supported on Supabase Free Tier.
   static String getPublicUrl(String? path, {required String bucket, int? width, int? height}) {
@@ -74,12 +118,6 @@ class SupabaseService {
     // Use direct public URL (Transformation is a paid feature)
     return storageClient.from(bucket).getPublicUrl(cleanPath);
   }
-
-  /// Delegate: Fetch all menu items with full category and option data
-  static Future<List<Map<String, dynamic>>> fetchMenu() => MenuService.fetchMenu();
-
-  /// Delegate: Fetch all categories
-  static Future<List<Map<String, dynamic>>> fetchCategories() => MenuService.fetchCategories();
 
   /// Helper to get a signed URL for private storage items
   static Future<String?> getSignedUrl(String bucket, String path) async {
@@ -120,3 +158,4 @@ class SupabaseService {
     }
   }
 }
+

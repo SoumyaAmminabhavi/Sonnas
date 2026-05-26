@@ -1,0 +1,10 @@
+# Handle line endings automatically for text files
+* text=auto
+
+# Force Windows batch files to always use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Ensure shell scripts always use LF
+*.sh text eol=lf
+gradlew text eol=lf

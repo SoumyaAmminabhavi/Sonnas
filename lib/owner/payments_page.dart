@@ -390,130 +390,10 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
           itemCount: items.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            return _buildCompactCard(context, items[index]);
+            return _PaymentCardReactive(item: items[index]);
           },
         );
       }
-    );
-  }
-
-  Widget _buildCompactCard(BuildContext context, Map<String, dynamic> item) {
-    final cs = Theme.of(context).colorScheme;
-    final String status = (item['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
-    final isCompleted = status == 'PAID';
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "ORDER #${item['orderNumber'] ?? '---'}",
-                  style: GoogleFonts.plusJakartaSans(
-                    color: cs.secondary.withValues(alpha: 0.3),
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  (item['customerName'] as String?) ?? 'Anonymous',
-                  style: GoogleFonts.notoSerif(
-                    color: cs.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  (item['cakeName'] as String?) ?? 'Custom Creation',
-                  style: GoogleFonts.notoSerif(
-                    color: cs.secondary.withValues(alpha: 0.5),
-                    fontSize: 11,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                OrderService.formatPrice(item['totalPrice']),
-                style: GoogleFonts.notoSerif(
-                  color: cs.onSurface,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (!isCompleted)
-                ElevatedButton(
-                  onPressed: () async {
-                    try {
-                      await OrderService.updatePaymentStatus(item['id'].toString(), 'PAID');
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Payment for #${item['orderNumber']} marked as completed"),
-                            backgroundColor: cs.primary,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    } catch (e, stackTrace) {
-                      debugPrint("❌ Failed to update payment status: $e\n$stackTrace");
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Failed to update payment. Please try again."),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: cs.primary,
-                    foregroundColor: cs.onPrimary,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    minimumSize: const Size(80, 32),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: Text(
-                    "MARK AS PAID",
-                    style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: cs.secondary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    "PAID",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary,
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -622,5 +502,159 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
           ),
       ],
     );
-    }
+  }
+}
+
+class _PaymentCardReactive extends ConsumerWidget {
+  final Map<String, dynamic> item;
+  const _PaymentCardReactive({required this.item});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final String status = (item['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+    final isCompleted = status == 'PAID';
+    
+    // Watch order items for this order to display actual cake name
+    final itemsAsync = ref.watch(orderItemsProvider(item['id']?.toString() ?? ''));
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "ORDER #${item['orderNumber'] ?? '---'}",
+                  style: GoogleFonts.plusJakartaSans(
+                    color: cs.secondary.withValues(alpha: 0.3),
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  (item['customerName'] as String?) ?? 'Anonymous',
+                  style: GoogleFonts.notoSerif(
+                    color: cs.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                itemsAsync.when(
+                  data: (items) {
+                    String subtitle = 'Custom Creation';
+                    if (items.isNotEmpty) {
+                      final String firstName = (items[0]['cakeName'] as String?) ?? 'Boutique Order';
+                      subtitle = items.length > 1 ? "$firstName + ${items.length - 1} more" : firstName;
+                    }
+                    return Text(
+                      subtitle,
+                      style: GoogleFonts.notoSerif(
+                        color: cs.secondary.withValues(alpha: 0.5),
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    );
+                  },
+                  loading: () => Text(
+                    "Loading details...",
+                    style: GoogleFonts.notoSerif(
+                      color: cs.secondary.withValues(alpha: 0.3),
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  error: (e, st) => Text(
+                    "Custom Creation",
+                    style: GoogleFonts.notoSerif(
+                      color: cs.secondary.withValues(alpha: 0.5),
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                OrderService.formatPrice(item['totalPrice']),
+                style: GoogleFonts.notoSerif(
+                  color: cs.onSurface,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (!isCompleted)
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await OrderService.updatePaymentStatus(item['id'].toString(), 'PAID');
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Payment for #${item['orderNumber']} marked as completed"),
+                            backgroundColor: cs.primary,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    } catch (e, stackTrace) {
+                      debugPrint("❌ Failed to update payment status: $e\n$stackTrace");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Failed to update payment. Please try again."),
+                            backgroundColor: Colors.red,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    minimumSize: const Size(80, 32),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(
+                    "MARK AS PAID",
+                    style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: cs.secondary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    "PAID",
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.secondary,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,16 +9,20 @@ import 'checkout_screen.dart';
 import 'self_checkout_screen.dart';
 import 'auth_screen.dart';
 
-class CartScreen extends ConsumerWidget {
+class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cart = ref.watch(customerCartProvider);
-    final cs = Theme.of(context).colorScheme;
+  Widget build(BuildContext context) {
+    final cart = context.watch<CartProvider>();
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color primaryContainerColor = Color(0xFFFFB6D3);
+    const Color surfaceColor = Color(0xFFFFF0F6);
+    const Color onSurfaceColor = Color(0xFF701235);
+    const Color secondaryColor = Color(0xFF701235);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: surfaceColor,
       body: CustomScrollView(
         slivers: [
           // Top App Bar
@@ -26,17 +30,17 @@ class CartScreen extends ConsumerWidget {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: cs.surface.withValues(alpha: 0.8),
+            backgroundColor: surfaceColor.withValues(alpha: 0.8),
             surfaceTintColor: Colors.transparent,
             leading: IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: Icon(Icons.arrow_back_ios_new, color: cs.primary, size: 20),
+              icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
             ),
             centerTitle: true,
             title: Text(
               "Sonna’s Patisserie",
               style: GoogleFonts.notoSerif(
-                color: cs.primary,
+                color: primaryColor,
                 fontSize: 22,
                 fontWeight: FontWeight.w400,
                 fontStyle: FontStyle.italic,
@@ -45,7 +49,7 @@ class CartScreen extends ConsumerWidget {
             actions: [
               IconButton(
                 onPressed: () {},
-                icon: Icon(Icons.account_circle_outlined, color: cs.primary),
+                icon: const Icon(Icons.account_circle_outlined, color: primaryColor),
               ),
               const SizedBox(width: 8),
             ],
@@ -64,7 +68,7 @@ class CartScreen extends ConsumerWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
-                      color: cs.onSurfaceVariant,
+                      color: const Color(0xFF867277),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -73,7 +77,7 @@ class CartScreen extends ConsumerWidget {
                     style: GoogleFonts.notoSerif(
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
-                      color: cs.onSurface,
+                      color: onSurfaceColor,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -82,21 +86,21 @@ class CartScreen extends ConsumerWidget {
             ),
           ),
 
-          if (cart.itemList.isEmpty)
+          if (cart.items.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.shopping_bag_outlined, size: 64, color: cs.onSurface.withValues(alpha: 0.1)),
+                    Icon(Icons.shopping_bag_outlined, size: 64, color: secondaryColor.withValues(alpha: 0.1)),
                     const SizedBox(height: 24),
                     Text(
                       "Your bag is empty",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontStyle: FontStyle.italic,
-                        color: cs.onSurface.withValues(alpha: 0.4),
+                        color: secondaryColor.withValues(alpha: 0.4),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -108,7 +112,7 @@ class CartScreen extends ConsumerWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.5,
-                          color: cs.primary,
+                          color: primaryColor,
                         ),
                       ),
                     ),
@@ -120,14 +124,14 @@ class CartScreen extends ConsumerWidget {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  final item = cart.itemList[index];
-                  return _buildCartItem(context, ref, item, cart);
+                  final item = cart.items[index];
+                  return _buildCartItem(context, item, cart);
                 },
-                childCount: cart.itemList.length,
+                childCount: cart.items.length,
               ),
             ),
 
-          if (cart.itemList.isNotEmpty)
+          if (cart.items.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -138,16 +142,16 @@ class CartScreen extends ConsumerWidget {
                     style: GoogleFonts.notoSerif(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
-                      color: cs.primary,
+                      color: primaryColor,
                       decoration: TextDecoration.underline,
-                      decorationColor: cs.primaryContainer.withValues(alpha: 0.5),
+                      decorationColor: primaryContainerColor.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
               ),
             ),
 
-          if (cart.itemList.isNotEmpty)
+          if (cart.items.isNotEmpty)
             SliverToBoxAdapter(
               child: _buildFulfillmentSection(context, cart),
             ),
@@ -159,8 +163,10 @@ class CartScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCartItem(BuildContext context, WidgetRef ref, CartItem item, CustomerCartState cart) {
-    final cs = Theme.of(context).colorScheme;
+  Widget _buildCartItem(BuildContext context, CartItem item, CartProvider cart) {
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color onSurfaceColor = Color(0xFF701235);
+    const Color outlineVariantColor = Color(0xFFD8C1C6);
 
     String imageUrl = item.imageUrl;
 
@@ -169,7 +175,7 @@ class CartScreen extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.1)),
+          bottom: BorderSide(color: outlineVariantColor.withValues(alpha: 0.1)),
         ),
       ),
       child: Row(
@@ -188,7 +194,7 @@ class CartScreen extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
+                    color: onSurfaceColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -197,7 +203,7 @@ class CartScreen extends ConsumerWidget {
                   style: GoogleFonts.notoSerif(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: cs.primary,
+                    color: primaryColor,
                   ),
                 ),
               ],
@@ -205,7 +211,7 @@ class CartScreen extends ConsumerWidget {
           ),
           Row(
             children: [
-              _buildQtyIcon(Icons.remove, () => ref.read(customerCartProvider.notifier).decrementItem(item.id), cs: cs),
+              _buildQtyIcon(Icons.remove, () => cart.decrementItem(item.id)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -213,7 +219,7 @@ class CartScreen extends ConsumerWidget {
                   style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
                 ),
               ),
-              _buildQtyIcon(Icons.add, () => ref.read(customerCartProvider.notifier).addItem(item.id, item.name, item.price, item.imageUrl), cs: cs),
+              _buildQtyIcon(Icons.add, () => cart.addItem(item.id, item.name, item.price, item.imageUrl)),
             ],
           ),
         ],
@@ -222,22 +228,23 @@ class CartScreen extends ConsumerWidget {
   }
 
 
-  Widget _buildQtyIcon(IconData icon, VoidCallback onTap, {required ColorScheme cs}) {
+  Widget _buildQtyIcon(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
+          border: Border.all(color: const Color(0xFFD8C1C6).withValues(alpha: 0.3)),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 12, color: cs.onPrimaryContainer),
+        child: Icon(icon, size: 12, color: const Color(0xFF701235)),
       ),
     );
   }
 
-  Widget _buildFulfillmentSection(BuildContext context, CustomerCartState cart) {
-    final cs = Theme.of(context).colorScheme;
+  Widget _buildFulfillmentSection(BuildContext context, CartProvider cart) {
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color primaryContainerColor = Color(0xFFFFB6D3);
 
     final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
     // Source delivery fee from a central service/config in production
@@ -249,7 +256,7 @@ class CartScreen extends ConsumerWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: const Color(0xFFFFF1E9),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -263,7 +270,7 @@ class CartScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text("Total", style: GoogleFonts.notoSerif(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(currencyFormatter.format(total / 100), style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: cs.primary)),
+              Text(currencyFormatter.format(total / 100), style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: primaryColor)),
             ],
           ),
           const SizedBox(height: 24),
@@ -274,7 +281,7 @@ class CartScreen extends ConsumerWidget {
               if (currentUser == null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute<void>(
+                  MaterialPageRoute(
                     builder: (context) => AuthScreen(
                       isOwner: false,
                       onSuccess: () {
@@ -292,7 +299,7 @@ class CartScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            backgroundColor: cs.primary,
+                            backgroundColor: primaryColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -300,19 +307,20 @@ class CartScreen extends ConsumerWidget {
 
                         Navigator.push(
                           context,
-                          MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()),
+                          MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
                         );
                       },
                     ),
-                  ));
-                } else {
-                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const CustomerCheckoutScreen()));
+                  ),
+                );
+              } else {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()));
               }
             },
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
+                gradient: const LinearGradient(colors: [primaryColor, primaryContainerColor]),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Center(
@@ -328,7 +336,7 @@ class CartScreen extends ConsumerWidget {
               if (currentUser == null) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute<void>(
+                  MaterialPageRoute(
                     builder: (context) => AuthScreen(
                       isOwner: false,
                       onSuccess: () {
@@ -346,7 +354,7 @@ class CartScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            backgroundColor: cs.primary,
+                            backgroundColor: primaryColor,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -354,13 +362,14 @@ class CartScreen extends ConsumerWidget {
 
                         Navigator.push(
                           context,
-                          MaterialPageRoute<void>(builder: (context) => const SelfCheckoutScreen()),
+                          MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()),
                         );
                       },
                     ),
-                  ));
-                } else {
-                  Navigator.push(context, MaterialPageRoute<void>(builder: (context) => const SelfCheckoutScreen()));
+                  ),
+                );
+              } else {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()));
               }
             },
             child: Container(
@@ -368,10 +377,10 @@ class CartScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
               ),
               child: Center(
-                child: Text("IN-STORE SELF CHECKOUT", style: GoogleFonts.plusJakartaSans(color: cs.primary, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1)),
+                child: Text("IN-STORE SELF CHECKOUT", style: GoogleFonts.plusJakartaSans(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1)),
               ),
             ),
           ),

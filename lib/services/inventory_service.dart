@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
@@ -17,7 +18,24 @@ class InventoryService {
 
   /// Add a new inventory item
   static Future<void> addInventoryItem(Map<String, dynamic> item) async {
-    await _client.from('InventoryItem').insert(item);
+    final payload = Map<String, dynamic>.from(item);
+    payload['id'] ??= _generateUUID();
+    await _client.from('InventoryItem').insert(payload);
+  }
+
+  static String _generateUUID() {
+    final random = Random.secure();
+    final values = List<int>.generate(16, (i) => random.nextInt(256));
+    values[6] = (values[6] & 0x0f) | 0x40; // set version to 4
+    values[8] = (values[8] & 0x3f) | 0x80; // set variant to RFC 4122
+    final buffer = StringBuffer();
+    for (int i = 0; i < 16; i++) {
+      if (i == 4 || i == 6 || i == 8 || i == 10) {
+        buffer.write('-');
+      }
+      buffer.write(values[i].toRadixString(16).padLeft(2, '0'));
+    }
+    return buffer.toString();
   }
 
   /// Delete an inventory item

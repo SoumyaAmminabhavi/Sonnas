@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import '../../services/supabase_service.dart';
 import 'product_detail_screen.dart';
 
-class MenuScreen extends ConsumerStatefulWidget {
+class MenuScreen extends StatefulWidget {
   final String? initialSearchQuery;
   const MenuScreen({super.key, this.initialSearchQuery});
 
   @override
-  ConsumerState<MenuScreen> createState() => _MenuScreenState();
+  State<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _MenuScreenState extends ConsumerState<MenuScreen> {
+class _MenuScreenState extends State<MenuScreen> {
   List<Map<String, dynamic>> menuItems = [];
   List<Map<String, dynamic>> filteredItems = [];
   bool _isLoading = true;
@@ -75,9 +75,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
       if (mounted) {
         setState(() {
           // Update Categories
-          categories = ["All", ...cats.map((c) => c['name']?.toString() ?? "").where((name) => name.isNotEmpty && name != "All")];
+          categories = ["All", ...cats.where((c) => c != "All")];
           menuItems = data.map((cake) {
-            final options = cake['CakeOption'] as List?;
+            final options = cake['options'] as List?;
             double numericPrice = 0.0;
             String priceDisplay = "₹ 0.00";
             
@@ -114,8 +114,8 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
             debugPrint('DEBUG: Cake: ${cake['name']}, Image Path: $imageName, Generated URL: $imageUrl');
 
             // Extract category name from relation
-            final catObj = cake['Category'];
-            final String catName = (catObj is Map) ? ((catObj['name'] as String?) ?? 'General') : 'General';
+            final catObj = cake['category'];
+            final String catName = (catObj is Map) ? (catObj['name'] ?? 'General') : 'General';
 
             return {
               'id': cake['id'],
@@ -147,7 +147,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
               'description': 'Rich Belgian chocolate ganache.',
               'category': 'Cakes',
-              'options': <dynamic>[],
+              'options': [],
             },
             {
               'title': "Strawberry Bliss",
@@ -156,7 +156,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               'image': 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
               'description': 'Fresh strawberries with cream.',
               'category': 'Cakes',
-              'options': <dynamic>[],
+              'options': [],
             },
             {
               'title': "Butter Croissant",
@@ -165,7 +165,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               'image': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=1000&auto=format&fit=crop',
               'description': 'Flaky, buttery French pastry.',
               'category': 'Pastries',
-              'options': <dynamic>[],
+              'options': [],
             },
             {
               'title': "Cheese Quiche",
@@ -174,19 +174,18 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
               'image': 'https://images.unsplash.com/photo-1550617931-e17a7b70dce2?q=80&w=1000&auto=format&fit=crop',
               'description': 'Savory tart with aged cheddar.',
               'category': 'Savories',
-              'options': <dynamic>[],
+              'options': [],
             },
           ];
           filteredItems = List.from(menuItems);
           _filterByCategory();
           _isLoading = false;
         });
-        final snackCs = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text("Backend Restricted: Please check Supabase RLS Policies"),
-            backgroundColor: snackCs.onSurface,
-            duration: const Duration(seconds: 5),
+          const SnackBar(
+            content: Text("Backend Restricted: Please check Supabase RLS Policies"),
+            backgroundColor: Color(0xFF701235),
+            duration: Duration(seconds: 5),
           ),
         );
       }
@@ -196,9 +195,9 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   void _sortItems(String criteria) {
     setState(() {
       if (criteria == "Price: Low to High") {
-        filteredItems.sort((a, b) => (a['numericPrice'] as num).compareTo(b['numericPrice'] as num));
+        filteredItems.sort((a, b) => a['numericPrice'].compareTo(b['numericPrice']));
       } else if (criteria == "Price: High to Low") {
-        filteredItems.sort((a, b) => (b['numericPrice'] as num).compareTo(a['numericPrice'] as num));
+        filteredItems.sort((a, b) => b['numericPrice'].compareTo(a['numericPrice']));
       } else if (criteria == "Name: A-Z") {
         filteredItems.sort((a, b) => a['title'].toString().compareTo(b['title'].toString()));
       } else {
@@ -236,10 +235,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color background = Color(0xFFFFF0F6);
+    const Color secondaryColor = Color(0xFF701235);
+    const Color onSurface = Color(0xFF701235);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: background,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -254,7 +256,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2,
-                      color: cs.onSurfaceVariant,
+                      color: primaryColor,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -264,7 +266,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.06),
+                          color: primaryColor.withValues(alpha: 0.06),
                           blurRadius: 15,
                           offset: const Offset(0, 4),
                         ),
@@ -274,7 +276,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                       controller: _searchController,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
-                        color: cs.onSurface,
+                        color: secondaryColor,
                         fontWeight: FontWeight.w600,
                       ),
                       onChanged: (_) => _filterByCategory(),
@@ -282,12 +284,12 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         hintText: "Search delicacies...",
                         hintStyle: GoogleFonts.plusJakartaSans(
                           fontSize: 13,
-                          color: cs.onSurface.withValues(alpha: 0.4),
+                          color: secondaryColor.withValues(alpha: 0.4),
                         ),
-                        prefixIcon: Icon(Icons.search_rounded, color: cs.onSurfaceVariant),
+                        prefixIcon: const Icon(Icons.search_rounded, color: primaryColor),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: Icon(Icons.clear_rounded, color: cs.onSurfaceVariant),
+                                icon: const Icon(Icons.clear_rounded, color: primaryColor),
                                 onPressed: () {
                                   _searchController.clear();
                                   _filterByCategory();
@@ -322,13 +324,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             labelStyle: GoogleFonts.plusJakartaSans(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: isSelected ? Colors.white : cs.onSurface,
+                              color: isSelected ? Colors.white : onSurface,
                             ),
-                            selectedColor: cs.onSurfaceVariant,
+                            selectedColor: primaryColor,
                             backgroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(color: isSelected ? cs.onSurfaceVariant : cs.onSurfaceVariant.withValues(alpha: 0.1)),
+                              side: BorderSide(color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.1)),
                             ),
                             showCheckmark: false,
                           ),
@@ -344,7 +346,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                         "${filteredItems.length} items",
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
-                          color: cs.onSurface.withValues(alpha: 0.6),
+                          color: secondaryColor.withValues(alpha: 0.6),
                         ),
                       ),
                       Row(
@@ -359,10 +361,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                      color: cs.onSurface,
-                                    ),
+                                    color: onSurface,
                                   ),
-                                  const Icon(Icons.keyboard_arrow_down, size: 20),
+                                ),
+                                const Icon(Icons.keyboard_arrow_down, size: 20),
                               ],
                             ),
                             itemBuilder: (context) => [
@@ -377,7 +379,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             onPressed: () => setState(() => _isGridView = true),
                             icon: Icon(Icons.grid_view_rounded, 
                               size: 20, 
-                              color: _isGridView ? cs.onSurface : Colors.grey.shade400
+                              color: _isGridView ? onSurface : Colors.grey.shade400
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -387,7 +389,7 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                             onPressed: () => setState(() => _isGridView = false),
                             icon: Icon(Icons.list_rounded, 
                               size: 24, 
-                              color: !_isGridView ? cs.onSurface : Colors.grey.shade400
+                              color: !_isGridView ? onSurface : Colors.grey.shade400
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -402,15 +404,15 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
           ),
 
           if (_isLoading)
-            SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator(color: cs.onSurfaceVariant)),
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator(color: primaryColor)),
             )
           else if (filteredItems.isEmpty)
             const SliverFillRemaining(
               child: Center(child: Text("No delicacies found.")),
             )
           else
-            _isGridView ? _buildGrid(cs.onSurfaceVariant, cs.onSurface, cs.onSurface) : _buildList(cs.onSurfaceVariant, cs.onSurface, cs.onSurface),
+            _isGridView ? _buildGrid(primaryColor, secondaryColor, onSurface) : _buildList(primaryColor, secondaryColor, onSurface),
 
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
@@ -455,13 +457,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                  item['image']?.toString() ?? '',
+                  item['image'],
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,
                   cacheWidth: 120,
                   cacheHeight: 120,
-                    errorBuilder: (_, _, _) {
+                  errorBuilder: (_, _, _) {
                     final id = item['id']?.toString() ?? item['title'].toString();
                     return Image.network(
                       'https://picsum.photos/seed/$id/120/120',
@@ -472,14 +474,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                   },
                 ),
                 ),
-                title: Text(item['title']?.toString() ?? '', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                subtitle: Text(item['price']?.toString() ?? '', style: GoogleFonts.notoSerif(color: primary, fontWeight: FontWeight.bold)),
-                trailing: Consumer(
-                  builder: (context, ref, _) {
-                    final favorites = ref.watch(customerFavoritesProvider);
-                    final isFav = favorites.isFavorite(item['id']?.toString(), item['title']?.toString() ?? '');
+                title: Text(item['title'], style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                subtitle: Text(item['price'], style: GoogleFonts.notoSerif(color: primary, fontWeight: FontWeight.bold)),
+                trailing: Consumer<FavoritesProvider>(
+                  builder: (context, favorites, _) {
+                    final isFav = favorites.isFavorite(item['id']?.toString(), item['title']);
                     return IconButton(
-                      onPressed: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite(item),
+                      onPressed: () => favorites.toggleFavorite(item),
                       icon: Icon(
                         isFav ? Icons.favorite : Icons.favorite_border,
                         color: isFav ? primary : Colors.grey.withValues(alpha: 0.3),
@@ -500,13 +501,13 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
   void _openDetail(Map<String, dynamic> item) {
     Navigator.push(
       context,
-      MaterialPageRoute<void>(
+      MaterialPageRoute(
         builder: (context) => ProductDetailScreen(
           cakeId: item['id']?.toString(),
-          title: item['title']?.toString() ?? '',
-          price: item['price']?.toString() ?? '',
-          imageUrl: item['image']?.toString() ?? '',
-          rawOptions: item['options'] as List? ?? [],
+          title: item['title'],
+          price: item['price'],
+          imageUrl: item['image'],
+          rawOptions: item['options'] ?? [],
         ),
       ),
     );
@@ -532,10 +533,10 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    item['image']?.toString() ?? '',
+                    item['image'],
                     fit: BoxFit.cover,
                     cacheWidth: 400,
-                  errorBuilder: (_, _, _) {
+                    errorBuilder: (_, _, _) {
                       final id = item['id']?.toString() ?? item['title'].toString();
                       return Image.network(
                         'https://picsum.photos/seed/$id/600/600',
@@ -557,24 +558,23 @@ class _MenuScreenState extends ConsumerState<MenuScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item['title']?.toString() ?? '',
+                    item['title'],
                     style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700, color: onSurface),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    item['price']?.toString() ?? '',
+                    item['price'],
                     style: GoogleFonts.notoSerif(fontSize: 11, fontWeight: FontWeight.w900, color: primary),
                   ),
                 ],
               ),
             ),
-            Consumer(
-              builder: (context, ref, _) {
-                final favorites = ref.watch(customerFavoritesProvider);
-                final isFav = favorites.isFavorite(item['id']?.toString(), item['title']?.toString() ?? '');
+            Consumer<FavoritesProvider>(
+              builder: (context, favorites, _) {
+                final isFav = favorites.isFavorite(item['id']?.toString(), item['title']);
                 return IconButton(
-                  onPressed: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite(item),
+                  onPressed: () => favorites.toggleFavorite(item),
                   icon: Icon(
                     isFav ? Icons.favorite : Icons.favorite_border,
                     color: isFav ? primary : Colors.grey.withValues(alpha: 0.3),

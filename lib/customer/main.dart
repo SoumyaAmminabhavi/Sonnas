@@ -1,33 +1,31 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/home_screen.dart';
 import 'screens/menu_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/profile_screen.dart';
-import '../services/haptic_service.dart';
-import '../main.dart' show themeProvider;
+import 'dart:async';
 import 'providers/favorites_provider.dart';
 import 'providers/cart_provider.dart';
-import 'theme.dart';
+import '../services/haptic_service.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class CustomerMainScreen extends ConsumerStatefulWidget {
+class CustomerMainScreen extends StatefulWidget {
   const CustomerMainScreen({super.key});
 
   @override
-  ConsumerState<CustomerMainScreen> createState() => _CustomerMainScreenState();
+  State<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
-class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
+class _CustomerMainScreenState extends State<CustomerMainScreen> {
   int _currentIndex = 0;
   String? _menuSearchQuery;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  StreamSubscription<dynamic>? _statusSubscription;
-  StreamSubscription<dynamic>? _stockSubscription;
+  StreamSubscription? _statusSubscription;
+  StreamSubscription? _stockSubscription;
   Timer? _abandonedCartTimer;
   final Map<String, bool> _previousStockStatus = {};
 
@@ -107,8 +105,8 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         .eq('customerPhone', phone)
         .listen((List<Map<String, dynamic>> orders) {
           for (final order in orders) {
-            final String status = order['status']?.toString() ?? '';
-            final String orderNum = order['orderNumber']?.toString() ?? 'Order';
+            final String status = order['status'] ?? '';
+            final String orderNum = order['orderNumber'] ?? 'Order';
             
             if (status == 'OUT_FOR_DELIVERY') {
               _showStatusNotification("🚀 $orderNum is out for delivery!");
@@ -125,17 +123,17 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
         .stream(primaryKey: ['id'])
         .listen((List<Map<String, dynamic>> cakes) {
           if (!mounted) return;
-          final favProvider = ref.read(customerFavoritesProvider);
+          final favoritesProvider = context.read<FavoritesProvider>();
           
           for (final cake in cakes) {
-            final bool isAvailable = cake['isAvailable'] as bool? ?? true;
+            final bool isAvailable = cake['isAvailable'] ?? true;
             final String cakeId = cake['id'].toString();
-            final String cakeName = cake['name']?.toString() ?? 'A favorite cake';
+            final String cakeName = cake['name'] ?? 'A favorite cake';
 
             // Only notify if it was previously UNAVAILABLE and is now AVAILABLE
             final bool wasAvailable = _previousStockStatus[cakeId] ?? true; 
 
-            if (isAvailable && !wasAvailable && favProvider.isFavorite(cakeId, cakeName)) {
+            if (isAvailable && !wasAvailable && favoritesProvider.isFavorite(cakeId, cakeName)) {
               _showStatusNotification("🍰 Good news! $cakeName is back in stock!");
             }
             
@@ -148,7 +146,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   void _setupAbandonedCartListener() {
     // Check every 10 minutes if the cart is abandoned
     _abandonedCartTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
-      final cart = ref.read(customerCartProvider);
+      final cart = context.read<CartProvider>();
       if (cart.items.isNotEmpty && _currentIndex != 2) {
         _showStatusNotification("🛒 Your bag is waiting! Don't miss out on your treats.");
       }
@@ -185,13 +183,10 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = ref.watch(themeProvider);
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color surfaceColor = Color(0xFFFFF0F6);
 
-    return Theme(
-      data: themeMode == ThemeMode.dark ? CustomerTheme.darkTheme : CustomerTheme.lightTheme,
-      child: LayoutBuilder(
+    return LayoutBuilder(
       builder: (context, constraints) {
         final bool isDesktop = constraints.maxWidth > 900;
         
@@ -265,7 +260,6 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
           ),
         );
       }
-    ),
     );
   }
 
@@ -551,7 +545,7 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
             onTap: () async {
               await Supabase.instance.client.auth.signOut();
               if (mounted) {
-                Navigator.of(context).pop();
+                unawaited(Navigator.of(context).pushReplacementNamed('/welcome'));
               }
             },
           ),

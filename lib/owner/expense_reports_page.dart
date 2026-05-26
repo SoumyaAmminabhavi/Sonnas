@@ -93,198 +93,27 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     }
   }
 
-  List<FlSpot> _generateChartSpots() {
-    if (_expenses.isEmpty) return [const FlSpot(0, 0)];
-    
-    // Group by date for last 7 entries
-    final recent = _expenses.take(7).toList().reversed.toList();
-    List<FlSpot> spots = [];
-    for (int i = 0; i < recent.length; i++) {
-      final amount = (recent[i]['amount'] as num?)?.toDouble() ?? 0.0;
-      spots.add(FlSpot(i.toDouble(), amount));
-    }
-    return spots;
-  }
 
-  void _showAddExpenseDialog() async {
-    final titleController = TextEditingController();
-    final amountController = TextEditingController();
-    final descController = TextEditingController();
-    String selectedCategory = _categories.first;
-    DateTime selectedDate = DateTime.now();
-    bool isSaving = false;
 
-    try {
-      await showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) => PopScope(
-            canPop: !isSaving,
-            child: AlertDialog(
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: Text(
-                "Log New Expense",
-                style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      decoration: _inputDecoration("Expense Title (e.g. Flour 50kg)"),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: _inputDecoration("Amount (${PriceConstants.currencySymbol})"),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedCategory,
-                      decoration: _inputDecoration("Category"),
-                      items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                      onChanged: (val) => setDialogState(() => selectedCategory = val!),
-                    ),
-                    const SizedBox(height: 16),
-                    InkWell(
-                      onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime(2024),
-                          lastDate: DateTime.now(),
-                        );
-                        if (!context.mounted) return;
-                        if (date != null) setDialogState(() => selectedDate = date);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 18),
-                            const SizedBox(width: 12),
-                            Text(DateFormat('dd MMM yyyy').format(selectedDate)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: descController,
-                      maxLines: 2,
-                      decoration: _inputDecoration("Notes (Optional)"),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSaving ? null : () => Navigator.pop(context),
-                  child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
-                ),
-                  ElevatedButton(
-                  onPressed: isSaving ? null : () async {
-                    if (titleController.text.trim().isEmpty || amountController.text.trim().isEmpty) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Title and amount are required."),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-                    final rawAmount = amountController.text.trim()
-                        .replaceAll(PriceConstants.currencySymbol, '')
-                        .replaceAll(',', '')
-                        .replaceAll(' ', '');
-                    final amount = double.tryParse(rawAmount);
-                    if (amount == null || amount < 0) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Enter a valid non-negative amount."),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-  
-                    final expense = {
-                      'title': titleController.text,
-                      'amount': amount,
-                      'category': selectedCategory,
-                      'date': selectedDate.toIso8601String(),
-                      'description': descController.text,
-                    };
-  
-                      setDialogState(() => isSaving = true);
-                      try {
-                        await FinanceService.addExpense(expense);
-                        if (context.mounted) {
-                          final messenger = ScaffoldMessenger.of(context);
-                          Navigator.pop(context);
-                          await _loadData();
-                          messenger.showSnackBar(
-                          const SnackBar(
-                            content: Text("Expense logged successfully!"),
-                            backgroundColor: Colors.green,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      debugPrint("Expense Log Error: $e");
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Failed to log expense"),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-                    } finally {
-                      if (context.mounted) setDialogState(() => isSaving = false);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: isSaving
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text("Save Expense"),
-                ),
-              ],
+  void _showAddExpenseDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _AddExpenseDialog(
+        categories: _categories,
+        onSave: (expense) async {
+          final messenger = ScaffoldMessenger.of(context);
+          await FinanceService.addExpense(expense);
+          await _loadData();
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text("Expense logged successfully!"),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
             ),
-          ),
-        ),
-      );
-    } finally {
-      titleController.dispose();
-      amountController.dispose();
-      descController.dispose();
-    }
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          );
+        },
+      ),
     );
   }
 
@@ -448,6 +277,22 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
   }
 
   Widget _buildTrendChart(ColorScheme cs, bool isDark) {
+    final recent = _expenses.take(7).toList().reversed.toList();
+    
+    double maxAmount = 500.0;
+    for (var exp in recent) {
+      final amount = (exp['amount'] as num?)?.toDouble() ?? 0.0;
+      if (amount > maxAmount) maxAmount = amount;
+    }
+    maxAmount = (maxAmount / 5).ceil() * 5.0;
+    if (maxAmount == 0) maxAmount = 500.0;
+
+    final List<FlSpot> spots = [];
+    for (int i = 0; i < recent.length; i++) {
+      final amount = (recent[i]['amount'] as num?)?.toDouble() ?? 0.0;
+      spots.add(FlSpot(i.toDouble(), amount));
+    }
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -466,16 +311,122 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
             height: 250,
             child: LineChart(
               LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxAmount / 5,
+                  getDrawingHorizontalLine:
+                      (_) => FlLine(
+                        color: cs.secondary.withValues(alpha: 0.05),
+                        strokeWidth: 1,
+                      ),
+                ),
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (touchedSpot) => cs.surfaceContainerHigh,
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((barSpot) {
+                        final index = barSpot.x.toInt();
+                        if (index < 0 || index >= recent.length) return null;
+                        final expenseItem = recent[index];
+                        final title = expenseItem['title'] ?? 'Expense';
+                        final amount = (expenseItem['amount'] as num?)?.toDouble() ?? 0.0;
+                        final category = expenseItem['category'] ?? 'Other';
+                        final formattedAmount = "${PriceConstants.currencySymbol}${amount.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')}";
+                        return LineTooltipItem(
+                          '$title\nCategory: $category\nAmount: $formattedAmount',
+                          GoogleFonts.plusJakartaSans(
+                            color: cs.secondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 45,
+                      interval: maxAmount / 5,
+                      getTitlesWidget: (value, meta) {
+                        if (value == meta.max || value == meta.min) return const SizedBox();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            "${PriceConstants.currencySymbol}${value.toInt()}",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.4),
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index < 0 || index >= recent.length) return const SizedBox();
+                        final dateStr = recent[index]['date']?.toString();
+                        if (dateStr == null) return const SizedBox();
+                        final date = DateTime.tryParse(dateStr);
+                        if (date == null) return const SizedBox();
+                        final formattedDate = DateFormat('dd MMM').format(date);
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: Text(
+                            formattedDate,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.4),
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: (recent.isEmpty ? 1 : recent.length - 1).toDouble(),
+                minY: 0,
+                maxY: maxAmount,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: _generateChartSpots(),
+                    spots: spots,
                     isCurved: true,
-                    color: cs.primary,
+                    gradient: LinearGradient(colors: [cs.primary, cs.primary.withValues(alpha: 0.7)]),
                     barWidth: 4,
-                    belowBarData: BarAreaData(show: true, color: cs.primary.withValues(alpha: 0.1)),
+                    isStrokeCapRound: true,
+                    dotData: const FlDotData(show: true),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          cs.primary.withValues(alpha: 0.15),
+                          cs.primary.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -589,6 +540,199 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
       baseColor: cs.surfaceContainer,
       highlightColor: cs.surface,
       child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _AddExpenseDialog extends StatefulWidget {
+  final List<String> categories;
+  final Future<void> Function(Map<String, dynamic> expense) onSave;
+
+  const _AddExpenseDialog({
+    required this.categories,
+    required this.onSave,
+  });
+
+  @override
+  State<_AddExpenseDialog> createState() => _AddExpenseDialogState();
+}
+
+class _AddExpenseDialogState extends State<_AddExpenseDialog> {
+  late final TextEditingController titleController;
+  late final TextEditingController amountController;
+  late final TextEditingController descController;
+  late String selectedCategory;
+  late DateTime selectedDate;
+  bool isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController();
+    amountController = TextEditingController();
+    descController = TextEditingController();
+    selectedCategory = widget.categories.first;
+    selectedDate = DateTime.now();
+  }
+
+  @override
+  void dispose() {
+    titleController.dispose();
+    amountController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.plusJakartaSans(fontSize: 13),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !isSaving,
+      child: AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Text(
+          "Log New Expense",
+          style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: _inputDecoration("Expense Title (e.g. Flour 50kg)"),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration("Amount (${PriceConstants.currencySymbol})"),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedCategory,
+                decoration: _inputDecoration("Category"),
+                items: widget.categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (val) => setState(() => selectedCategory = val!),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2024),
+                    lastDate: DateTime.now(),
+                  );
+                  if (!context.mounted) return;
+                  if (date != null) setState(() => selectedDate = date);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 18),
+                      const SizedBox(width: 12),
+                      Text(DateFormat('dd MMM yyyy').format(selectedDate)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descController,
+                maxLines: 2,
+                decoration: _inputDecoration("Notes (Optional)"),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: isSaving ? null : () => Navigator.pop(context),
+            child: Text("Cancel", style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            onPressed: isSaving ? null : () async {
+              if (titleController.text.trim().isEmpty || amountController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Title and amount are required."),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+              final rawAmount = amountController.text.trim()
+                  .replaceAll(PriceConstants.currencySymbol, '')
+                  .replaceAll(',', '')
+                  .replaceAll(' ', '');
+              final amount = double.tryParse(rawAmount);
+              if (amount == null || amount < 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Enter a valid non-negative amount."),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+                return;
+              }
+
+              final expense = {
+                'title': titleController.text,
+                'amount': amount,
+                'category': selectedCategory,
+                'date': selectedDate.toIso8601String(),
+                'description': descController.text,
+              };
+
+              setState(() => isSaving = true);
+              try {
+                await widget.onSave(expense);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                }
+              } catch (e) {
+                debugPrint("Expense Log Error: $e");
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Failed to log expense"),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } finally {
+                if (mounted) setState(() => isSaving = false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: isSaving
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text("Save Expense"),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
@@ -14,21 +14,25 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-class CustomerCheckoutScreen extends ConsumerStatefulWidget {
+class CustomerCheckoutScreen extends StatefulWidget {
   final bool isSelfCheckout;
   const CustomerCheckoutScreen({super.key, this.isSelfCheckout = false});
 
   @override
-  ConsumerState<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
+  State<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
 }
 
-class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen> {
+class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   String selectedPayment = "UPI";
   DateTime? selectedDate;
   String? selectedTimeSlot;
   bool _isGettingLocation = false;
   LatLng _currentLatLng = const LatLng(12.9716, 77.5946); // Default to Bangalore
   final MapController _mapController = MapController();
+
+  static const primary = Color(0xFFC2185B);
+  static const background = Color(0xFFFFF0F5);
+  static const berryText = Color(0xFF4A152C);
 
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -49,9 +53,13 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
     if (user != null && user.userMetadata != null) {
       final meta = user.userMetadata!;
       if (meta['full_name'] != null) {
-        _nameController.text = meta['full_name']?.toString() ?? '';
-        _phoneController.text = meta['phone']?.toString() ?? '';
-        _addressController.text = meta['default_address']?.toString() ?? '';
+        _nameController.text = meta['full_name'];
+      }
+      if (meta['phone'] != null) {
+        _phoneController.text = meta['phone'];
+      }
+      if (meta['default_address'] != null) {
+        _addressController.text = meta['default_address'];
       }
     }
   }
@@ -93,7 +101,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
         
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          finalAddress = data['display_name']?.toString();
+          finalAddress = data['display_name'];
         }
       } else {
         // Native platforms can use the geocoding package
@@ -150,16 +158,15 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
 
   @override
   Widget build(BuildContext context) {
-    final cart = ref.watch(customerCartProvider);
-    final cs = Theme.of(context).colorScheme;
+    final cart = Provider.of<CartProvider>(context);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface), onPressed: () => Navigator.pop(context)),
-        title: Text("Checkout", style: GoogleFonts.dmSerifDisplay(color: cs.onSurface)),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new, color: berryText), onPressed: () => Navigator.pop(context)),
+        title: Text("Checkout", style: GoogleFonts.dmSerifDisplay(color: berryText)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -171,7 +178,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
             const SizedBox(height: 16),
             _buildTextField("Recipient Name", Icons.person_outline, controller: _nameController),
             const SizedBox(height: 12),
-            _buildTextField("Contact Number", Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)], prefixText: "+91 ", prefixStyle: GoogleFonts.plusJakartaSans(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 14)),
+            _buildTextField("Contact Number", Icons.phone_outlined, controller: _phoneController, keyboardType: TextInputType.phone, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)], prefixText: "+91 ", prefixStyle: GoogleFonts.plusJakartaSans(color: const Color(0xFF4A152C), fontWeight: FontWeight.w600, fontSize: 14)),
             const SizedBox(height: 12),
             _buildMapView(),
             const SizedBox(height: 12),
@@ -187,16 +194,16 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _isGiftWrapping ? cs.primary : cs.primary.withValues(alpha: 0.05)),
+                border: Border.all(color: _isGiftWrapping ? primary : primary.withValues(alpha: 0.05)),
               ),
               child: Column(
                 children: [
                   SwitchListTile(
                     title: Text("Add Premium Gift Wrapping", style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600)),
                     subtitle: const Text("Includes silk ribbon & celebration box (+ ₹250)", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    secondary: Icon(Icons.card_giftcard, color: _isGiftWrapping ? cs.primary : Colors.grey),
+                    secondary: Icon(Icons.card_giftcard, color: _isGiftWrapping ? primary : Colors.grey),
                     value: _isGiftWrapping,
-                    activeThumbColor: cs.primary,
+                    activeThumbColor: primary,
                     onChanged: (val) => setState(() => _isGiftWrapping = val),
                   ),
                   if (_isGiftWrapping) ...[
@@ -238,7 +245,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
-                  boxShadow: [BoxShadow(color: cs.primary.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20))],
+                  boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20))],
                 ),
                 child: Column(
                   children: [
@@ -288,7 +295,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
 
                   Navigator.push(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute(
                       builder: (context) => PaymentScreen(
                         customerName: trimmedName,
                         phone: trimmedPhone,
@@ -301,7 +308,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.primary,
+                  backgroundColor: primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
@@ -317,7 +324,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
   }
 
   Widget _sectionTitle(String title) {
-    return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: cs.onSurface.withValues(alpha: 0.5)));
+    return Text(title, style: GoogleFonts.plusJakartaSans(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: const Color(0xFF4A152C).withValues(alpha: 0.5)));
   }
 
   Widget _buildTextField(String hint, IconData icon, {int maxLines = 1, TextEditingController? controller, TextInputType? keyboardType, List<TextInputFormatter>? inputFormatters, String? prefixText, TextStyle? prefixStyle}) {
@@ -331,11 +338,11 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
         hintStyle: const TextStyle(fontSize: 14, color: Colors.grey),
         prefixText: prefixText,
         prefixStyle: prefixStyle,
-        prefixIcon: Icon(icon, size: 20, color: cs.primary),
+        prefixIcon: Icon(icon, size: 20, color: const Color(0xFFC2185B)),
         filled: true,
         fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: cs.primary.withValues(alpha: 0.05))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: cs.primary)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC2185B))),
       ),
     );
   }
@@ -345,7 +352,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
       height: 200,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cs.primary.withValues(alpha: 0.1)),
+        border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.1)),
       ),
       clipBehavior: Clip.antiAlias,
       child: FlutterMap(
@@ -371,7 +378,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
                 point: _currentLatLng,
                 width: 40,
                 height: 40,
-                child: Icon(Icons.location_on, color: cs.primary, size: 40),
+                child: const Icon(Icons.location_on, color: Color(0xFFC2185B), size: 40),
               ),
             ],
           ),
@@ -389,7 +396,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
         final response = await http.get(url, headers: {'User-Agent': 'SonnaPatisserieApp'});
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
-          finalAddress = data['display_name']?.toString();
+          finalAddress = data['display_name'];
         }
       } else {
         try {
@@ -424,21 +431,21 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
       decoration: InputDecoration(
         hintText: "Full Delivery Address",
         hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
-        prefixIcon: Icon(Icons.location_on_outlined, size: 20, color: cs.primary),
+        prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: Color(0xFFC2185B)),
         suffixIcon: Padding(
           padding: const EdgeInsets.only(right: 8),
           child: _isGettingLocation 
-            ? const UnconstrainedBox(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary)))
+            ? const UnconstrainedBox(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFC2185B))))
             : IconButton(
-                icon: const Icon(Icons.my_location, size: 20, color: cs.primary),
+                icon: const Icon(Icons.my_location, size: 20, color: Color(0xFFC2185B)),
                 onPressed: _getCurrentLocation,
                 tooltip: "Get Current Location",
               ),
         ),
         filled: true,
         fillColor: Colors.white,
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: cs.primary.withValues(alpha: 0.05))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: cs.primary)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFC2185B))),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
@@ -452,10 +459,10 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
       },
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.primary.withValues(alpha: 0.05))),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today_outlined, size: 18, color: cs.primary),
+            const Icon(Icons.calendar_today_outlined, size: 18, color: Color(0xFFC2185B)),
             const SizedBox(width: 12),
             Text(selectedDate == null ? "Date" : "${selectedDate!.day}/${selectedDate!.month}", style: const TextStyle(fontSize: 14)),
           ],
@@ -467,7 +474,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
   Widget _buildTimePicker() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: cs.primary.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.05))),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           hint: const Text("Time", style: TextStyle(fontSize: 14)),
@@ -484,7 +491,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
 
   Widget _buildPaymentOption(String title, String subtitle, IconData icon) {
     final isSelected = selectedPayment == title;
-    final cs = Theme.of(context).colorScheme;
+    const primary = Color(0xFFC2185B);
     return GestureDetector(
       onTap: () => setState(() => selectedPayment = title),
       child: Container(
@@ -493,12 +500,12 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? cs.primary : cs.primary.withValues(alpha: 0.05)),
-          boxShadow: isSelected ? [BoxShadow(color: cs.primary.withValues(alpha: 0.05), blurRadius: 10)] : null,
+          border: Border.all(color: isSelected ? primary : primary.withValues(alpha: 0.05)),
+          boxShadow: isSelected ? [BoxShadow(color: primary.withValues(alpha: 0.05), blurRadius: 10)] : null,
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? cs.primary : Colors.grey),
+            Icon(icon, color: isSelected ? primary : Colors.grey),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -509,7 +516,7 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
                 ],
               ),
             ),
-            Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_off, color: isSelected ? cs.primary : Colors.grey, size: 20),
+            Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_off, color: isSelected ? primary : Colors.grey, size: 20),
           ],
         ),
       ),
@@ -517,14 +524,13 @@ class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen>
   }
 
   Widget _summaryRow(String label, String value, {bool isTotal = false}) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(color: isTotal ? Colors.black : Colors.grey, fontSize: isTotal ? 14 : 13, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
-          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: isTotal ? 16 : 13, color: isTotal ? cs.primary : Colors.black)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w600, fontSize: isTotal ? 16 : 13, color: isTotal ? primary : Colors.black)),
         ],
       ),
     );
@@ -536,10 +542,12 @@ class SuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    const primary = Color(0xFFC2185B);
+    const background = Color(0xFFFFF0F5);
+    const berryText = Color(0xFF4A152C);
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -548,22 +556,22 @@ class SuccessScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: cs.primary.withValues(alpha: 0.1), blurRadius: 40)]),
+                decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.1), blurRadius: 40)]),
                 child: const Icon(Icons.check_circle, size: 80, color: Colors.green),
               ),
               const SizedBox(height: 40),
-              Text("Order Placed!", style: GoogleFonts.dmSerifDisplay(fontSize: 36, color: cs.onSurface)),
+              Text("Order Placed!", style: GoogleFonts.dmSerifDisplay(fontSize: 36, color: berryText)),
               const SizedBox(height: 12),
               const Text("Your sweet delight is being prepared\nby our master artisans.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey, height: 1.5)),
               const SizedBox(height: 48),
               Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: cs.primary.withValues(alpha: 0.05))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: primary.withValues(alpha: 0.05))),
                 child: Column(
                   children: [
                     const Text("ORDER ID", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.grey)),
                     const SizedBox(height: 8),
-                    Text("#SN-2024-089", style: GoogleFonts.dmSerifDisplay(fontSize: 20, color: cs.onSurface)),
+                    Text("#SN-2024-089", style: GoogleFonts.dmSerifDisplay(fontSize: 20, color: berryText)),
                   ],
                 ),
               ),
@@ -571,7 +579,7 @@ class SuccessScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: cs.primary,
+                  backgroundColor: primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 18),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
@@ -579,7 +587,7 @@ class SuccessScreen extends StatelessWidget {
                 child: const Text("TRACK ORDER", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 16),
-              TextButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: Text("VIEW ALL ORDERS", style: TextStyle(color: cs.primary.withValues(alpha: 0.6), fontWeight: FontWeight.bold))),
+              TextButton(onPressed: () => Navigator.popUntil(context, (route) => route.isFirst), child: Text("VIEW ALL ORDERS", style: TextStyle(color: primary.withValues(alpha: 0.6), fontWeight: FontWeight.bold))),
             ],
           ),
         ),

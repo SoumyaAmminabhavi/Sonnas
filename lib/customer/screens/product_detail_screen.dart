@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/cart_provider.dart';
 
@@ -18,7 +18,7 @@ class ProductOption {
   }
 }
 
-class ProductDetailScreen extends ConsumerStatefulWidget {
+class ProductDetailScreen extends StatefulWidget {
   final String? cakeId;
   final String title;
   final String price;
@@ -34,14 +34,14 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
     List<dynamic> rawOptions = const [],
   }) : options = rawOptions
             .whereType<Map<String, dynamic>>()
-            .map(ProductOption.fromJson)
+            .map((o) => ProductOption.fromJson(o))
             .toList();
 
   @override
-  ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String selectedSize = "";
   double currentPriceValue = 0.0;
   String currentPriceDisplay = "";
@@ -98,7 +98,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    const Color primaryColor = Color(0xFFFF4D8D);
+    const Color accentRed = Color(0xFFEF4F5F);
 
     return Scaffold(
       backgroundColor: Colors.black54,
@@ -121,8 +122,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 child: Container(
                   width: 44,
                   height: 44,
-                  decoration: BoxDecoration(
-                    color: cs.onSurface,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF333333),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.close, color: Colors.white, size: 24),
@@ -137,9 +138,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             child: Container(
               constraints: const BoxConstraints(maxWidth: 600), // Neat alignment on web
               height: MediaQuery.of(context).size.height * 0.85,
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 children: [
@@ -155,7 +156,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                             width: double.infinity,
                             height: 320,
                             decoration: BoxDecoration(
-                              color: cs.surfaceContainerLow,
+                              color: const Color(0xFFF7F7F9),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: ClipRRect(
@@ -165,13 +166,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                 fit: BoxFit.contain, // Show whole image
                                 loadingBuilder: (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
-                                  return Center(child: CircularProgressIndicator(color: cs.primary));
+                                  return const Center(child: CircularProgressIndicator(color: primaryColor));
                                 },
                                 errorBuilder: (context, error, stackTrace) => Container(
                                   width: double.infinity,
                                   height: 320,
                                   color: Colors.grey.shade100,
-                                  child: Icon(Icons.cake, color: cs.primary, size: 64),
+                                  child: const Icon(Icons.cake, color: primaryColor, size: 64),
                                 ),
                               ),
                             ),
@@ -202,12 +203,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   ),
                                 ),
                               ),
-                                Consumer(
-                                builder: (context, ref, _) {
-                                  final favorites = ref.watch(customerFavoritesProvider);
+                               Consumer<FavoritesProvider>(
+                                builder: (context, favorites, _) {
                                   final isFav = favorites.isFavorite(null, widget.title);
                                   return GestureDetector(
-                                    onTap: () => ref.read(customerFavoritesProvider.notifier).toggleFavorite({
+                                    onTap: () => favorites.toggleFavorite({
                                       'id': null,
                                       'title': widget.title,
                                       'price': widget.price,
@@ -215,7 +215,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                     }),
                                     child: _buildActionBtn(
                                       isFav ? Icons.favorite : Icons.favorite_border,
-                                      iconColor: isFav ? cs.primary : Colors.grey.shade600,
+                                      iconColor: isFav ? primaryColor : Colors.grey.shade600,
                                     ),
                                   );
                                 },
@@ -291,7 +291,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                     const SizedBox(width: 12),
                                     Icon(
                                       isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                                      color: isSelected ? cs.error : Colors.grey.shade300,
+                                      color: isSelected ? accentRed : Colors.grey.shade300,
                                       size: 22,
                                     ),
                                   ],
@@ -308,9 +308,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: cs.surfaceContainerLow,
+                              color: const Color(0xFFF1F2F6),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: cs.primary.withValues(alpha: 0.1)),
+                              border: Border.all(color: primaryColor.withValues(alpha: 0.1)),
                             ),
                             child: Column(
                               children: [
@@ -348,9 +348,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                     color: isSel ? Colors.white : Colors.black87,
                                   )),
                                   selected: isSel,
-                                  selectedColor: cs.primary,
+                                  selectedColor: primaryColor,
                                   backgroundColor: Colors.white,
-                                  side: BorderSide(color: isSel ? cs.primary : Colors.grey.shade300),
+                                  side: BorderSide(color: isSel ? primaryColor : Colors.grey.shade300),
                                   onSelected: (val) {
                                     if (val) setState(() => selectedDietary = diet);
                                   },
@@ -369,7 +369,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               value: isSel,
                               title: Text(addon, style: GoogleFonts.plusJakartaSans(fontSize: 14)),
                               subtitle: Text("+ ₹${(addonPrices[addon]! / 100).toStringAsFixed(2)}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                              activeColor: cs.primary,
+                              activeColor: primaryColor,
                               contentPadding: EdgeInsets.zero,
                               onChanged: (val) {
                                 setState(() {
@@ -389,11 +389,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   child: ActionChip(
                                     label: Text(tag, style: GoogleFonts.plusJakartaSans(
                                       fontSize: 11,
-                                      color: cs.primary.withValues(alpha: 0.8),
+                                      color: primaryColor.withValues(alpha: 0.8),
                                     )),
                                     backgroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    side: BorderSide(color: cs.primary.withValues(alpha: 0.1)),
+                                    side: BorderSide(color: primaryColor.withValues(alpha: 0.1)),
                                     onPressed: () => _messageController.text = tag,
                                   ),
                                 )),
@@ -420,7 +420,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                         Container(
                           height: 50,
                           decoration: BoxDecoration(
-                            border: Border.all(color: cs.error.withValues(alpha: 0.2)),
+                            border: Border.all(color: accentRed.withValues(alpha: 0.2)),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -428,7 +428,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               _buildQtyIcon(Icons.remove, () {
                                 if (quantity > 1) setState(() { quantity--; _updatePriceDisplay(); });
                               }),
-                              SizedBox(width: 32, child: Center(child: Text("$quantity", style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.bold, color: cs.error)))),
+                              SizedBox(width: 32, child: Center(child: Text("$quantity", style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.bold, color: accentRed)))),
                               _buildQtyIcon(Icons.add, () {
                                 setState(() { quantity++; _updatePriceDisplay(); });
                               }),
@@ -461,7 +461,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                                   .where((e) => e.value)
                                   .fold(0.0, (prev, e) => prev + (addonPrices[e.key]! / 100.0));
 
-                              ref.read(customerCartProvider.notifier).addItem(
+                              context.read<CartProvider>().addItem(
                                 "${widget.title}_${DateTime.now().millisecondsSinceEpoch}", 
                                 fullDescription, 
                                 (currentPriceValue + addonsTotal) * 100, 
@@ -472,14 +472,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                               
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                                 content: Text("${widget.title} added with customizations!"), 
-                                backgroundColor: cs.error, 
+                                backgroundColor: accentRed, 
                                 behavior: SnackBarBehavior.floating
                               ));
                               Navigator.pop(context);
                             },
                             child: Container(
                               height: 50,
-                              decoration: BoxDecoration(color: cs.error, borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(color: accentRed, borderRadius: BorderRadius.circular(8)),
                               child: Center(
                                 child: Text("Add item $currentPriceDisplay", style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                               ),
@@ -522,6 +522,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Widget _buildQtyIcon(IconData icon, VoidCallback onTap) {
-    return InkWell(onTap: onTap, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Icon(icon, size: 18, color: Theme.of(context).colorScheme.error)));
+    return InkWell(onTap: onTap, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Icon(icon, size: 18, color: const Color(0xFFEF4F5F))));
   }
 }

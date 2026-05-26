@@ -1,20 +1,20 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 import 'cart_screen.dart';
 
-class ContactScreen extends ConsumerStatefulWidget {
+class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
 
   @override
-  ConsumerState<ContactScreen> createState() => _ContactScreenState();
+  State<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ContactScreenState extends ConsumerState<ContactScreen> {
+class _ContactScreenState extends State<ContactScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _orderIdController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
@@ -23,9 +23,9 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
   final TextEditingController _subjectController = TextEditingController();
   
   // Brand Colors
-  Color get primaryColor => Theme.of(context).colorScheme.onSurfaceVariant;
-  Color get secondaryColor => Theme.of(context).colorScheme.onSurface;
-  Color get backgroundColor => Theme.of(context).colorScheme.surface;
+  final Color primaryColor = const Color(0xFFFF4D8D);
+  final Color secondaryColor = const Color(0xFF701235);
+  final Color backgroundColor = const Color(0xFFFFF0F6);
 
   List<Map<String, dynamic>> _realCakes = [];
   bool _isFetchingCakes = true;
@@ -90,19 +90,19 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
   Future<void> _launch(String url) async {
     final uri = Uri.parse(url);
-    if (!['tel', 'https', 'mailto'].contains(uri.scheme)) return;
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) debugPrint('Could not launch $url');
+    if (!await launchUrl(uri)) debugPrint('Could not launch $url');
   }
 
   void _handleOrderAgain() {
     if (_realCakes.isEmpty) return;
     
+    final cart = Provider.of<CartProvider>(context, listen: false);
     for (var item in _realCakes) {
-      final String name = item['name']?.toString() ?? 'Exquisite Creation';
-      final double price = (item['price'] as num?)?.toDouble() ?? 0.0;
-      final String image = item['image']?.toString() ?? '';
+      final String name = item['name'] ?? 'Exquisite Creation';
+      final double price = item['price'] ?? 0.0;
+      final String image = item['image'] ?? '';
       
-      ref.read(customerCartProvider.notifier).addItem(
+      cart.addItem(
         "reorder_$name", 
         name, 
         price, 
@@ -122,7 +122,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
       Navigator.push(
         context, 
-        MaterialPageRoute<void>(builder: (context) => const CartScreen())
+        MaterialPageRoute(builder: (context) => const CartScreen())
       );
     }
   }
@@ -145,7 +145,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
 
         if (!mounted) return;
         
-        unawaited(showDialog<void>(
+        unawaited(showDialog(
           context: context,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -196,7 +196,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
       if (!mounted) return;
       setState(() => _userRating = rating);
       
-      unawaited(showDialog<void>(
+      unawaited(showDialog(
         context: context,
         builder: (context) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -558,3 +558,4 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
     );
   }
 }
+
