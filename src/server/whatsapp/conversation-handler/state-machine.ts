@@ -109,8 +109,8 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
         updateState(msg.from, ConversationState.IDLE, RESET_STATE),
       ]);
       await sendTextMessage(msg.from, "Your previous session timed out due to inactivity. Starting fresh for you! ✨");
-      convo = await getConversation(msg.from, msg.name, true);
-      state = convo.state;
+      await sendWelcome(msg.from, msg.name);
+      return;
     }
   }
 
@@ -351,6 +351,18 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
 
   if (interactiveId.startsWith("more_") || interactiveId.startsWith("prev_")) {
     await handleCategorySelection(msg);
+    return;
+  }
+
+  if (interactiveId.startsWith("morehist_") || interactiveId.startsWith("prevhist_")) {
+    const offset = parseInt(interactiveId.split("_")[1] ?? "0") || 0;
+    await sendOrderStatus(msg.from, offset);
+    return;
+  }
+
+  if (interactiveId.startsWith("hist_order_")) {
+    const { sendOrderDetails } = await import("./orders");
+    await sendOrderDetails(msg.from, interactiveId.replace("hist_order_", ""));
     return;
   }
 

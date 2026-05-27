@@ -107,7 +107,7 @@ These are checked regardless of the current conversation state:
 | `help` | Show welcome message |
 | `menu`, `cakes`, or `btn_menu` | Enter `BROWSING_MENU` state |
 | `btn_custom` | Enter `CUSTOM_ORDER_DETAILS` |
-| `status`, `my order`, `order status`, `btn_status` | Show last 3 orders |
+| `status`, `my order`, `order status`, `btn_status` | Show interactive order history list (paginated) |
 | `btn_add_to_cart`, `btn_checkout`, `btn_checkout_now` | Trigger cart add / checkout flow |
 | `btn_clear_cart` | Clear cart, reset to `IDLE`, show menu |
 | `btn_back` | Intelligent rollback to previous state |
@@ -157,9 +157,10 @@ The `btn_back` handler implements intelligent state rollback:
 - **Image Safety Guard**: Before sending to WhatsApp API, the `isPublicImageUrl()` check ensures only valid `https://` URLs (excluding `localhost`) are sent. Invalid images are skipped silently — the size selection buttons are still sent.
 
 ### Welcome Message Structure
-The welcome `sendInteractiveList` message contains 2 sections:
-1. **📋 Browse by Category**: First 6 categories (oldest first) — each row links to `cat_{id}`
-2. **✨ Other Services**: Custom Creation (`btn_custom`) and Track My Order (`btn_status`)
+The welcome `sendInteractiveList` message contains 3 sections:
+1. **🔥 Top Sellers**: The top 2 actual most-sold cakes from the database (grouped by order item counts, with automated fallback to the first 2 cakes by sort order if order history is empty)
+2. **📋 Browse by Category**: First 6 categories (oldest first) — each row links to `cat_{id}`
+3. **✨ Other Services**: Custom Creation (`btn_custom`) and Track My Order (`btn_status`)
 
 After the interactive list, the **Menu PDF** (`menu_compressed.pdf`) is sent as a separate document message with a 1-second delay to avoid racing conditions with the list.
 
@@ -288,10 +289,12 @@ When payment is completed:
    - Thank-you branding
 
 ### Order Status
-The `sendOrderStatus()` function shows the user's last 3 orders with:
-- Status emoji (🕐 Pending, ✅ Confirmed, 👩‍🍳 Preparing, 📦 Ready, 🎉 Delivered, ❌ Cancelled)
-- Item details with quantities and prices
-- Total and order date
+The `sendOrderStatus()` function generates a paginated **Interactive Orders List** dropdown containing the customer's order history:
+- Each row represents a past order showing:
+  - **Title:** `Order #SPC-YYMMDD-XXXXX`
+  - **Description:** Total price, status emoji (🕐 Pending, ✅ Confirmed, 👩‍🍳 Preparing, 📦 Ready, 🎉 Delivered, ❌ Cancelled), and order status text
+- Implements dynamic pagination using WhatsApp's 10-row limit (First page shows 9 orders + Next Page option, subsequent pages include Previous/Next navigation).
+- Tapping on any order row sends a `hist_order_{id}` payload which calls `sendOrderDetails()` to display that specific order's complete details (items, delivery slot, address, notes, status, and custom invoice / "Pay Now" link if payment is pending).
 
 If no orders exist, the bot shows buttons: "📋 Browse Our Cakes" and "🎨 Custom Creation".
 

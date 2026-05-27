@@ -139,6 +139,63 @@ export async function sendMenuPDF(to: string) {
   }
 }
 
+export async function safeGetTopSellers(): Promise<Cake[]> {
+  try {
+    const topSellersGroup = await db.orderItem.groupBy({
+      by: ["cakeId"],
+      where: { cakeId: { not: null } },
+      _sum: { quantity: true },
+      orderBy: {
+        _sum: { quantity: "desc" },
+      },
+      take: 2,
+    });
+
+    const cakeIds = topSellersGroup.map(g => g.cakeId!).filter(Boolean);
+    let topSellers: Cake[] = [];
+
+    if (cakeIds.length > 0) {
+      const dbCakes = (await db.cake.findMany({
+        where: { id: { in: cakeIds }, isAvailable: true },
+        include: { options: true, category: true },
+      })) as unknown as DBCake[];
+
+      const mapped = dbCakes.map(dbCake => {
+        const effectiveCategory = dbCake.category?.name ?? dbCake.categoryName ?? "General";
+        return {
+          ...dbCake,
+          category: effectiveCategory,
+          image: (dbCake.image && String(dbCake.image).trim().length > 0)
+            ? (String(dbCake.image).startsWith('http')
+              ? dbCake.image
+              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
+            : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
+        } as unknown as Cake;
+      });
+
+      topSellers = cakeIds
+        .map(id => mapped.find(c => c.id === id))
+        .filter((c): c is Cake => !!c);
+    }
+
+    if (topSellers.length < 2) {
+      const allCakes = await safeGetCakes();
+      for (const cake of allCakes) {
+        if (topSellers.length >= 2) break;
+        if (!topSellers.some(c => c.id === cake.id)) {
+          topSellers.push(cake);
+        }
+      }
+    }
+
+    return topSellers.slice(0, 2);
+  } catch (e) {
+    console.error("[WhatsApp] Failed to fetch top sellers:", e);
+    const allCakes = await safeGetCakes();
+    return allCakes.slice(0, 2);
+  }
+}
+
 export async function sendWelcome(to: string, name?: string) {
   const customerName = name ?? "there";
 
@@ -154,10 +211,21 @@ export async function sendWelcome(to: string, name?: string) {
       const headerText = activeVersion.headerText ? compileTemplate(activeVersion.headerText, context) : "Sonna's Patisserie";
       const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
 
+      // Sort listSections explicitly in code to guarantee the required sequence:
+      // 1. TOP_FAVORITES (Top Sellers)
+      // 2. CATEGORIES (Browse by Category)
+      // 3. STATIC (Other Services)
+      const dataSourceOrder = ["TOP_FAVORITES", "CATEGORIES", "STATIC"];
+      const sortedSections = [...activeVersion.listSections].sort((a, b) => {
+        const indexA = dataSourceOrder.indexOf(a.dataSource);
+        const indexB = dataSourceOrder.indexOf(b.dataSource);
+        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+      });
+
       // 2. Resolve Interactive List Sections dynamically
       const resolvedSections = (
         await Promise.all(
-          activeVersion.listSections.map(async (section) => {
+          sortedSections.map(async (section) => {
             if (section.dataSource === "CATEGORIES") {
               const dbCategories = await safeGetCategories();
               const rows = dbCategories.length > 0
@@ -170,7 +238,13 @@ export async function sendWelcome(to: string, name?: string) {
             }
 
             if (section.dataSource === "TOP_FAVORITES") {
-              return null; // Top Favorites section has been removed
+              const topSellers = await safeGetTopSellers();
+              const rows = topSellers.map((c) => ({
+                id: `cake_${c.id}`,
+                title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
+                description: "🔥 Most Popular Selection",
+              }));
+              return { title: section.title, rows };
             }
 
             // STATIC list rows configured in the panel
@@ -215,6 +289,7 @@ export async function sendWelcome(to: string, name?: string) {
   console.warn("[WhatsApp] Dynamic WELCOME_MESSAGE missing or failed. Falling back to hardcoded greetings.");
 
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
+  const topSellers = await safeGetTopSellers();
   const dbCategories = await safeGetCategories();
 
   await sendInteractiveList(
@@ -223,6 +298,14 @@ export async function sendWelcome(to: string, name?: string) {
     `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart`,
     "View Menu",
     [
+      {
+        title: "🔥 Top Sellers",
+        rows: topSellers.map((c) => ({
+          id: `cake_${c.id}`,
+          title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
+          description: "🔥 Most Popular Selection",
+        })),
+      },
       {
         title: "📋 Browse by Category",
         rows: dbCategories.length > 0

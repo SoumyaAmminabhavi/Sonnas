@@ -373,7 +373,15 @@ export async function sendWelcome(to: string, name?: string) {
         }
 
         if (section.dataSource === "TOP_FAVORITES") {
-          return null; // Top Favorites removed
+          const topSellers = await safeGetTopSellers();
+          return {
+            title: section.title,
+            rows: topSellers.map((c) => ({
+              id: `cake_${c.id}`,
+              title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
+              description: "🔥 Most Popular Selection",
+            })),
+          };
         }
 
         // Default to static rows configured in the panel
@@ -457,8 +465,9 @@ Clicking `[Edit]` opens a WYSIWYG side-by-side Live Preview Editor:
 | [ Interactive Components ]                                                        |
 | Type: [ Dropdown List ]  Dropdown Button Label: [ View Cakes ]                    |
 |                                                                                   |
-| Section 1: [ 📋 Cake Categories ] Data Source: [ CATEGORIES     v ]               |
-| Section 2: [ 🎨 Other Services ]  Data Source: [ STATIC         v ]               |
+| Section 1: [ 🔥 Top Sellers ]      Data Source: [ TOP_FAVORITES  v ]               |
+| Section 2: [ 📋 Cake Categories ] Data Source: [ CATEGORIES     v ]               |
+| Section 3: [ 🎨 Other Services ]  Data Source: [ STATIC         v ]               |
 |   - Row 1: ID [ btn_custom ] Title [ Custom Cake   ] Desc [ Design your cake  ]   |
 |   - Row 2: ID [ btn_status ] Title [ Track Orders  ] Desc [ View order status ]   |
 |                                                                                   |
@@ -515,14 +524,15 @@ UPDATE "WhatsAppTemplate" SET "activeVersionId" = 'v_welcome_1' WHERE "id" = 't_
 -- 3. Insert Welcome Interactive Sections
 INSERT INTO "WhatsAppListSection" ("id", "versionId", "sortOrder", "title", "dataSource")
 VALUES 
-('s_welcome_1', 'v_welcome_1', 1, '📋 Browse by Category', 'CATEGORIES'),
-('s_welcome_2', 'v_welcome_1', 2, '✨ Other Services', 'STATIC');
+('s_welcome_1', 'v_welcome_1', 1, '🔥 Top Sellers', 'TOP_FAVORITES'),
+('s_welcome_2', 'v_welcome_1', 2, '📋 Browse by Category', 'CATEGORIES'),
+('s_welcome_3', 'v_welcome_1', 3, '✨ Other Services', 'STATIC');
 
--- 4. Insert Static Rows under Section 2
+-- 4. Insert Static Rows under Section 3
 INSERT INTO "WhatsAppListRow" ("id", "sectionId", "sortOrder", "rowId", "title", "description")
 VALUES
-('r_static_1', 's_welcome_2', 1, 'btn_custom', '🎨 Custom Creation', 'Design your own cake'),
-('r_static_2', 's_welcome_2', 2, 'btn_status', '📦 Track My Order', 'Check your history');
+('r_static_1', 's_welcome_3', 1, 'btn_custom', '🎨 Custom Creation', 'Design your own cake'),
+('r_static_2', 's_welcome_3', 2, 'btn_status', '📦 Track My Order', 'Check your history');
 
 -- 5. Insert Unpaid Order Confirmation Template (with dynamic CTA Pay Link)
 INSERT INTO "WhatsAppTemplate" ("id", "code", "language", "description", "category", "isActive", "createdAt", "updatedAt") 
