@@ -22,14 +22,13 @@ class ReportService {
       }
       String dateStr = dt != null ? DateFormat('dd-MM-yyyy HH:mm').format(dt) : 'N/A';
 
-      final rawPrice = order['totalPrice']?.toString() ?? '0';
-      final cleanPrice = rawPrice.replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '');
+      final double price = PriceConstants.normalizePrice(order['totalPrice']);
 
       rows.add([
         order['orderNumber']?.toString() ?? 'N/A',
         dateStr,
         order['customerName']?.toString() ?? 'Guest',
-        cleanPrice,
+        price.toStringAsFixed(2),
         order['status']?.toString() ?? 'PENDING',
         order['notes']?.toString() ?? '',
       ]);
@@ -97,8 +96,8 @@ class ReportService {
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text("Total Revenue: ${PriceConstants.currencySymbol}${totalRevenue.toStringAsFixed(0)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                    pw.Text("Avg Order Value: ${PriceConstants.currencySymbol}${avgOrder.toStringAsFixed(0)}"),
+                    pw.Text("Total Revenue: Rs. ${totalRevenue.toStringAsFixed(0)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text("Avg Order Value: Rs. ${avgOrder.toStringAsFixed(0)}"),
                   ],
                 ),
               ],
@@ -112,7 +111,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(e.key.toString().isNotEmpty ? e.key.toString() : "Uncategorized"),
-                  pw.Text("${PriceConstants.currencySymbol}${e.value.toStringAsFixed(0)}"),
+                  pw.Text("Rs. ${e.value.toStringAsFixed(0)}"),
                 ],
               ),
             )),
@@ -122,13 +121,12 @@ class ReportService {
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
               headers: ["Order #", "Customer", "Status", "Amount"],
               data: orders.take(20).map((o) {
-                final rawPrice = o['totalPrice']?.toString() ?? '0';
-                final cleanPrice = rawPrice.replaceAll(PriceConstants.currencySymbol, '').replaceAll(',', '');
+                final double price = PriceConstants.normalizePrice(o['totalPrice']);
                 return [
                   o['orderNumber']?.toString() ?? 'N/A',
                   o['customerName']?.toString() ?? 'Guest',
                   o['status']?.toString() ?? 'PENDING',
-                  "${PriceConstants.currencySymbol}$cleanPrice",
+                  "Rs. ${price.toStringAsFixed(2)}",
                 ];
               }).toList(),
             ),
@@ -219,7 +217,7 @@ class ReportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text("Report Date: ${DateFormat('dd MMM yyyy').format(DateTime.now())}"),
-                pw.Text("Total Expenses: ${PriceConstants.currencySymbol}${totalExpenses.toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                pw.Text("Total Expenses: Rs. ${totalExpenses.toStringAsFixed(2)}", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
               ],
             ),
             pw.SizedBox(height: 30),
@@ -231,7 +229,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(e.key),
-                  pw.Text("${PriceConstants.currencySymbol}${e.value.toStringAsFixed(2)}"),
+                  pw.Text("Rs. ${e.value.toStringAsFixed(2)}"),
                 ],
               ),
             )),
@@ -247,7 +245,7 @@ class ReportService {
                   dateStr,
                   e['title']?.toString() ?? 'N/A',
                   e['category']?.toString() ?? 'Other',
-                  "${PriceConstants.currencySymbol}${e['amount']?.toString() ?? '0'}",
+                  "Rs. ${e['amount']?.toString() ?? '0'}",
                 ];
               }).toList(),
             ),
