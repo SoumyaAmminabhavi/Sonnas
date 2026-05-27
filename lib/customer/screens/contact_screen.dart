@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -31,10 +31,53 @@ class _ContactScreenState extends State<ContactScreen> {
   bool _isFetchingCakes = true;
   double _userRating = 0;
 
+  Map<String, String> _settings = {};
+
+  String get cleanPhone {
+    final raw = _settings['contact_phone'] ?? "+91 91132 31424";
+    final digits = raw.replaceAll(RegExp(r'\D'), '');
+    return digits.startsWith('91') ? digits : '91$digits';
+  }
+
+  String get instagramUrl {
+    final handle = _settings['instagram'] ?? "@sonnas__";
+    final cleanHandle = handle.replaceAll('@', '').trim();
+    return "https://instagram.com/$cleanHandle";
+  }
+
+  String get mapsUrl {
+    final name = _settings['bakery_name'] ?? "Sonna's Patisserie and Cafe";
+    final addr = _settings['address'] ?? "Akshay Colony";
+    return "https://maps.google.com/?q=${Uri.encodeComponent('$name $addr')}";
+  }
+
   @override
   void initState() {
     super.initState();
     _fetchRealCakes();
+    _fetchSystemSettings();
+  }
+
+  Future<void> _fetchSystemSettings() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final response = await supabase.from('SystemSetting').select('*');
+      if (mounted) {
+        final Map<String, String> settingsMap = {};
+        for (var item in response) {
+          final k = item['key']?.toString();
+          final v = item['value']?.toString();
+          if (k != null && v != null) {
+            settingsMap[k] = v;
+          }
+        }
+        setState(() {
+          _settings = settingsMap;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching system settings: $e");
+    }
   }
 
   @override
@@ -57,30 +100,31 @@ class _ContactScreenState extends State<ContactScreen> {
         return;
       }
 
-      // Fetch actual past items from user's most recent order
+      // Fetch recent cart items directly from WhatsAppCartItem by phone
       final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
-      final orderResponse = await supabase
-          .from('WhatsAppOrder')
-          .select('items:WhatsAppOrderItem(*)')
-          .eq('phone', userPhone)
-          .order('createdAt', ascending: false)
-          .limit(1)
-          .maybeSingle();
+      // Normalise to digits-only for matching
+      final digits = userPhone.replaceAll(RegExp(r'\D'), '');
+      final queryPhone = digits.length > 10 ? digits : '91$digits';
 
-      if (mounted && orderResponse != null) {
-        final items = orderResponse['items'] as List? ?? [];
+      final itemsResponse = await supabase
+          .from('WhatsAppCartItem')
+          .select('cakeName, price, size')
+          .eq('phone', queryPhone)
+          .order('createdAt', ascending: false)
+          .limit(2);
+
+      if (mounted) {
+        final items = (itemsResponse as List);
         setState(() {
-          _realCakes = items.take(2).map((item) {
+          _realCakes = items.map((item) {
             return {
               'name': (item['cakeName'] as String?) ?? 'Exquisite Creation',
-              'price': double.tryParse(item['price'].toString()) ?? 0.0,
-              'image': '', // Historical items don't have images in the schema
+              'price': ((item['price'] as num?) ?? 0) / 100.0, // stored in paise
+              'image': '',
             };
           }).toList();
           _isFetchingCakes = false;
         });
-      } else if (mounted) {
-        setState(() => _isFetchingCakes = false);
       }
     } catch (e) {
       debugPrint("Error fetching cakes for support: $e");
@@ -135,11 +179,11 @@ class _ContactScreenState extends State<ContactScreen> {
         final user = supabase.auth.currentUser;
         final String phone = user?.userMetadata?['phone']?.toString() ?? user?.phone ?? '';
         
-        await supabase.from('SupportReport').insert({
-          'title': _subjectController.text,
+        await supabase.from('Feedback').insert({
+          'rating': 0,
           'message': _messageController.text,
           'user_phone': phone,
-          'status': 'PENDING',
+          'type': 'SUPPORT',
           'createdAt': DateTime.now().toUtc().toIso8601String(),
         });
 
@@ -269,9 +313,21 @@ class _ContactScreenState extends State<ContactScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildContactBtn(Icons.phone_outlined, "Call", () => _launch("tel:+919113231424"))),
+                Expanded(
+                  child: _buildContactBtn(
+                    Icons.phone_outlined,
+                    "Call",
+                    () => _launch("tel:+$cleanPhone"),
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Expanded(child: _buildContactBtn(Icons.chat_bubble_outline, "WhatsApp", () => _launch("https://wa.me/919113231424"))),
+                Expanded(
+                  child: _buildContactBtn(
+                    Icons.chat_bubble_outline,
+                    "WhatsApp",
+                    () => _launch("https://wa.me/$cleanPhone"),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 40),
@@ -281,9 +337,9 @@ class _ContactScreenState extends State<ContactScreen> {
             const SizedBox(height: 40),
             _buildFeedbackSection(),
             const SizedBox(height: 60),
-            Center(
+             Center(
               child: Text(
-                "Sonna's Patisserie Support\nAvailable 9 AM - 9 PM",
+                "${_settings['bakery_name'] ?? "Sonna's Patisserie"} Support\nAvailable 9 AM - 9 PM",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withValues(alpha: 0.4)),
               ),
@@ -410,8 +466,6 @@ class _ContactScreenState extends State<ContactScreen> {
           children: [
             Text("Report an Issue", style: GoogleFonts.notoSerif(fontSize: 18, fontWeight: FontWeight.bold, color: secondaryColor)),
             const SizedBox(height: 20),
-            _buildSimpleField("Subject", controller: _subjectController),
-            const SizedBox(height: 12),
             _buildSimpleField("Describe the issue...", controller: _messageController, maxLines: 3),
             const SizedBox(height: 20),
             SizedBox(
@@ -435,6 +489,12 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Widget _buildVisitSection() {
+    final bakeryName = _settings['bakery_name'] ?? "Sonna's Patisserie and Cafe";
+    final addressVal = _settings['address'] ?? "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Apartment, Akshay Colony, Unkal, Hubballi, Karnataka 580021";
+    final timingsVal = _settings['visit_timings'] ?? "Mon, Wed-Sat: 2:00 PM – 10:00 PM\nSun: 2:00 PM – 10:30 PM\nTue: Closed";
+    final phoneVal = _settings['contact_phone'] ?? "+91 91132 31424";
+    final emailVal = _settings['contact_email'] ?? "sonnaspatisseriecafe@gmail.com";
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -462,18 +522,34 @@ class _ContactScreenState extends State<ContactScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text("Sonna's Patisserie and Cafe", style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold, color: secondaryColor)),
+          Text(bakeryName, style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.bold, color: secondaryColor)),
           Text("Bakery and Cake Shop • ₹200–400 per person", style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withValues(alpha: 0.5))),
           const SizedBox(height: 24),
-          _buildInfoRow(Icons.location_on_outlined, "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Apartment, Akshay Colony, Unkal, Hubballi, Karnataka 580021"),
-          const SizedBox(height: 16),
-          _buildInfoRow(Icons.access_time, "Mon, Wed-Sat: 2:00 PM – 10:00 PM\nSun: 2:00 PM – 10:30 PM\nTue: Closed"),
+          _buildInfoRow(
+            Icons.location_on_outlined, 
+            addressVal,
+            onTap: () => _launch(mapsUrl),
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(Icons.access_time, timingsVal),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            Icons.phone_outlined, 
+            phoneVal,
+            onTap: () => _launch("tel:+$cleanPhone"),
+          ),
+          const SizedBox(height: 12),
+          _buildInfoRow(
+            Icons.mail_outline, 
+            emailVal,
+            onTap: () => _launch("mailto:$emailVal"),
+          ),
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildSocialIcon(Icons.camera_alt_outlined, "https://instagram.com/sonnas__"),
+              _buildSocialIcon(Icons.camera_alt_outlined, instagramUrl),
               const SizedBox(width: 16),
-              _buildSocialIcon(Icons.map_outlined, "https://maps.google.com/?q=Sonna's+Patisserie+and+Cafe+Akshay+Colony"),
+              _buildSocialIcon(Icons.map_outlined, mapsUrl),
             ],
           )
         ],
@@ -481,13 +557,37 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
+  Widget _buildInfoRow(IconData icon, String text, {VoidCallback? onTap}) {
+    final rowChild = Row(
       children: [
         Icon(icon, color: primaryColor, size: 20),
         const SizedBox(width: 12),
-        Expanded(child: Text(text, style: GoogleFonts.plusJakartaSans(fontSize: 14, color: secondaryColor.withValues(alpha: 0.7)))),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              color: secondaryColor.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
       ],
+    );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
+          child: rowChild,
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 4.0),
+      child: rowChild,
     );
   }
 

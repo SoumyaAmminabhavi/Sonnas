@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,15 +33,32 @@ class _CustomerOrderHistoryScreenState
         return;
       }
 
-      final phone =
-          user.userMetadata?['phone']?.toString() ?? user.phone ?? '';
+      final rawPhone = (user.userMetadata?['phone']?.toString() ??
+          user.phone ??
+          '').replaceAll(RegExp(r'\D'), '');
 
-      // Query the unified Order table by customerPhone
-      final response = await supabase
+      final userPhone = rawPhone.length > 10
+          ? rawPhone.substring(rawPhone.length - 10)
+          : rawPhone;
+
+      final userEmail = user.email?.trim();
+
+      var query = supabase
           .from('Order')
-          .select('*, items:OrderItem(*)')
-          .eq('customerPhone', phone)
-          .order('createdAt', ascending: false);
+          .select('*, items:OrderItem(*)');
+
+      if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
+        query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
+      } else if (userEmail != null && userEmail.isNotEmpty) {
+        query = query.eq('customerEmail', userEmail);
+      } else if (userPhone.isNotEmpty) {
+        query = query.eq('customerPhone', userPhone);
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final response = await query.order('createdAt', ascending: false);
 
       if (mounted) {
         setState(() {

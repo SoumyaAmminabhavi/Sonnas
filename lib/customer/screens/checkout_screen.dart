@@ -159,6 +159,11 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
+    final int subtotalCents = cart.total.round();
+    final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
+    final int wrappingCents = _isGiftWrapping ? wrappingFeePaise : 0;
+    final int taxCents = (((subtotalCents + wrappingCents) * 5) + 50) ~/ 100;
+    final int grandTotalCents = subtotalCents + packagingCents + wrappingCents + taxCents;
 
     return Scaffold(
       backgroundColor: background,
@@ -187,33 +192,6 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             _buildTextField("Special Instructions (Notes)", Icons.note_add_outlined, controller: _notesController, maxLines: 2),
             
             const SizedBox(height: 32),
-            _sectionTitle("PREMIUM GIFTING"),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _isGiftWrapping ? primary : primary.withValues(alpha: 0.05)),
-              ),
-              child: Column(
-                children: [
-                  SwitchListTile(
-                    title: Text("Add Premium Gift Wrapping", style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w600)),
-                    subtitle: const Text("Includes silk ribbon & celebration box (+ ₹250)", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    secondary: Icon(Icons.card_giftcard, color: _isGiftWrapping ? primary : Colors.grey),
-                    value: _isGiftWrapping,
-                    activeThumbColor: primary,
-                    onChanged: (val) => setState(() => _isGiftWrapping = val),
-                  ),
-                  if (_isGiftWrapping) ...[
-                    const Divider(height: 24),
-                    _buildTextField("Personalized Gift Note", Icons.edit_note, controller: _giftMessageController, maxLines: 2),
-                  ],
-                ],
-              ),
-            ),
-            
             const SizedBox(height: 24),
             Row(
               children: [
@@ -224,42 +202,27 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
             ),
 
             const SizedBox(height: 40),
-            _sectionTitle("PAYMENT METHOD"),
-            const SizedBox(height: 16),
-            _buildPaymentOption("UPI", "Instant, secure transfer", Icons.vibration),
-            _buildPaymentOption("Credit/Debit Card", "Mastercard, Visa, RuPay", Icons.credit_card),
-            _buildPaymentOption("Cash on Delivery", "Pay when you receive", Icons.payments_outlined),
-
-            const SizedBox(height: 40),
             _sectionTitle("ORDER SUMMARY"),
             const SizedBox(height: 16),
-            Builder(builder: (context) {
-              final int subtotalCents = cart.total.round();
-              final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
-              final int wrappingCents = _isGiftWrapping ? wrappingFeePaise : 0;
-              final int taxCents = (((subtotalCents + wrappingCents) * 5) + 50) ~/ 100;
-              final int grandTotalCents = subtotalCents + packagingCents + wrappingCents + taxCents;
-
-              return Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20))],
-                ),
-                child: Column(
-                  children: [
-                    _summaryRow("Bag Total", "₹${(subtotalCents / 100).toStringAsFixed(2)}"),
-                    if (_isGiftWrapping)
-                      _summaryRow("Premium Wrapping", "₹${(wrappingCents / 100).toStringAsFixed(2)}"),
-                    _summaryRow("Delivery", "₹${(packagingCents / 100).toStringAsFixed(2)}"),
-                    _summaryRow("Taxes (5%)", "₹${(taxCents / 100).toStringAsFixed(2)}"),
-                    const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
-                    _summaryRow("Grand Total", "₹${(grandTotalCents / 100).toStringAsFixed(2)}", isTotal: true),
-                  ],
-                ),
-              );
-            }),
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+                boxShadow: [BoxShadow(color: primary.withValues(alpha: 0.08), blurRadius: 40, offset: const Offset(0, 20))],
+              ),
+              child: Column(
+                children: [
+                  _summaryRow("Bag Total", "₹${(subtotalCents / 100).toStringAsFixed(2)}"),
+                  if (_isGiftWrapping)
+                    _summaryRow("Premium Wrapping", "₹${(wrappingCents / 100).toStringAsFixed(2)}"),
+                  _summaryRow("Delivery", "₹${(packagingCents / 100).toStringAsFixed(2)}"),
+                  _summaryRow("Taxes (5%)", "₹${(taxCents / 100).toStringAsFixed(2)}"),
+                  const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
+                  _summaryRow("Grand Total", "₹${(grandTotalCents / 100).toStringAsFixed(2)}", isTotal: true),
+                ],
+              ),
+            ),
 
             const SizedBox(height: 48),
             SizedBox(
@@ -303,6 +266,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                         deliveryDate: selectedDate?.toIso8601String(),
                         deliveryTime: selectedTimeSlot,
                         notes: _notesController.text + (_isGiftWrapping ? "\n[GIFT WRAP] Message: ${_giftMessageController.text}" : ""),
+                        isSelfCheckout: widget.isSelfCheckout,
+                        totalAmount: grandTotalCents.toDouble(),
                       ),
                     ),
                   );
@@ -489,39 +454,6 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     );
   }
 
-  Widget _buildPaymentOption(String title, String subtitle, IconData icon) {
-    final isSelected = selectedPayment == title;
-    const primary = Color(0xFFC2185B);
-    return GestureDetector(
-      onTap: () => setState(() => selectedPayment = title),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? primary : primary.withValues(alpha: 0.05)),
-          boxShadow: isSelected ? [BoxShadow(color: primary.withValues(alpha: 0.05), blurRadius: 10)] : null,
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? primary : Colors.grey),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                ],
-              ),
-            ),
-            Icon(isSelected ? Icons.radio_button_checked : Icons.radio_button_off, color: isSelected ? primary : Colors.grey, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _summaryRow(String label, String value, {bool isTotal = false}) {
     return Padding(

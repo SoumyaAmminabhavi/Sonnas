@@ -102,56 +102,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     const Color accentRed = Color(0xFFEF4F5F);
 
     return Scaffold(
-      backgroundColor: Colors.black54,
-      body: Stack(
-        children: [
-          // Close area
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(color: Colors.transparent),
-          ),
-          
-          // Close button
-          Positioned(
-            top: 30,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF333333),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 24),
-                ),
-              ),
-            ),
-          ),
-
-          // Modal Card
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 600), // Neat alignment on web
-              height: MediaQuery.of(context).size.height * 0.85,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Image Container - Ensuring whole cake is visible
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600), // Neat alignment on web
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 64, 16, 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Image Container - Ensuring whole cake is visible
                           Container(
                             width: double.infinity,
                             height: 320,
@@ -331,75 +298,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 24),
-
-                          // Dietary Preferences
-                          _buildTitle("DIETARY PREFERENCE"),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: ["Standard", "Eggless", "Less Sugar"].map((diet) {
-                              final isSel = selectedDietary == diet;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child: ChoiceChip(
-                                  label: Text(diet, style: TextStyle(
-                                    fontSize: 12, 
-                                    fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                                    color: isSel ? Colors.white : Colors.black87,
-                                  )),
-                                  selected: isSel,
-                                  selectedColor: primaryColor,
-                                  backgroundColor: Colors.white,
-                                  side: BorderSide(color: isSel ? primaryColor : Colors.grey.shade300),
-                                  onSelected: (val) {
-                                    if (val) setState(() => selectedDietary = diet);
-                                  },
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Add-ons
-                          _buildTitle("CELEBRATION ADD-ONS"),
-                          const SizedBox(height: 8),
-                          ...selectedAddons.keys.map((addon) {
-                            final isSel = selectedAddons[addon]!;
-                            return CheckboxListTile(
-                              value: isSel,
-                              title: Text(addon, style: GoogleFonts.plusJakartaSans(fontSize: 14)),
-                              subtitle: Text("+ ₹${(addonPrices[addon]! / 100).toStringAsFixed(2)}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                              activeColor: primaryColor,
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (val) {
-                                setState(() {
-                                  selectedAddons[addon] = val ?? false;
-                                  _updatePriceDisplay();
-                                });
-                              },
-                            );
-                          }),
-                          const SizedBox(height: 12),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                ...["Happy Birthday", "Happy Anniversary", "Congratulations", "Best Wishes",].map((tag) => Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: ActionChip(
-                                    label: Text(tag, style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      color: primaryColor.withValues(alpha: 0.8),
-                                    )),
-                                    backgroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                    side: BorderSide(color: primaryColor.withValues(alpha: 0.1)),
-                                    onPressed: () => _messageController.text = tag,
-                                  ),
-                                )),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 40),
                         ],
                       ),
@@ -493,7 +391,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ),
-        ],
+          Positioned(
+              top: 12,
+              left: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

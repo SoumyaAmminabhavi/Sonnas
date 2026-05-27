@@ -48,11 +48,33 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
           return;
         }
 
-        final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
-        final recentOrder = await supabase
+        final rawPhone = (currentUser.userMetadata?['phone']?.toString() ??
+            currentUser.phone ??
+            '').replaceAll(RegExp(r'\D'), '');
+
+        final userPhone = rawPhone.length > 10
+            ? rawPhone.substring(rawPhone.length - 10)
+            : rawPhone;
+
+        final userEmail = currentUser.email?.trim();
+
+        var query = supabase
             .from('Order')
-            .select('id')
-            .eq('customerPhone', userPhone)
+            .select('id');
+
+        if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
+          query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
+        } else if (userEmail != null && userEmail.isNotEmpty) {
+          query = query.eq('customerEmail', userEmail);
+        } else if (userPhone.isNotEmpty) {
+          query = query.eq('customerPhone', userPhone);
+        } else {
+          if (!mounted) return;
+          setState(() => isLoading = false);
+          return;
+        }
+
+        final recentOrder = await query
             .order('createdAt', ascending: false)
             .limit(1)
             .maybeSingle();

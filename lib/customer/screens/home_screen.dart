@@ -6,6 +6,7 @@ import 'product_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
+import '../../services/supabase_service.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
@@ -21,65 +22,57 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
 
   final TextEditingController _searchController = TextEditingController();
-  final PageController _promoController = PageController();
-  int _currentPromoPage = 0;
-  Timer? _promoTimer;
-
-  final List<Map<String, dynamic>> _promoOffers = [
-    {
-      'title': "TODAY'S PICK",
-      'subtitle': "White Chocolate Raspberry Gateau",
-      'discount': "15% OFF today only! Use code SONNA15",
-      'bgGradient': [const Color(0xFFFF4D8D), const Color(0xFFFFB6D3)],
-      'icon': Icons.star_rounded,
-      'code': "SONNA15",
-    },
-    {
-      'title': "WEEKEND SPECIAL",
-      'subtitle': "Signature French Macarons Box",
-      'discount': "Buy 1 Get 1 Free on all boxes!",
-      'bgGradient': [const Color(0xFF701235), const Color(0xFFC2185B)],
-      'icon': Icons.card_giftcard_rounded,
-      'code': "MACARONBOGO",
-    },
-    {
-      'title': "CUSTOM CREATIONS",
-      'subtitle': "Premium Birthday & Anniversary Cakes",
-      'discount': "Book 3 days ahead for free delivery!",
-      'bgGradient': [const Color(0xFFE26D5C), const Color(0xFFF0A202)],
-      'icon': Icons.palette_rounded,
-      'code': "FREEDELIVERY",
-    }
-  ];
+  List<String> categories = [];
+  bool _isLoadingCategories = true;
 
   @override
   void initState() {
     super.initState();
     _fetchFeaturedCakes();
-    _startPromoTimer();
+    _fetchCategories();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _promoController.dispose();
-    _promoTimer?.cancel();
     super.dispose();
   }
 
-  void _startPromoTimer() {
-    _promoTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (_promoController.hasClients) {
+  IconData _getCategoryIcon(String categoryName) {
+    switch (categoryName.toLowerCase()) {
+      case 'cakes':
+        return Icons.cake_outlined;
+      case 'pastries':
+        return Icons.bakery_dining_outlined;
+      case 'savories':
+        return Icons.breakfast_dining_outlined;
+      case 'macarons':
+        return Icons.cookie_outlined;
+      case 'custom':
+        return Icons.edit_note_outlined;
+      default:
+        return Icons.restaurant_menu_outlined;
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final cats = await SupabaseService.fetchCategories();
+      if (mounted) {
         setState(() {
-          _currentPromoPage = (_currentPromoPage + 1) % _promoOffers.length;
+          categories = cats;
+          _isLoadingCategories = false;
         });
-        _promoController.animateToPage(
-          _currentPromoPage,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
       }
-    });
+    } catch (e) {
+      debugPrint("Error fetching categories: $e");
+      if (mounted) {
+        setState(() {
+          categories = ["Cakes", "Pastries", "Savories", "Macarons", "Custom"];
+          _isLoadingCategories = false;
+        });
+      }
+    }
   }
 
   Future<void> _fetchFeaturedCakes() async {
@@ -269,8 +262,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 24),
             _buildSearchBar(primaryColor),
             const SizedBox(height: 32),
-            _buildPromoCarousel(primaryColor),
-            const SizedBox(height: 32),
             // Categories Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -287,19 +278,21 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             SizedBox(
               height: 100,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                children: [
-                  _buildCategoryItem("Cakes", Icons.cake_outlined),
-                  _buildCategoryItem("Pastries", Icons.bakery_dining_outlined),
-                  _buildCategoryItem("Savories", Icons.breakfast_dining_outlined),
-                  _buildCategoryItem("Macarons", Icons.cookie_outlined),
-                  _buildCategoryItem("Custom", Icons.edit_note_outlined),
-                ],
-              ),
+              child: _isLoadingCategories
+                  ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        final catName = categories[index];
+                        return _buildCategoryItem(
+                          catName,
+                          _getCategoryIcon(catName),
+                        );
+                      },
+                    ),
             ),
-
             const SizedBox(height: 32),
 
             // Slides Section
@@ -443,14 +436,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () => widget.onViewMenu(null),
                       isGradient: true,
                     ),
-                    const SizedBox(height: 16),
-                    _buildMainButton(
-                      "CONTACT SONNA'S PATISSERIE",
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => const ContactScreen()));
-                      },
-                      isGradient: false,
-                    ),
                   ],
                 ),
               ),
@@ -584,135 +569,5 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPromoCarousel(Color primaryColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            "DAILY SPECIALS",
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 2,
-              color: primaryColor,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 160,
-          child: PageView.builder(
-            controller: _promoController,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPromoPage = index;
-              });
-            },
-            itemCount: _promoOffers.length,
-            itemBuilder: (context, index) {
-              final promo = _promoOffers[index];
-              final List<Color> gradientColors = promo['bgGradient'] as List<Color>;
-              
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: gradientColors,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: gradientColors[0].withValues(alpha: 0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        right: -30,
-                        bottom: -30,
-                        child: Icon(
-                          promo['icon'] as IconData,
-                          size: 150,
-                          color: Colors.white.withValues(alpha: 0.08),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                promo['title'] as String,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.5,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              promo['subtitle'] as String,
-                              style: GoogleFonts.notoSerif(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              promo['discount'] as String,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.9),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_promoOffers.length, (index) {
-            final isCurrent = _currentPromoPage == index;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              height: 6,
-              width: isCurrent ? 18 : 6,
-              decoration: BoxDecoration(
-                color: isCurrent ? primaryColor : primaryColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(3),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
+
 }
