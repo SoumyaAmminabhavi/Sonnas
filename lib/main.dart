@@ -49,7 +49,7 @@ void main() async {
       _initialThemeMode = savedTheme;
     } catch (e) {
       debugPrint('Theme Loading Error: $e');
-      _initialThemeMode = ThemeMode.system;
+      _initialThemeMode = ThemeMode.light;
     }
     
     runApp(

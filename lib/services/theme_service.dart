@@ -23,11 +23,11 @@ class ThemeService {
   static Future<ThemeMode> getThemeMode() async {
     final prefs = await _prefs;
     final modeName = prefs.getString(_themeKey);
-    if (modeName == null) return ThemeMode.system;
+    if (modeName == null) return ThemeMode.light;
     
     return ThemeMode.values.firstWhere(
       (e) => e.name == modeName,
-      orElse: () => ThemeMode.system,
+      orElse: () => ThemeMode.light,
     );
   }
 }
