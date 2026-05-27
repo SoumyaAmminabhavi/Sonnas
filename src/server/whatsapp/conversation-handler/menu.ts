@@ -211,10 +211,21 @@ export async function sendWelcome(to: string, name?: string) {
       const headerText = activeVersion.headerText ? compileTemplate(activeVersion.headerText, context) : "Sonna's Patisserie";
       const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
 
+      // Sort listSections explicitly in code to guarantee the required sequence:
+      // 1. TOP_FAVORITES (Top Sellers)
+      // 2. CATEGORIES (Browse by Category)
+      // 3. STATIC (Other Services)
+      const dataSourceOrder = ["TOP_FAVORITES", "CATEGORIES", "STATIC"];
+      const sortedSections = [...activeVersion.listSections].sort((a, b) => {
+        const indexA = dataSourceOrder.indexOf(a.dataSource);
+        const indexB = dataSourceOrder.indexOf(b.dataSource);
+        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+      });
+
       // 2. Resolve Interactive List Sections dynamically
       const resolvedSections = (
         await Promise.all(
-          activeVersion.listSections.map(async (section) => {
+          sortedSections.map(async (section) => {
             if (section.dataSource === "CATEGORIES") {
               const dbCategories = await safeGetCategories();
               const rows = dbCategories.length > 0
