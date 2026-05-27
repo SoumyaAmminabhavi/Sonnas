@@ -39,7 +39,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
   final _giftMessageController = TextEditingController();
-  bool _isGiftWrapping = false;
+  final bool _isGiftWrapping = false;
   static const int wrappingFeePaise = 25000; // ₹250 for premium wrapping
 
   @override
