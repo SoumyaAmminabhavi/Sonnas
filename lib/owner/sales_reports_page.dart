@@ -126,7 +126,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
   void _calculateMetrics() {
     _totalRevenue = 0;
-    final paidOrders = _paidOrders;
+    final paidOrders = _paidOrders.where((o) => o['isCustom'] != true).toList();
     _totalOrders = paidOrders.length;
 
     for (var order in paidOrders) {
@@ -144,13 +144,49 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
     for (var item in items) {
       final String? cakeId = item['cakeId']?.toString();
-      final String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
+      String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
+      
+      // Normalize: strip size/type suffixes for matching (e.g. "(1kg)", "(Slice)", "(Plate)")
+      final normalizedName = cakeName.replaceAll(RegExp(r'\s*\(.*?\)\s*$'), '').trim().toLowerCase();
       
       // Match with menu to get category and image (Prefer ID, fallback to name)
-      final matchingCake = menu.firstWhere(
-        (c) => (cakeId != null && c['id']?.toString() == cakeId) || (c['name']?.toString().toLowerCase() == cakeName.toLowerCase()),
-        orElse: () => <String, dynamic>{},
-      );
+      var matchingCake = <String, dynamic>{};
+      if (cakeId != null) {
+        matchingCake = menu.firstWhere(
+          (c) => c['id']?.toString() == cakeId,
+          orElse: () => <String, dynamic>{},
+        );
+      }
+      if (matchingCake.isEmpty) {
+        // Try exact match on normalized name
+        matchingCake = menu.firstWhere(
+          (c) => c['name']?.toString().toLowerCase() == normalizedName,
+          orElse: () => <String, dynamic>{},
+        );
+      }
+      if (matchingCake.isEmpty) {
+        // Try contains match (handles "Almond Brittle Slice" → "Almond Brittle with Salted Caramel Ganache")
+        matchingCake = menu.firstWhere(
+          (c) {
+            final menuName = c['name']?.toString().toLowerCase() ?? '';
+            return menuName.contains(normalizedName) || normalizedName.contains(menuName);
+          },
+          orElse: () => <String, dynamic>{},
+        );
+      }
+      if (matchingCake.isEmpty) {
+        // Try stripping common trailing type words ("slice", "cake", "mousse", etc.)
+        final strippedName = normalizedName.replaceAll(RegExp(r'\s+(slice|cake|mousse|macaron|pastry)\s*$'), '').trim();
+        if (strippedName != normalizedName) {
+          matchingCake = menu.firstWhere(
+            (c) {
+              final menuName = c['name']?.toString().toLowerCase() ?? '';
+              return menuName.contains(strippedName) || strippedName.contains(menuName);
+            },
+            orElse: () => <String, dynamic>{},
+          );
+        }
+      }
 
       final String category = (matchingCake['Category']?['name'] as String?) ?? 'Custom';
       final itemPrice = _parsePrice(item['price']);
