@@ -619,7 +619,7 @@ class _AddExpenseDialogState extends State<_AddExpenseDialog> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 decoration: _inputDecoration("Category"),
                 items: widget.categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (val) => setState(() => selectedCategory = val!),
