@@ -300,7 +300,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     const Color surfaceColor = Color(0xFFFFF0F6);
     const Color onSurfaceColor = Color(0xFF701235);
     const Color secondaryColor = Color(0xFF701235);
-    const Color outlineVariantColor = Color(0xFFD8C1C6);
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -683,22 +682,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildAppLogo(String name) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1E9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Text(
-          name,
-          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withValues(alpha: 0.4)),
-        ),
-      ),
-    );
-  }
 
   Widget _buildSuccessOverlay(BuildContext context) {
     const Color primaryColor = Color(0xFFFF4D8D);
