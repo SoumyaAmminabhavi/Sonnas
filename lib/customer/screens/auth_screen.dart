@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -96,7 +96,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           if (mounted) {
             unawaited(Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
+              MaterialPageRoute(
+                settings: const RouteSettings(name: 'OwnerDashboard'),
+                builder: (context) => owner_dashboard.OwnerDashboard(),
+              ),
             ));
           }
         } else {
