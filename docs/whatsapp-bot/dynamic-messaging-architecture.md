@@ -118,7 +118,7 @@ model WhatsAppListSection {
   id          String                  @id @default(cuid())
   versionId   String
   sortOrder   Int                     @default(0)
-  title       String                  // Max 24 chars. (e.g. "⭐ Top Favorites")
+  title       String                  // Max 24 chars. (e.g. "📋 Browse by Category")
   
   // Dynamic Integration field
   dataSource  SectionDataSource       @default(STATIC) // STATIC, CATEGORIES, PRODUCT_LIST, CURRENT_CART, ACTIVE_ORDERS
@@ -356,44 +356,38 @@ export async function sendWelcome(to: string, name?: string) {
   const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
 
   // 4. Resolve Dynamic Interactive List Sections
-  const resolvedSections = await Promise.all(
-    activeVersion.listSections.map(async (section) => {
-      // Handle fully automated DB-driven lists
-      if (section.dataSource === "CATEGORIES") {
-        const dbCategories = await safeGetCategories();
+  const resolvedSections = (
+    await Promise.all(
+      activeVersion.listSections.map(async (section) => {
+        // Handle fully automated DB-driven lists
+        if (section.dataSource === "CATEGORIES") {
+          const dbCategories = await safeGetCategories();
+          return {
+            title: section.title,
+            rows: dbCategories.slice(0, 8).map((cat) => ({
+              id: `cat_${cat.id}`,
+              title: cat.name.slice(0, 24),
+              description: "Freshly crafted desserts"
+            }))
+          };
+        }
+
+        if (section.dataSource === "TOP_FAVORITES") {
+          return null; // Top Favorites removed
+        }
+
+        // Default to static rows configured in the panel
         return {
           title: section.title,
-          rows: dbCategories.slice(0, 8).map((cat) => ({
-            id: `cat_${cat.id}`,
-            title: cat.name.slice(0, 24),
-            description: "Freshly crafted desserts"
+          rows: section.rows.map((row) => ({
+            id: compileTemplate(row.rowId, context),
+            title: compileTemplate(row.title, context).slice(0, 24),
+            description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined
           }))
         };
-      }
-
-      if (section.dataSource === "TOP_FAVORITES") {
-        const cakes = await safeGetCakes();
-        return {
-          title: section.title,
-          rows: cakes.slice(0, 3).map((cake) => ({
-            id: `cake_${cake.id}`,
-            title: cake.name.slice(0, 24),
-            description: `From ${formatPrice(cake.options?.[0]?.price ?? 75000)}`
-          }))
-        };
-      }
-
-      // Default to static rows configured in the panel
-      return {
-        title: section.title,
-        rows: section.rows.map((row) => ({
-          id: compileTemplate(row.rowId, context),
-          title: compileTemplate(row.title, context).slice(0, 24),
-          description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined
-        }))
-      };
-    })
-  );
+      })
+    )
+  ).filter((section): section is Exclude<typeof section, null> => section !== null);
 
   // 5. Send Dynamic WhatsApp List
   await sendInteractiveList(
@@ -463,9 +457,8 @@ Clicking `[Edit]` opens a WYSIWYG side-by-side Live Preview Editor:
 | [ Interactive Components ]                                                        |
 | Type: [ Dropdown List ]  Dropdown Button Label: [ View Cakes ]                    |
 |                                                                                   |
-| Section 1: [ ⭐ Top Favorites ]   Data Source: [ TOP_FAVORITES  v ]               |
-| Section 2: [ 📋 Cake Categories ] Data Source: [ CATEGORIES     v ]               |
-| Section 3: [ 🎨 Other Services ]  Data Source: [ STATIC         v ]               |
+| Section 1: [ 📋 Cake Categories ] Data Source: [ CATEGORIES     v ]               |
+| Section 2: [ 🎨 Other Services ]  Data Source: [ STATIC         v ]               |
 |   - Row 1: ID [ btn_custom ] Title [ Custom Cake   ] Desc [ Design your cake  ]   |
 |   - Row 2: ID [ btn_status ] Title [ Track Orders  ] Desc [ View order status ]   |
 |                                                                                   |
@@ -522,15 +515,14 @@ UPDATE "WhatsAppTemplate" SET "activeVersionId" = 'v_welcome_1' WHERE "id" = 't_
 -- 3. Insert Welcome Interactive Sections
 INSERT INTO "WhatsAppListSection" ("id", "versionId", "sortOrder", "title", "dataSource")
 VALUES 
-('s_welcome_1', 'v_welcome_1', 1, '⭐ Top Favorites', 'TOP_FAVORITES'),
-('s_welcome_2', 'v_welcome_2', 2, '📋 Browse by Category', 'CATEGORIES'),
-('s_welcome_3', 'v_welcome_3', 3, '✨ Other Services', 'STATIC');
+('s_welcome_1', 'v_welcome_1', 1, '📋 Browse by Category', 'CATEGORIES'),
+('s_welcome_2', 'v_welcome_1', 2, '✨ Other Services', 'STATIC');
 
--- 4. Insert Static Rows under Section 3
+-- 4. Insert Static Rows under Section 2
 INSERT INTO "WhatsAppListRow" ("id", "sectionId", "sortOrder", "rowId", "title", "description")
 VALUES
-('r_static_1', 's_welcome_3', 1, 'btn_custom', '🎨 Custom Creation', 'Design your own cake'),
-('r_static_2', 's_welcome_3', 2, 'btn_status', '📦 Track My Order', 'Check your history');
+('r_static_1', 's_welcome_2', 1, 'btn_custom', '🎨 Custom Creation', 'Design your own cake'),
+('r_static_2', 's_welcome_2', 2, 'btn_status', '📦 Track My Order', 'Check your history');
 
 -- 5. Insert Unpaid Order Confirmation Template (with dynamic CTA Pay Link)
 INSERT INTO "WhatsAppTemplate" ("id", "code", "language", "description", "category", "isActive", "createdAt", "updatedAt") 
