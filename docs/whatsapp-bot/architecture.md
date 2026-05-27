@@ -157,10 +157,9 @@ The `btn_back` handler implements intelligent state rollback:
 - **Image Safety Guard**: Before sending to WhatsApp API, the `isPublicImageUrl()` check ensures only valid `https://` URLs (excluding `localhost`) are sent. Invalid images are skipped silently — the size selection buttons are still sent.
 
 ### Welcome Message Structure
-The welcome `sendInteractiveList` message contains 3 sections:
-1. **⭐ Top Favorites**: First 2 cakes from the database (by sort order)
-2. **📋 Browse by Category**: First 6 categories (oldest first) — each row links to `cat_{id}`
-3. **✨ Other Services**: Custom Creation (`btn_custom`) and Track My Order (`btn_status`)
+The welcome `sendInteractiveList` message contains 2 sections:
+1. **📋 Browse by Category**: First 6 categories (oldest first) — each row links to `cat_{id}`
+2. **✨ Other Services**: Custom Creation (`btn_custom`) and Track My Order (`btn_status`)
 
 After the interactive list, the **Menu PDF** (`menu_compressed.pdf`) is sent as a separate document message with a 1-second delay to avoid racing conditions with the list.
 
