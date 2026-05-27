@@ -13,6 +13,7 @@ import '../../owner/owner_dashboard.dart' deferred as owner_dashboard;
 import '../main.dart';
 import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
+import '../utils/razorpay_service.dart';
 
 
 class PaymentScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class PaymentScreen extends StatefulWidget {
   final String? deliveryTime;
   final String? notes;
   final bool isSelfCheckout;
+  final double totalAmount;
 
   const PaymentScreen({
     super.key,
@@ -33,6 +35,7 @@ class PaymentScreen extends StatefulWidget {
     this.deliveryTime,
     this.notes,
     this.isSelfCheckout = false,
+    this.totalAmount = 0.0,
   });
 
   @override
@@ -54,6 +57,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
     _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final cart = Provider.of<CartProvider>(context, listen: false);
+      _startRazorpayPayment(cart);
+    });
   }
 
   @override
@@ -84,16 +92,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   void _startRazorpayPayment(CartProvider cart) {
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Online payments via Razorpay are only supported on Android & iOS mobile devices."),
-          backgroundColor: Color(0xFFFF4D8D),
-        ),
-      );
-      return;
-    }
-
     final double totalWithExtras = _calculateTotal(cart.total);
     final int amountInPaise = totalWithExtras.round();
     
@@ -113,6 +111,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     };
 
+    if (kIsWeb) {
+      try {
+        setState(() => _isLoading = true);
+        openRazorpay(
+          options: options,
+          onSuccess: (paymentId) {
+            debugPrint("Razorpay Payment Success: $paymentId");
+            _placeOrder(cart, paymentId: paymentId);
+          },
+          onFailure: (code, message) {
+            debugPrint("Razorpay Payment Error: $code - $message");
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Payment Failed: $message"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          },
+        );
+      } catch (e) {
+        debugPrint("Error opening Razorpay Web: $e");
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
+
     try {
       setState(() => _isLoading = true);
       _razorpay.open(options);
@@ -123,6 +148,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   double _calculateTotal(double cartTotal) {
+    if (widget.totalAmount > 0) {
+      return widget.totalAmount;
+    }
     final int subtotalCents = cartTotal.round();
     final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
     final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
@@ -139,9 +167,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _placedOrderId = orderId;
       _placedOrderTotal = _calculateTotal(cart.total);
       final String orderNumber = "SN-${DateTime.now().millisecondsSinceEpoch}";
-      final String? customerPhone = widget.phone?.replaceAll(RegExp(r'\D'), '');
+      String? customerPhone = widget.phone?.replaceAll(RegExp(r'\D'), '');
       if (customerPhone == null || customerPhone.isEmpty) {
         throw Exception("A valid contact number is required to place an order.");
+      }
+      if (customerPhone.length > 10) {
+        customerPhone = customerPhone.substring(customerPhone.length - 10);
       }
       
       // 1. (Optional) Try to ensure Conversation exists, but don't let it block the order
@@ -174,6 +205,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'id': orderId,
         'orderNumber': orderNumber,
         'customerPhone': customerPhone,
+        'customerEmail': supabase.auth.currentUser?.email?.trim(),
         'customerName': widget.customerName ?? 'Guest Customer',
         'address': widget.address ?? 'No Address',
         'deliveryDate': widget.deliveryDate,
@@ -229,6 +261,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             builder: (context) => OrderSuccessScreen(
               orderNumber: orderNumber,
               totalAmount: totalWithExtras / 100,
+              status: paymentId != null ? 'CONFIRMED' : 'PENDING',
             ),
           ),
         ));
@@ -301,7 +334,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
                 ),
                 title: Text(
-                  "Sonnaâ€™s Patisserie",
+                  "Sonna's Patisserie",
                   style: GoogleFonts.notoSerif(
                     color: primaryColor,
                     fontSize: 20,
@@ -402,108 +435,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                         ),
                       ),
-
-                      _buildPaymentMethod(
-                        id: 'UPI Scanner',
-                        icon: Icons.qr_code_scanner,
-                        title: 'UPI Scanner',
-                        subtitle: 'Scan and pay instantly at the counter',
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: outlineVariantColor.withValues(alpha: 0.1)),
-                              ),
-                              child: Column(
-                                children: [
-                                  Image.network(
-                                    "https://lh3.googleusercontent.com/aida-public/AB6AXuCE0VkjT0DzbaGmhQllA7poRoma8CX_y5_fOZaNBnH7LUp4pYx0Yra0gZ_zghUWvjFyRqmMsJDK-Qu3nUWm3b3EkpZDVrwRkQwZvxnljK2Y5Jv1Vy5ofM3k1A1ty0hQaadVHhsz97Ef0LBYtgoBqHDHCmXJocOWpQ1oNcFQ5qygyeMWq2bj-y7kG9r5dzvuglhjONwbpp1QqsNkY2IFfV-CcWXWQWCWjD97yMb_NHk715YrKAgkv9XT2ehk8eTf_qlei13Tq5YDtlhV",
-                                    width: 180,
-                                    height: 180,
-                                    fit: BoxFit.contain,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    "Scan the display QR at the Sonna's Patisserie counter to pay instantly.",
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 11,
-                                      color: secondaryColor.withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      _buildPaymentMethod(
-                        id: 'UPI ID',
-                        icon: Icons.smartphone,
-                        title: 'UPI ID / App',
-                        subtitle: 'Pay via GPay, PhonePe, or Paytm',
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextField(
-                                      decoration: InputDecoration(
-                                        hintText: "Enter UPI ID (e.g. user@bank)",
-                                        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 13, color: secondaryColor.withValues(alpha: 0.3)),
-                                        filled: true,
-                                        fillColor: const Color(0xFFFFF1E9),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    height: 48,
-                                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                                    decoration: BoxDecoration(
-                                      color: primaryColor,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        "VERIFY",
-                                        style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildAppLogo("GPay"),
-                                  const SizedBox(width: 16),
-                                  _buildAppLogo("PhPe"),
-                                  const SizedBox(width: 16),
-                                  _buildAppLogo("Paytm"),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      _buildPaymentMethod(
-                        id: 'Cash',
-                        icon: Icons.payments_outlined,
-                        title: 'Cash on Collection',
-                        subtitle: 'Pay by cash or card at our boutique',
-                      ),
                     ],
                   ),
                 ),
@@ -550,7 +481,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                               ),
                               Text(
-                                "â‚¹${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
+                                "\u20B9${NumberFormat.currency(locale: 'en_IN', symbol: '', decimalDigits: 2).format((item.price * item.quantity) / 100)}",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w700, color: onSurfaceColor),
                               ),
                             ],
@@ -575,7 +506,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
+                                  NumberFormat.currency(locale: 'en_IN', symbol: '\u20B9', decimalDigits: 2).format(_calculateTotal(cart.total) / 100),
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
@@ -696,7 +627,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ],
       ),
       child: InkWell(
-        onTap: () => setState(() => _selectedMethod = id),
+        onTap: () {
+          setState(() => _selectedMethod = id);
+          if (id == 'Razorpay') {
+            final cart = context.read<CartProvider>();
+            _startRazorpayPayment(cart);
+          }
+        },
         child: Column(
           children: [
             Row(
@@ -807,7 +744,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               
               // Heading
               Text(
-                "Order Placed Successfully ðŸŽ‰",
+                "Order Placed Successfully \u{1F389}",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
@@ -849,7 +786,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),
                     ),
-                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: 'â‚¹', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
+                    _buildInfoRow("Total Paid", NumberFormat.currency(locale: 'en_IN', symbol: '\u20B9', decimalDigits: 2).format((_placedOrderTotal ?? 0) / 100)),
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Divider(height: 1, thickness: 0.5),

@@ -34,6 +34,27 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    window.openRazorpayCheckout = function(options, onSuccess, onFailure) {
+      // options is passed from Dart as a JS object/map
+      options.handler = function(response) {
+        if (onSuccess) {
+          onSuccess(response.razorpay_payment_id);
+        }
+      };
+      
+      var rzp = new Razorpay(options);
+      
+      rzp.on('payment.failed', function(response) {
+        if (onFailure) {
+          onFailure(response.error.code, response.error.description);
+        }
+      });
+      
+      rzp.open();
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

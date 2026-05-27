@@ -32,11 +32,6 @@ class _MenuScreenState extends State<MenuScreen> {
     super.initState();
     if (widget.initialSearchQuery != null) {
       _searchController.text = widget.initialSearchQuery!;
-      final lowerQuery = widget.initialSearchQuery!.trim().toLowerCase();
-      if (lowerQuery == "cakes" || lowerQuery == "pastries" || lowerQuery == "savories" || lowerQuery == "desserts") {
-        _selectedCategory = widget.initialSearchQuery!.trim();
-        _searchController.clear();
-      }
     }
     _fetchCakes();
     _subscribeToMenuChanges();
@@ -76,6 +71,23 @@ class _MenuScreenState extends State<MenuScreen> {
         setState(() {
           // Update Categories
           categories = ["All", ...cats.where((c) => c != "All")];
+          
+          if (widget.initialSearchQuery != null) {
+            final queryLower = widget.initialSearchQuery!.trim().toLowerCase();
+            final matchedCat = categories.firstWhere(
+              (c) => c.toLowerCase() == queryLower,
+              orElse: () => '',
+            );
+            
+            if (matchedCat.isNotEmpty) {
+              _selectedCategory = matchedCat;
+              _searchController.clear();
+            } else {
+              _selectedCategory = "All";
+              _searchController.text = widget.initialSearchQuery!;
+            }
+          }
+
           menuItems = data.map((cake) {
             final options = cake['options'] as List?;
             double numericPrice = 0.0;
@@ -138,6 +150,24 @@ class _MenuScreenState extends State<MenuScreen> {
       debugPrint("Error fetching cakes: $e");
       if (mounted) {
         setState(() {
+          categories = ["All", "Cakes", "Pastries", "Savories"];
+          
+          if (widget.initialSearchQuery != null) {
+            final queryLower = widget.initialSearchQuery!.trim().toLowerCase();
+            final matchedCat = categories.firstWhere(
+              (c) => c.toLowerCase() == queryLower,
+              orElse: () => '',
+            );
+            
+            if (matchedCat.isNotEmpty) {
+              _selectedCategory = matchedCat;
+              _searchController.clear();
+            } else {
+              _selectedCategory = "All";
+              _searchController.text = widget.initialSearchQuery!;
+            }
+          }
+
           // Fallback to sample data for visual feedback
           menuItems = [
             {
@@ -242,12 +272,13 @@ class _MenuScreenState extends State<MenuScreen> {
 
     return Scaffold(
       backgroundColor: background,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 120, 24, 24),
-              child: Column(
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -417,8 +448,9 @@ class _MenuScreenState extends State<MenuScreen> {
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildGrid(Color primary, Color secondary, Color onSurface) {
     return SliverPadding(

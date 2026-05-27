@@ -339,7 +339,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         autofillHints: const [AutofillHints.password],
                         style: GoogleFonts.plusJakartaSans(color: berry, fontWeight: FontWeight.w600),
                         decoration: _buildInputDecoration(
-                          "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢", 
+                          "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022", 
                           Icons.lock_outline,
                           suffixIcon: IconButton(
                             icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),

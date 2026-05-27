@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'dart:math' show min;
 
 import '../../services/dashboard_provider.dart';
 import '../../services/order_service.dart';
@@ -84,6 +85,13 @@ class DashboardContent extends ConsumerWidget {
 
           // Orders List (Using Riverpod)
           _buildOrdersList(ref, cs),
+          const SizedBox(height: 48),
+
+          // Customer Reviews Section
+          _buildReviewsHeader(cs),
+          const SizedBox(height: 24),
+          _buildReviewsSection(ref, cs),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -170,6 +178,69 @@ class DashboardContent extends ConsumerWidget {
       error: (err, st) {
         debugPrint('Failed to load orders: $err\n$st');
         return const Center(child: Text("Failed to load orders"));
+      },
+    );
+  }
+
+  Widget _buildReviewsHeader(ColorScheme cs) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Customer Reviews",
+              style: GoogleFonts.notoSerif(color: cs.secondary, fontSize: 24),
+            ),
+            Text(
+              "Live feedback from your customers",
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.6),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReviewsSection(WidgetRef ref, ColorScheme cs) {
+    final feedbackAsync = ref.watch(feedbackStreamProvider);
+    return feedbackAsync.when(
+      data: (reviews) {
+        if (reviews.isEmpty) {
+          return _NoReviewsView(cs: cs);
+        }
+        final recent = reviews.sublist(0, min(6, reviews.length));
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isDesktop ? 2 : 1,
+            crossAxisSpacing: 24,
+            mainAxisSpacing: 16,
+            mainAxisExtent: 140,
+          ),
+          itemCount: recent.length,
+          itemBuilder: (context, index) =>
+              _ReviewCard(review: recent[index], cs: cs, isDesktop: isDesktop),
+        );
+      },
+      loading: () => Column(
+        children: List.generate(
+          2,
+          (_) => const Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: Skeleton(height: 140, width: double.infinity),
+          ),
+        ),
+      ),
+      error: (err, _) {
+        debugPrint('Feedback load error: $err');
+        return const Center(child: Text("Failed to load reviews"));
       },
     );
   }
@@ -773,6 +844,147 @@ class _NoOrdersView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _NoReviewsView extends StatelessWidget {
+  final ColorScheme cs;
+  const _NoReviewsView({required this.cs});
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(48.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.star_border_rounded,
+              color: cs.primary.withValues(alpha: 0.15),
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No reviews yet.",
+              style: GoogleFonts.notoSerif(
+                color: cs.secondary.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  final Map<String, dynamic> review;
+  final ColorScheme cs;
+  final bool isDesktop;
+
+  const _ReviewCard({
+    required this.review,
+    required this.cs,
+    required this.isDesktop,
+  });
+
+  String _timeAgo(String? iso) {
+    if (iso == null) return '';
+    try {
+      final dt = DateTime.parse(iso).toLocal();
+      final diff = DateTime.now().difference(dt);
+      if (diff.inMinutes < 1) return 'just now';
+      if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+      if (diff.inHours < 24) return '${diff.inHours}h ago';
+      return '${diff.inDays}d ago';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = (review['rating'] as num?)?.toDouble() ?? 0.0;
+    final message = review['message']?.toString() ?? '';
+    final phone = (review['user_phone'] ?? review['userPhone'])?.toString() ?? '';
+    final timeAgo = _timeAgo(review['createdAt']?.toString());
+    final stars = rating.round().clamp(0, 5);
+    final isSupport = review['type']?.toString() == 'SUPPORT';
+
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 20 : 14),
+      decoration: BoxDecoration(
+        color: isSupport
+            ? cs.errorContainer.withValues(alpha: 0.3)
+            : cs.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: isSupport
+            ? Border.all(color: cs.error.withValues(alpha: 0.3), width: 1)
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              if (isSupport)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: cs.error.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'SUPPORT REQUEST',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.error,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              else
+                Row(
+                  children: List.generate(5, (i) => Icon(
+                    i < stars ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: cs.primary,
+                    size: isDesktop ? 16 : 14,
+                  )),
+                ),
+              const Spacer(),
+              Text(
+                timeAgo,
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.4),
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          if (message.isNotEmpty)
+            Text(
+              message,
+              maxLines: isSupport ? 3 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.8),
+                fontSize: isDesktop ? 13 : 12,
+              ),
+            ),
+          if (phone.isNotEmpty)
+            Text(
+              phone.length >= 10
+                  ? '•••• ${phone.substring(phone.length - 4)}'
+                  : phone,
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.4),
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -144,6 +144,10 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                     return;
                   }
                   
+                  final int subtotalCents = cart.total.round();
+                  final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
+                  final int grandTotalCents = subtotalCents + taxCents;
+                  
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -155,6 +159,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                         deliveryTime: "Immediate",
                         notes: "Self Checkout Transaction",
                         isSelfCheckout: true,
+                        totalAmount: grandTotalCents.toDouble(),
                       ),
                     ),
                   );

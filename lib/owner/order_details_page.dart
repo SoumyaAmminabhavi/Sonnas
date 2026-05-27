@@ -212,12 +212,21 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                             () {
                                               if (order['deliveryDate'] == null) return "Date not scheduled yet";
                                               final date = OrderService.parseDate(order['deliveryDate'].toString());
+                                              final slot = order['deliverySlot']?.toString();
+                                              final isImmediate = slot?.toLowerCase() == 'immediate';
+
                                               if (date != null) {
                                                 final formattedDate = DateFormat('MMMM d, y').format(date);
-                                                final time = order['deliverySlot'] != null ? ' at ${order['deliverySlot']}' : '';
+                                                if (isImmediate) {
+                                                  return "Immediate Delivery ($formattedDate)";
+                                                }
+                                                final time = slot != null ? ' at $slot' : '';
                                                 return "Scheduled for $formattedDate$time";
                                               }
-                                              return "Scheduled for ${order['deliveryDate']}${order['deliverySlot'] != null ? ' at ${order['deliverySlot']}' : ''}";
+                                              if (isImmediate) {
+                                                return "Immediate Delivery (${order['deliveryDate']})";
+                                              }
+                                              return "Scheduled for ${order['deliveryDate']}${slot != null ? ' at $slot' : ''}";
                                             }(),
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,

@@ -209,7 +209,15 @@ class _OrderCardBase extends StatelessWidget {
                   const SizedBox(height: 2),
                   _InfoRow(icon: Icons.cake_outlined, text: orderSubtitle, cs: cs),
                   _InfoRow(icon: Icons.payments_outlined, text: price, cs: cs),
-                  _InfoRow(icon: Icons.schedule_outlined, text: deliveryTime != null ? "$deliveryDate at $deliveryTime" : deliveryDate, cs: cs),
+                  _InfoRow(
+                    icon: Icons.schedule_outlined,
+                    text: deliveryTime != null
+                        ? (deliveryTime?.toLowerCase() == 'immediate'
+                            ? "Immediate Delivery ($deliveryDate)"
+                            : "$deliveryDate at $deliveryTime")
+                        : deliveryDate,
+                    cs: cs,
+                  ),
                 ],
               ),
             ),
