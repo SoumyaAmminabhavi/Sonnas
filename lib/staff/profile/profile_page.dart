@@ -358,6 +358,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
 
                                   if (dbUpdated) {
                                     await SessionService.updateBiometricStatus(val);
+                                    if (!context.mounted) return;
                                     if (widget.staffData != null) {
                                       widget.staffData!['biometricEnabled'] = val;
                                     }
@@ -396,6 +397,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
 
                                 if (dbUpdated) {
                                   await SessionService.updateBiometricStatus(false);
+                                  if (!context.mounted) return;
                                   if (widget.staffData != null) {
                                     widget.staffData!['biometricEnabled'] = false;
                                   }

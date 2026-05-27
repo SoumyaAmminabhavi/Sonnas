@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -18,7 +19,7 @@ class SystemSettingService {
       }
       return settings;
     } catch (e) {
-      print("Error fetching settings: $e");
+      debugPrint("Error fetching settings: $e");
       // Return empty map on error to allow fallback values
       return {};
     }

@@ -380,6 +380,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     });
   }
 
+  // ignore: unused_element
   void _showCreateVersionDialog() {
     if (_selectedTemplate == null) return;
 
@@ -398,7 +399,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     
     // Manage dynamic items inside dialog state
     List<Map<String, dynamic>> dynamicButtons = [];
-    List<Map<String, dynamic>> dynamicSections = [];
+    List<Map<String, dynamic>> dynamicSections = []; // ignore: unused_element
 
     final nextVerNum = _selectedTemplateVersions.isEmpty
         ? 1
@@ -1435,7 +1436,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _interactiveType,
+                    initialValue: _interactiveType,
                     decoration: InputDecoration(
                       isDense: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -1505,7 +1506,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                   ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
-                    value: _mediaType,
+                    initialValue: _mediaType,
                     decoration: InputDecoration(
                       isDense: true,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
