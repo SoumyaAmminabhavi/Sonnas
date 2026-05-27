@@ -155,40 +155,35 @@ export async function sendWelcome(to: string, name?: string) {
       const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
 
       // 2. Resolve Interactive List Sections dynamically
-      const resolvedSections = await Promise.all(
-        activeVersion.listSections.map(async (section) => {
-          if (section.dataSource === "CATEGORIES") {
-            const dbCategories = await safeGetCategories();
-            const rows = dbCategories.length > 0
-              ? dbCategories.slice(0, 6).map((cat) => ({
-                  id: `cat_${cat.id}`,
-                  title: cat.name.slice(0, 24),
-                }))
-              : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }];
-            return { title: section.title, rows };
-          }
+      const resolvedSections = (
+        await Promise.all(
+          activeVersion.listSections.map(async (section) => {
+            if (section.dataSource === "CATEGORIES") {
+              const dbCategories = await safeGetCategories();
+              const rows = dbCategories.length > 0
+                ? dbCategories.slice(0, 6).map((cat) => ({
+                    id: `cat_${cat.id}`,
+                    title: cat.name.slice(0, 24),
+                  }))
+                : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }];
+              return { title: section.title, rows };
+            }
 
-          if (section.dataSource === "TOP_FAVORITES") {
-            const cakes = await safeGetCakes();
-            const topCakes = cakes.slice(0, 2);
-            const rows = topCakes.map((c) => ({
-              id: `cake_${c.id}`,
-              title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
-              description: "Signature Selection",
+            if (section.dataSource === "TOP_FAVORITES") {
+              return null; // Top Favorites section has been removed
+            }
+
+            // STATIC list rows configured in the panel
+            const rows = section.rows.map((row) => ({
+              id: compileTemplate(row.rowId, context),
+              title: compileTemplate(row.title, context).slice(0, 24),
+              description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined,
             }));
+
             return { title: section.title, rows };
-          }
-
-          // STATIC list rows configured in the panel
-          const rows = section.rows.map((row) => ({
-            id: compileTemplate(row.rowId, context),
-            title: compileTemplate(row.title, context).slice(0, 24),
-            description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined,
-          }));
-
-          return { title: section.title, rows };
-        })
-      );
+          })
+        )
+      ).filter((section): section is Exclude<typeof section, null> => section !== null);
 
       // 3. Send Dynamic Interactive List Menu
       await sendInteractiveList(
@@ -220,8 +215,6 @@ export async function sendWelcome(to: string, name?: string) {
   console.warn("[WhatsApp] Dynamic WELCOME_MESSAGE missing or failed. Falling back to hardcoded greetings.");
 
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
-  const cakes = await safeGetCakes();
-  const topCakes = cakes.slice(0, 2);
   const dbCategories = await safeGetCategories();
 
   await sendInteractiveList(
@@ -230,14 +223,6 @@ export async function sendWelcome(to: string, name?: string) {
     `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart`,
     "View Menu",
     [
-      {
-        title: "⭐ Top Favorites",
-        rows: topCakes.map((c) => ({
-          id: `cake_${c.id}`,
-          title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
-          description: `Signature Selection`,
-        })),
-      },
       {
         title: "📋 Browse by Category",
         rows: dbCategories.length > 0
