@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/whatsapp_service.dart';
 
 class WhatsAppSettingsPage extends StatefulWidget {
@@ -28,6 +30,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
   String _mediaType = 'NONE';
   String _interactiveType = 'NONE';
   bool _isSavingLive = false;
+  bool _isUploadingMedia = false;
 
   @override
   void initState() {
@@ -86,6 +89,72 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     _ctaButtonTitleController.dispose();
     _ctaButtonUrlController.dispose();
     super.dispose();
+  }
+
+  Future<void> _uploadMediaFile() async {
+    try {
+      setState(() => _isUploadingMedia = true);
+      
+      // Determine allowed extensions based on media type
+      List<String>? allowedExtensions;
+      if (_mediaType == 'DOCUMENT') {
+        allowedExtensions = ['pdf', 'doc', 'docx'];
+      } else if (_mediaType == 'IMAGE') {
+        allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+      } else if (_mediaType == 'VIDEO') {
+        allowedExtensions = ['mp4', 'avi', 'mov', 'mkv'];
+      }
+
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
+        withData: true,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        setState(() => _isUploadingMedia = false);
+        return;
+      }
+
+      final file = result.files.first;
+      final supabase = Supabase.instance.client;
+      
+      // Generate unique filename
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = '${_mediaType.toLowerCase()}_${timestamp}_${file.name}';
+      final bucket = 'cakes'; // Using existing 'cakes' bucket
+
+      // Upload to Supabase Storage
+      await supabase.storage
+          .from(bucket)
+          .uploadBinary(fileName, file.bytes!);
+
+      // Get public URL
+      final publicUrl = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fileName);
+
+      if (mounted) {
+        setState(() {
+          _mediaUrlController.text = publicUrl;
+          _selectedVersionDetails?['mediaUrl'] = publicUrl;
+          _isUploadingMedia = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File uploaded successfully!')),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error uploading file: $e');
+      debugPrint('Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() => _isUploadingMedia = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _loadTemplateVersions(String templateId) async {
@@ -1167,10 +1236,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       color: cs.primary,
                     ),
                   ),
-                  Text(
-                    "Active Version: ${_selectedTemplateVersions.firstWhere((v) => v['id'] == _selectedTemplate!['activeVersionId'], orElse: () => {'versionNumber': 'None'})['versionNumber']}",
-                    style: TextStyle(color: cs.secondary.withValues(alpha: 0.6), fontSize: 13),
-                  ),
                 ],
               ),
             ),
@@ -1223,75 +1288,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         ),
         const SizedBox(height: 16),
         
-        Card(
-            color: cs.surfaceContainer,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Historical Drafts", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                        TextButton.icon(
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text("New Draft Version"),
-                          onPressed: _showCreateVersionDialog,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  if (_selectedTemplateVersions.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(
-                        child: Text(
-                          "No version drafts. Please add a version layout.",
-                          style: TextStyle(color: cs.secondary.withValues(alpha: 0.5), fontSize: 13),
-                        ),
-                      ),
-                    )
-                  else
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _selectedTemplateVersions.map((v) {
-                        final isSel = _selectedVersionDetails?['id'] == v['id'];
-                        final isActive = _selectedTemplate?['activeVersionId'] == v['id'];
-
-                        return ChoiceChip(
-                          label: Text("v${v['versionNumber']}"),
-                          selected: isSel,
-                          avatar: isActive ? const Icon(Icons.check_circle, size: 12, color: Colors.green) : null,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() {
-                                _selectedVersionDetails = v;
-                                _bodyController.text = v['bodyText']?.toString() ?? '';
-                                _headerController.text = v['headerText']?.toString() ?? '';
-                                _footerController.text = v['footerText']?.toString() ?? '';
-                                _mediaUrlController.text = v['mediaUrl']?.toString() ?? '';
-                                _ctaButtonTitleController.text = v['ctaButtonTitle']?.toString() ?? '';
-                                _ctaButtonUrlController.text = v['ctaButtonUrl']?.toString() ?? '';
-                                _mediaType = v['mediaType']?.toString() ?? 'NONE';
-                                _interactiveType = v['interactiveType']?.toString() ?? 'NONE';
-                              });
-                            }
-                          },
-                        );
-                      }).toList(),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
+        
         if (_selectedVersionDetails != null) ...[
           // Direct WYSIWYG Editor Panel
           Card(
@@ -1530,20 +1527,45 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                   ),
                   if (_mediaType != 'NONE') ...[
                     const SizedBox(height: 16),
-                    Text(
-                      "Attachment Source Link",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: cs.secondary.withValues(alpha: 0.7),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Attachment Source",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: cs.secondary.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          icon: _isUploadingMedia
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.cloud_upload, size: 14),
+                          label: Text(
+                            _isUploadingMedia ? "Uploading..." : "Choose File",
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cs.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: _isUploadingMedia ? null : _uploadMediaFile,
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _mediaUrlController,
                       maxLines: 2,
                       decoration: InputDecoration(
-                        hintText: "https://...",
+                        hintText: "https://... (or upload file above)",
                         isDense: true,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
