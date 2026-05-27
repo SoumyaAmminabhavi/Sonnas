@@ -78,7 +78,16 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
             if (overlayEntry.mounted) overlayEntry.remove();
             return;
           }
-          await Navigator.push<void>(context, MaterialPageRoute<void>(builder: (context) => OwnerOrderDetailsView(orderId: orderId)));
+          await Navigator.push<void>(
+            context,
+            MaterialPageRoute<void>(
+              settings: const RouteSettings(name: 'OwnerOrderDetails'),
+              builder: (context) => OwnerOrderDetailsView(
+                orderId: orderId,
+                onTabChanged: _handleNavigation,
+              ),
+            ),
+          );
           if (overlayEntry.mounted) overlayEntry.remove();
         },
         onDismiss: () {
