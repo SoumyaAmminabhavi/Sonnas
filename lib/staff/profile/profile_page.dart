@@ -357,6 +357,10 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                   if (!context.mounted) return;
 
                                   if (dbUpdated) {
+                                    await SessionService.updateBiometricStatus(val);
+                                    if (widget.staffData != null) {
+                                      widget.staffData!['biometricEnabled'] = val;
+                                    }
                                     setState(() => _biometricEnabled = val);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -391,6 +395,10 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                 if (!context.mounted) return;
 
                                 if (dbUpdated) {
+                                  await SessionService.updateBiometricStatus(false);
+                                  if (widget.staffData != null) {
+                                    widget.staffData!['biometricEnabled'] = false;
+                                  }
                                   setState(() => _biometricEnabled = false);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
