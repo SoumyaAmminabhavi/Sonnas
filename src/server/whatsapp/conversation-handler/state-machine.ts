@@ -109,8 +109,8 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
         updateState(msg.from, ConversationState.IDLE, RESET_STATE),
       ]);
       await sendTextMessage(msg.from, "Your previous session timed out due to inactivity. Starting fresh for you! ✨");
-      convo = await getConversation(msg.from, msg.name, true);
-      state = convo.state;
+      await sendWelcome(msg.from, msg.name);
+      return;
     }
   }
 
