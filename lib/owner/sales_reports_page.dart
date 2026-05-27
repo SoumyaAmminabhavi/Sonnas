@@ -277,14 +277,479 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     });
   }
 
+  Future<void> _showExportDialog(ColorScheme cs, String exportFormat) async {
+    String selectedRangeType = 'all';
+    DateTimeRange? customRange = DateTimeRange(
+      start: DateTime.now().subtract(const Duration(days: 7)),
+      end: DateTime.now(),
+    );
+    String selectedLimit = 'all';
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: cs.surfaceContainer,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            exportFormat == 'pdf' ? Icons.picture_as_pdf_outlined : Icons.table_chart_outlined,
+                            color: cs.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Export Report",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: cs.secondary,
+                                ),
+                              ),
+                              Text(
+                                "Format: ${exportFormat.toUpperCase()}",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  color: cs.secondary.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      "SELECT DATE RANGE",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                        color: cs.secondary.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      dropdownColor: cs.surfaceContainer,
+                      initialValue: selectedRangeType,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: cs.surface,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.secondary.withValues(alpha: 0.12)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.primary, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'all', child: Text("All Time")),
+                        DropdownMenuItem(value: 'today', child: Text("Today")),
+                        DropdownMenuItem(value: '7days', child: Text("Last 7 Days")),
+                        DropdownMenuItem(value: '30days', child: Text("Last 30 Days")),
+                        DropdownMenuItem(value: 'custom', child: Text("Custom Range...")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedRangeType = val;
+                          });
+                        }
+                      },
+                    ),
+                    if (selectedRangeType == 'custom') ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final d = await showDatePicker(
+                                  context: context,
+                                  initialDate: customRange!.start,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: Theme.of(context).colorScheme.copyWith(
+                                          primary: cs.primary,
+                                          onPrimary: Colors.white,
+                                          surface: cs.surfaceContainer,
+                                          onSurface: cs.secondary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (d != null) {
+                                  setDialogState(() {
+                                    final end = customRange!.end;
+                                    if (d.isAfter(end)) {
+                                      customRange = DateTimeRange(start: d, end: d);
+                                    } else {
+                                      customRange = DateTimeRange(start: d, end: end);
+                                    }
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: cs.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: cs.secondary.withValues(alpha: 0.12)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "FROM DATE",
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: cs.secondary.withValues(alpha: 0.5),
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      DateFormat('dd MMM yyyy').format(customRange!.start),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        color: cs.secondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final d = await showDatePicker(
+                                  context: context,
+                                  initialDate: customRange!.end,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: Theme.of(context).colorScheme.copyWith(
+                                          primary: cs.primary,
+                                          onPrimary: Colors.white,
+                                          surface: cs.surfaceContainer,
+                                          onSurface: cs.secondary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (d != null) {
+                                  setDialogState(() {
+                                    final start = customRange!.start;
+                                    if (d.isBefore(start)) {
+                                      customRange = DateTimeRange(start: d, end: d);
+                                    } else {
+                                      customRange = DateTimeRange(start: start, end: d);
+                                    }
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: cs.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: cs.secondary.withValues(alpha: 0.12)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "TO DATE",
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: cs.secondary.withValues(alpha: 0.5),
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      DateFormat('dd MMM yyyy').format(customRange!.end),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        color: cs.secondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    Text(
+                      "SELECT ORDER LIMIT",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                        color: cs.secondary.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      dropdownColor: cs.surfaceContainer,
+                      initialValue: selectedLimit,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: cs.surface,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.secondary.withValues(alpha: 0.12)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.primary, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'all', child: Text("No Limit (All Orders)")),
+                        DropdownMenuItem(value: '20', child: Text("Last 20 Orders")),
+                        DropdownMenuItem(value: '50', child: Text("Last 50 Orders")),
+                        DropdownMenuItem(value: '100', child: Text("Last 100 Orders")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedLimit = val;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, {
+                              'rangeType': selectedRangeType,
+                              'customRange': customRange,
+                              'limit': selectedLimit,
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cs.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text(
+                            "Download",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    final String rangeType = result['rangeType'] as String;
+    final DateTimeRange? range = result['customRange'] as DateTimeRange?;
+    final String limitStr = result['limit'] as String;
+
+    List<Map<String, dynamic>> filteredOrders = List<Map<String, dynamic>>.from(_paidOrders);
+
+    final now = DateTime.now();
+    if (rangeType == 'today') {
+      final todayStart = DateTime(now.year, now.month, now.day);
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(todayStart);
+      }).toList();
+    } else if (rangeType == '7days') {
+      final start = now.subtract(const Duration(days: 7));
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(start);
+      }).toList();
+    } else if (rangeType == '30days') {
+      final start = now.subtract(const Duration(days: 30));
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(start);
+      }).toList();
+    } else if (rangeType == 'custom' && range != null) {
+      final start = DateTime(range.start.year, range.start.month, range.start.day);
+      final end = DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59);
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(start) && date.isBefore(end);
+      }).toList();
+    }
+
+    if (limitStr != 'all') {
+      final limitVal = int.tryParse(limitStr) ?? 9999;
+      if (filteredOrders.length > limitVal) {
+        filteredOrders = filteredOrders.take(limitVal).toList();
+      }
+    }
+
+    if (filteredOrders.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("No transactions found for the selected filter."),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    double totalRevenue = 0;
+    final validOrders = filteredOrders.where((o) => o['isCustom'] != true).toList();
+    final totalOrders = validOrders.length;
+    for (var order in validOrders) {
+      totalRevenue += _parsePrice(order['totalPrice']);
+    }
+    final avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0.0;
+
+    Map<String, double> filteredCategorySales = {};
+    final filteredIds = filteredOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    if (filteredIds.isNotEmpty) {
+      try {
+        final items = await OrderService.fetchBulkOrderItems(filteredIds);
+        for (var item in items) {
+          final String? cakeId = item['cakeId']?.toString();
+          String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
+          final normalizedName = cakeName.replaceAll(RegExp(r'\s*\(.*?\)\s*$'), '').trim().toLowerCase();
+
+          var matchingCake = <String, dynamic>{};
+          if (cakeId != null) {
+            matchingCake = _cachedMenu.firstWhere(
+              (c) => c['id']?.toString() == cakeId,
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          if (matchingCake.isEmpty) {
+            matchingCake = _cachedMenu.firstWhere(
+              (c) => c['name']?.toString().toLowerCase() == normalizedName,
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          if (matchingCake.isEmpty) {
+            matchingCake = _cachedMenu.firstWhere(
+              (c) {
+                final menuName = c['name']?.toString().toLowerCase() ?? '';
+                return menuName.contains(normalizedName) || normalizedName.contains(menuName);
+              },
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          final String category = (matchingCake['Category']?['name'] as String?) ?? 'Custom';
+          final itemPrice = _parsePrice(item['price']);
+          final qty = (item['quantity'] as num?)?.toInt() ?? 1;
+          final subtotal = itemPrice * qty;
+          filteredCategorySales[category] = (filteredCategorySales[category] ?? 0) + subtotal;
+        }
+      } catch (e) {
+        debugPrint("Error fetching item details for export: $e");
+      }
+    }
+
+    if (exportFormat == 'pdf') {
+      await ReportService.downloadPDF(filteredOrders, totalRevenue, totalOrders, avgOrder, filteredCategorySales);
+    } else if (exportFormat == 'csv') {
+      await ReportService.downloadCSV(filteredOrders, totalRevenue, totalOrders);
+    }
+  }
+
   Widget _buildExportButton(ColorScheme cs) {
     return PopupMenuButton<String>(
       onSelected: (value) async {
         try {
           if (value == 'pdf') {
-            await ReportService.downloadPDF(_paidOrders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
+            await _showExportDialog(cs, 'pdf');
           } else if (value == 'csv') {
-            await ReportService.downloadCSV(_paidOrders, _totalRevenue, _totalOrders);
+            await _showExportDialog(cs, 'csv');
           }
         } catch (e) {
           debugPrint("Export failed: $e");
@@ -383,11 +848,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (widget.onClose != null)
-                            IconButton(
-                              icon: Icon(Icons.close, color: cs.secondary.withValues(alpha: 0.4)),
-                              onPressed: () => widget.onClose?.call(),
-                            ),
                           _buildExportButton(cs),
                         ],
                       ),
