@@ -17,9 +17,76 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
   bool _isLoadingVersions = false;
   int _activeInspectorTab = 0; // 0 = Config, 1 = Preview
 
+  // Simplified editing controllers
+  final _bodyController = TextEditingController();
+  final _headerController = TextEditingController();
+  final _footerController = TextEditingController();
+  final _mediaUrlController = TextEditingController();
+  final _ctaButtonTitleController = TextEditingController();
+  final _ctaButtonUrlController = TextEditingController();
+
+  String _mediaType = 'NONE';
+  String _interactiveType = 'NONE';
+  bool _isAdvancedMode = false;
+  bool _isSavingLive = false;
+
   @override
   void initState() {
     super.initState();
+    // Update live simulator preview in-memory as text is changed
+    _bodyController.addListener(() {
+      if (_selectedVersionDetails != null && _selectedVersionDetails!['bodyText'] != _bodyController.text) {
+        setState(() {
+          _selectedVersionDetails!['bodyText'] = _bodyController.text;
+        });
+      }
+    });
+    _headerController.addListener(() {
+      if (_selectedVersionDetails != null && _selectedVersionDetails!['headerText'] != _headerController.text) {
+        setState(() {
+          _selectedVersionDetails!['headerText'] = _headerController.text.isNotEmpty ? _headerController.text : null;
+        });
+      }
+    });
+    _footerController.addListener(() {
+      if (_selectedVersionDetails != null && _selectedVersionDetails!['footerText'] != _footerController.text) {
+        setState(() {
+          _selectedVersionDetails!['footerText'] = _footerController.text.isNotEmpty ? _footerController.text : null;
+        });
+      }
+    });
+    _mediaUrlController.addListener(() {
+      if (_selectedVersionDetails != null && _selectedVersionDetails!['mediaUrl'] != _mediaUrlController.text) {
+        setState(() {
+          _selectedVersionDetails!['mediaUrl'] = _mediaUrlController.text.isNotEmpty ? _mediaUrlController.text : null;
+        });
+      }
+    });
+    _ctaButtonTitleController.addListener(() {
+      if (_selectedVersionDetails != null && _selectedVersionDetails!['ctaButtonTitle'] != _ctaButtonTitleController.text) {
+        setState(() {
+          _selectedVersionDetails!['ctaButtonTitle'] = _ctaButtonTitleController.text.isNotEmpty ? _ctaButtonTitleController.text : null;
+        });
+      }
+    });
+    _ctaButtonUrlController.addListener(() {
+      if (_selectedVersionDetails != null && _selectedVersionDetails!['ctaButtonUrl'] != _ctaButtonUrlController.text) {
+        setState(() {
+          _selectedVersionDetails!['ctaButtonUrl'] = _ctaButtonUrlController.text.isNotEmpty ? _ctaButtonUrlController.text : null;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _bodyController.dispose();
+    _headerController.dispose();
+    _footerController.dispose();
+    _mediaUrlController.dispose();
+    _ctaButtonTitleController.dispose();
+    _ctaButtonUrlController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadTemplateVersions(String templateId) async {
@@ -32,12 +99,15 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     });
 
     try {
-      final versions = await WhatsAppService.fetchTemplateVersions(templateId);
+      final rawVersions = await WhatsAppService.fetchTemplateVersions(templateId);
       
       // Stale response guard
       if (currentTemplateId != _selectedTemplate?['id']?.toString()) {
         return;
       }
+
+      // Convert all version maps to modifiable maps
+      final List<Map<String, dynamic>> versions = rawVersions.map((v) => Map<String, dynamic>.from(v)).toList();
 
       final activeVersionId = _selectedTemplate?['activeVersionId']?.toString();
 
@@ -61,6 +131,15 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         _selectedTemplateVersions = versions;
         _selectedVersionDetails = selectedVer;
         _isLoadingVersions = false;
+
+        _bodyController.text = selectedVer?['bodyText']?.toString() ?? '';
+        _headerController.text = selectedVer?['headerText']?.toString() ?? '';
+        _footerController.text = selectedVer?['footerText']?.toString() ?? '';
+        _mediaUrlController.text = selectedVer?['mediaUrl']?.toString() ?? '';
+        _ctaButtonTitleController.text = selectedVer?['ctaButtonTitle']?.toString() ?? '';
+        _ctaButtonUrlController.text = selectedVer?['ctaButtonUrl']?.toString() ?? '';
+        _mediaType = selectedVer?['mediaType']?.toString() ?? 'NONE';
+        _interactiveType = selectedVer?['interactiveType']?.toString() ?? 'NONE';
       });
     } catch (e, stackTrace) {
       debugPrint('Error loading template versions: $e');
@@ -74,7 +153,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
       if (!mounted) return;
       setState(() => _isLoadingVersions = false);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Error loading template versions')),
+        SnackBar(content: Text('Error loading template versions: $e')),
       );
     }
   }
@@ -809,7 +888,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
       if (_selectedTemplate == null) {
         bodyWidget = sidebarWidget;
       } else {
-        bodyWidget = _buildDetailsInspector(cs, showMockupSideBySide: false);
+        bodyWidget = _buildDetailsInspector(cs, showMockupSideBySide: false, isMobile: isMobile);
       }
     } else if (isTablet) {
       bodyWidget = Row(
@@ -838,7 +917,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       ],
                     ),
                   )
-                : _buildDetailsInspector(cs, showMockupSideBySide: false),
+                : _buildDetailsInspector(cs, showMockupSideBySide: false, isMobile: isMobile),
           ),
         ],
       );
@@ -870,13 +949,11 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       ],
                     ),
                   )
-                : _buildDetailsInspector(cs, showMockupSideBySide: true),
+                : _buildDetailsInspector(cs, showMockupSideBySide: true, isMobile: isMobile),
           ),
         ],
       );
     }
-
-    final showBackButtonOnMobileDetails = isMobile && _selectedTemplate != null;
 
     final headerWidget = Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -886,20 +963,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         children: [
           Row(
             children: [
-              if (isMobile) ...[
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios_new, color: cs.primary, size: 18),
-                  onPressed: showBackButtonOnMobileDetails
-                      ? () {
-                          setState(() {
-                            _selectedTemplate = null;
-                            _selectedTemplateVersions = [];
-                          });
-                        }
-                      : widget.onClose,
-                ),
-                const SizedBox(width: 8),
-              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -909,28 +972,29 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       style: GoogleFonts.notoSerif(
                         fontWeight: FontWeight.bold,
                         fontStyle: FontStyle.italic,
-                        fontSize: 22,
+                        fontSize: isMobile ? 18 : 22,
                         color: cs.primary,
+                        height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       "Manage transactional template layouts and dynamic bot responses",
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
+                        fontSize: isMobile ? 10 : 12,
                         color: cs.secondary.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
                 ),
               ),
-              if (!isMobile || _selectedTemplate == null)
+              if (_selectedTemplate == null) // Show New Template button only when templates list is showing
                 Padding(
                   padding: const EdgeInsets.only(left: 16.0),
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.add, size: 16),
                     label: Text(
-                      "New Template",
+                      isMobile ? "New" : "New Template",
                       style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.bold,
                       ),
@@ -941,8 +1005,8 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 12 : 16,
                         vertical: 12,
                       ),
                     ),
@@ -971,7 +1035,94 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     );
   }
 
-  Widget _buildDetailsInspector(ColorScheme cs, {required bool showMockupSideBySide}) {
+  void _insertVariable(String variable) {
+    final text = _bodyController.text;
+    final selection = _bodyController.selection;
+    // Fallback if no selection/cursor active
+    if (selection.start < 0 || selection.end < 0) {
+      _bodyController.text = text + variable;
+      _bodyController.selection = TextSelection.collapsed(offset: _bodyController.text.length);
+      return;
+    }
+    final newText = text.replaceRange(selection.start, selection.end, variable);
+    _bodyController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: selection.start + variable.length),
+    );
+  }
+
+  Future<void> _saveAndApplyLive() async {
+    if (_selectedTemplate == null || _selectedVersionDetails == null) return;
+    setState(() => _isSavingLive = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final nextVerNum = _selectedTemplateVersions.isEmpty
+          ? 1
+          : _selectedTemplateVersions.map((v) => v['versionNumber'] as int).reduce((a, b) => a > b ? a : b) + 1;
+
+      // Extract buttons and list sections with type safety
+      final buttons = (_selectedVersionDetails!['buttons'] as List<dynamic>?)
+          ?.map((b) => Map<String, dynamic>.from(b as Map))
+          .toList();
+      final listSections = (_selectedVersionDetails!['listSections'] as List<dynamic>?)
+          ?.map((s) {
+            final section = Map<String, dynamic>.from(s as Map);
+            final rows = (section['rows'] as List<dynamic>?)
+                ?.map((r) => Map<String, dynamic>.from(r as Map))
+                .toList();
+            section['rows'] = rows;
+            return section;
+          })
+          .toList();
+
+      // Create new draft version with updated fields in database
+      final newVer = await WhatsAppService.createTemplateVersion(
+        templateId: _selectedTemplate!['id'] as String,
+        versionNumber: nextVerNum,
+        bodyText: _bodyController.text,
+        headerText: _headerController.text.isNotEmpty ? _headerController.text : null,
+        footerText: _footerController.text.isNotEmpty ? _footerController.text : null,
+        mediaUrl: _selectedVersionDetails!['mediaUrl'] as String?,
+        mediaType: _selectedVersionDetails!['mediaType'] as String? ?? 'NONE',
+        interactiveType: _selectedVersionDetails!['interactiveType'] as String? ?? 'NONE',
+        ctaButtonTitle: _selectedVersionDetails!['ctaButtonTitle'] as String?,
+        ctaButtonUrl: _selectedVersionDetails!['ctaButtonUrl'] as String?,
+        listButtonTitle: _selectedVersionDetails!['listButtonTitle'] as String?,
+        listTitle: _selectedVersionDetails!['listTitle'] as String?,
+        buttons: buttons,
+        listSections: listSections,
+      );
+
+      // Deploy it as active immediately
+      await WhatsAppService.setActiveVersion(
+        _selectedTemplate!['id'] as String,
+        newVer['id'] as String,
+      );
+
+      // Update in-memory selected template reference
+      setState(() {
+        _selectedTemplate!['activeVersionId'] = newVer['id'];
+      });
+
+      // Reload versions and select new active version
+      await _loadTemplateVersions(_selectedTemplate!['id'] as String);
+      
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Changes saved and deployed live successfully!')),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('Error saving and applying live: $e\n$stackTrace');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Failed to save and apply: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingLive = false);
+      }
+    }
+  }
+
+  Widget _buildDetailsInspector(ColorScheme cs, {required bool showMockupSideBySide, required bool isMobile}) {
     if (_isLoadingVersions) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -979,8 +1130,31 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     final editorPanel = ListView(
       padding: const EdgeInsets.all(24),
       children: [
+        if (isMobile) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _selectedTemplate = null;
+                  _selectedTemplateVersions = [];
+                });
+              },
+              icon: Icon(Icons.arrow_back_ios_new, size: 14, color: cs.primary),
+              label: Text(
+                "Back to Templates",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
@@ -995,11 +1169,29 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                     ),
                   ),
                   Text(
-                    "Draft Versions: ${_selectedTemplateVersions.length}",
+                    "Active Version: ${_selectedTemplateVersions.firstWhere((v) => v['id'] == _selectedTemplate!['activeVersionId'], orElse: () => {'versionNumber': 'None'})['versionNumber']}",
                     style: TextStyle(color: cs.secondary.withValues(alpha: 0.6), fontSize: 13),
                   ),
                 ],
               ),
+            ),
+            Row(
+              children: [
+                Text(
+                  "Advanced Settings",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: cs.secondary.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Switch(
+                  value: _isAdvancedMode,
+                  onChanged: (val) => setState(() => _isAdvancedMode = val),
+                  activeThumbColor: cs.primary,
+                ),
+              ],
             ),
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert, color: cs.secondary.withValues(alpha: 0.6)),
@@ -1048,76 +1240,12 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
             )
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         
-        // Versions section
-        Card(
-          color: cs.surfaceContainer,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      Text("Historical Drafts", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
-                      TextButton.icon(
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text("New Draft Version"),
-                        onPressed: _showCreateVersionDialog,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (_selectedTemplateVersions.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Center(
-                      child: Text(
-                        "No version drafts. Please add a version layout.",
-                        style: TextStyle(color: cs.secondary.withValues(alpha: 0.5), fontSize: 13),
-                      ),
-                    ),
-                  )
-                else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedTemplateVersions.map((v) {
-                      final isSel = _selectedVersionDetails?['id'] == v['id'];
-                      final isActive = _selectedTemplate?['activeVersionId'] == v['id'];
-
-                      return ChoiceChip(
-                        label: Text("v${v['versionNumber']}"),
-                        selected: isSel,
-                        avatar: isActive ? const Icon(Icons.check_circle, size: 12, color: Colors.green) : null,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() => _selectedVersionDetails = v);
-                          }
-                        },
-                      );
-                    }).toList(),
-                  ),
-              ],
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        if (_selectedVersionDetails != null) ...[
-          // Version details panel
+        // Advanced Mode: Historical drafts section
+        if (_isAdvancedMode) ...[
           Card(
-            color: cs.surfaceContainerHigh,
+            color: cs.surfaceContainer,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -1126,75 +1254,348 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                 children: [
                   SizedBox(
                     width: double.infinity,
-                    child: Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 12,
-                      runSpacing: 8,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          "Draft Layout Config (v${_selectedVersionDetails!['versionNumber']})",
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+                        Text("Historical Drafts", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+                        TextButton.icon(
+                          icon: const Icon(Icons.add, size: 16),
+                          label: const Text("New Draft Version"),
+                          onPressed: _showCreateVersionDialog,
                         ),
-                        if (_selectedTemplate?['activeVersionId'] != _selectedVersionDetails!['id'])
-                          OutlinedButton.icon(
-                            icon: const Icon(Icons.publish, size: 14),
-                            label: const Text("Deploy Active", style: TextStyle(fontSize: 12)),
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              try {
-                                await WhatsAppService.setActiveVersion(
-                                  _selectedTemplate!['id'] as String,
-                                  _selectedVersionDetails!['id'] as String,
-                                );
-                                if (!mounted) return;
-                                setState(() {
-                                  _selectedTemplate!['activeVersionId'] = _selectedVersionDetails!['id'];
-                                });
-                                messenger.showSnackBar(
-                                  const SnackBar(content: Text('Version deployed as live notification engine!')),
-                                );
-                              } catch (e, stackTrace) {
-                                debugPrint('Error activating template version: $e\n$stackTrace');
-                                if (!mounted) return;
-                                messenger.showSnackBar(
-                                  SnackBar(content: Text('Failed to deploy version: $e')),
-                                );
-                              }
-                            },
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.check, size: 12, color: Colors.green),
-                                SizedBox(width: 4),
-                                Text("Deployed Live", style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
                       ],
                     ),
                   ),
-                  const Divider(height: 24),
-                  _buildMetaField("Body Copy", (_selectedVersionDetails!['bodyText'] as String?) ?? '---', isLongText: true),
-                  _buildMetaField("Header Title", (_selectedVersionDetails!['headerText'] as String?) ?? '---'),
-                  _buildMetaField("Footer Note", (_selectedVersionDetails!['footerText'] as String?) ?? '---'),
-                  _buildMetaField("Action Interface Type", (_selectedVersionDetails!['interactiveType'] as String?) ?? 'NONE'),
-                  if (_selectedVersionDetails!['interactiveType'] == 'CTA_URL') ...[
-                    _buildMetaField("Redirect Link Title", (_selectedVersionDetails!['ctaButtonTitle'] as String?) ?? '---'),
-                    _buildMetaField("URL Address", (_selectedVersionDetails!['ctaButtonUrl'] as String?) ?? '---'),
+                  const SizedBox(height: 12),
+                  if (_selectedTemplateVersions.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Center(
+                        child: Text(
+                          "No version drafts. Please add a version layout.",
+                          style: TextStyle(color: cs.secondary.withValues(alpha: 0.5), fontSize: 13),
+                        ),
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _selectedTemplateVersions.map((v) {
+                        final isSel = _selectedVersionDetails?['id'] == v['id'];
+                        final isActive = _selectedTemplate?['activeVersionId'] == v['id'];
+
+                        return ChoiceChip(
+                          label: Text("v${v['versionNumber']}"),
+                          selected: isSel,
+                          avatar: isActive ? const Icon(Icons.check_circle, size: 12, color: Colors.green) : null,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _selectedVersionDetails = v;
+                                _bodyController.text = v['bodyText']?.toString() ?? '';
+                                _headerController.text = v['headerText']?.toString() ?? '';
+                                _footerController.text = v['footerText']?.toString() ?? '';
+                                _mediaUrlController.text = v['mediaUrl']?.toString() ?? '';
+                                _ctaButtonTitleController.text = v['ctaButtonTitle']?.toString() ?? '';
+                                _ctaButtonUrlController.text = v['ctaButtonUrl']?.toString() ?? '';
+                                _mediaType = v['mediaType']?.toString() ?? 'NONE';
+                                _interactiveType = v['interactiveType']?.toString() ?? 'NONE';
+                              });
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        if (_selectedVersionDetails != null) ...[
+          // Direct WYSIWYG Editor Panel
+          Card(
+            color: cs.surfaceContainerHigh,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Edit Template Content",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: cs.secondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Changes will update the live WhatsApp assistant instantly on save.",
+                    style: TextStyle(color: cs.secondary.withValues(alpha: 0.6), fontSize: 12),
+                  ),
+                  const Divider(height: 32),
+                  
+                  // Header input (optional)
+                  Text(
+                    "Header Text (Optional)",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary.withValues(alpha: 0.7),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _headerController,
+                    decoration: InputDecoration(
+                      hintText: "Enter header title...",
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Body Copy input (Required)
+                  Text(
+                    "Message Body (Required)",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary.withValues(alpha: 0.7),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _bodyController,
+                    maxLines: 6,
+                    decoration: InputDecoration(
+                      hintText: "Type message content here. Use *bold* or _italics_.",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Variables Toolbar (Quick Tap Badges)
+                  Text(
+                    "Tap to Insert Variables:",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(
+                        label: const Text("Customer Name"),
+                        onPressed: () => _insertVariable("{{customer_name}}"),
+                        backgroundColor: cs.primary.withValues(alpha: 0.05),
+                        labelStyle: TextStyle(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      ActionChip(
+                        label: const Text("Order Number"),
+                        onPressed: () => _insertVariable("{{order_number}}"),
+                        backgroundColor: cs.primary.withValues(alpha: 0.05),
+                        labelStyle: TextStyle(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      ActionChip(
+                        label: const Text("Total Price"),
+                        onPressed: () => _insertVariable("{{total_price}}"),
+                        backgroundColor: cs.primary.withValues(alpha: 0.05),
+                        labelStyle: TextStyle(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      ActionChip(
+                        label: const Text("Delivery Date"),
+                        onPressed: () => _insertVariable("{{delivery_date}}"),
+                        backgroundColor: cs.primary.withValues(alpha: 0.05),
+                        labelStyle: TextStyle(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      ActionChip(
+                        label: const Text("Payment Link"),
+                        onPressed: () => _insertVariable("{{payment_link}}"),
+                        backgroundColor: cs.primary.withValues(alpha: 0.05),
+                        labelStyle: TextStyle(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Footer input (optional)
+                  Text(
+                    "Footer Note (Optional)",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary.withValues(alpha: 0.7),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _footerController,
+                    decoration: InputDecoration(
+                      hintText: "Enter disclaimer or bot footnote...",
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  // Advanced Settings Field Info (Editable)
+                  if (_isAdvancedMode) ...[
+                    const Divider(height: 32),
+                    Text(
+                      "Action Interface Type",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary.withValues(alpha: 0.7),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: _interactiveType,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'NONE', child: Text('Plain Text Notification')),
+                        DropdownMenuItem(value: 'BUTTONS', child: Text('Quick Reply Action Buttons')),
+                        DropdownMenuItem(value: 'CTA_URL', child: Text('Call to Action Link (CTA)')),
+                        DropdownMenuItem(value: 'LIST', child: Text('Interactive Option List Menu')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _interactiveType = val;
+                            _selectedVersionDetails!['interactiveType'] = val;
+                          });
+                        }
+                      },
+                    ),
+                    if (_interactiveType == 'CTA_URL') ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        "Redirect Link Title",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: cs.secondary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _ctaButtonTitleController,
+                        decoration: InputDecoration(
+                          hintText: "e.g., Pay Now",
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        "URL Address",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: cs.secondary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _ctaButtonUrlController,
+                        decoration: InputDecoration(
+                          hintText: "https://...",
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 20),
+                    Text(
+                      "Attachment Type",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary.withValues(alpha: 0.7),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: _mediaType,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'NONE', child: Text('No Attachment')),
+                        DropdownMenuItem(value: 'IMAGE', child: Text('Image')),
+                        DropdownMenuItem(value: 'VIDEO', child: Text('Video')),
+                        DropdownMenuItem(value: 'DOCUMENT', child: Text('Document (PDF)')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _mediaType = val;
+                            _selectedVersionDetails!['mediaType'] = val;
+                          });
+                        }
+                      },
+                    ),
+                    if (_mediaType != 'NONE') ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        "Attachment Source Link",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: cs.secondary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: _mediaUrlController,
+                        maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: "https://...",
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ],
                   ],
-                  if (_selectedVersionDetails!['mediaType'] != 'NONE') ...[
-                    _buildMetaField("Attachment Type", (_selectedVersionDetails!['mediaType'] as String?) ?? '---'),
-                    _buildMetaField("Attachment Source Link", (_selectedVersionDetails!['mediaUrl'] as String?) ?? '---'),
-                  ]
+                  const SizedBox(height: 24),
+                  
+                  // Action button to Save and Apply
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      icon: _isSavingLive 
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                        : const Icon(Icons.flash_on, size: 16),
+                      label: Text(
+                        _isSavingLive ? "SAVING & GOING LIVE..." : "SAVE & APPLY LIVE",
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[700],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: _isSavingLive ? null : _saveAndApplyLive,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1300,25 +1701,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     }
   }
 
-  Widget _buildMetaField(String label, String val, {bool isLongText = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8, color: Colors.grey)),
-          const SizedBox(height: 4),
-          Text(
-            val,
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              fontWeight: isLongText ? FontWeight.w500 : FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   // ─────────────────────────────────────────────────────────────────────────────
   // ─── Live WhatsApp Mockup Simulator

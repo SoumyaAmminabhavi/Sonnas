@@ -1,9 +1,21 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 class WhatsAppService {
   static SupabaseClient get _client => SupabaseService.client;
+
+  /// Helper to generate a 25-character CUID-like random string
+  static String _generateCuid() {
+    final random = Random.secure();
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final buffer = StringBuffer('c');
+    for (var i = 0; i < 24; i++) {
+      buffer.write(chars[random.nextInt(chars.length)]);
+    }
+    return buffer.toString();
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // ─── WhatsAppTemplate Operations
@@ -34,6 +46,7 @@ class WhatsAppService {
     String? description,
   }) async {
     final res = await _client.from('WhatsAppTemplate').insert({
+      'id': _generateCuid(),
       'code': code.toUpperCase().trim(),
       'category': category.toUpperCase().trim(),
       'language': language,
@@ -111,10 +124,11 @@ class WhatsAppService {
     List<Map<String, dynamic>>? buttons,
     List<Map<String, dynamic>>? listSections,
   }) async {
-    String? versionId;
+    final versionId = _generateCuid();
     try {
       // 1. Insert Core Template Version record
       final versionRecord = await _client.from('WhatsAppTemplateVersion').insert({
+        'id': versionId,
         'templateId': templateId,
         'versionNumber': versionNumber,
         'bodyText': bodyText,
@@ -131,14 +145,13 @@ class WhatsAppService {
         'createdBy': createdBy,
       }).select().single();
 
-      versionId = versionRecord['id'].toString();
-
       // 2. Insert associated buttons if any
       if (interactiveType.toUpperCase() == 'BUTTONS' && buttons != null && buttons.isNotEmpty) {
         final buttonsPayload = buttons.asMap().entries.map((entry) {
           final index = entry.key;
           final btn = entry.value;
           return {
+            'id': _generateCuid(),
             'versionId': versionId,
             'sortOrder': index,
             'buttonId': btn['buttonId'] ?? 'btn_${index + 1}',
@@ -152,14 +165,16 @@ class WhatsAppService {
       if (interactiveType.toUpperCase() == 'LIST' && listSections != null && listSections.isNotEmpty) {
         for (int sIndex = 0; sIndex < listSections.length; sIndex++) {
           final section = listSections[sIndex];
-          final sectionRecord = await _client.from('WhatsAppListSection').insert({
+          final sectionId = _generateCuid();
+          
+          await _client.from('WhatsAppListSection').insert({
+            'id': sectionId,
             'versionId': versionId,
             'sortOrder': sIndex,
             'title': section['title'] ?? 'Section ${sIndex + 1}',
             'dataSource': section['dataSource'] ?? 'STATIC',
-          }).select().single();
+          });
 
-          final String sectionId = sectionRecord['id'].toString();
           final List<dynamic>? rows = section['rows'] as List<dynamic>?;
 
           if (rows != null && rows.isNotEmpty) {
@@ -167,6 +182,7 @@ class WhatsAppService {
               final rIndex = rEntry.key;
               final row = rEntry.value;
               return {
+                'id': _generateCuid(),
                 'sectionId': sectionId,
                 'sortOrder': rIndex,
                 'rowId': row['rowId'] ?? 'row_${sIndex + 1}_${rIndex + 1}',
@@ -183,12 +199,10 @@ class WhatsAppService {
       final fullDetails = await fetchVersionDetails(versionId);
       return fullDetails ?? Map<String, dynamic>.from(versionRecord);
     } catch (e) {
-      if (versionId != null) {
-        try {
-          await _client.from('WhatsAppTemplateVersion').delete().eq('id', versionId);
-        } catch (cleanupError, cleanupStack) {
-          debugPrint("Rollback delete failed: $cleanupError\n$cleanupStack");
-        }
+      try {
+        await _client.from('WhatsAppTemplateVersion').delete().eq('id', versionId);
+      } catch (cleanupError, cleanupStack) {
+        debugPrint("Rollback delete failed: $cleanupError\n$cleanupStack");
       }
       rethrow;
     }
