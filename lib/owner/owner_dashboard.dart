@@ -12,6 +12,7 @@ import '../services/dashboard_provider.dart';
 import 'order_details_page.dart';
 import 'widgets/dashboard_content.dart';
 import 'widgets/owner_bottom_nav.dart';
+import '../services/settings_service.dart';
 
 class OwnerDashboard extends ConsumerStatefulWidget {
   const OwnerDashboard({super.key});
@@ -123,8 +124,9 @@ class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
         if (orders.isNotEmpty) {
           final latestOrderId = orders.first['id']?.toString();
           if (latestOrderId != null && latestOrderId != _lastNotifiedOrderId && orders.length > _lastOrderCount!) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              final pushEnabled = await SettingsService.getPushNotificationsEnabled();
+              if (mounted && pushEnabled) {
                 _showNewOrderNotification(orders.first);
               }
             });

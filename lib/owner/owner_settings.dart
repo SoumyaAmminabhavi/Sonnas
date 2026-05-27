@@ -12,6 +12,7 @@ import '../services/staff_service.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
 import '../services/theme_service.dart';
+import '../services/settings_service.dart';
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -51,6 +52,18 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   @override
   void initState() {
     super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final pushEnabled = await SettingsService.getPushNotificationsEnabled();
+    final inventoryEnabled = await SettingsService.getInventoryAlertsEnabled();
+    if (mounted) {
+      setState(() {
+        _pushNotifications = pushEnabled;
+        _inventoryAlerts = inventoryEnabled;
+      });
+    }
   }
 
   @override
@@ -202,14 +215,20 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             "Push Notifications",
             "Receive alerts for new orders",
             _pushNotifications,
-            (val) => setState(() => _pushNotifications = val),
+            (val) async {
+              setState(() => _pushNotifications = val);
+              await SettingsService.setPushNotificationsEnabled(val);
+            },
           ),
           _buildSwitchRow(
             cs,
             "Inventory Alerts",
             "Notify when ingredients are low",
             _inventoryAlerts,
-            (val) => setState(() => _inventoryAlerts = val),
+            (val) async {
+              setState(() => _inventoryAlerts = val);
+              await SettingsService.setInventoryAlertsEnabled(val);
+            },
           ),
           _buildSwitchRow(
             cs,
