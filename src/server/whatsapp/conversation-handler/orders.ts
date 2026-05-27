@@ -7,7 +7,8 @@ import { formatPrice } from "~/lib/format";
 import { 
   sendTextMessage, 
   sendInteractiveButtons, 
-  sendCTAUrlButton 
+  sendCTAUrlButton,
+  sendInteractiveList
 } from "~/server/whatsapp";
 import { createPaymentLink } from "~/server/razorpay";
 import { updateState, getConversation } from "./session";
@@ -62,15 +63,16 @@ export async function createCustomOrder(
   return orderNumber;
 }
 
-export async function sendOrderStatus(to: string) {
-  const orders = await db.order.findMany({
+export async function sendOrderStatus(to: string, offset = 0) {
+  const allOrders = await db.order.findMany({
     where: { OR: [{ whatsappPhone: to }, { customerPhone: to }] },
     orderBy: { createdAt: "desc" },
     include: { items: true },
-    take: 3,
   });
 
-  if (orders.length === 0) {
+  const totalOrders = allOrders.length;
+
+  if (totalOrders === 0) {
     await sendInteractiveButtons(
       to,
       "You haven't placed an order yet — let's change that! 🧁\n\nBrowse our handcrafted collection and treat yourself to something special.",
@@ -82,32 +84,139 @@ export async function sendOrderStatus(to: string) {
     return;
   }
 
-  const statusEmoji: Record<string, string> = {
+  const PAGE_SIZE = 10;
+  const isFirstPage = offset === 0;
+  const ordersRemaining = totalOrders - offset;
+
+  let displayCount = 0;
+  let hasNext = false;
+  const hasPrev = !isFirstPage;
+
+  if (isFirstPage) {
+    if (totalOrders > PAGE_SIZE) {
+      displayCount = 9;
+      hasNext = true;
+    } else {
+      displayCount = totalOrders;
+      hasNext = false;
+    }
+  } else {
+    if (ordersRemaining > 9) {
+      displayCount = 8;
+      hasNext = true;
+    } else {
+      displayCount = ordersRemaining;
+      hasNext = false;
+    }
+  }
+
+  const currentBatch = allOrders.slice(offset, offset + displayCount);
+  const rows = currentBatch.map((order) => {
+    const emoji = order.status === "PENDING" ? "🕐" :
+                  order.status === "CONFIRMED" ? "✅" :
+                  order.status === "OUT_FOR_DELIVERY" ? "🚚" :
+                  order.status === "DELIVERED" ? "🎉" :
+                  order.status === "COMPLETED" ? "🍰" :
+                  order.status === "CANCELLED" ? "❌" : "📋";
+
+    return {
+      id: `hist_order_${order.id}`,
+      title: `Order #${order.orderNumber.replace("SPC-", "")}`.slice(0, 24),
+      description: `Total: ${formatPrice(order.totalPrice)} | ${emoji} ${order.status}`.slice(0, 72),
+    };
+  });
+
+  if (hasNext) {
+    const nextOffset = offset + displayCount;
+    rows.push({
+      id: `morehist_${nextOffset}`,
+      title: "➡️ Next Page",
+      description: `Show older orders ${nextOffset + 1} - ${Math.min(nextOffset + 9, totalOrders)}`
+    });
+  }
+
+  if (hasPrev) {
+    const prevOffset = offset > 9 ? offset - 8 : 0;
+    rows.unshift({
+      id: `prevhist_${prevOffset}`,
+      title: "⬅️ Previous Page",
+      description: `Return to orders ${prevOffset + 1} - ${prevOffset + (prevOffset === 0 ? 9 : 8)}`
+    });
+  }
+
+  await sendInteractiveList(
+    to,
+    "📦 Order History",
+    totalOrders > PAGE_SIZE
+      ? `Showing orders ${offset + 1} - ${offset + currentBatch.length} of ${totalOrders}. Select an order to view full details:`
+      : `You have placed ${totalOrders} order${totalOrders > 1 ? "s" : ""} with us! Tap an order below to view its details:`,
+    "View Orders",
+    [
+      {
+        title: totalOrders > PAGE_SIZE ? `Orders ${offset + 1} - ${offset + currentBatch.length}` : "Your Orders",
+        rows,
+      }
+    ]
+  );
+}
+
+export async function sendOrderDetails(to: string, orderId: string) {
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  });
+
+  if (!order) {
+    await sendTextMessage(to, "⚠️ Sorry, I couldn't find the details for that order.");
+    return;
+  }
+
+  const statusEmoji: Record<OrderStatus, string> = {
     PENDING: "🕐",
     CONFIRMED: "✅",
-    PREPARING: "👩‍🍳",
-    READY: "📦",
+    OUT_FOR_DELIVERY: "🚚",
     DELIVERED: "🎉",
+    COMPLETED: "🍰",
     CANCELLED: "❌",
   };
 
-  let statusText = "📦 *Your Recent Orders*\n\n";
+  const emoji = statusEmoji[order.status] ?? "📋";
+  let detailsText = `${emoji} *Order Details: #${order.orderNumber}*\n\n`;
 
-  for (const order of orders) {
-    const emoji = statusEmoji[order.status] ?? "📋";
-    statusText += `${emoji} *#${order.orderNumber}*\n`;
-    order.items.forEach(item => {
-      const qtyStr = item.quantity > 1 ? ` (x${item.quantity})` : "";
-      const displayPrice = formatItemTotal(item.price, item.quantity);
-      statusText += `   🎂 ${item.cakeName} (${item.size})${qtyStr} — ${displayPrice}\n`;
-    });
-    statusText += `   💰 Total: ${formatPrice(order.totalPrice ?? 0)}\n`;
-    statusText += `   Status: *${order.status}*\n`;
-    statusText += `   Placed: ${order.createdAt.toLocaleDateString("en-IN")}\n\n`;
+  order.items.forEach(item => {
+    const qtyStr = item.quantity > 1 ? ` (x${item.quantity})` : "";
+    const displayPrice = formatItemTotal(item.price, item.quantity);
+    detailsText += `🎂 *${item.cakeName}* (${item.size})${qtyStr}\n   Price: ${displayPrice}\n`;
+  });
+
+  detailsText += `\n💰 *Total Price:* ${formatPrice(order.totalPrice ?? 0)}\n`;
+  detailsText += `📍 *Delivery Address:* ${order.address || "Store Pickup"}\n`;
+  
+  if (order.notes) {
+    detailsText += `✍️ *Personalization/Notes:* ${order.notes}\n`;
   }
 
-  statusText += "Reply *Menu* to order more! 🧁";
-  await sendTextMessage(to, statusText);
+  const dateStr = order.deliveryDate
+    ? new Date(order.deliveryDate).toLocaleDateString("en-IN")
+    : "Not specified";
+  const slotStr = order.deliverySlot ?? "Not specified";
+  detailsText += `📅 *Delivery Date:* ${dateStr}\n`;
+  detailsText += `🕒 *Time Slot:* ${slotStr}\n`;
+  detailsText += `💳 *Payment Status:* *${order.paymentStatus}*\n`;
+  detailsText += `✨ *Order Status:* *${order.status}*\n`;
+  detailsText += `Placed: ${order.createdAt.toLocaleDateString("en-IN")}\n\n`;
+
+  if (order.paymentStatus === "PENDING" && order.status !== "CANCELLED" && order.paymentLink) {
+    await sendCTAUrlButton(
+      to,
+      detailsText + "💳 Your payment is pending. Tap below to complete payment:",
+      "💳 Pay Now",
+      order.paymentLink
+    );
+  } else {
+    detailsText += "Reply *Menu* to order more! 🧁";
+    await sendTextMessage(to, detailsText);
+  }
 }
 
 export async function handleConfirmation(

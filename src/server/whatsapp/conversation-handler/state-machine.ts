@@ -354,6 +354,18 @@ export async function _internalHandleMessage(msg: IncomingMessage) {
     return;
   }
 
+  if (interactiveId.startsWith("morehist_") || interactiveId.startsWith("prevhist_")) {
+    const offset = parseInt(interactiveId.split("_")[1] ?? "0") || 0;
+    await sendOrderStatus(msg.from, offset);
+    return;
+  }
+
+  if (interactiveId.startsWith("hist_order_")) {
+    const { sendOrderDetails } = await import("./orders");
+    await sendOrderDetails(msg.from, interactiveId.replace("hist_order_", ""));
+    return;
+  }
+
   if (interactiveId.startsWith("cat_")) { await handleCategorySelection(msg); return; }
   if (interactiveId.startsWith("cake_")) { await handleCakeSelection(msg); return; }
   if (interactiveId.startsWith("size_")) {
