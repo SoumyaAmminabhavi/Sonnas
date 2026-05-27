@@ -536,10 +536,206 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
   }
 
   Widget _buildSkeleton(ColorScheme cs) {
+    final shimmerBase = cs.surfaceContainerHighest;
+    final shimmerHighlight = cs.surfaceContainer;
+
+    Widget box({double? width, double height = 16, double radius = 12}) =>
+        Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+        );
+
     return Shimmer.fromColors(
-      baseColor: cs.surfaceContainer,
-      highlightColor: cs.surface,
-      child: const Center(child: CircularProgressIndicator()),
+      baseColor: shimmerBase,
+      highlightColor: shimmerHighlight,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header title
+            box(width: 220, height: 44, radius: 10),
+            const SizedBox(height: 16),
+            box(width: 160, height: 14, radius: 8),
+            const SizedBox(height: 20),
+            Container(height: 1, color: Colors.white.withValues(alpha: 0.3)),
+            const SizedBox(height: 32),
+
+            // 3 metric cards
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              return GridView.count(
+                crossAxisCount: isMobile ? 1 : 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: isMobile ? 2.5 : 1.5,
+                children: List.generate(3, (_) => Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          box(width: 110, height: 12),
+                          box(width: 20, height: 20, radius: 4),
+                        ],
+                      ),
+                      box(width: 80, height: 28, radius: 8),
+                      box(width: double.infinity, height: 4, radius: 4),
+                    ],
+                  ),
+                )),
+              );
+            }),
+            const SizedBox(height: 32),
+
+            // Trend chart card
+            Container(
+              height: 340,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  box(width: 160, height: 18, radius: 8),
+                  const SizedBox(height: 8),
+                  box(width: 200, height: 12),
+                  const Spacer(),
+                  // Fake bar chart lines
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [80.0, 130.0, 60.0, 150.0, 100.0, 90.0, 120.0]
+                        .map((h) => Container(
+                              width: 24,
+                              height: h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Bottom: Recent Expenses + Category Mix
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 800;
+
+              Widget recentCard = Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    box(width: 160, height: 18, radius: 8),
+                    const SizedBox(height: 24),
+                    ...List.generate(6, (i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Row(
+                        children: [
+                          box(width: 36, height: 36, radius: 8),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                box(height: 13, radius: 6),
+                                const SizedBox(height: 6),
+                                box(width: 90, height: 10, radius: 6),
+                              ],
+                            ),
+                          ),
+                          box(width: 60, height: 16, radius: 6),
+                        ],
+                      ),
+                    )),
+                  ],
+                ),
+              );
+
+              Widget categoryCard = Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    box(width: 140, height: 18, radius: 8),
+                    const SizedBox(height: 24),
+                    // Fake pie circle
+                    Center(
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ...List.generate(5, (_) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          box(width: 12, height: 12, radius: 6),
+                          const SizedBox(width: 8),
+                          Expanded(child: box(height: 11, radius: 6)),
+                          const SizedBox(width: 8),
+                          box(width: 50, height: 11, radius: 6),
+                        ],
+                      ),
+                    )),
+                  ],
+                ),
+              );
+
+              if (isMobile) {
+                return Column(children: [
+                  recentCard,
+                  const SizedBox(height: 24),
+                  categoryCard,
+                ]);
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: recentCard),
+                  const SizedBox(width: 24),
+                  Expanded(flex: 2, child: categoryCard),
+                ],
+              );
+            }),
+            const SizedBox(height: 64),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'auth_service.dart';
+
+/// Key used to persist owner auth in SharedPreferences
+const _kOwnerAuthKey = 'owner_is_authenticated';
 
 /// Local application-level Auth State
 class AppAuthState {
@@ -47,6 +51,9 @@ class AuthNotifier extends Notifier<AppAuthState> {
 
   @override
   AppAuthState build() {
+    // Read persisted owner auth flag synchronously — SharedPreferences may not
+    // be ready here, so we kick off an async restore and begin with the in-memory
+    // Supabase session as the initial source of truth.
     sb.User? currentUser;
     try {
       _listenToAuthChanges();
@@ -54,11 +61,28 @@ class AuthNotifier extends Notifier<AppAuthState> {
     } catch (_) {
       // Supabase is not initialized (e.g. in test environment)
     }
-    
+
+    // Restore persisted owner PIN-auth flag in the background
+    _restoreOwnerSession();
+
     return AppAuthState(
       isAuthenticated: currentUser != null,
       user: currentUser,
     );
+  }
+
+  /// Reads the persisted flag and updates state if the owner was previously
+  /// authenticated via PIN (no Supabase session is involved for PIN auth).
+  Future<void> _restoreOwnerSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final wasAuthenticated = prefs.getBool(_kOwnerAuthKey) ?? false;
+      if (wasAuthenticated && !state.isAuthenticated) {
+        state = state.copyWith(isAuthenticated: true);
+      }
+    } catch (_) {
+      // Ignore — prefs unavailable (e.g. test)
+    }
   }
 
   void _listenToAuthChanges() {
@@ -88,6 +112,10 @@ class AuthNotifier extends Notifier<AppAuthState> {
       final isValid = await AuthService.verifyOwnerPin(pin);
       
       if (isValid) {
+        // Persist the authenticated flag so the session survives app restarts
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_kOwnerAuthKey, true);
+
         state = state.copyWith(
           isLoading: false, 
           isAuthenticated: true, 
@@ -116,7 +144,20 @@ class AuthNotifier extends Notifier<AppAuthState> {
   }
 
   Future<void> signOut() async {
-    await sb.Supabase.instance.client.auth.signOut();
+    // Clear the persisted owner session flag first
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kOwnerAuthKey);
+    } catch (_) {
+      // Ignore
+    }
+
+    try {
+      await sb.Supabase.instance.client.auth.signOut();
+    } catch (_) {
+      // May not have a Supabase session if PIN auth was used
+    }
+
     state = AppAuthState();
   }
 }

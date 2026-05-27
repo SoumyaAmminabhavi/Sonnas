@@ -34,6 +34,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   String _lastProcessedIds = "";
   StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
   int _pendingFetchVersion = 0;
+  String? _hoveredCategory;
 
   @override
   void initState() {
@@ -720,42 +721,83 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                 sectionsSpace: 4,
                 centerSpaceRadius: 40,
                 sections: _generatePieSections(cs),
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
+                    final isLeave = event is FlPointerExitEvent || event is FlTapUpEvent || event is FlLongPressEnd;
+                    if (isLeave || response == null || response.touchedSection == null) {
+                      setState(() => _hoveredCategory = null);
+                      return;
+                    }
+                    final idx = response.touchedSection!.touchedSectionIndex;
+                    if (idx >= 0 && idx < _categorySales.length) {
+                      setState(() => _hoveredCategory = _categorySales.keys.elementAt(idx));
+                    }
+                  },
+                ),
               ),
             ),
           ),
           const SizedBox(height: 24),
-          ..._categorySales.entries.map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _getCategoryColor(e.key),
-                    shape: BoxShape.circle,
+          ..._categorySales.entries.map((e) {
+            final isHovered = _hoveredCategory == e.key;
+            final color = _getCategoryColor(e.key);
+            return MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) => setState(() => _hoveredCategory = e.key),
+              onExit: (_) => setState(() => _hoveredCategory = null),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isHovered ? color.withValues(alpha: 0.08) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border(
+                    left: BorderSide(
+                      color: isHovered ? color : Colors.transparent,
+                      width: 3,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  e.key,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: cs.secondary.withValues(alpha: 0.7),
-                  ),
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: isHovered ? 14 : 10,
+                      height: isHovered ? 14 : 10,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        boxShadow: isHovered
+                            ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6)]
+                            : [],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        e.key,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+                          color: isHovered ? cs.secondary : cs.secondary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(e.value),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: isHovered ? FontWeight.bold : FontWeight.w500,
+                        color: isHovered ? color : cs.secondary,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(e.value),
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: cs.secondary,
-                  ),
-                ),
-              ],
-            ),
-          )),
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -768,13 +810,14 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     
     _categorySales.forEach((key, value) {
       final percentage = (value / total) * 100;
+      final isHovered = _hoveredCategory == key;
       sections.add(PieChartSectionData(
         color: _getCategoryColor(key),
         value: value,
         title: '${percentage.toStringAsFixed(0)}%',
-        radius: 50,
+        radius: isHovered ? 62 : 50,
         titleStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
+          fontSize: isHovered ? 12 : 10,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),

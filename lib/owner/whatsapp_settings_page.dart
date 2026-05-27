@@ -27,7 +27,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
 
   String _mediaType = 'NONE';
   String _interactiveType = 'NONE';
-  bool _isAdvancedMode = false;
   bool _isSavingLive = false;
 
   @override
@@ -1175,24 +1174,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                 ],
               ),
             ),
-            Row(
-              children: [
-                Text(
-                  "Advanced Settings",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: cs.secondary.withValues(alpha: 0.8),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Switch(
-                  value: _isAdvancedMode,
-                  onChanged: (val) => setState(() => _isAdvancedMode = val),
-                  activeThumbColor: cs.primary,
-                ),
-              ],
-            ),
             PopupMenuButton<String>(
               icon: Icon(Icons.more_vert, color: cs.secondary.withValues(alpha: 0.6)),
               onSelected: (val) async {
@@ -1242,9 +1223,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
         ),
         const SizedBox(height: 16),
         
-        // Advanced Mode: Historical drafts section
-        if (_isAdvancedMode) ...[
-          Card(
+        Card(
             color: cs.surfaceContainer,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -1312,7 +1291,6 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
             ),
           ),
           const SizedBox(height: 16),
-        ],
 
         if (_selectedVersionDetails != null) ...[
           // Direct WYSIWYG Editor Panel
@@ -1448,131 +1426,128 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
-                  // Advanced Settings Field Info (Editable)
-                  if (_isAdvancedMode) ...[
-                    const Divider(height: 32),
+                  const Divider(height: 32),
+                  Text(
+                    "Action Interface Type",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary.withValues(alpha: 0.7),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _interactiveType,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'NONE', child: Text('Plain Text Notification')),
+                      DropdownMenuItem(value: 'BUTTONS', child: Text('Quick Reply Action Buttons')),
+                      DropdownMenuItem(value: 'CTA_URL', child: Text('Call to Action Link (CTA)')),
+                      DropdownMenuItem(value: 'LIST', child: Text('Interactive Option List Menu')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _interactiveType = val;
+                          _selectedVersionDetails!['interactiveType'] = val;
+                        });
+                      }
+                    },
+                  ),
+                  if (_interactiveType == 'CTA_URL') ...[
+                    const SizedBox(height: 16),
                     Text(
-                      "Action Interface Type",
+                      "Redirect Link Title",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: cs.secondary.withValues(alpha: 0.7),
-                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: _interactiveType,
+                    TextFormField(
+                      controller: _ctaButtonTitleController,
                       decoration: InputDecoration(
+                        hintText: "e.g., Pay Now",
                         isDense: true,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'NONE', child: Text('Plain Text Notification')),
-                        DropdownMenuItem(value: 'BUTTONS', child: Text('Quick Reply Action Buttons')),
-                        DropdownMenuItem(value: 'CTA_URL', child: Text('Call to Action Link (CTA)')),
-                        DropdownMenuItem(value: 'LIST', child: Text('Interactive Option List Menu')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _interactiveType = val;
-                            _selectedVersionDetails!['interactiveType'] = val;
-                          });
-                        }
-                      },
                     ),
-                    if (_interactiveType == 'CTA_URL') ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        "Redirect Link Title",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: cs.secondary.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _ctaButtonTitleController,
-                        decoration: InputDecoration(
-                          hintText: "e.g., Pay Now",
-                          isDense: true,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "URL Address",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: cs.secondary.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _ctaButtonUrlController,
-                        decoration: InputDecoration(
-                          hintText: "https://...",
-                          isDense: true,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     Text(
-                      "Attachment Type",
+                      "URL Address",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: cs.secondary.withValues(alpha: 0.7),
-                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: _mediaType,
+                    TextFormField(
+                      controller: _ctaButtonUrlController,
                       decoration: InputDecoration(
+                        hintText: "https://...",
                         isDense: true,
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'NONE', child: Text('No Attachment')),
-                        DropdownMenuItem(value: 'IMAGE', child: Text('Image')),
-                        DropdownMenuItem(value: 'VIDEO', child: Text('Video')),
-                        DropdownMenuItem(value: 'DOCUMENT', child: Text('Document (PDF)')),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _mediaType = val;
-                            _selectedVersionDetails!['mediaType'] = val;
-                          });
-                        }
-                      },
                     ),
-                    if (_mediaType != 'NONE') ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        "Attachment Source Link",
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: cs.secondary.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _mediaUrlController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          hintText: "https://...",
-                          isDense: true,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
+                  ],
+                  const SizedBox(height: 20),
+                  Text(
+                    "Attachment Type",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary.withValues(alpha: 0.7),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  DropdownButtonFormField<String>(
+                    value: _mediaType,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'NONE', child: Text('No Attachment')),
+                      DropdownMenuItem(value: 'IMAGE', child: Text('Image')),
+                      DropdownMenuItem(value: 'VIDEO', child: Text('Video')),
+                      DropdownMenuItem(value: 'DOCUMENT', child: Text('Document (PDF)')),
                     ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _mediaType = val;
+                          _selectedVersionDetails!['mediaType'] = val;
+                        });
+                      }
+                    },
+                  ),
+                  if (_mediaType != 'NONE') ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      "Attachment Source Link",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _mediaUrlController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: "https://...",
+                        isDense: true,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 24),
                   

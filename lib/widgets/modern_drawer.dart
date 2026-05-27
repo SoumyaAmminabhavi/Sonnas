@@ -4,9 +4,32 @@ import 'package:google_fonts/google_fonts.dart';
 import '../owner/owner_dashboard.dart';
 import '../staff/auth/login_page.dart';
 import '../services/auth_provider.dart';
+import '../services/system_setting_service.dart';
 
-class ModernDrawer extends ConsumerWidget {
+class ModernDrawer extends ConsumerStatefulWidget {
   const ModernDrawer({super.key});
+
+  @override
+  ConsumerState<ModernDrawer> createState() => _ModernDrawerState();
+}
+
+class _ModernDrawerState extends ConsumerState<ModernDrawer> {
+  Future<String>? _addressFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _addressFuture = _fetchAddress();
+  }
+
+  Future<String> _fetchAddress() async {
+    try {
+      final settings = await SystemSettingService.fetchAllSettings();
+      return settings['address'] ?? 'Address not set';
+    } catch (_) {
+      return 'Address not set';
+    }
+  }
 
   Future<void> _showOwnerAuth(BuildContext context, WidgetRef ref) async {
     final pinController = TextEditingController();
@@ -89,7 +112,7 @@ class ModernDrawer extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Drawer(
       backgroundColor: cs.surfaceContainerLow,
@@ -166,11 +189,9 @@ class ModernDrawer extends ConsumerWidget {
                   color: cs.outlineVariant.withValues(alpha: 0.3),
                 ),
               ),
-              const _DrawerItem(icon: Icons.info_outline, label: "Business Info"),
-              Consumer(
-                builder: (context, ref, child) {
-                  final isAuthenticated =
-                      ref.watch(authProvider).isAuthenticated;
+              Builder(
+                builder: (context) {
+                  final isAuthenticated = ref.watch(authProvider).isAuthenticated;
                   if (!isAuthenticated) return const SizedBox();
 
                   return _DrawerItem(
@@ -184,39 +205,46 @@ class ModernDrawer extends ConsumerWidget {
                 },
               ),
               const Spacer(),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainer,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: cs.outlineVariant.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "LOCATION",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2.0,
-                        color: cs.onSurfaceVariant,
+              FutureBuilder<String>(
+                future: _addressFuture,
+                builder: (context, snapshot) {
+                  final address = snapshot.data;
+                  if (address == null) return const SizedBox();
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainer,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: cs.outlineVariant.withValues(alpha: 0.2),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "4TH Phase, Shop No. 5,6,7 Ground Floor, Hubballi",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        color: cs.onSurface,
-                        height: 1.6,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "LOCATION",
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2.0,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          address,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: cs.onSurface,
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           ),
