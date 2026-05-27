@@ -25,35 +25,7 @@ class CartScreen extends StatelessWidget {
       backgroundColor: surfaceColor,
       body: CustomScrollView(
         slivers: [
-          // Top App Bar
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: surfaceColor.withValues(alpha: 0.8),
-            surfaceTintColor: Colors.transparent,
-            leading: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
-            ),
-            centerTitle: true,
-            title: Text(
-              "Sonna’s Patisserie",
-              style: GoogleFonts.notoSerif(
-                color: primaryColor,
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            actions: [
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.account_circle_outlined, color: primaryColor),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ),
+
 
           // Main Content
           SliverToBoxAdapter(

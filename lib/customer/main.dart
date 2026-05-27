@@ -25,6 +25,8 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   String? _menuSearchQuery;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   StreamSubscription? _statusSubscription;
+  StreamSubscription? _statusSubscriptionEmail;
+  final Set<String> _notifiedOrderStatuses = {};
   StreamSubscription? _stockSubscription;
   Timer? _abandonedCartTimer;
   final Map<String, bool> _previousStockStatus = {};
@@ -76,6 +78,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       if (mounted) {
         setState(() {
           _statusSubscription?.cancel();
+          _statusSubscriptionEmail?.cancel();
           _setupStatusListener();
           _loadAvatar();
         });
@@ -87,6 +90,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   void dispose() {
     _authSubscription?.cancel();
     _statusSubscription?.cancel();
+    _statusSubscriptionEmail?.cancel();
     _stockSubscription?.cancel();
     _abandonedCartTimer?.cancel();
     super.dispose();
@@ -96,25 +100,49 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
 
-    final String phone = user.userMetadata?['phone']?.toString() ?? user.phone ?? "";
-    if (phone.isEmpty) return;
+    _statusSubscription?.cancel();
+    _statusSubscriptionEmail?.cancel();
 
-    _statusSubscription = Supabase.instance.client
-        .from('Order')
-        .stream(primaryKey: ['id'])
-        .eq('customerPhone', phone)
-        .listen((List<Map<String, dynamic>> orders) {
-          for (final order in orders) {
-            final String status = order['status'] ?? '';
-            final String orderNum = order['orderNumber'] ?? 'Order';
-            
-            if (status == 'OUT_FOR_DELIVERY') {
-              _showStatusNotification("🚀 $orderNum is out for delivery!");
-            } else if (status == 'DELIVERED') {
-              _showStatusNotification("✨ $orderNum has been delivered! Enjoy!");
-            }
-          }
-        });
+    final String rawPhone = (user.userMetadata?['phone']?.toString() ?? user.phone ?? "").replaceAll(RegExp(r'\D'), '');
+    final String phone = rawPhone.length > 10
+        ? rawPhone.substring(rawPhone.length - 10)
+        : rawPhone;
+    final String? email = user.email?.trim();
+
+    void handleOrders(List<Map<String, dynamic>> orders) {
+      for (final order in orders) {
+        final String orderId = order['id'] ?? '';
+        final String status = order['status'] ?? '';
+        final String orderNum = order['orderNumber'] ?? 'Order';
+        final String notifyKey = "${orderId}_$status";
+
+        if (_notifiedOrderStatuses.contains(notifyKey)) continue;
+
+        if (status == 'OUT_FOR_DELIVERY') {
+          _notifiedOrderStatuses.add(notifyKey);
+          _showStatusNotification("🚀 $orderNum is out for delivery!");
+        } else if (status == 'DELIVERED') {
+          _notifiedOrderStatuses.add(notifyKey);
+          _showStatusNotification("✨ $orderNum has been delivered! Enjoy!");
+        }
+      }
+    }
+
+    if (phone.isNotEmpty) {
+      _statusSubscription = Supabase.instance.client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('customerPhone', phone)
+          .listen(handleOrders);
+    }
+
+    if (email != null && email.isNotEmpty) {
+      _statusSubscriptionEmail = Supabase.instance.client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('customerEmail', email)
+          .listen(handleOrders);
+    }
   }
 
   void _setupStockListener() {

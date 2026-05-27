@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'menu_service.dart';
 import 'order_service.dart';
 import 'constants.dart';
+import 'feedback_service.dart';
 
 /// Cached provider for the bakery menu.
 final menuProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((
@@ -133,4 +134,10 @@ final orderNotifierProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>?, String>((ref, arg) async {
       final cleanId = arg.replaceAll(RegExp(r'[#]'), '');
       return await OrderService.fetchOrderByIdOrNumber(cleanId);
+    });
+
+/// Real-time stream of customer feedback/reviews.
+final feedbackStreamProvider =
+    StreamProvider.autoDispose<List<Map<String, dynamic>>>((ref) {
+      return FeedbackService.getFeedbackStream();
     });

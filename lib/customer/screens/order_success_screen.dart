@@ -1,16 +1,18 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import '../../services/haptic_service.dart';
 
 class OrderSuccessScreen extends StatefulWidget {
   final String orderNumber;
   final double totalAmount;
+  final String status;
 
   const OrderSuccessScreen({
     super.key,
     required this.orderNumber,
     required this.totalAmount,
+    this.status = 'PENDING',
   });
 
   @override
@@ -43,7 +45,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              // Lottie Success Animation
+              // Success Animation
               Container(
                 width: 180,
                 height: 180,
@@ -58,10 +60,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                     ),
                   ],
                 ),
-                child: Lottie.network(
-                  'https://assets5.lottiefiles.com/packages/lf20_u4j3cx7p.json',
-                  repeat: false,
-                ),
+                child: const AnimatedCheckmark(),
               ),
               const SizedBox(height: 48),
               Text(
@@ -104,7 +103,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                     const Divider(height: 32),
                     _buildSummaryRow("Total Paid", "₹${widget.totalAmount.toStringAsFixed(2)}"),
                     const Divider(height: 32),
-                    _buildSummaryRow("Status", "PENDING", isStatus: true),
+                    _buildSummaryRow("Status", widget.status, isStatus: true),
                   ],
                 ),
               ),
@@ -164,10 +163,110 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isStatus ? primaryColor : secondaryColor,
+            color: isStatus 
+                ? (value == 'CONFIRMED' ? Colors.green : primaryColor)
+                : secondaryColor,
           ),
         ),
       ],
     );
+  }
+}
+
+class AnimatedCheckmark extends StatefulWidget {
+  const AnimatedCheckmark({super.key});
+
+  @override
+  State<AnimatedCheckmark> createState() => _AnimatedCheckmarkState();
+}
+
+class _AnimatedCheckmarkState extends State<AnimatedCheckmark> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _checkAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
+      ),
+    );
+
+    _checkAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeInOutBack),
+      ),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const Color primaryColor = Color(0xFFFF4D8D);
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _checkAnimation,
+          builder: (context, child) {
+            return CustomPaint(
+              size: const Size(100, 100),
+              painter: CheckmarkPainter(
+                progress: _checkAnimation.value,
+                color: primaryColor,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class CheckmarkPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  CheckmarkPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8.0
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    path.moveTo(size.width * 0.25, size.height * 0.5);
+    path.lineTo(size.width * 0.45, size.height * 0.7);
+    path.lineTo(size.width * 0.75, size.height * 0.35);
+
+    if (progress > 0) {
+      final PathMetric metric = path.computeMetrics().first;
+      final Path extractPath = metric.extractPath(0.0, metric.length * progress);
+      canvas.drawPath(extractPath, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CheckmarkPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }

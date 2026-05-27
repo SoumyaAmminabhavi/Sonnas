@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -177,13 +177,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final currentUser = supabase.auth.currentUser;
       if (currentUser == null) return;
 
-      final userPhone = currentUser.userMetadata?['phone']?.toString() ?? currentUser.phone ?? '';
-      if (userPhone.isEmpty) return;
+      final rawPhone = (currentUser.userMetadata?['phone']?.toString() ??
+          currentUser.phone ??
+          '').replaceAll(RegExp(r'\D'), '');
 
-      final data = await supabase
+      final userPhone = rawPhone.length > 10
+          ? rawPhone.substring(rawPhone.length - 10)
+          : rawPhone;
+
+      final userEmail = currentUser.email?.trim();
+
+      var query = supabase
           .from('Order')
-          .select('totalPrice')
-          .eq('customerPhone', userPhone);
+          .select('totalPrice');
+
+      if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
+        query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
+      } else if (userEmail != null && userEmail.isNotEmpty) {
+        query = query.eq('customerEmail', userEmail);
+      } else if (userPhone.isNotEmpty) {
+        query = query.eq('customerPhone', userPhone);
+      } else {
+        return;
+      }
+
+      final data = await query;
 
       double spentSum = 0;
       for (var row in data) {
@@ -194,11 +212,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final count = data.length;
       final spentRupees = spentSum / 100.0;
 
-      String level = "Bronze Gourmet ðŸ°";
+      String level = "Bronze Gourmet \u{1F370}";
       if (count >= 6) {
-        level = "Gold Patissier ðŸ‘‘";
+        level = "Gold Patissier \u{1F451}";
       } else if (count >= 3) {
-        level = "Silver Connoisseur âœ¨";
+        level = "Silver Connoisseur \u2728";
       }
 
       if (mounted) {
@@ -305,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                "Sign in to track orders, customize delivery addresses, earn Bronze, Silver, or Gold rewards, and get personal recommendations.",
+                "Sign in to track your orders, manage saved addresses, and view your loyalty rewards.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: secondary.withValues(alpha: 0.6),
@@ -356,6 +374,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  Stream<List<Map<String, dynamic>>> _mergeOrderStreams(
+      Stream<List<Map<String, dynamic>>> s1,
+      Stream<List<Map<String, dynamic>>> s2) {
+    final controller = StreamController<List<Map<String, dynamic>>>();
+    StreamSubscription? sub1;
+    StreamSubscription? sub2;
+    List<Map<String, dynamic>> last1 = [];
+    List<Map<String, dynamic>> last2 = [];
+
+    void emitCombined() {
+      final combined = [...last1, ...last2];
+      combined.sort((a, b) {
+        final aTime = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime(1970);
+        final bTime = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime(1970);
+        return bTime.compareTo(aTime);
+      });
+      final seen = <String>{};
+      final unique = combined.where((order) {
+        final id = order['id']?.toString() ?? '';
+        return seen.add(id);
+      }).toList();
+      if (!controller.isClosed) {
+        controller.add(unique);
+      }
+    }
+
+    controller.onListen = () {
+      sub1 = s1.listen((data) {
+        last1 = data;
+        emitCombined();
+      }, onError: controller.addError);
+      sub2 = s2.listen((data) {
+        last2 = data;
+        emitCombined();
+      }, onError: controller.addError);
+    };
+
+    controller.onCancel = () {
+      sub1?.cancel();
+      sub2?.cancel();
+      controller.close();
+    };
+
+    return controller.stream;
   }
 
   @override
@@ -493,7 +557,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           child: _buildStatItem(
                             "Total Spent", 
-                            "â‚¹${_totalSpent.toStringAsFixed(0)}", 
+                            "\u20B9${_totalSpent.toStringAsFixed(0)}", 
                             Icons.account_balance_wallet_rounded, 
                             Colors.orange.shade700,
                           ),
@@ -677,13 +741,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   StreamBuilder<List<Map<String, dynamic>>>(
-                    key: Key(_phoneController.text),
-                    stream: Supabase.instance.client
-                        .from('Order')
-                        .stream(primaryKey: ['id'])
-                        .eq('customerPhone', _phoneController.text)
-                        .order('createdAt', ascending: false)
-                        .limit(1),
+                    key: Key("${_phoneController.text}_${_emailController.text}"),
+                    stream: (() {
+                      final rawPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+                      final cleanPhone = rawPhone.length > 10 
+                          ? rawPhone.substring(rawPhone.length - 10) 
+                          : rawPhone;
+                      final email = _emailController.text.trim();
+                      final client = Supabase.instance.client;
+
+                      if (cleanPhone.isNotEmpty && email.isNotEmpty) {
+                        final s1 = client
+                            .from('Order')
+                            .stream(primaryKey: ['id'])
+                            .eq('customerPhone', cleanPhone)
+                            .limit(1);
+                        final s2 = client
+                            .from('Order')
+                            .stream(primaryKey: ['id'])
+                            .eq('customerEmail', email)
+                            .limit(1);
+                        return _mergeOrderStreams(s1, s2);
+                      } else if (email.isNotEmpty) {
+                        return client
+                            .from('Order')
+                            .stream(primaryKey: ['id'])
+                            .eq('customerEmail', email)
+                            .order('createdAt', ascending: false)
+                            .limit(1);
+                      } else if (cleanPhone.isNotEmpty) {
+                        return client
+                            .from('Order')
+                            .stream(primaryKey: ['id'])
+                            .eq('customerPhone', cleanPhone)
+                            .order('createdAt', ascending: false)
+                            .limit(1);
+                      } else {
+                        return const Stream<List<Map<String, dynamic>>>.empty();
+                      }
+                    })(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
@@ -712,7 +808,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       
                       return _buildActivityItem(
                         "${latestOrder['customerName']?.toString().split(' ').first}'s Selection",
-                        "â‚¹${priceVal.toStringAsFixed(2)}",
+                        "\u20B9${priceVal.toStringAsFixed(2)}",
                         "ORDER #${latestOrder['orderNumber']?.toString().split('-').last ?? '...'}",
                         status.toUpperCase(),
                         latestOrder['customImageUrl'] ?? "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=3578&auto=format&fit=crop",

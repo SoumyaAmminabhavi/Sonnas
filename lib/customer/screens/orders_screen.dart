@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
@@ -37,22 +37,32 @@ class _OrdersScreenState extends State<OrdersScreen> {
         return;
       }
 
-      final userPhone =
-          currentUser.userMetadata?['phone']?.toString() ??
+      final rawPhone = (currentUser.userMetadata?['phone']?.toString() ??
           currentUser.phone ??
-          '';
+          '').replaceAll(RegExp(r'\D'), '');
 
-      if (userPhone.isEmpty) {
+      final userPhone = rawPhone.length > 10
+          ? rawPhone.substring(rawPhone.length - 10)
+          : rawPhone;
+
+      final userEmail = currentUser.email?.trim();
+
+      var query = supabase
+          .from('Order')
+          .select('*, items:OrderItem(*)');
+
+      if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
+        query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
+      } else if (userEmail != null && userEmail.isNotEmpty) {
+        query = query.eq('customerEmail', userEmail);
+      } else if (userPhone.isNotEmpty) {
+        query = query.eq('customerPhone', userPhone);
+      } else {
         if (mounted) setState(() => _isLoading = false);
         return;
       }
 
-      // Query the unified Order table using customerPhone
-      final data = await supabase
-          .from('Order')
-          .select('*, items:OrderItem(*)')
-          .eq('customerPhone', userPhone)
-          .order('createdAt', ascending: false);
+      final data = await query.order('createdAt', ascending: false);
 
       if (mounted) {
         setState(() {
@@ -74,14 +84,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
               "uuid": order['id'],
               "date": _formatDate(order['createdAt']),
               "title": firstItemTitle,
-              // totalPrice is stored in paise â†’ convert to rupees
-              "price": "â‚¹${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
+              // totalPrice is stored in paise -> convert to rupees
+              "price": "\u20B9${((order['totalPrice'] ?? 0) / 100).toStringAsFixed(2)}",
               "status": status,
               "source": order['source']?.toString() ?? 'APP',
               "imageUrl": imageUrl,
-              // active = PENDING or CONFIRMED (not yet out for delivery)
-              "isActive":
-                  (status == 'PENDING' || status == 'CONFIRMED').toString(),
+              // active = PENDING, CONFIRMED, or OUT_FOR_DELIVERY
+              "isActive": (status == 'PENDING' ||
+                      status == 'CONFIRMED' ||
+                      status == 'OUT_FOR_DELIVERY')
+                  .toString(),
             };
           }).toList();
           _isLoading = false;
@@ -96,14 +108,22 @@ class _OrdersScreenState extends State<OrdersScreen> {
   }
 
   String _formatDate(String isoString) {
-    final date = DateTime.parse(isoString);
-    final now = DateTime.now();
-    if (date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day) {
+    try {
+      String normalized = isoString;
+      if (!normalized.endsWith('Z') &&
+          !normalized.contains('+') &&
+          !RegExp(r'-\d\d:\d\d$').hasMatch(normalized)) {
+        normalized = '${normalized}Z';
+      }
+      final date = DateTime.parse(normalized).toLocal();
+      const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ];
+      return "${date.day} ${months[date.month - 1]} ${date.year}";
+    } catch (e) {
       return "Today";
     }
-    return "${date.day}/${date.month}/${date.year}";
   }
 
   Future<void> _cancelOrder(String uuid) async {
@@ -250,7 +270,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content:
-                                  Text("Thank you for your feedback! ðŸ’–"),
+                                  Text("Thank you for your feedback! \u{1F496}"),
                               backgroundColor: primary),
                         );
                       }
@@ -312,7 +332,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
               const SizedBox(height: 32),
               Text(
-                "Gourmet History",
+                "Order History",
                 style: GoogleFonts.notoSerif(
                   fontSize: 28,
                   fontWeight: FontWeight.w600,
@@ -322,7 +342,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                "Sign in to see your past orders, track active deliveries, and download receipts in high-fidelity PDF formats.",
+                "Sign in to view your past orders and track active deliveries.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: secondary.withValues(alpha: 0.6),
@@ -425,64 +445,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       child:
                           Text("You haven't placed any orders yet.")))
             else ...[
-              // Active Order Banner
-              if (orders.any((o) => o['isActive'] == 'true'))
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: InkWell(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const CustomerTrackingScreen()),
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [primary, Color(0xFFFFB6D3)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.delivery_dining,
-                              color: Colors.white, size: 24),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "TRACK ACTIVE ORDER",
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                  ),
-                                ),
-                                Text(
-                                  orders.firstWhere(
-                                      (o) => o['isActive'] == 'true')['title'],
-                                  style: GoogleFonts.notoSerif(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.arrow_forward_ios,
-                              color: Colors.white, size: 16),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.all(24),
@@ -502,9 +464,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget _buildCompactOrderCard(
       BuildContext context, Map<String, dynamic> order) {
     final String status = order['status']?.toString() ?? 'PENDING';
-    final String source = order['source']?.toString() ?? 'APP';
 
-    // Map status â†’ color
+    // Map status -> color
     Color statusColor;
     switch (status) {
       case 'CONFIRMED':
@@ -524,8 +485,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
         statusColor = primary;
     }
 
-    return Container(
-      padding: const EdgeInsets.all(12),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CustomerTrackingScreen(
+              orderId: order['uuid'],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -573,28 +545,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     ),
                     Row(
                       children: [
-                        // Source badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: source == 'WHATSAPP'
-                                ? Colors.green.shade50
-                                : primary.withValues(alpha: 0.07),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            source == 'WHATSAPP' ? 'ðŸ’¬ WA' : 'ðŸ“² APP',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              color: source == 'WHATSAPP'
-                                  ? Colors.green.shade700
-                                  : primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
                         // Status badge
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -638,7 +588,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // Cancel â€” only for PENDING or CONFIRMED
+                    // Cancel — only for PENDING or CONFIRMED
                     if (status == 'PENDING' || status == 'CONFIRMED')
                       TextButton(
                         onPressed: () => _cancelOrder(order['uuid']),
@@ -657,7 +607,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           ),
                         ),
                       ),
-                    // Review â€” for DELIVERED or COMPLETED
+                    // Review — for DELIVERED or COMPLETED
                     if (status == 'DELIVERED' || status == 'COMPLETED')
                       TextButton(
                         onPressed: () => _showReviewDialog(order),
@@ -683,7 +633,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
