@@ -13,6 +13,7 @@ import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
 import '../services/theme_service.dart';
 import '../services/settings_service.dart';
+import '../services/system_setting_service.dart';
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -48,6 +49,13 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
   Widget? _activeSubPage;
+  
+  bool _isLoadingSettings = true;
+  String _bakeryName = "Sonna's Patisserie & Cafe";
+  String _contactPhone = "+91 91132 31424";
+  String _instagram = "@sonnas__";
+  String _contactEmail = "sonnaspatisseriecafe@gmail.com";
+  String _address = "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021";
 
   @override
   void initState() {
@@ -58,10 +66,22 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   Future<void> _loadPreferences() async {
     final pushEnabled = await SettingsService.getPushNotificationsEnabled();
     final inventoryEnabled = await SettingsService.getInventoryAlertsEnabled();
+    
+    // Load database settings
+    final dbSettings = await SystemSettingService.fetchAllSettings();
+    
     if (mounted) {
       setState(() {
         _pushNotifications = pushEnabled;
         _inventoryAlerts = inventoryEnabled;
+        
+        if (dbSettings.containsKey('bakery_name')) _bakeryName = dbSettings['bakery_name']!;
+        if (dbSettings.containsKey('contact_phone')) _contactPhone = dbSettings['contact_phone']!;
+        if (dbSettings.containsKey('instagram')) _instagram = dbSettings['instagram']!;
+        if (dbSettings.containsKey('contact_email')) _contactEmail = dbSettings['contact_email']!;
+        if (dbSettings.containsKey('address')) _address = dbSettings['address']!;
+        
+        _isLoadingSettings = false;
       });
     }
   }
@@ -170,25 +190,35 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   }
 
   Widget _buildEstablishmentSection(ColorScheme cs) {
+    if (_isLoadingSettings) {
+      return _SettingsCard(
+        title: "Establishment Details",
+        icon: Icons.storefront,
+        child: SkeletonWrapper(
+          child: Column(
+            children: List.generate(4, (index) => const Padding(
+              padding: EdgeInsets.only(bottom: 16.0),
+              child: Skeleton(height: 20, width: double.infinity),
+            )),
+          ),
+        ),
+      );
+    }
     return _SettingsCard(
       title: "Establishment Details",
       icon: Icons.storefront,
       child: Column(
         children: [
-          _buildInfoRow(cs, "Bakery Name", "Sonna's Patisserie & Cafe"),
-          _buildInfoRow(cs, "Contact Phone", "+91 91132 31424"),
-          _buildInfoRow(cs, "Instagram", "@sonnas__"),
-          _buildInfoRow(cs, "Contact Email", "sonnaspatisseriecafe@gmail.com"),
-          _buildInfoRow(
-            cs,
-            "Address",
-            "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021",
-          ),
+          _buildInfoRow(cs, "Bakery Name", _bakeryName),
+          _buildInfoRow(cs, "Contact Phone", _contactPhone),
+          _buildInfoRow(cs, "Instagram", _instagram),
+          _buildInfoRow(cs, "Contact Email", _contactEmail),
+          _buildInfoRow(cs, "Address", _address),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: () {},
+              onPressed: () => _showEditEstablishmentDialog(context, cs),
               icon: Icon(Icons.edit, size: 16, color: cs.primary),
               label: Text(
                 "Edit Information",
@@ -200,6 +230,102 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditEstablishmentDialog(BuildContext context, ColorScheme cs) {
+    final nameController = TextEditingController(text: _bakeryName);
+    final phoneController = TextEditingController(text: _contactPhone);
+    final instaController = TextEditingController(text: _instagram);
+    final emailController = TextEditingController(text: _contactEmail);
+    final addressController = TextEditingController(text: _address);
+    bool isSaving = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: Text("Edit Establishment", style: GoogleFonts.notoSerif()),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: "Bakery Name"),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: phoneController,
+                  decoration: const InputDecoration(labelText: "Contact Phone"),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: instaController,
+                  decoration: const InputDecoration(labelText: "Instagram"),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: "Contact Email"),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: addressController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: "Address"),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: isSaving ? null : () async {
+                setDialogState(() => isSaving = true);
+                try {
+                  await SystemSettingService.updateSetting('bakery_name', nameController.text.trim());
+                  await SystemSettingService.updateSetting('contact_phone', phoneController.text.trim());
+                  await SystemSettingService.updateSetting('instagram', instaController.text.trim());
+                  await SystemSettingService.updateSetting('contact_email', emailController.text.trim());
+                  await SystemSettingService.updateSetting('address', addressController.text.trim());
+                  
+                  if (mounted) {
+                    setState(() {
+                      _bakeryName = nameController.text.trim();
+                      _contactPhone = phoneController.text.trim();
+                      _instagram = instaController.text.trim();
+                      _contactEmail = emailController.text.trim();
+                      _address = addressController.text.trim();
+                    });
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Failed to save settings.")),
+                    );
+                  }
+                } finally {
+                  if (mounted) setDialogState(() => isSaving = false);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: cs.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: isSaving 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Text("SAVE"),
+            ),
+          ],
+        ),
       ),
     );
   }

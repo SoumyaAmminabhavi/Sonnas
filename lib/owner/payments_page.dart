@@ -251,7 +251,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Atelier Revenue",
+                  "Revenue",
                   style: GoogleFonts.notoSerif(
                     color: cs.onSurface,
                     fontSize: isDesktop ? 32 : 28,
