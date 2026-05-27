@@ -14,6 +14,7 @@ import '../widgets/secure_avatar.dart';
 import '../services/theme_service.dart';
 import '../services/settings_service.dart';
 import '../services/system_setting_service.dart';
+import '../services/auth_provider.dart';
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -163,6 +164,8 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                         _buildPreferencesSection(cs),
                         const SizedBox(height: 32),
                         _buildBISection(cs),
+                        const SizedBox(height: 32),
+                        _buildAccountSection(cs),
                       ],
                     ),
                   ),
@@ -180,12 +183,92 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                 _buildStaffSection(cs),
                 const SizedBox(height: 32),
                 _buildBISection(cs),
+                const SizedBox(height: 32),
+                _buildAccountSection(cs),
                 const SizedBox(height: 64),
               ],
             );
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildAccountSection(ColorScheme cs) {
+    return _SettingsCard(
+      title: "Account & Session",
+      icon: Icons.account_circle_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Logged in as Business Owner. Active session is stored securely on this device.",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: cs.secondary.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildLogoutButton(cs),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(ColorScheme cs) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text("Sign Out", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+              content: const Text("Are you sure you want to sign out of the owner panel?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[700],
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("Sign Out"),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm == true) {
+            await ref.read(authProvider.notifier).signOut();
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          }
+        },
+        icon: const Icon(Icons.logout, size: 18),
+        label: Text(
+          "LOG OUT",
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red[50],
+          foregroundColor: Colors.red[700],
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.red[100]!),
+          ),
+        ),
+      ),
     );
   }
 
