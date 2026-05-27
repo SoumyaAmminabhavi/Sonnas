@@ -245,86 +245,114 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
+        builder: (context, setDialogState) => Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: Text("Edit Establishment", style: GoogleFonts.notoSerif()),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: "Bakery Name"),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(labelText: "Contact Phone"),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: instaController,
-                  decoration: const InputDecoration(labelText: "Instagram"),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(labelText: "Contact Email"),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: addressController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: "Address"),
-                ),
-              ],
+          backgroundColor: cs.surface,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Edit Establishment",
+                    style: GoogleFonts.notoSerif(
+                      color: cs.secondary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: nameController,
+                            decoration: const InputDecoration(labelText: "Bakery Name"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: phoneController,
+                            decoration: const InputDecoration(labelText: "Contact Phone"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: instaController,
+                            decoration: const InputDecoration(labelText: "Instagram"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: emailController,
+                            decoration: const InputDecoration(labelText: "Contact Email"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: addressController,
+                            maxLines: 3,
+                            decoration: const InputDecoration(labelText: "Address"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: isSaving ? null : () => Navigator.pop(context),
+                        child: Text("Cancel", style: TextStyle(color: cs.secondary.withValues(alpha: 0.6))),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: isSaving ? null : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            await SystemSettingService.updateSetting('bakery_name', nameController.text.trim());
+                            await SystemSettingService.updateSetting('contact_phone', phoneController.text.trim());
+                            await SystemSettingService.updateSetting('instagram', instaController.text.trim());
+                            await SystemSettingService.updateSetting('contact_email', emailController.text.trim());
+                            await SystemSettingService.updateSetting('address', addressController.text.trim());
+                            
+                            if (mounted) {
+                              setState(() {
+                                _bakeryName = nameController.text.trim();
+                                _contactPhone = phoneController.text.trim();
+                                _instagram = instaController.text.trim();
+                                _contactEmail = emailController.text.trim();
+                                _address = addressController.text.trim();
+                              });
+                            }
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Failed to save settings.")),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setDialogState(() => isSaving = false);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cs.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: isSaving 
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text("SAVE"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: isSaving ? null : () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: isSaving ? null : () async {
-                setDialogState(() => isSaving = true);
-                try {
-                  await SystemSettingService.updateSetting('bakery_name', nameController.text.trim());
-                  await SystemSettingService.updateSetting('contact_phone', phoneController.text.trim());
-                  await SystemSettingService.updateSetting('instagram', instaController.text.trim());
-                  await SystemSettingService.updateSetting('contact_email', emailController.text.trim());
-                  await SystemSettingService.updateSetting('address', addressController.text.trim());
-                  
-                  if (mounted) {
-                    setState(() {
-                      _bakeryName = nameController.text.trim();
-                      _contactPhone = phoneController.text.trim();
-                      _instagram = instaController.text.trim();
-                      _contactEmail = emailController.text.trim();
-                      _address = addressController.text.trim();
-                    });
-                  }
-                  if (context.mounted) Navigator.pop(context);
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Failed to save settings.")),
-                    );
-                  }
-                } finally {
-                  if (mounted) setDialogState(() => isSaving = false);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: cs.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: isSaving 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : const Text("SAVE"),
-            ),
-          ],
         ),
       ),
     );

@@ -18,6 +18,7 @@ class SystemSettingService {
       }
       return settings;
     } catch (e) {
+      print("Error fetching settings: $e");
       // Return empty map on error to allow fallback values
       return {};
     }
