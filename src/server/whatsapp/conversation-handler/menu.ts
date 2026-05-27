@@ -151,7 +151,7 @@ export async function safeGetTopSellers(): Promise<Cake[]> {
       take: 2,
     });
 
-    const cakeIds = topSellersGroup.map(g => g.cakeId as string).filter(Boolean);
+    const cakeIds = topSellersGroup.map(g => g.cakeId!).filter(Boolean);
     let topSellers: Cake[] = [];
 
     if (cakeIds.length > 0) {
