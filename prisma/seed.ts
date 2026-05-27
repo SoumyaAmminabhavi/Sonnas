@@ -120,10 +120,19 @@ async function main() {
   });
 
   // Welcome Dropdown list sections
-  const secCategories = await prisma.whatsAppListSection.create({
+  const secFavorites = await prisma.whatsAppListSection.create({
     data: {
       versionId: welcomeVersion.id,
       sortOrder: 1,
+      title: "🔥 Top Sellers",
+      dataSource: "TOP_FAVORITES",
+    },
+  });
+
+  const secCategories = await prisma.whatsAppListSection.create({
+    data: {
+      versionId: welcomeVersion.id,
+      sortOrder: 2,
       title: "📋 Browse by Category",
       dataSource: "CATEGORIES",
     },
@@ -132,7 +141,7 @@ async function main() {
   const secServices = await prisma.whatsAppListSection.create({
     data: {
       versionId: welcomeVersion.id,
-      sortOrder: 2,
+      sortOrder: 3,
       title: "✨ Other Services",
       dataSource: "STATIC",
     },
