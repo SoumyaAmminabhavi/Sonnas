@@ -51,11 +51,11 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   Widget? _activeSubPage;
   
   bool _isLoadingSettings = true;
-  String _bakeryName = "Sonna's Patisserie & Cafe";
-  String _contactPhone = "+91 91132 31424";
-  String _instagram = "@sonnas__";
-  String _contactEmail = "sonnaspatisseriecafe@gmail.com";
-  String _address = "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021";
+  String _bakeryName = "";
+  String _contactPhone = "";
+  String _instagram = "";
+  String _contactEmail = "";
+  String _address = "";
 
   @override
   void initState() {
