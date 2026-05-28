@@ -231,13 +231,18 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             centerTitle: true,
-            title: Text(
-              "Sonna's Patisserie",
-              style: GoogleFonts.notoSerif(
-                fontSize: 24,
-                fontWeight: FontWeight.w400,
-                fontStyle: FontStyle.italic,
-                color: primaryColor,
+            title: InkWell(
+              onTap: () {
+                setState(() => _currentIndex = 0);
+              },
+              child: Text(
+                "Sonna's Patisserie",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w400,
+                  fontStyle: FontStyle.italic,
+                  color: primaryColor,
+                ),
               ),
             ),
             actions: [
@@ -308,27 +313,32 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           // Sidebar Logo
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                Text(
-                  "Sonna's",
-                  style: GoogleFonts.notoSerif(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w400,
-                    fontStyle: FontStyle.italic,
-                    color: primaryColor,
+            child: InkWell(
+              onTap: () {
+                setState(() => _currentIndex = 0);
+              },
+              child: Column(
+                children: [
+                  Text(
+                    "Sonna's",
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.italic,
+                      color: primaryColor,
+                    ),
                   ),
-                ),
-                Text(
-                  "PATISSERIE",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4,
-                    color: secondaryColor.withValues(alpha: 0.4),
+                  Text(
+                    "PATISSERIE",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 4,
+                      color: secondaryColor.withValues(alpha: 0.4),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 80),
@@ -516,29 +526,35 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(color: Colors.white),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Sonna's",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.italic,
-                      color: primaryColor,
+            child: InkWell(
+              onTap: () {
+                Navigator.pop(context);
+                setState(() => _currentIndex = 0);
+              },
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Sonna's",
+                      style: GoogleFonts.notoSerif(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w400,
+                        fontStyle: FontStyle.italic,
+                        color: primaryColor,
+                      ),
                     ),
-                  ),
-                  Text(
-                    "PATISSERIE",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 4,
-                      color: secondaryColor.withValues(alpha: 0.4),
+                    Text(
+                      "PATISSERIE",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 4,
+                        color: secondaryColor.withValues(alpha: 0.4),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

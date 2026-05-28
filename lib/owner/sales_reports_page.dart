@@ -21,6 +21,8 @@ class SalesReportsPage extends ConsumerStatefulWidget {
   ConsumerState<SalesReportsPage> createState() => _SalesReportsPageState();
 }
 
+enum _SalesRange { today, weekly, monthly, yearly }
+
 class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   bool _isLoading = true;
   bool _isLoadingData = false;
@@ -34,6 +36,10 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   String _lastProcessedIds = "";
   StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
   int _pendingFetchVersion = 0;
+  String? _hoveredCategory;
+  _SalesRange _selectedRange = _SalesRange.weekly;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
 
   @override
   void initState() {
@@ -143,13 +149,49 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
     for (var item in items) {
       final String? cakeId = item['cakeId']?.toString();
-      final String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
+      String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
+      
+      // Normalize: strip size/type suffixes for matching (e.g. "(1kg)", "(Slice)", "(Plate)")
+      final normalizedName = cakeName.replaceAll(RegExp(r'\s*\(.*?\)\s*$'), '').trim().toLowerCase();
       
       // Match with menu to get category and image (Prefer ID, fallback to name)
-      final matchingCake = menu.firstWhere(
-        (c) => (cakeId != null && c['id']?.toString() == cakeId) || (c['name']?.toString().toLowerCase() == cakeName.toLowerCase()),
-        orElse: () => <String, dynamic>{},
-      );
+      var matchingCake = <String, dynamic>{};
+      if (cakeId != null) {
+        matchingCake = menu.firstWhere(
+          (c) => c['id']?.toString() == cakeId,
+          orElse: () => <String, dynamic>{},
+        );
+      }
+      if (matchingCake.isEmpty) {
+        // Try exact match on normalized name
+        matchingCake = menu.firstWhere(
+          (c) => c['name']?.toString().toLowerCase() == normalizedName,
+          orElse: () => <String, dynamic>{},
+        );
+      }
+      if (matchingCake.isEmpty) {
+        // Try contains match (handles "Almond Brittle Slice" → "Almond Brittle with Salted Caramel Ganache")
+        matchingCake = menu.firstWhere(
+          (c) {
+            final menuName = c['name']?.toString().toLowerCase() ?? '';
+            return menuName.contains(normalizedName) || normalizedName.contains(menuName);
+          },
+          orElse: () => <String, dynamic>{},
+        );
+      }
+      if (matchingCake.isEmpty) {
+        // Try stripping common trailing type words ("slice", "cake", "mousse", etc.)
+        final strippedName = normalizedName.replaceAll(RegExp(r'\s+(slice|cake|mousse|macaron|pastry)\s*$'), '').trim();
+        if (strippedName != normalizedName) {
+          matchingCake = menu.firstWhere(
+            (c) {
+              final menuName = c['name']?.toString().toLowerCase() ?? '';
+              return menuName.contains(strippedName) || strippedName.contains(menuName);
+            },
+            orElse: () => <String, dynamic>{},
+          );
+        }
+      }
 
       final String category = (matchingCake['Category']?['name'] as String?) ?? 'Custom';
       final itemPrice = _parsePrice(item['price']);
@@ -240,14 +282,479 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     });
   }
 
+  Future<void> _showExportDialog(ColorScheme cs, String exportFormat) async {
+    String selectedRangeType = 'all';
+    DateTimeRange? customRange = DateTimeRange(
+      start: DateTime.now().subtract(const Duration(days: 7)),
+      end: DateTime.now(),
+    );
+    String selectedLimit = 'all';
+
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: cs.surfaceContainer,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            exportFormat == 'pdf' ? Icons.picture_as_pdf_outlined : Icons.table_chart_outlined,
+                            color: cs.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Export Report",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: cs.secondary,
+                                ),
+                              ),
+                              Text(
+                                "Format: ${exportFormat.toUpperCase()}",
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  color: cs.secondary.withValues(alpha: 0.5),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      "SELECT DATE RANGE",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                        color: cs.secondary.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      dropdownColor: cs.surfaceContainer,
+                      initialValue: selectedRangeType,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: cs.surface,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.secondary.withValues(alpha: 0.12)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.primary, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'all', child: Text("All Time")),
+                        DropdownMenuItem(value: 'today', child: Text("Today")),
+                        DropdownMenuItem(value: '7days', child: Text("Last 7 Days")),
+                        DropdownMenuItem(value: '30days', child: Text("Last 30 Days")),
+                        DropdownMenuItem(value: 'custom', child: Text("Custom Range...")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedRangeType = val;
+                          });
+                        }
+                      },
+                    ),
+                    if (selectedRangeType == 'custom') ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final d = await showDatePicker(
+                                  context: context,
+                                  initialDate: customRange!.start,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: Theme.of(context).colorScheme.copyWith(
+                                          primary: cs.primary,
+                                          onPrimary: Colors.white,
+                                          surface: cs.surfaceContainer,
+                                          onSurface: cs.secondary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (d != null) {
+                                  setDialogState(() {
+                                    final end = customRange!.end;
+                                    if (d.isAfter(end)) {
+                                      customRange = DateTimeRange(start: d, end: d);
+                                    } else {
+                                      customRange = DateTimeRange(start: d, end: end);
+                                    }
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: cs.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: cs.secondary.withValues(alpha: 0.12)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "FROM DATE",
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: cs.secondary.withValues(alpha: 0.5),
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      DateFormat('dd MMM yyyy').format(customRange!.start),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        color: cs.secondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final d = await showDatePicker(
+                                  context: context,
+                                  initialDate: customRange!.end,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                  builder: (context, child) {
+                                    return Theme(
+                                      data: Theme.of(context).copyWith(
+                                        colorScheme: Theme.of(context).colorScheme.copyWith(
+                                          primary: cs.primary,
+                                          onPrimary: Colors.white,
+                                          surface: cs.surfaceContainer,
+                                          onSurface: cs.secondary,
+                                        ),
+                                      ),
+                                      child: child!,
+                                    );
+                                  },
+                                );
+                                if (d != null) {
+                                  setDialogState(() {
+                                    final start = customRange!.start;
+                                    if (d.isBefore(start)) {
+                                      customRange = DateTimeRange(start: d, end: d);
+                                    } else {
+                                      customRange = DateTimeRange(start: start, end: d);
+                                    }
+                                  });
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: cs.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: cs.secondary.withValues(alpha: 0.12)),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "TO DATE",
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 9,
+                                        color: cs.secondary.withValues(alpha: 0.5),
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      DateFormat('dd MMM yyyy').format(customRange!.end),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 13,
+                                        color: cs.secondary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    Text(
+                      "SELECT ORDER LIMIT",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        letterSpacing: 1.5,
+                        color: cs.secondary.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      dropdownColor: cs.surfaceContainer,
+                      initialValue: selectedLimit,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: cs.surface,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.secondary.withValues(alpha: 0.12)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: cs.primary, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      ),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'all', child: Text("No Limit (All Orders)")),
+                        DropdownMenuItem(value: '20', child: Text("Last 20 Orders")),
+                        DropdownMenuItem(value: '50', child: Text("Last 50 Orders")),
+                        DropdownMenuItem(value: '100', child: Text("Last 100 Orders")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setDialogState(() {
+                            selectedLimit = val;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.6),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context, {
+                              'rangeType': selectedRangeType,
+                              'customRange': customRange,
+                              'limit': selectedLimit,
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cs.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text(
+                            "Download",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (result == null) return;
+
+    final String rangeType = result['rangeType'] as String;
+    final DateTimeRange? range = result['customRange'] as DateTimeRange?;
+    final String limitStr = result['limit'] as String;
+
+    List<Map<String, dynamic>> filteredOrders = List<Map<String, dynamic>>.from(_paidOrders);
+
+    final now = DateTime.now();
+    if (rangeType == 'today') {
+      final todayStart = DateTime(now.year, now.month, now.day);
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(todayStart);
+      }).toList();
+    } else if (rangeType == '7days') {
+      final start = now.subtract(const Duration(days: 7));
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(start);
+      }).toList();
+    } else if (rangeType == '30days') {
+      final start = now.subtract(const Duration(days: 30));
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(start);
+      }).toList();
+    } else if (rangeType == 'custom' && range != null) {
+      final start = DateTime(range.start.year, range.start.month, range.start.day);
+      final end = DateTime(range.end.year, range.end.month, range.end.day, 23, 59, 59);
+      filteredOrders = filteredOrders.where((o) {
+        final date = DateTime.tryParse(o['createdAt']?.toString() ?? '');
+        return date != null && date.isAfter(start) && date.isBefore(end);
+      }).toList();
+    }
+
+    if (limitStr != 'all') {
+      final limitVal = int.tryParse(limitStr) ?? 9999;
+      if (filteredOrders.length > limitVal) {
+        filteredOrders = filteredOrders.take(limitVal).toList();
+      }
+    }
+
+    if (filteredOrders.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("No transactions found for the selected filter."),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    double totalRevenue = 0;
+    final validOrders = filteredOrders;
+    final totalOrders = validOrders.length;
+    for (var order in validOrders) {
+      totalRevenue += _parsePrice(order['totalPrice']);
+    }
+    final avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0.0;
+
+    Map<String, double> filteredCategorySales = {};
+    final filteredIds = filteredOrders.map((o) => o['id']?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    if (filteredIds.isNotEmpty) {
+      try {
+        final items = await OrderService.fetchBulkOrderItems(filteredIds);
+        for (var item in items) {
+          final String? cakeId = item['cakeId']?.toString();
+          String cakeName = item['cakeName']?.toString() ?? 'Custom Selection';
+          final normalizedName = cakeName.replaceAll(RegExp(r'\s*\(.*?\)\s*$'), '').trim().toLowerCase();
+
+          var matchingCake = <String, dynamic>{};
+          if (cakeId != null) {
+            matchingCake = _cachedMenu.firstWhere(
+              (c) => c['id']?.toString() == cakeId,
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          if (matchingCake.isEmpty) {
+            matchingCake = _cachedMenu.firstWhere(
+              (c) => c['name']?.toString().toLowerCase() == normalizedName,
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          if (matchingCake.isEmpty) {
+            matchingCake = _cachedMenu.firstWhere(
+              (c) {
+                final menuName = c['name']?.toString().toLowerCase() ?? '';
+                return menuName.contains(normalizedName) || normalizedName.contains(menuName);
+              },
+              orElse: () => <String, dynamic>{},
+            );
+          }
+          final String category = (matchingCake['Category']?['name'] as String?) ?? 'Custom';
+          final itemPrice = _parsePrice(item['price']);
+          final qty = (item['quantity'] as num?)?.toInt() ?? 1;
+          final subtotal = itemPrice * qty;
+          filteredCategorySales[category] = (filteredCategorySales[category] ?? 0) + subtotal;
+        }
+      } catch (e) {
+        debugPrint("Error fetching item details for export: $e");
+      }
+    }
+
+    if (exportFormat == 'pdf') {
+      await ReportService.downloadPDF(filteredOrders, totalRevenue, totalOrders, avgOrder, filteredCategorySales);
+    } else if (exportFormat == 'csv') {
+      await ReportService.downloadCSV(filteredOrders, totalRevenue, totalOrders);
+    }
+  }
+
   Widget _buildExportButton(ColorScheme cs) {
     return PopupMenuButton<String>(
       onSelected: (value) async {
         try {
           if (value == 'pdf') {
-            await ReportService.downloadPDF(_paidOrders, _totalRevenue, _totalOrders, _avgOrderValue, _categorySales);
+            await _showExportDialog(cs, 'pdf');
           } else if (value == 'csv') {
-            await ReportService.downloadCSV(_paidOrders, _totalRevenue, _totalOrders);
+            await _showExportDialog(cs, 'csv');
           }
         } catch (e) {
           debugPrint("Export failed: $e");
@@ -290,17 +797,221 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     );
   }
 
+  bool _isInTimeWindow(DateTime date, _SalesRange range) {
+    final now = DateTime.now();
+    switch (range) {
+      case _SalesRange.today:
+        final today = DateTime(now.year, now.month, now.day);
+        return date.isAfter(today.subtract(const Duration(days: 1))) && date.isBefore(today.add(const Duration(days: 1)));
+      case _SalesRange.weekly:
+        final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+        return date.isAfter(weekStart.subtract(const Duration(days: 1))) && date.isBefore(weekStart.add(const Duration(days: 7)));
+      case _SalesRange.monthly:
+        final monthStart = DateTime(_selectedYear, _selectedMonth, 1);
+        final monthEnd = DateTime(_selectedYear, _selectedMonth + 1, 1);
+        return date.isAfter(monthStart.subtract(const Duration(days: 1))) && date.isBefore(monthEnd);
+      case _SalesRange.yearly:
+        final yearStart = DateTime(_selectedYear, 1, 1);
+        final yearEnd = DateTime(_selectedYear + 1, 1, 1);
+        return date.isAfter(yearStart.subtract(const Duration(days: 1))) && date.isBefore(yearEnd);
+    }
+  }
+
+  int _getTimeBucket(DateTime date, _SalesRange range) {
+    switch (range) {
+      case _SalesRange.today: return date.hour;
+      case _SalesRange.weekly: return date.weekday;
+      case _SalesRange.monthly: return date.day;
+      case _SalesRange.yearly: return date.month;
+    }
+  }
+
+  double _getMinX() {
+    switch (_selectedRange) {
+      case _SalesRange.today: return 0;
+      case _SalesRange.weekly: return 1;
+      case _SalesRange.monthly: return 1;
+      case _SalesRange.yearly: return 1;
+    }
+  }
+
+  double _getMaxX() {
+    switch (_selectedRange) {
+      case _SalesRange.today: return 23;
+      case _SalesRange.weekly: return 7;
+      case _SalesRange.monthly: return DateTime(_selectedYear, _selectedMonth + 1, 0).day.toDouble();
+      case _SalesRange.yearly: return 12;
+    }
+  }
+
   List<FlSpot> _generateChartSpots() {
     final paidOrders = _paidOrders;
     if (paidOrders.isEmpty) return [const FlSpot(0, 0)];
-    final recent = paidOrders.take(7).toList().reversed.toList();
-    List<FlSpot> spots = [];
-    for (int i = 0; i < recent.length; i++) {
-      final amount = _parsePrice(recent[i]['totalPrice']);
-      spots.add(FlSpot(i.toDouble(), amount));
+
+    final filtered = paidOrders.where((o) {
+      final dateStr = o['createdAt']?.toString() ?? o['paidAt']?.toString();
+      if (dateStr == null) return false;
+      final date = DateTime.tryParse(dateStr);
+      return date != null && _isInTimeWindow(date, _selectedRange);
+    }).toList();
+
+    if (filtered.isEmpty) return [const FlSpot(0, 0)];
+
+    Map<int, double> buckets = {};
+    for (var order in filtered) {
+      final dateStr = order['createdAt']?.toString() ?? order['paidAt']?.toString();
+      if (dateStr == null) continue;
+      final date = DateTime.tryParse(dateStr);
+      if (date == null) continue;
+      final key = _getTimeBucket(date, _selectedRange);
+      final amount = _parsePrice(order['totalPrice']);
+      buckets[key] = (buckets[key] ?? 0) + amount;
     }
-    if (spots.isEmpty) return [const FlSpot(0, 0)];
+
+    if (buckets.isEmpty) return [const FlSpot(0, 0)];
+
+    List<FlSpot> spots = [];
+    final sortedKeys = buckets.keys.toList()..sort();
+    for (var key in sortedKeys) {
+      spots.add(FlSpot(key.toDouble(), buckets[key]!));
+    }
     return spots;
+  }
+
+  Widget _buildRevenueLineChart(ColorScheme cs) {
+    final spots = _generateChartSpots();
+    final amounts = spots.map((s) => s.y).toList();
+    double maxRevenue = 500.0;
+    for (var v in amounts) {
+      if (v > maxRevenue) maxRevenue = v;
+    }
+    maxRevenue = (maxRevenue / 5).ceil() * 5.0;
+    if (maxRevenue == 0) maxRevenue = 500.0;
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxRevenue / 5,
+          getDrawingHorizontalLine:
+              (_) => FlLine(
+                color: cs.secondary.withValues(alpha: 0.05),
+                strokeWidth: 1,
+              ),
+        ),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => cs.surfaceContainerHigh,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((barSpot) {
+                final amount = barSpot.y;
+                final formattedAmount = "${PriceConstants.currencySymbol}${amount.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')}";
+                return LineTooltipItem(
+                  'Revenue: $formattedAmount',
+                  GoogleFonts.plusJakartaSans(
+                    color: cs.secondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              interval: maxRevenue / 5,
+              getTitlesWidget: (value, meta) {
+                if (value == meta.max || value == meta.min) return const SizedBox();
+                String text = '';
+                if (value >= 1000) {
+                  text = '${(value / 1000).toStringAsFixed(1)}K';
+                } else {
+                  text = value.toInt().toString();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Text(
+                    text,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.secondary.withValues(alpha: 0.4),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: _selectedRange == _SalesRange.monthly ? 5 : 1,
+              getTitlesWidget: (value, meta) {
+                String text = '';
+                if (_selectedRange == _SalesRange.today) {
+                  if (value % 4 == 0) text = "${value.toInt()}h";
+                } else if (_selectedRange == _SalesRange.weekly) {
+                  text = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][(value.toInt() - 1) % 7];
+                } else if (_selectedRange == _SalesRange.monthly) {
+                  if (value % 5 == 0) text = "D${value.toInt()}";
+                } else {
+                  text = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][(value.toInt() - 1) % 12];
+                }
+                return text.isEmpty
+                    ? const SizedBox()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          text,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.secondary.withValues(alpha: 0.4),
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: _getMinX(),
+        maxX: _getMaxX(),
+        minY: 0,
+        maxY: maxRevenue,
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: true),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  cs.primary.withValues(alpha: 0.15),
+                  cs.primary.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -346,11 +1057,6 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (widget.onClose != null)
-                            IconButton(
-                              icon: Icon(Icons.close, color: cs.secondary.withValues(alpha: 0.4)),
-                              onPressed: () => widget.onClose?.call(),
-                            ),
                           _buildExportButton(cs),
                         ],
                       ),
@@ -472,101 +1178,132 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Revenue Trends",
-            style: GoogleFonts.plusJakartaSans(
-              color: cs.secondary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Daily performance over the last 7 entries",
-            style: GoogleFonts.plusJakartaSans(
-              color: cs.secondary.withValues(alpha: 0.5),
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 48),
-          SizedBox(
-            height: 300,
-            child: LineChart(
-              LineChartData(
-                minY: 0,
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 52,
-                      interval: (_totalRevenue > 100 ? _totalRevenue / 4 : 100),
-                      getTitlesWidget: (value, meta) {
-                        String text = '';
-                        if (value >= 1000) {
-                          text = '${(value / 1000).toStringAsFixed(1)}K';
-                        } else {
-                          text = value.toInt().toString();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 600;
+
+          final titleCol = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Revenue Trends",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Revenue aggregated by ${_selectedRange.name}",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          );
+
+          final actionsCol = Column(
+            crossAxisAlignment: isNarrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _SalesRange.values.map((range) {
+                      final isSelected = _selectedRange == range;
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedRange = range;
+                          if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
+                            _selectedYear = DateTime.now().year;
+                          }
+                          if (range == _SalesRange.monthly) {
+                            _selectedMonth = DateTime.now().month;
+                          }
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cs.primary : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Text(
-                            text,
-                            textAlign: TextAlign.right,
+                            range.name.toUpperCase(),
                             style: GoogleFonts.plusJakartaSans(
-                              color: cs.secondary.withValues(alpha: 0.4),
-                              fontSize: 10,
+                              color: isSelected ? Colors.white : cs.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            "D${value.toInt() + 1}",
-                            style: GoogleFonts.plusJakartaSans(
-                              color: cs.secondary.withValues(alpha: 0.4),
-                              fontSize: 10,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _generateChartSpots(),
-                    isCurved: true,
-                    color: const Color(0xFFFF4D8D),
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: const Color(0xFFFF4D8D).withValues(alpha: 0.1),
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ),
-        ],
+              if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedRange == _SalesRange.monthly)
+                        DropdownButton<int>(
+                          value: _selectedMonth,
+                          underline: const SizedBox(),
+                          style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                          onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
+                          items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
+                          )).toList(),
+                        ),
+                      const SizedBox(width: 8),
+                      DropdownButton<int>(
+                        value: _selectedYear,
+                        underline: const SizedBox(),
+                        style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                        onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
+                        items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isNarrow) ...[
+                titleCol,
+                const SizedBox(height: 16),
+                actionsCol,
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleCol,
+                    actionsCol,
+                  ],
+                ),
+              ],
+              const SizedBox(height: 48),
+              SizedBox(
+                height: 300,
+                child: _buildRevenueLineChart(cs),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -720,42 +1457,99 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                 sectionsSpace: 4,
                 centerSpaceRadius: 40,
                 sections: _generatePieSections(cs),
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
+                    final eventType = event.runtimeType.toString();
+                    final isHoverExit = eventType.contains('PointerExit');
+                    if (response == null || response.touchedSection == null) {
+                      if (isHoverExit) {
+                        setState(() => _hoveredCategory = null);
+                      }
+                      return;
+                    }
+                    final idx = response.touchedSection!.touchedSectionIndex;
+                    if (idx >= 0 && idx < _categorySales.length) {
+                      if (!eventType.contains('PointerUp') && !eventType.contains('TapUp')) {
+                        setState(() => _hoveredCategory = _categorySales.keys.elementAt(idx));
+                      }
+                    }
+                  },
+                ),
               ),
             ),
           ),
           const SizedBox(height: 24),
-          ..._categorySales.entries.map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _getCategoryColor(e.key),
-                    shape: BoxShape.circle,
+          ..._categorySales.entries.map((e) {
+            final isHovered = _hoveredCategory == e.key;
+            final color = _getCategoryColor(e.key);
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (_hoveredCategory == e.key) {
+                    _hoveredCategory = null;
+                  } else {
+                    _hoveredCategory = e.key;
+                  }
+                });
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => setState(() => _hoveredCategory = e.key),
+                onExit: (_) => setState(() => _hoveredCategory = null),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isHovered ? color.withValues(alpha: 0.08) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border(
+                    left: BorderSide(
+                      color: isHovered ? color : Colors.transparent,
+                      width: 3,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  e.key,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: cs.secondary.withValues(alpha: 0.7),
-                  ),
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: isHovered ? 14 : 10,
+                      height: isHovered ? 14 : 10,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        boxShadow: isHovered
+                            ? [BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6)]
+                            : [],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        e.key,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+                          color: isHovered ? cs.secondary : cs.secondary.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(e.value),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: isHovered ? FontWeight.bold : FontWeight.w500,
+                        color: isHovered ? color : cs.secondary,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(e.value),
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: cs.secondary,
-                  ),
-                ),
-              ],
+              ),
             ),
-          )),
+          );
+        }),
         ],
       ),
     );
@@ -768,13 +1562,14 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     
     _categorySales.forEach((key, value) {
       final percentage = (value / total) * 100;
+      final isHovered = _hoveredCategory == key;
       sections.add(PieChartSectionData(
         color: _getCategoryColor(key),
         value: value,
         title: '${percentage.toStringAsFixed(0)}%',
-        radius: 50,
+        radius: isHovered ? 62 : 50,
         titleStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 10,
+          fontSize: isHovered ? 12 : 10,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),

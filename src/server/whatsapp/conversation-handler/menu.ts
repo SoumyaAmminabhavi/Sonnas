@@ -139,6 +139,63 @@ export async function sendMenuPDF(to: string) {
   }
 }
 
+export async function safeGetTopSellers(): Promise<Cake[]> {
+  try {
+    const topSellersGroup = await db.orderItem.groupBy({
+      by: ["cakeId"],
+      where: { cakeId: { not: null } },
+      _sum: { quantity: true },
+      orderBy: {
+        _sum: { quantity: "desc" },
+      },
+      take: 2,
+    });
+
+    const cakeIds = topSellersGroup.map(g => g.cakeId!).filter(Boolean);
+    let topSellers: Cake[] = [];
+
+    if (cakeIds.length > 0) {
+      const dbCakes = (await db.cake.findMany({
+        where: { id: { in: cakeIds }, isAvailable: true },
+        include: { options: true, category: true },
+      })) as unknown as DBCake[];
+
+      const mapped = dbCakes.map(dbCake => {
+        const effectiveCategory = dbCake.category?.name ?? dbCake.categoryName ?? "General";
+        return {
+          ...dbCake,
+          category: effectiveCategory,
+          image: (dbCake.image && String(dbCake.image).trim().length > 0)
+            ? (String(dbCake.image).startsWith('http')
+              ? dbCake.image
+              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
+            : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
+        } as unknown as Cake;
+      });
+
+      topSellers = cakeIds
+        .map(id => mapped.find(c => c.id === id))
+        .filter((c): c is Cake => !!c);
+    }
+
+    if (topSellers.length < 2) {
+      const allCakes = await safeGetCakes();
+      for (const cake of allCakes) {
+        if (topSellers.length >= 2) break;
+        if (!topSellers.some(c => c.id === cake.id)) {
+          topSellers.push(cake);
+        }
+      }
+    }
+
+    return topSellers.slice(0, 2);
+  } catch (e) {
+    console.error("[WhatsApp] Failed to fetch top sellers:", e);
+    const allCakes = await safeGetCakes();
+    return allCakes.slice(0, 2);
+  }
+}
+
 export async function sendWelcome(to: string, name?: string) {
   const customerName = name ?? "there";
 
@@ -154,41 +211,53 @@ export async function sendWelcome(to: string, name?: string) {
       const headerText = activeVersion.headerText ? compileTemplate(activeVersion.headerText, context) : "Sonna's Patisserie";
       const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
 
+      // Sort listSections explicitly in code to guarantee the required sequence:
+      // 1. TOP_FAVORITES (Top Sellers)
+      // 2. CATEGORIES (Browse by Category)
+      // 3. STATIC (Other Services)
+      const dataSourceOrder = ["TOP_FAVORITES", "CATEGORIES", "STATIC"];
+      const sortedSections = [...activeVersion.listSections].sort((a, b) => {
+        const indexA = dataSourceOrder.indexOf(a.dataSource);
+        const indexB = dataSourceOrder.indexOf(b.dataSource);
+        return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+      });
+
       // 2. Resolve Interactive List Sections dynamically
-      const resolvedSections = await Promise.all(
-        activeVersion.listSections.map(async (section) => {
-          if (section.dataSource === "CATEGORIES") {
-            const dbCategories = await safeGetCategories();
-            const rows = dbCategories.length > 0
-              ? dbCategories.slice(0, 6).map((cat) => ({
-                  id: `cat_${cat.id}`,
-                  title: cat.name.slice(0, 24),
-                }))
-              : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }];
-            return { title: section.title, rows };
-          }
+      const resolvedSections = (
+        await Promise.all(
+          sortedSections.map(async (section) => {
+            if (section.dataSource === "CATEGORIES") {
+              const dbCategories = await safeGetCategories();
+              const rows = dbCategories.length > 0
+                ? dbCategories.slice(0, 6).map((cat) => ({
+                    id: `cat_${cat.id}`,
+                    title: cat.name.slice(0, 24),
+                  }))
+                : [{ id: "none", title: "Coming Soon...", description: "Fresh categories arriving soon!" }];
+              return { title: section.title, rows };
+            }
 
-          if (section.dataSource === "TOP_FAVORITES") {
-            const cakes = await safeGetCakes();
-            const topCakes = cakes.slice(0, 2);
-            const rows = topCakes.map((c) => ({
-              id: `cake_${c.id}`,
-              title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
-              description: "Signature Selection",
+            if (section.dataSource === "TOP_FAVORITES") {
+              const topSellers = await safeGetTopSellers();
+              const rows = topSellers.map((c) => ({
+                id: `cake_${c.id}`,
+                title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
+                description: "🔥 Most Popular Selection",
+              }));
+              return { title: section.title, rows };
+            }
+
+            // STATIC list rows configured in the panel
+            const rows = section.rows.map((row) => ({
+              id: compileTemplate(row.rowId, context),
+              title: compileTemplate(row.title, context).slice(0, 24),
+              description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined,
             }));
+
             return { title: section.title, rows };
-          }
-
-          // STATIC list rows configured in the panel
-          const rows = section.rows.map((row) => ({
-            id: compileTemplate(row.rowId, context),
-            title: compileTemplate(row.title, context).slice(0, 24),
-            description: row.description ? compileTemplate(row.description, context).slice(0, 72) : undefined,
-          }));
-
-          return { title: section.title, rows };
-        })
-      );
+          })
+        )
+      ).filter((section): section is Exclude<typeof section, null> => section !== null);
 
       // 3. Send Dynamic Interactive List Menu
       await sendInteractiveList(
@@ -220,8 +289,7 @@ export async function sendWelcome(to: string, name?: string) {
   console.warn("[WhatsApp] Dynamic WELCOME_MESSAGE missing or failed. Falling back to hardcoded greetings.");
 
   const greeting = name ? `Hi ${name}! ✨` : "Welcome! ✨";
-  const cakes = await safeGetCakes();
-  const topCakes = cakes.slice(0, 2);
+  const topSellers = await safeGetTopSellers();
   const dbCategories = await safeGetCategories();
 
   await sendInteractiveList(
@@ -231,11 +299,11 @@ export async function sendWelcome(to: string, name?: string) {
     "View Menu",
     [
       {
-        title: "⭐ Top Favorites",
-        rows: topCakes.map((c) => ({
+        title: "🔥 Top Sellers",
+        rows: topSellers.map((c) => ({
           id: `cake_${c.id}`,
           title: c.name.length > 24 ? c.name.substring(0, 21) + "..." : c.name,
-          description: `Signature Selection`,
+          description: "🔥 Most Popular Selection",
         })),
       },
       {

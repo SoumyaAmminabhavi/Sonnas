@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -676,6 +676,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
+
   Widget _buildSuccessOverlay(BuildContext context) {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color secondaryColor = Color(0xFF701235);
@@ -818,7 +819,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     owner_dashboard.loadLibrary().then((_) {
                       if (context.mounted) {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => owner_dashboard.OwnerDashboard()),
+                          MaterialPageRoute(
+                            settings: const RouteSettings(name: 'OwnerDashboard'),
+                            builder: (context) => owner_dashboard.OwnerDashboard(),
+                          ),
                           (route) => false,
                         );
                       }

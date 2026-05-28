@@ -127,6 +127,7 @@ model Order {
   confirmedAt     DateTime?
   deliveredAt     DateTime?
   cancelledAt     DateTime?
+  completedAt     DateTime?
   deliverySlot    String?
   user            User?                 @relation(fields: [userId], references: [id])
   conversation    WhatsAppConversation? @relation(fields: [whatsappPhone], references: [phone], onDelete: Cascade)

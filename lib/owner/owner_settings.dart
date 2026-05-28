@@ -12,6 +12,10 @@ import '../services/staff_service.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/secure_avatar.dart';
 import '../services/theme_service.dart';
+import '../services/settings_service.dart';
+import '../services/system_setting_service.dart';
+import '../services/auth_provider.dart';
+import '../services/biometric_service.dart';
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -46,11 +50,48 @@ class _SettingsContent extends ConsumerStatefulWidget {
 class _SettingsContentState extends ConsumerState<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
+  bool _biometricEnabled = false;
+  bool _supportBiometrics = false;
   Widget? _activeSubPage;
+  
+  bool _isLoadingSettings = true;
+  String _bakeryName = "";
+  String _contactPhone = "";
+  String _instagram = "";
+  String _contactEmail = "";
+  String _address = "";
 
   @override
   void initState() {
     super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final pushEnabled = await SettingsService.getPushNotificationsEnabled();
+    final inventoryEnabled = await SettingsService.getInventoryAlertsEnabled();
+    final biometricEnabled = await SettingsService.getOwnerBiometricEnabled();
+    final canCheck = await BiometricService.canCheckBiometrics();
+    
+    // Load database settings
+    final dbSettings = await SystemSettingService.fetchAllSettings();
+    
+    if (mounted) {
+      setState(() {
+        _pushNotifications = pushEnabled;
+        _inventoryAlerts = inventoryEnabled;
+        _biometricEnabled = biometricEnabled;
+        _supportBiometrics = canCheck;
+        
+        if (dbSettings.containsKey('bakery_name')) _bakeryName = dbSettings['bakery_name']!;
+        if (dbSettings.containsKey('contact_phone')) _contactPhone = dbSettings['contact_phone']!;
+        if (dbSettings.containsKey('instagram')) _instagram = dbSettings['instagram']!;
+        if (dbSettings.containsKey('contact_email')) _contactEmail = dbSettings['contact_email']!;
+        if (dbSettings.containsKey('address')) _address = dbSettings['address']!;
+        
+        _isLoadingSettings = false;
+      });
+    }
   }
 
   @override
@@ -130,6 +171,8 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                         _buildPreferencesSection(cs),
                         const SizedBox(height: 32),
                         _buildBISection(cs),
+                        const SizedBox(height: 32),
+                        _buildAccountSection(cs),
                       ],
                     ),
                   ),
@@ -147,6 +190,8 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                 _buildStaffSection(cs),
                 const SizedBox(height: 32),
                 _buildBISection(cs),
+                const SizedBox(height: 32),
+                _buildAccountSection(cs),
                 const SizedBox(height: 64),
               ],
             );
@@ -156,26 +201,114 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     );
   }
 
+  Widget _buildAccountSection(ColorScheme cs) {
+    return _SettingsCard(
+      title: "Account & Session",
+      icon: Icons.account_circle_outlined,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Logged in as Business Owner. Active session is stored securely on this device.",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: cs.secondary.withValues(alpha: 0.6),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildLogoutButton(cs),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton(ColorScheme cs) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text("Sign Out", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+              content: const Text("Are you sure you want to sign out of the owner panel?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[700],
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("Sign Out"),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm == true) {
+            await ref.read(authProvider.notifier).signOut();
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          }
+        },
+        icon: const Icon(Icons.logout, size: 18),
+        label: Text(
+          "LOG OUT",
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red[50],
+          foregroundColor: Colors.red[700],
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.red[100]!),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEstablishmentSection(ColorScheme cs) {
+    if (_isLoadingSettings) {
+      return _SettingsCard(
+        title: "Establishment Details",
+        icon: Icons.storefront,
+        child: SkeletonWrapper(
+          child: Column(
+            children: List.generate(4, (index) => const Padding(
+              padding: EdgeInsets.only(bottom: 16.0),
+              child: Skeleton(height: 20, width: double.infinity),
+            )),
+          ),
+        ),
+      );
+    }
     return _SettingsCard(
       title: "Establishment Details",
       icon: Icons.storefront,
       child: Column(
         children: [
-          _buildInfoRow(cs, "Bakery Name", "Sonna's Patisserie & Cafe"),
-          _buildInfoRow(cs, "Contact Phone", "+91 91132 31424"),
-          _buildInfoRow(cs, "Instagram", "@sonnas__"),
-          _buildInfoRow(cs, "Contact Email", "sonnaspatisseriecafe@gmail.com"),
-          _buildInfoRow(
-            cs,
-            "Address",
-            "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021",
-          ),
+          _buildInfoRow(cs, "Bakery Name", _bakeryName),
+          _buildInfoRow(cs, "Contact Phone", _contactPhone),
+          _buildInfoRow(cs, "Instagram", _instagram),
+          _buildInfoRow(cs, "Contact Email", _contactEmail),
+          _buildInfoRow(cs, "Address", _address),
           const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: TextButton.icon(
-              onPressed: () {},
+              onPressed: () => _showEditEstablishmentDialog(context, cs),
               icon: Icon(Icons.edit, size: 16, color: cs.primary),
               label: Text(
                 "Edit Information",
@@ -191,6 +324,130 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
     );
   }
 
+  void _showEditEstablishmentDialog(BuildContext context, ColorScheme cs) {
+    final nameController = TextEditingController(text: _bakeryName);
+    final phoneController = TextEditingController(text: _contactPhone);
+    final instaController = TextEditingController(text: _instagram);
+    final emailController = TextEditingController(text: _contactEmail);
+    final addressController = TextEditingController(text: _address);
+    bool isSaving = false;
+
+    showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: cs.surface,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Edit Establishment",
+                    style: GoogleFonts.notoSerif(
+                      color: cs.secondary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            controller: nameController,
+                            decoration: const InputDecoration(labelText: "Bakery Name"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: phoneController,
+                            decoration: const InputDecoration(labelText: "Contact Phone"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: instaController,
+                            decoration: const InputDecoration(labelText: "Instagram"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: emailController,
+                            decoration: const InputDecoration(labelText: "Contact Email"),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: addressController,
+                            maxLines: 3,
+                            decoration: const InputDecoration(labelText: "Address"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: isSaving ? null : () => Navigator.pop(context),
+                        child: Text("Cancel", style: TextStyle(color: cs.secondary.withValues(alpha: 0.6))),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: isSaving ? null : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            await SystemSettingService.updateSetting('bakery_name', nameController.text.trim());
+                            await SystemSettingService.updateSetting('contact_phone', phoneController.text.trim());
+                            await SystemSettingService.updateSetting('instagram', instaController.text.trim());
+                            await SystemSettingService.updateSetting('contact_email', emailController.text.trim());
+                            await SystemSettingService.updateSetting('address', addressController.text.trim());
+                            
+                            if (mounted) {
+                              setState(() {
+                                _bakeryName = nameController.text.trim();
+                                _contactPhone = phoneController.text.trim();
+                                _instagram = instaController.text.trim();
+                                _contactEmail = emailController.text.trim();
+                                _address = addressController.text.trim();
+                              });
+                            }
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Failed to save settings.")),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setDialogState(() => isSaving = false);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: cs.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: isSaving 
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text("SAVE"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPreferencesSection(ColorScheme cs) {
     return _SettingsCard(
       title: "App Preferences",
@@ -202,14 +459,20 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
             "Push Notifications",
             "Receive alerts for new orders",
             _pushNotifications,
-            (val) => setState(() => _pushNotifications = val),
+            (val) async {
+              setState(() => _pushNotifications = val);
+              await SettingsService.setPushNotificationsEnabled(val);
+            },
           ),
           _buildSwitchRow(
             cs,
             "Inventory Alerts",
             "Notify when ingredients are low",
             _inventoryAlerts,
-            (val) => setState(() => _inventoryAlerts = val),
+            (val) async {
+              setState(() => _inventoryAlerts = val);
+              await SettingsService.setInventoryAlertsEnabled(val);
+            },
           ),
           _buildSwitchRow(
             cs,
@@ -229,6 +492,108 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               }
             },
           ),
+          if (_supportBiometrics)
+            _buildSwitchRow(
+              cs,
+              "Biometric Login",
+              "Use Fingerprint/Face ID to access owner panel",
+              _biometricEnabled,
+              (val) async {
+                try {
+                  if (val) {
+                    final bool canCheck = await BiometricService.canCheckBiometrics();
+                    if (!canCheck) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("No biometric hardware detected.")),
+                      );
+                      return;
+                    }
+
+                    // Check if we have the owner PIN cached. If not, prompt for it.
+                    String? cachedPin = await SettingsService.getOwnerPin();
+                    if (cachedPin == null || cachedPin.isEmpty) {
+                      // Show a dialog asking for their owner PIN to set up biometrics
+                      if (!mounted) return;
+                      final String? pin = await showDialog<String>(
+                        context: context,
+                        builder: (context) {
+                          final tempPinController = TextEditingController();
+                          return AlertDialog(
+                            title: Text("Enable Biometrics", style: GoogleFonts.notoSerif()),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text("Enter your Owner PIN to confirm and enable biometric login:"),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: tempPinController,
+                                  obscureText: true,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: "Owner PIN",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("CANCEL"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final pinText = tempPinController.text.trim();
+                                  Navigator.pop(context, pinText);
+                                },
+                                child: const Text("CONFIRM"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (pin == null || pin.isEmpty) return;
+
+                      // Verify if this PIN is valid using AuthService
+                      final isValid = await ref.read(authProvider.notifier).verifyOwnerPin(pin);
+                      if (!isValid) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Invalid Owner PIN.")),
+                        );
+                        return;
+                      }
+                      cachedPin = pin;
+                    }
+
+                    // Request biometric authentication to confirm
+                    final bool authenticated = await BiometricService.authenticate();
+                    if (authenticated) {
+                      await SettingsService.setOwnerBiometricEnabled(true);
+                      await SettingsService.setOwnerPin(cachedPin);
+                      setState(() => _biometricEnabled = true);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Biometric login enabled successfully.")),
+                      );
+                    }
+                  } else {
+                    // Disable biometric login
+                    await SettingsService.setOwnerBiometricEnabled(false);
+                    await SettingsService.setOwnerPin(null);
+                    setState(() => _biometricEnabled = false);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Biometric login disabled.")),
+                    );
+                  }
+                } catch (e) {
+                  debugPrint("Error toggling biometrics: $e");
+                }
+              },
+            ),
         ],
       ),
     );
@@ -590,20 +955,26 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               color: cs.surface,
               onSelected: (value) async {
                 if (value == 'edit') {
-                  await Navigator.push<void>(
+                  final result = await Navigator.push<dynamic>(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute<dynamic>(
                       builder: (context) => AddStaffPage(staff: staffData),
                     ),
                   );
+                  if (result != null && result is int) {
+                    widget.onTabChanged?.call(result);
+                  }
                 } else if (value == 'view') {
-                  await Navigator.push<void>(
+                  final result = await Navigator.push<dynamic>(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute<dynamic>(
                       builder: (context) =>
                           AddStaffPage(staff: staffData, isReadOnly: true),
                     ),
                   );
+                  if (result != null && result is int) {
+                    widget.onTabChanged?.call(result);
+                  }
                 } else if (value == 'delete') {
                   final confirm = await showDialog<bool>(
                     context: context,

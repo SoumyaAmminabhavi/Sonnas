@@ -133,3 +133,8 @@ artifacts/
 projects/
 issues.txt
 
+# ── Redundant Archives, Screenshots & Logs ────────────────────
+/assets.zip
+/flutter_01.png
+/analysis_output.txt
+

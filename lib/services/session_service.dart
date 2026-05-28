@@ -39,4 +39,13 @@ class SessionService {
   static Future<void> clearSession() async {
     await _storage.delete(key: _staffSessionKey);
   }
+
+  /// Update biometric status in the active session
+  static Future<void> updateBiometricStatus(bool enabled) async {
+    final session = await getStaffSession();
+    if (session != null) {
+      session['biometricEnabled'] = enabled;
+      await _storage.write(key: _staffSessionKey, value: jsonEncode(session));
+    }
+  }
 }

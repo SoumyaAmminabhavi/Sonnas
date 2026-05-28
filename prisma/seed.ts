@@ -124,7 +124,7 @@ async function main() {
     data: {
       versionId: welcomeVersion.id,
       sortOrder: 1,
-      title: "⭐ Top Favorites",
+      title: "🔥 Top Sellers",
       dataSource: "TOP_FAVORITES",
     },
   });

@@ -15,6 +15,8 @@ class ExpenseReportsPage extends StatefulWidget {
   State<ExpenseReportsPage> createState() => _ExpenseReportsPageState();
 }
 
+enum _SalesRange { today, weekly, monthly, yearly }
+
 class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _expenses = [];
@@ -22,6 +24,10 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
   double _monthlyBurn = 0;
   String _topCategory = "N/A";
   Map<String, double> _categoryBreakdown = {};
+  String? _hoveredCategory;
+  _SalesRange _selectedRange = _SalesRange.weekly;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
 
   final List<String> _categories = [
     'Ingredients',
@@ -276,22 +282,95 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
     );
   }
 
-  Widget _buildTrendChart(ColorScheme cs, bool isDark) {
-    final recent = _expenses.take(7).toList().reversed.toList();
-    
-    double maxAmount = 500.0;
-    for (var exp in recent) {
+  bool _isInTimeWindow(DateTime date, _SalesRange range) {
+    final now = DateTime.now();
+    switch (range) {
+      case _SalesRange.today:
+        final today = DateTime(now.year, now.month, now.day);
+        return date.isAfter(today.subtract(const Duration(days: 1))) && date.isBefore(today.add(const Duration(days: 1)));
+      case _SalesRange.weekly:
+        final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+        return date.isAfter(weekStart.subtract(const Duration(days: 1))) && date.isBefore(weekStart.add(const Duration(days: 7)));
+      case _SalesRange.monthly:
+        final monthStart = DateTime(_selectedYear, _selectedMonth, 1);
+        final monthEnd = DateTime(_selectedYear, _selectedMonth + 1, 1);
+        return date.isAfter(monthStart.subtract(const Duration(days: 1))) && date.isBefore(monthEnd);
+      case _SalesRange.yearly:
+        final yearStart = DateTime(_selectedYear, 1, 1);
+        final yearEnd = DateTime(_selectedYear + 1, 1, 1);
+        return date.isAfter(yearStart.subtract(const Duration(days: 1))) && date.isBefore(yearEnd);
+    }
+  }
+
+  int _getTimeBucket(DateTime date, _SalesRange range) {
+    switch (range) {
+      case _SalesRange.today: return date.hour;
+      case _SalesRange.weekly: return date.weekday;
+      case _SalesRange.monthly: return date.day;
+      case _SalesRange.yearly: return date.month;
+    }
+  }
+
+  double _getMinX() {
+    switch (_selectedRange) {
+      case _SalesRange.today: return 0;
+      case _SalesRange.weekly: return 1;
+      case _SalesRange.monthly: return 1;
+      case _SalesRange.yearly: return 1;
+    }
+  }
+
+  double _getMaxX() {
+    switch (_selectedRange) {
+      case _SalesRange.today: return 23;
+      case _SalesRange.weekly: return 7;
+      case _SalesRange.monthly: return DateTime(_selectedYear, _selectedMonth + 1, 0).day.toDouble();
+      case _SalesRange.yearly: return 12;
+    }
+  }
+
+  List<FlSpot> _generateExpenseSpots() {
+    if (_expenses.isEmpty) return [const FlSpot(0, 0)];
+
+    final filtered = _expenses.where((e) {
+      final dateStr = e['date']?.toString();
+      if (dateStr == null) return false;
+      final date = DateTime.tryParse(dateStr);
+      return date != null && _isInTimeWindow(date, _selectedRange);
+    }).toList();
+
+    if (filtered.isEmpty) return [const FlSpot(0, 0)];
+
+    Map<int, double> buckets = {};
+    for (var exp in filtered) {
+      final dateStr = exp['date']?.toString();
+      if (dateStr == null) continue;
+      final date = DateTime.tryParse(dateStr);
+      if (date == null) continue;
+      final key = _getTimeBucket(date, _selectedRange);
       final amount = (exp['amount'] as num?)?.toDouble() ?? 0.0;
-      if (amount > maxAmount) maxAmount = amount;
+      buckets[key] = (buckets[key] ?? 0) + amount;
+    }
+
+    if (buckets.isEmpty) return [const FlSpot(0, 0)];
+
+    List<FlSpot> spots = [];
+    final sortedKeys = buckets.keys.toList()..sort();
+    for (var key in sortedKeys) {
+      spots.add(FlSpot(key.toDouble(), buckets[key]!));
+    }
+    return spots;
+  }
+
+  Widget _buildTrendChart(ColorScheme cs, bool isDark) {
+    final spots = _generateExpenseSpots();
+    final amounts = spots.map((s) => s.y).toList();
+    double maxAmount = 500.0;
+    for (var v in amounts) {
+      if (v > maxAmount) maxAmount = v;
     }
     maxAmount = (maxAmount / 5).ceil() * 5.0;
     if (maxAmount == 0) maxAmount = 500.0;
-
-    final List<FlSpot> spots = [];
-    for (int i = 0; i < recent.length; i++) {
-      final amount = (recent[i]['amount'] as num?)?.toDouble() ?? 0.0;
-      spots.add(FlSpot(i.toDouble(), amount));
-    }
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -300,13 +379,112 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Expense Trends", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text("Last 7 transactions trend", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5), fontSize: 12)),
-          const SizedBox(height: 48),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 600;
+
+          final titleCol = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Expense Trends", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text("Expenses aggregated by ${_selectedRange.name}", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5), fontSize: 12)),
+            ],
+          );
+
+          final actionsCol = Column(
+            crossAxisAlignment: isNarrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _SalesRange.values.map((range) {
+                      final isSelected = _selectedRange == range;
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedRange = range;
+                          if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
+                            _selectedYear = DateTime.now().year;
+                          }
+                          if (range == _SalesRange.monthly) {
+                            _selectedMonth = DateTime.now().month;
+                          }
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cs.primary : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            range.name.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: isSelected ? Colors.white : cs.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedRange == _SalesRange.monthly)
+                        DropdownButton<int>(
+                          value: _selectedMonth,
+                          underline: const SizedBox(),
+                          style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                          onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
+                          items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
+                          )).toList(),
+                        ),
+                      const SizedBox(width: 8),
+                      DropdownButton<int>(
+                        value: _selectedYear,
+                        underline: const SizedBox(),
+                        style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                        onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
+                        items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isNarrow) ...[
+                titleCol,
+                const SizedBox(height: 16),
+                actionsCol,
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleCol,
+                    actionsCol,
+                  ],
+                ),
+              ],
+              const SizedBox(height: 48),
           SizedBox(
             height: 250,
             child: LineChart(
@@ -326,15 +504,10 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                     getTooltipColor: (touchedSpot) => cs.surfaceContainerHigh,
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((barSpot) {
-                        final index = barSpot.x.toInt();
-                        if (index < 0 || index >= recent.length) return null;
-                        final expenseItem = recent[index];
-                        final title = expenseItem['title'] ?? 'Expense';
-                        final amount = (expenseItem['amount'] as num?)?.toDouble() ?? 0.0;
-                        final category = expenseItem['category'] ?? 'Other';
+                        final amount = barSpot.y;
                         final formattedAmount = "${PriceConstants.currencySymbol}${amount.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')}";
                         return LineTooltipItem(
-                          '$title\nCategory: $category\nAmount: $formattedAmount',
+                          'Total: $formattedAmount',
                           GoogleFonts.plusJakartaSans(
                             color: cs.secondary,
                             fontWeight: FontWeight.bold,
@@ -347,12 +520,8 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -379,33 +548,38 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
-                      interval: 1,
+                      interval: _selectedRange == _SalesRange.monthly ? 5 : 1,
                       getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-                        if (index < 0 || index >= recent.length) return const SizedBox();
-                        final dateStr = recent[index]['date']?.toString();
-                        if (dateStr == null) return const SizedBox();
-                        final date = DateTime.tryParse(dateStr);
-                        if (date == null) return const SizedBox();
-                        final formattedDate = DateFormat('dd MMM').format(date);
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 10.0),
-                          child: Text(
-                            formattedDate,
-                            style: GoogleFonts.plusJakartaSans(
-                              color: cs.secondary.withValues(alpha: 0.4),
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
+                        String text = '';
+                        if (_selectedRange == _SalesRange.today) {
+                          if (value % 4 == 0) text = "${value.toInt()}h";
+                        } else if (_selectedRange == _SalesRange.weekly) {
+                          text = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][(value.toInt() - 1) % 7];
+                        } else if (_selectedRange == _SalesRange.monthly) {
+                          if (value % 5 == 0) text = "D${value.toInt()}";
+                        } else {
+                          text = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][(value.toInt() - 1) % 12];
+                        }
+                        return text.isEmpty
+                            ? const SizedBox()
+                            : Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  text,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: cs.secondary.withValues(alpha: 0.4),
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              );
                       },
                     ),
                   ),
                 ),
                 borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: (recent.isEmpty ? 1 : recent.length - 1).toDouble(),
+                minX: _getMinX(),
+                maxX: _getMaxX(),
                 minY: 0,
                 maxY: maxAmount,
                 lineBarsData: [
@@ -433,9 +607,11 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
+    },
+  ),
+);
+}
 
   Widget _buildSecondaryStats(ColorScheme cs) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -470,35 +646,92 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
               height: 200,
               child: PieChart(
                 PieChartData(
-                  sections: _categoryBreakdown.entries.map((e) => PieChartSectionData(
-                    value: e.value,
-                    title: '',
-                    color: _getCategoryColor(e.key),
-                    radius: 40,
-                  )).toList(),
+                  sections: _categoryBreakdown.entries.map((e) {
+                    final total = _categoryBreakdown.values.fold(0.0, (a, b) => a + b);
+                    final percentage = total > 0 ? (e.value / total) * 100 : 0;
+                    final isHovered = _hoveredCategory == e.key;
+                    return PieChartSectionData(
+                      value: e.value,
+                      title: '${percentage.toStringAsFixed(0)}%',
+                      color: _getCategoryColor(e.key),
+                      radius: isHovered ? 52 : 40,
+                      titleStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: isHovered ? 11 : 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    );
+                  }).toList(),
+                  sectionsSpace: 4,
+                  centerSpaceRadius: 40,
+                  pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
+                      final eventType = event.runtimeType.toString();
+                      final isHoverExit = eventType.contains('PointerExit');
+                      
+                      setState(() {
+                        if (response == null || response.touchedSection == null) {
+                          if (isHoverExit) {
+                            _hoveredCategory = null;
+                          }
+                          return;
+                        }
+                        final touchedIndex = response.touchedSection!.touchedSectionIndex;
+                        if (touchedIndex >= 0 && touchedIndex < _categoryBreakdown.entries.length) {
+                          final cat = _categoryBreakdown.entries.elementAt(touchedIndex).key;
+                          if (!eventType.contains('PointerUp') && !eventType.contains('TapUp')) {
+                            _hoveredCategory = cat;
+                          }
+                        }
+                      });
+                    },
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            ..._categoryBreakdown.entries.map((e) => Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  Container(width: 12, height: 12, decoration: BoxDecoration(color: _getCategoryColor(e.key), shape: BoxShape.circle)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      e.key,
-                      style: const TextStyle(fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+            ..._categoryBreakdown.entries.map((e) {
+              final isHovered = _hoveredCategory == e.key;
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  setState(() {
+                    if (_hoveredCategory == e.key) {
+                      _hoveredCategory = null;
+                    } else {
+                      _hoveredCategory = e.key;
+                    }
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: isHovered ? 16 : 12,
+                        height: isHovered ? 16 : 12,
+                        decoration: BoxDecoration(color: _getCategoryColor(e.key), shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          e.key,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text("${PriceConstants.currencySymbol}${e.value.toInt()}", style: TextStyle(fontWeight: isHovered ? FontWeight.bold : FontWeight.w600)),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text("${PriceConstants.currencySymbol}${e.value.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            )),
+                ),
+              );
+            }),
           ],
         ),
       );
@@ -536,10 +769,206 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
   }
 
   Widget _buildSkeleton(ColorScheme cs) {
+    final shimmerBase = cs.surfaceContainerHighest;
+    final shimmerHighlight = cs.surfaceContainer;
+
+    Widget box({double? width, double height = 16, double radius = 12}) =>
+        Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(radius),
+          ),
+        );
+
     return Shimmer.fromColors(
-      baseColor: cs.surfaceContainer,
-      highlightColor: cs.surface,
-      child: const Center(child: CircularProgressIndicator()),
+      baseColor: shimmerBase,
+      highlightColor: shimmerHighlight,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header title
+            box(width: 220, height: 44, radius: 10),
+            const SizedBox(height: 16),
+            box(width: 160, height: 14, radius: 8),
+            const SizedBox(height: 20),
+            Container(height: 1, color: Colors.white.withValues(alpha: 0.3)),
+            const SizedBox(height: 32),
+
+            // 3 metric cards
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 600;
+              return GridView.count(
+                crossAxisCount: isMobile ? 1 : 3,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: isMobile ? 2.5 : 1.5,
+                children: List.generate(3, (_) => Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          box(width: 110, height: 12),
+                          box(width: 20, height: 20, radius: 4),
+                        ],
+                      ),
+                      box(width: 80, height: 28, radius: 8),
+                      box(width: double.infinity, height: 4, radius: 4),
+                    ],
+                  ),
+                )),
+              );
+            }),
+            const SizedBox(height: 32),
+
+            // Trend chart card
+            Container(
+              height: 340,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  box(width: 160, height: 18, radius: 8),
+                  const SizedBox(height: 8),
+                  box(width: 200, height: 12),
+                  const Spacer(),
+                  // Fake bar chart lines
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [80.0, 130.0, 60.0, 150.0, 100.0, 90.0, 120.0]
+                        .map((h) => Container(
+                              width: 24,
+                              height: h,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Bottom: Recent Expenses + Category Mix
+            LayoutBuilder(builder: (context, constraints) {
+              final isMobile = constraints.maxWidth < 800;
+
+              Widget recentCard = Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    box(width: 160, height: 18, radius: 8),
+                    const SizedBox(height: 24),
+                    ...List.generate(6, (i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Row(
+                        children: [
+                          box(width: 36, height: 36, radius: 8),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                box(height: 13, radius: 6),
+                                const SizedBox(height: 6),
+                                box(width: 90, height: 10, radius: 6),
+                              ],
+                            ),
+                          ),
+                          box(width: 60, height: 16, radius: 6),
+                        ],
+                      ),
+                    )),
+                  ],
+                ),
+              );
+
+              Widget categoryCard = Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    box(width: 140, height: 18, radius: 8),
+                    const SizedBox(height: 24),
+                    // Fake pie circle
+                    Center(
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ...List.generate(5, (_) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          box(width: 12, height: 12, radius: 6),
+                          const SizedBox(width: 8),
+                          Expanded(child: box(height: 11, radius: 6)),
+                          const SizedBox(width: 8),
+                          box(width: 50, height: 11, radius: 6),
+                        ],
+                      ),
+                    )),
+                  ],
+                ),
+              );
+
+              if (isMobile) {
+                return Column(children: [
+                  recentCard,
+                  const SizedBox(height: 24),
+                  categoryCard,
+                ]);
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: recentCard),
+                  const SizedBox(width: 24),
+                  Expanded(flex: 2, child: categoryCard),
+                ],
+              );
+            }),
+            const SizedBox(height: 64),
+          ],
+        ),
+      ),
     );
   }
 }
