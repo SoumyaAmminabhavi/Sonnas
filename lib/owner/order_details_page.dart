@@ -213,20 +213,31 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                               if (order['deliveryDate'] == null) return "Date not scheduled yet";
                                               final date = OrderService.parseDate(order['deliveryDate'].toString());
                                               final slot = order['deliverySlot']?.toString();
-                                              final isImmediate = slot?.toLowerCase() == 'immediate';
+                                              final slotLower = slot?.toLowerCase().trim() ?? '';
+                                              final isImmediate = slotLower == 'immediate' ||
+                                                  slotLower == 'immediate delivery' ||
+                                                  slotLower.contains('immediate') ||
+                                                  slotLower.contains('imidate') ||
+                                                  slotLower.contains('immidate');
+
+                                              final address = (order['address'] ?? '').toString().toLowerCase();
+                                              final isPickup = address.contains('pickup') || address.contains('checkout') || address.contains('store');
 
                                               if (date != null) {
                                                 final formattedDate = DateFormat('MMMM d, y').format(date);
                                                 if (isImmediate) {
-                                                  return "Immediate Delivery ($formattedDate)";
+                                                  return isPickup ? "Immediate Pickup ($formattedDate)" : "Immediate Delivery ($formattedDate)";
                                                 }
                                                 final time = slot != null ? ' at $slot' : '';
-                                                return "Scheduled for $formattedDate$time";
+                                                return isPickup ? "Pickup: $formattedDate$time" : "Scheduled for $formattedDate$time";
                                               }
                                               if (isImmediate) {
-                                                return "Immediate Delivery (${order['deliveryDate']})";
+                                                final dateStr = order['deliveryDate'].toString();
+                                                return isPickup ? "Immediate Pickup ($dateStr)" : "Immediate Delivery ($dateStr)";
                                               }
-                                              return "Scheduled for ${order['deliveryDate']}${slot != null ? ' at $slot' : ''}";
+                                              return isPickup
+                                                  ? "Pickup: ${order['deliveryDate']}${slot != null ? ' at $slot' : ''}"
+                                                  : "Scheduled for ${order['deliveryDate']}${slot != null ? ' at $slot' : ''}";
                                             }(),
                                             style: GoogleFonts.plusJakartaSans(
                                               fontSize: 13,

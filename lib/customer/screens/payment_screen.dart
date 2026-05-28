@@ -152,9 +152,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return widget.totalAmount;
     }
     final int subtotalCents = cartTotal.round();
-    final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
-    final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
-    return (subtotalCents + packagingCents + taxCents).toDouble();
+    return subtotalCents.toDouble();
   }
 
   Future<void> _placeOrder(CartProvider cart, {String? paymentId}) async {
@@ -300,7 +298,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     const Color surfaceColor = Color(0xFFFFF0F6);
     const Color onSurfaceColor = Color(0xFF701235);
     const Color secondaryColor = Color(0xFF701235);
-    const Color outlineVariantColor = Color(0xFFD8C1C6);
 
     return Scaffold(
       backgroundColor: surfaceColor,
@@ -379,7 +376,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           children: [
                             const TextSpan(text: "Complete Your\n"),
                             const TextSpan(
-                              text: "Savoury Experience",
+                              text: "Order",
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: primaryColor,
@@ -510,10 +507,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
-                            ),
-                            Text(
-                              "Incl. all taxes",
-                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -678,23 +671,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             if (isSelected && child != null) child,
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppLogo(String name) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1E9),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Text(
-          name,
-          style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF701235).withValues(alpha: 0.4)),
         ),
       ),
     );

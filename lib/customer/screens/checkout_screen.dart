@@ -39,7 +39,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
   final _giftMessageController = TextEditingController();
-  bool _isGiftWrapping = false;
+  final bool _isGiftWrapping = false;
   static const int wrappingFeePaise = 25000; // ₹250 for premium wrapping
 
   @override
@@ -160,10 +160,8 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
     final int subtotalCents = cart.total.round();
-    final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
     final int wrappingCents = _isGiftWrapping ? wrappingFeePaise : 0;
-    final int taxCents = (((subtotalCents + wrappingCents) * 5) + 50) ~/ 100;
-    final int grandTotalCents = subtotalCents + packagingCents + wrappingCents + taxCents;
+    final int grandTotalCents = subtotalCents + wrappingCents;
 
     return Scaffold(
       backgroundColor: background,
@@ -216,8 +214,6 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                   _summaryRow("Bag Total", "₹${(subtotalCents / 100).toStringAsFixed(2)}"),
                   if (_isGiftWrapping)
                     _summaryRow("Premium Wrapping", "₹${(wrappingCents / 100).toStringAsFixed(2)}"),
-                  _summaryRow("Delivery", "₹${(packagingCents / 100).toStringAsFixed(2)}"),
-                  _summaryRow("Taxes (5%)", "₹${(taxCents / 100).toStringAsFixed(2)}"),
                   const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(height: 1, thickness: 0.5)),
                   _summaryRow("Grand Total", "₹${(grandTotalCents / 100).toStringAsFixed(2)}", isTotal: true),
                 ],

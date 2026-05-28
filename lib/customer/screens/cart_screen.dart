@@ -110,7 +110,7 @@ class CartScreen extends StatelessWidget {
                 child: InkWell(
                   onTap: () => Navigator.pop(context),
                   child: Text(
-                    "Continue browsing the daily collections",
+                    "← Continue Shopping",
                     style: GoogleFonts.notoSerif(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
@@ -219,10 +219,7 @@ class CartScreen extends StatelessWidget {
     const Color primaryContainerColor = Color(0xFFFFB6D3);
 
     final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 2);
-    // Source delivery fee from a central service/config in production
-    const double delivery = 15000.0; // 150.00 Rupees in paise
-    final double tax = cart.total * 0.05;
-    final double total = cart.total + delivery + tax;
+    final double total = cart.total;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -235,8 +232,6 @@ class CartScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSummaryRow(context, "Subtotal", currencyFormatter.format(cart.total / 100)),
-          _buildSummaryRow(context, "Delivery", currencyFormatter.format(delivery / 100)),
-          _buildSummaryRow(context, "Tax (5%)", currencyFormatter.format(tax / 100)),
           const Divider(height: 32),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

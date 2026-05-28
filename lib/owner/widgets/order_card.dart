@@ -72,6 +72,9 @@ class OrderCardReactive extends ConsumerWidget {
           });
         }
 
+        final address = (data['address'] ?? '').toString().toLowerCase();
+        final isPickup = address.contains('pickup') || address.contains('checkout') || address.contains('store');
+
         return _OrderCardBase(
           orderId: data['id']?.toString() ?? '',
           id: "#${data['orderNumber'] ?? '---'}",
@@ -98,6 +101,7 @@ class OrderCardReactive extends ConsumerWidget {
           })(),
           deliveryTime: data['deliverySlot']?.toString() ?? data['deliveryTime']?.toString(),
           orderSubtitle: orderSubtitle,
+          isPickup: isPickup,
           onWhatsAppPressed: () async {
             final rawConversation = data['WhatsAppConversation'];
             final conversation = rawConversation is Map ? rawConversation : null;
@@ -149,6 +153,7 @@ class _OrderCardBase extends StatelessWidget {
   final String deliveryDate;
   final String? deliveryTime;
   final String orderSubtitle;
+  final bool isPickup;
 
   final VoidCallback? onWhatsAppPressed;
   final ValueChanged<int>? onTabChanged;
@@ -164,6 +169,7 @@ class _OrderCardBase extends StatelessWidget {
     required this.imageUrl,
     required this.deliveryDate,
     required this.orderSubtitle,
+    required this.isPickup,
     this.deliveryTime,
     this.onWhatsAppPressed,
     this.onTabChanged,
@@ -212,9 +218,18 @@ class _OrderCardBase extends StatelessWidget {
                   _InfoRow(
                     icon: Icons.schedule_outlined,
                     text: deliveryTime != null
-                        ? (deliveryTime?.toLowerCase() == 'immediate'
-                            ? "Immediate Delivery ($deliveryDate)"
-                            : "$deliveryDate at $deliveryTime")
+                        ? (() {
+                            final time = deliveryTime!.toLowerCase().trim();
+                            final isImmediate = time == 'immediate' ||
+                                time == 'immediate delivery' ||
+                                time.contains('immediate') ||
+                                time.contains('imidate') ||
+                                time.contains('immidate');
+                            if (isImmediate) {
+                              return isPickup ? "Immediate Pickup ($deliveryDate)" : "Immediate Delivery ($deliveryDate)";
+                            }
+                            return isPickup ? "Pickup: $deliveryDate at $deliveryTime" : "$deliveryDate at $deliveryTime";
+                          })()
                         : deliveryDate,
                     cs: cs,
                   ),
