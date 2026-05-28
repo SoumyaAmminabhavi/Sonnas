@@ -4,8 +4,7 @@
 
 # ── Dependencies & Node.js (Web & Server Tooling) ────────────
 node_modules/
-/node_modules/
-/.pnp
+.pnp
 .pnp.js
 npm-debug.log*
 yarn-debug.log*
@@ -29,11 +28,7 @@ app.*.map.json
 /android/app/debug/
 /android/app/profile/
 /android/app/release/
-/android/app/debug
-/android/app/profile
-/android/app/release
 .gradle/
-android/.gradle/
 
 # ── Next.js ───────────────────────────────────────────────────
 /.next/
@@ -41,21 +36,14 @@ android/.gradle/
 /dist/
 
 # ── Environment Variables & Secret Credentials ────────────────
-# Ignore all .env files; whitelist only example/template files
-.env
 .env*
 !.env.example
 !.env.*.example
-.env*.local
-.env.test
-.env.production
-.env.development
 *.secret
 *.pem
 *.p12
 *.keystore
 key.properties
-android/key.properties
 
 # ── Vercel ────────────────────────────────────────────────────
 .vercel
@@ -137,4 +125,3 @@ issues.txt
 /assets.zip
 /flutter_01.png
 /analysis_output.txt
-
