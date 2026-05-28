@@ -351,11 +351,6 @@ class OrderService {
             if (targetMonth != null && date.month != targetMonth) continue;
             if (targetYear != null && date.year != targetYear) continue;
 
-            // Only count PAID orders
-            if ((order['paymentStatus']?.toString().toUpperCase()) != 'PAID') {
-              continue;
-            }
-
             int key;
             if (range == 'today') {
               key = date.hour;

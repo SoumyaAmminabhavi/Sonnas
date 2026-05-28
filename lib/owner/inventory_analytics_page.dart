@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../services/inventory_service.dart';
 import '../widgets/skeleton.dart';
 
@@ -72,6 +73,8 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildKPIs(cs, allItems.length, lowStockItems.length),
+                      const SizedBox(height: 32),
+                      _buildStockChart(cs, allItems),
                       const SizedBox(height: 32),
                       if (lowStockItems.isNotEmpty) ...[
                         _buildAlertSection(cs, lowStockItems),
@@ -629,6 +632,162 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: cs.secondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStockChart(ColorScheme cs, List<Map<String, dynamic>> items) {
+    // Aggregate total stock by category
+    final Map<String, double> categoryStock = {};
+    for (var item in items) {
+      final cat = item['category'] as String? ?? 'Other';
+      final stock = (item['currentStock'] as num?)?.toDouble() ?? 0.0;
+      categoryStock[cat] = (categoryStock[cat] ?? 0) + stock;
+    }
+
+    final categories = categoryStock.keys.toList();
+    final colors = [cs.primary, Colors.green, Colors.orange, Colors.blue, Colors.purple, Colors.grey];
+
+    double maxStock = 500.0;
+    for (var v in categoryStock.values) {
+      if (v > maxStock) maxStock = v;
+    }
+    maxStock = (maxStock / 5).ceil() * 5.0;
+    if (maxStock == 0) maxStock = 500.0;
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainer,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Stock Distribution",
+            style: GoogleFonts.plusJakartaSans(
+              color: cs.secondary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Total stock levels by category",
+            style: GoogleFonts.plusJakartaSans(
+              color: cs.secondary.withValues(alpha: 0.5),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            height: 220,
+            child: BarChart(
+              BarChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxStock / 5,
+                  getDrawingHorizontalLine:
+                      (_) => FlLine(
+                        color: cs.secondary.withValues(alpha: 0.05),
+                        strokeWidth: 1,
+                      ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 36,
+                      interval: maxStock / 5,
+                      getTitlesWidget: (value, meta) {
+                        if (value == meta.max || value == meta.min) return const SizedBox();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            value.toInt().toString(),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.4),
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 28,
+                      getTitlesWidget: (value, meta) {
+                        final idx = value.toInt();
+                        if (idx < 0 || idx >= categories.length) return const SizedBox();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            categories[idx],
+                            style: GoogleFonts.plusJakartaSans(
+                              color: cs.secondary.withValues(alpha: 0.4),
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                minY: 0,
+                maxY: maxStock,
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (_) => cs.surfaceContainerHigh,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final idx = group.x.toInt();
+                      if (idx < 0 || idx >= categories.length) return null;
+                      final cat = categories[idx];
+                      final stock = categoryStock[cat] ?? 0;
+                      return BarTooltipItem(
+                        '$cat\nStock: ${stock.toStringAsFixed(1)}',
+                        GoogleFonts.plusJakartaSans(
+                          color: cs.secondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                barGroups: categories.asMap().entries.map((e) {
+                  final cat = e.value;
+                  final stock = categoryStock[cat] ?? 0;
+                  return BarChartGroupData(
+                    x: e.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: stock,
+                        color: colors[e.key % colors.length],
+                        width: 24,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(6),
+                          topRight: Radius.circular(6),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
