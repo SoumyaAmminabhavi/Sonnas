@@ -101,7 +101,6 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                   const Divider(height: 32),
                   _summaryRow("Subtotal", "₹${(cart.total / 100).toStringAsFixed(2)}"),
                   _summaryRow("In-Store Service", "FREE"),
-                  _summaryRow("Tax (5%)", "₹${(((cart.total.round() * 5) + 50) ~/ 100 / 100).toStringAsFixed(2)}"),
                   const Divider(height: 32),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -111,7 +110,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                         style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        "₹${((cart.total.round() + ((cart.total.round() * 5) + 50) ~/ 100) / 100).toStringAsFixed(2)}",
+                        "₹${(cart.total / 100).toStringAsFixed(2)}",
                         style: GoogleFonts.notoSerif(
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
@@ -145,8 +144,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                   }
                   
                   final int subtotalCents = cart.total.round();
-                  final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
-                  final int grandTotalCents = subtotalCents + taxCents;
+                  final int grandTotalCents = subtotalCents;
                   
                   Navigator.push(
                     context,

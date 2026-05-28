@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'contact_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomerTrackingScreen extends StatefulWidget {
   final String? orderId;
@@ -28,6 +29,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
   List<dynamic> orderItems = [];
   bool isLoading = true;
   String? targetOrderId;
+  bool _isOrderTrackingEnabled = true;
 
   @override
   void initState() {
@@ -37,6 +39,9 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
 
   Future<void> _initializeTracking() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      _isOrderTrackingEnabled = prefs.getBool('notif_order_tracking') ?? true;
+
       final supabase = Supabase.instance.client;
       String? id = widget.orderId;
       
@@ -163,8 +168,10 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: Column(
                     children: [
-                      _buildStatusTracker(effectiveSelfCheckout),
-                      const SizedBox(height: 40),
+                      if (_isOrderTrackingEnabled) ...[
+                        _buildStatusTracker(effectiveSelfCheckout),
+                        const SizedBox(height: 40),
+                      ],
                       _buildOrderSummary(effectiveSelfCheckout),
                       const SizedBox(height: 40),
                       _buildHelpCard(),
@@ -325,7 +332,7 @@ class _CustomerTrackingScreenState extends State<CustomerTrackingScreen> {
       case 'OUT_FOR_DELIVERY': return isSelfCheckout ? "Your order is ready for pickup!" : "Your delicate selection is en route";
       case 'DELIVERED': return isSelfCheckout ? "Order picked up! Enjoy your treat." : "Hand-delivered with love";
       case 'CANCELLED': return "Order has been cancelled.";
-      case 'CONFIRMED': return "Our artisans are starting your order";
+      case 'CONFIRMED': return "We are preparing your order";
       default: return "Order confirmed and in queue";
     }
   }
