@@ -125,3 +125,55 @@ issues.txt
 /assets.zip
 /flutter_01.png
 /analysis_output.txt
+
+# ── Platform-Specific Consolidations (Android, iOS, macOS, Windows, Linux) ──
+# Android
+/android/local.properties
+/android/key.properties
+GeneratedPluginRegistrant.java
+.cxx/
+*.jks
+
+# iOS & macOS
+**/dgph
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+**/*sync/
+.sconsign.dblite
+.tags*
+**/.vagrant/
+**/DerivedData/
+Icon?
+**/Pods/
+**/.symlinks/
+/ios/profile
+**/xcuserdata/
+**/.generated/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Flutter.podspec
+**/Flutter/Generated.xcconfig
+**/Flutter/ephemeral/
+**/Flutter/app.flx
+**/Flutter/app.zip
+**/Flutter/flutter_assets/
+**/Flutter/flutter_export_environment.sh
+ServiceDefinitions.json
+**/Runner/GeneratedPluginRegistrant.*
+!default.mode1v3
+!default.mode2v3
+!default.pbxuser
+!default.perspectivev3
+
+# Windows & Linux
+**/flutter/ephemeral/
+*.user
+*.userosscache
+*.sln.docstates
+x64/
+x86/
+*.[Cc]ache
+!*.[Cc]ache/
