@@ -180,38 +180,9 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
         children: [
           _buildCompactHero(context, isDesktop, weeklyGross, totalPending),
           const SizedBox(height: 16),
-          if (isDesktop)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildTabs(context),
-                      const SizedBox(height: 24),
-                      _buildPaymentList(context, pendingOrders, completedHistory),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 48),
-                Expanded(
-                  flex: 2,
-                  child: _buildHistorySection(context, isCompact: true, recentCompleted: completedHistory),
-                ),
-              ],
-            )
-          else
-            Column(
-              children: [
-                _buildTabs(context),
-                const SizedBox(height: 24),
-                _buildPaymentList(context, pendingOrders, completedHistory),
-                const SizedBox(height: 48),
-                _buildHistorySection(context, isCompact: false, recentCompleted: completedHistory),
-              ],
-            ),
+          _buildTabs(context),
+          const SizedBox(height: 24),
+          _buildPaymentList(context, pendingOrders, completedHistory),
         ],
       ),
     );
@@ -397,112 +368,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
     );
   }
 
-  Widget _buildHistorySection(BuildContext context, {required bool isCompact, required List<Map<String, dynamic>> recentCompleted}) {
-    final cs = Theme.of(context).colorScheme;
-    
-    // Sort and take top 5 for history
-    final historyItems = recentCompleted.take(5).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "Recent History",
-              style: GoogleFonts.notoSerif(
-                color: cs.onSurface,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              "View All",
-              style: GoogleFonts.plusJakartaSans(
-                color: cs.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        if (historyItems.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Center(
-              child: Text(
-                "No completed payments in the last 7 days.",
-                style: GoogleFonts.plusJakartaSans(
-                  color: cs.secondary.withValues(alpha: 0.4),
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.02),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: cs.primary.withValues(alpha: 0.05)),
-            ),
-            child: Column(
-              children: historyItems.map((item) {
-                final rawDate = item['paidAt']?.toString() ?? item['createdAt']?.toString() ?? '';
-                final date = DateTime.tryParse(rawDate);
-                final dateStr = date != null ? DateFormat('MMM d, h:mm a').format(date) : 'Recently';
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              (item['customerName'] as String?) ?? 'Anonymous',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: cs.onSurface,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Text(
-                              dateStr,
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 10,
-                                color: cs.secondary.withValues(alpha: 0.4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        OrderService.formatPrice(item['totalPrice']),
-                        style: GoogleFonts.notoSerif(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: cs.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-      ],
-    );
-  }
 }
 
 class _PaymentCardReactive extends ConsumerWidget {
