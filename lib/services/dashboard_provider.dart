@@ -44,18 +44,10 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
       double totalRevenue = 0;
       final Set<String> customers = {};
       int paidOrderCount = 0;
+      int totalOrderCount = 0;
 
       for (var order in orders) {
-        final pStatus =
-            (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
-        if (pStatus != 'PAID') continue;
-
-        final isCustom = order['isCustom'] == true;
-        final price = PriceConstants.normalizePrice(order['totalPrice']);
-        if (!isCustom) {
-          totalRevenue += price;
-        }
-        paidOrderCount++;
+        totalOrderCount++;
 
         final rawPhone = order['customerPhone'] ?? order['phone'];
         if (rawPhone != null) {
@@ -68,10 +60,21 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
             customers.add(phone);
           }
         }
+
+        final pStatus =
+            (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+        if (pStatus != 'PAID') continue;
+
+        final isCustom = order['isCustom'] == true;
+        final price = PriceConstants.normalizePrice(order['totalPrice']);
+        if (!isCustom) {
+          totalRevenue += price;
+        }
+        paidOrderCount++;
       }
 
       return <String, dynamic>{
-        'totalOrders': paidOrderCount,
+        'totalOrders': totalOrderCount,
         'totalRevenue': totalRevenue,
         'activeCustomers': customers.length,
         'avgOrderValue':

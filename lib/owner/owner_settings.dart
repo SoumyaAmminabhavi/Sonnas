@@ -846,20 +846,26 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               color: cs.surface,
               onSelected: (value) async {
                 if (value == 'edit') {
-                  await Navigator.push<void>(
+                  final result = await Navigator.push<dynamic>(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute<dynamic>(
                       builder: (context) => AddStaffPage(staff: staffData),
                     ),
                   );
+                  if (result != null && result is int) {
+                    widget.onTabChanged?.call(result);
+                  }
                 } else if (value == 'view') {
-                  await Navigator.push<void>(
+                  final result = await Navigator.push<dynamic>(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute<dynamic>(
                       builder: (context) =>
                           AddStaffPage(staff: staffData, isReadOnly: true),
                     ),
                   );
+                  if (result != null && result is int) {
+                    widget.onTabChanged?.call(result);
+                  }
                 } else if (value == 'delete') {
                   final confirm = await showDialog<bool>(
                     context: context,

@@ -32,15 +32,17 @@ class StaffProfilePage extends ConsumerStatefulWidget {
 
 class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   late bool _biometricEnabled;
+  late Map<String, dynamic> _localData;
 
   @override
   void initState() {
     super.initState();
     _biometricEnabled = widget.currentBiometricStatus;
+    _localData = Map<String, dynamic>.from(widget.staffData ?? {});
   }
 
   String get _displayName {
-    final name = widget.staffData?['name'];
+    final name = _localData['name'];
     if (name != null && name.toString().trim().isNotEmpty) {
       return name.toString();
     }
@@ -48,7 +50,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   }
 
   String get _displayPhone {
-    final phone = widget.staffData?['phone'];
+    final phone = _localData['phone'];
     if (phone != null) return '+91 $phone';
     return '—';
   }
@@ -58,17 +60,204 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   }
 
   String get _displayShift {
-    final start = (widget.staffData?['shiftStart'] as String?) ?? '—';
-    final end = (widget.staffData?['shiftEnd'] as String?) ?? '—';
+    final start = (_localData['shiftStart'] as String?) ?? '—';
+    final end = (_localData['shiftEnd'] as String?) ?? '—';
     return '$start – $end';
   }
 
-  String get _displayBloodGroup => (widget.staffData?['bloodGroup'] as String?) ?? '—';
-  String get _displayAddress => (widget.staffData?['address'] as String?) ?? '—';
-  String get _displayEmail => (widget.staffData?['email'] as String?) ?? '—';
-  String get _displayEmergencyName => (widget.staffData?['emergencyName'] as String?) ?? '—';
+  String get _displayBloodGroup => (_localData['bloodGroup'] as String?) ?? '—';
+  String get _displayAddress => (_localData['address'] as String?) ?? '—';
+  String get _displayEmail => (_localData['email'] as String?) ?? '—';
+  String get _displayEmergencyName => (_localData['emergencyName'] as String?) ?? '—';
   String get _displayEmergencyPhone =>
-      (widget.staffData?['emergencyPhone'] as String?) ?? '—';
+      (_localData['emergencyPhone'] as String?) ?? '—';
+
+  void _showEditProfileSheet() {
+    final formKey = GlobalKey<FormState>();
+    final nameCtl = TextEditingController(text: _localData['name'] as String? ?? '');
+    final phoneCtl = TextEditingController(text: _localData['phone'] as String? ?? '');
+    final emailCtl = TextEditingController(text: _localData['email'] as String? ?? '');
+    final addressCtl = TextEditingController(text: _localData['address'] as String? ?? '');
+    final initialBlood = _localData['bloodGroup'] as String?;
+    final emergNameCtl = TextEditingController(text: _localData['emergencyName'] as String? ?? '');
+    final emergPhoneCtl = TextEditingController(text: _localData['emergencyPhone'] as String? ?? '');
+
+    bool saving = false;
+    String? blood = initialBlood;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 40, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 20),
+                      decoration: BoxDecoration(color: widget.cs.secondary.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
+                    ),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Edit Profile", style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: widget.cs.secondary)),
+                        IconButton(
+                          icon: Icon(Icons.close_rounded, color: widget.cs.secondary.withValues(alpha: 0.4)),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text("Update your personal information", style: GoogleFonts.plusJakartaSans(fontSize: 13, color: widget.cs.secondary.withValues(alpha: 0.5))),
+                    const SizedBox(height: 28),
+                    _sectionLabel("PERSONAL INFORMATION", widget.cs),
+                    const SizedBox(height: 16),
+                    _editField("Full Name", nameCtl, Icons.person_outlined, widget.cs),
+                    const SizedBox(height: 14),
+                    _editField("Phone", phoneCtl, Icons.phone_outlined, widget.cs),
+                    const SizedBox(height: 14),
+                    _editField("Email", emailCtl, Icons.email_outlined, widget.cs),
+                    const SizedBox(height: 14),
+                    _editField("Address", addressCtl, Icons.location_on_outlined, widget.cs),
+                    const SizedBox(height: 14),
+                    _bloodDropdown(blood, (v) => setSheetState(() => blood = v), widget.cs),
+                    const SizedBox(height: 28),
+                    _sectionLabel("EMERGENCY CONTACT", widget.cs),
+                    const SizedBox(height: 16),
+                    _editField("Contact Name", emergNameCtl, Icons.person_outline_rounded, widget.cs),
+                    const SizedBox(height: 14),
+                    _editField("Contact Phone", emergPhoneCtl, Icons.phone_forwarded_outlined, widget.cs),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: saving ? null : () async {
+                          if (!formKey.currentState!.validate()) return;
+                          setSheetState(() => saving = true);
+                          final updates = <String, dynamic>{};
+                          updates['name'] = nameCtl.text.trim();
+                          updates['phone'] = phoneCtl.text.trim();
+                          updates['email'] = emailCtl.text.trim();
+                          updates['address'] = addressCtl.text.trim();
+                           updates['bloodGroup'] = blood;
+
+                          updates['emergencyName'] = emergNameCtl.text.trim();
+                          updates['emergencyPhone'] = emergPhoneCtl.text.trim();
+                          try {
+                            await StaffService.updateStaff(widget.staffId, updates);
+                            if (mounted && ctx.mounted) {
+                              setState(() {
+                                _localData.addAll(updates);
+                                if (widget.staffData != null) {
+                                  widget.staffData!.addAll(updates);
+                                }
+                              });
+                              Navigator.of(ctx).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Profile updated"), backgroundColor: Colors.green),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              setSheetState(() { saving = false; });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Failed to update: $e"), backgroundColor: Colors.red),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: widget.cs.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: saving
+                            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                            : Text("SAVE CHANGES", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 13, letterSpacing: 1.5)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _sectionLabel(String label, ColorScheme cs) {
+    return Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 1.8));
+  }
+
+  Widget _bloodDropdown(String? selected, ValueChanged<String?> onChanged, ColorScheme cs) {
+    const groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.secondary.withValues(alpha: 0.08)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: DropdownButtonFormField<String>(
+        initialValue: groups.contains(selected) ? selected : null,
+        hint: Row(
+          children: [
+            Icon(Icons.water_drop_outlined, size: 18, color: cs.primary.withValues(alpha: 0.5)),
+            const SizedBox(width: 12),
+            Text("Blood Group", style: GoogleFonts.plusJakartaSans(fontSize: 14, color: cs.secondary.withValues(alpha: 0.3))),
+          ],
+        ),
+        items: groups.map((g) => DropdownMenuItem(
+          value: g,
+          child: Text(g, style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w500, color: cs.secondary)),
+        )).toList(),
+        onChanged: onChanged,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 16),
+        ),
+        icon: Icon(Icons.keyboard_arrow_down_rounded, color: cs.secondary.withValues(alpha: 0.4)),
+        dropdownColor: cs.surface,
+        borderRadius: BorderRadius.circular(14),
+      ),
+    );
+  }
+
+  Widget _editField(String label, TextEditingController controller, IconData icon, ColorScheme cs) {
+    return TextFormField(
+      controller: controller,
+      style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.w500, color: cs.secondary),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, size: 18, color: cs.primary.withValues(alpha: 0.5)),
+        hintText: label,
+        hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: cs.secondary.withValues(alpha: 0.3)),
+        filled: true,
+        fillColor: cs.surfaceContainerLow.withValues(alpha: 0.5),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: cs.secondary.withValues(alpha: 0.08))),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: cs.primary.withValues(alpha: 0.3))),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +306,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                     children: [
                       _PetalProfileImage(
                         size: imageSize,
-                        imageUrl: widget.staffData?['imageUrl'] as String?,
+                        imageUrl: _localData['imageUrl'] as String?,
                         name: _displayName,
                         cs: widget.cs,
                       ),
@@ -155,7 +344,33 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+                Center(
+                  child: SizedBox(
+                    height: 44,
+                    child: TextButton.icon(
+                      onPressed: _showEditProfileSheet,
+                      icon: Icon(Icons.edit_outlined, size: 16, color: widget.cs.primary),
+                      label: Text(
+                        "EDIT PROFILE",
+                        style: GoogleFonts.plusJakartaSans(
+                          color: widget.cs.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(100),
+                          side: BorderSide(color: widget.cs.primary.withValues(alpha: 0.3)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
                 // Duty Status Card
                 _DutyStatusCard(shift: _displayShift),

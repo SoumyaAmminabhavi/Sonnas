@@ -8,6 +8,7 @@ import '../operations/kitchen_page.dart';
 import '../operations/orders_page.dart';
 import '../../widgets/staff_sidebar.dart';
 import '../../services/order_service.dart';
+import '../../owner/whatsapp_settings_page.dart';
 
 class StaffDashboard extends StatefulWidget {
   final StaffRole role;
@@ -68,8 +69,9 @@ class _StaffDashboardState extends State<StaffDashboard> {
     final bool hasKitchen = widget.role == StaffRole.chef || widget.role == StaffRole.manager;
     final bool hasOrders = widget.role == StaffRole.support || widget.role == StaffRole.cashier || widget.role == StaffRole.manager;
     final bool hasHygiene = widget.role == StaffRole.cleaning || widget.role == StaffRole.manager;
+    final bool hasWhatsApp = widget.role == StaffRole.manager;
 
-    if (hasKitchen || hasOrders || hasHygiene) {
+    if (hasKitchen || hasOrders || hasHygiene || hasWhatsApp) {
       pages.add(_OperationsCombinedPage(
         cs: cs,
         isDesktop: isDesktop,
@@ -78,6 +80,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
         hasKitchen: hasKitchen,
         hasOrders: hasOrders,
         hasHygiene: hasHygiene,
+        hasWhatsApp: hasWhatsApp,
       ));
     }
 
@@ -91,8 +94,8 @@ class _StaffDashboardState extends State<StaffDashboard> {
 
     pages.add(
       StaffProfilePage(
-        cs: cs, 
-        isDesktop: isDesktop, 
+        cs: cs,
+        isDesktop: isDesktop,
         role: widget.role,
         staffId: (widget.staffData?['id'] as String?) ?? 'unknown',
         currentBiometricStatus: (widget.staffData?['biometricEnabled'] as bool?) ?? false,
@@ -669,6 +672,7 @@ class _OperationsCombinedPage extends StatelessWidget {
   final bool hasKitchen;
   final bool hasOrders;
   final bool hasHygiene;
+  final bool hasWhatsApp;
 
   const _OperationsCombinedPage({
     required this.cs,
@@ -678,6 +682,7 @@ class _OperationsCombinedPage extends StatelessWidget {
     required this.hasKitchen,
     required this.hasOrders,
     required this.hasHygiene,
+    required this.hasWhatsApp,
   });
 
   @override
@@ -686,6 +691,7 @@ class _OperationsCombinedPage extends StatelessWidget {
     if (hasKitchen) tabCount++;
     if (hasOrders) tabCount++;
     if (hasHygiene) tabCount++;
+    if (hasWhatsApp) tabCount++;
 
     return DefaultTabController(
       length: tabCount,
@@ -724,6 +730,7 @@ class _OperationsCombinedPage extends StatelessWidget {
                   if (hasKitchen) const Tab(text: "KITCHEN"),
                   if (hasOrders) const Tab(text: "ORDERS"),
                   if (hasHygiene) const Tab(text: "HYGIENE"),
+                  if (hasWhatsApp) const Tab(text: "WHATSAPP"),
                 ],
               ),
             ],
@@ -734,6 +741,7 @@ class _OperationsCombinedPage extends StatelessWidget {
             if (hasKitchen) const KitchenPage(),
             if (hasOrders) const StaffOrdersPage(),
             if (hasHygiene) _CleaningTasksPage(cs: cs, shift: shift),
+            if (hasWhatsApp) WhatsAppSettingsPage(onClose: () {}),
           ],
         ),
       ),

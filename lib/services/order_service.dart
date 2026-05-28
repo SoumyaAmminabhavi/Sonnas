@@ -301,7 +301,6 @@ class OrderService {
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .eq('paymentStatus', 'PAID')
         .map((orders) {
           final Map<int, SalesChartDataPoint> chartData = {};
 
@@ -364,9 +363,10 @@ class OrderService {
 
             final price = PriceConstants.normalizePrice(order['totalPrice']);
             final current = chartData[key] ?? const SalesChartDataPoint(count: 0, amount: 0.0);
+            final isPaid = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase() == 'PAID';
             chartData[key] = SalesChartDataPoint(
               count: current.count + 1,
-              amount: current.amount + price,
+              amount: current.amount + (isPaid ? price : 0.0),
             );
           }
           return chartData;
