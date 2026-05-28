@@ -198,15 +198,22 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                             ),
                                           ),
                                           const SizedBox(height: 8),
-                                          Text(
-                                            "Order #${order['orderNumber'] ?? '---'}",
-                                            style: GoogleFonts.notoSerif(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold,
-                                              fontStyle: FontStyle.italic,
-                                              color: cs.onSurface,
-                                              letterSpacing: -1,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  "Order #${order['orderNumber'] ?? '---'}",
+                                                  style: GoogleFonts.notoSerif(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontStyle: FontStyle.italic,
+                                                    color: cs.onSurface,
+                                                    letterSpacing: -1,
+                                                  ),
+                                                ),
+                                              ),
+                                              _buildPaymentStatusBadge(cs, order),
+                                            ],
                                           ),
                                           Text(
                                             () {
@@ -341,6 +348,8 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                                 : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
                                                             : '';
 
+                                                        final bool isCustomItem = cakeName.toUpperCase().contains('CUSTOM') || (double.tryParse(item['price']?.toString() ?? '0') ?? 0.0) == 0;
+
                                                        return Padding(
                                                          padding: const EdgeInsets.only(bottom: 12.0),
                                                          child: _OrderItemCard(
@@ -350,6 +359,9 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                            imageUrl: finalImageUrl,
                                                            imageBytes: displayImageBytes,
                                                            cs: cs,
+                                                           onEditPrice: isCustomItem
+                                                               ? () => _showEditPriceDialog(context, item, order['id'] as String)
+                                                               : null,
                                                          ),
                                                        );
                                                      }),
@@ -641,6 +653,168 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
       } : null,
     );
   }
+
+  void _showEditPriceDialog(BuildContext context, Map<String, dynamic> item, String orderId) {
+    final currentPrice = (double.tryParse(item['price']?.toString() ?? '0') ?? 0.0) / 100.0;
+    final priceController = TextEditingController(text: currentPrice == 0 ? '' : currentPrice.toStringAsFixed(0));
+    final cakeName = item['cakeName'] ?? 'Custom Item';
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        bool isSaving = false;
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final cs = Theme.of(dialogContext).colorScheme;
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text("Set Custom Price", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Enter the finalized price for $cakeName:", style: GoogleFonts.plusJakartaSans(fontSize: 13)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: priceController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      prefixText: "₹ ",
+                      labelText: "Price (Rs)",
+                      border: const OutlineInputBorder(),
+                      errorText: priceController.text.trim().isNotEmpty && double.tryParse(priceController.text.trim()) == null
+                          ? "Enter a valid number"
+                          : null,
+                    ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                  child: const Text("CANCEL"),
+                ),
+                ElevatedButton(
+                  onPressed: (isSaving || priceController.text.trim().isEmpty || double.tryParse(priceController.text.trim()) == null)
+                      ? null
+                      : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final double newPrice = double.parse(priceController.text.trim());
+                            await OrderService.updateOrderItemPrice(orderId, item['id'] as String, newPrice);
+                            
+                            // Invalidate/refresh providers to trigger UI updates
+                            ref.invalidate(orderNotifierProvider(widget.orderId));
+                            ref.invalidate(orderItemsProvider(orderId));
+                            
+                            if (dialogContext.mounted) {
+                              Navigator.pop(dialogContext);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Price updated successfully.")),
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("Failed to update item price: $e");
+                            if (dialogContext.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Failed to update price. Please try again.")),
+                              );
+                            }
+                          } finally {
+                            setDialogState(() => isSaving = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: isSaving
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text("SAVE"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildPaymentStatusBadge(ColorScheme cs, Map<String, dynamic> order) {
+    final String paymentStatus = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+    final bool isPaid = paymentStatus == 'PAID';
+
+    return Container(
+      margin: const EdgeInsets.only(left: 12),
+      child: InkWell(
+        onTap: isPaid ? null : () async {
+          final confirm = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text("Mark as Paid", style: GoogleFonts.notoSerif(fontWeight: FontWeight.bold)),
+              content: Text("Do you want to mark order #${order['orderNumber']} as PAID?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text("CANCEL"),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text("CONFIRM"),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm == true) {
+            try {
+              await OrderService.updatePaymentStatus(order['id'] as String, 'PAID');
+              ref.invalidate(orderNotifierProvider(widget.orderId));
+            } catch (e) {
+              debugPrint("Failed to update payment status: $e");
+            }
+          }
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isPaid ? Colors.green.withValues(alpha: 0.3) : Colors.orange.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isPaid ? Icons.check_circle_outline : Icons.pending_actions_outlined,
+                size: 14,
+                color: isPaid ? Colors.green[700] : Colors.orange[700],
+              ),
+              const SizedBox(width: 6),
+              Text(
+                isPaid ? "PAID" : "PENDING (MARK PAID)",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isPaid ? Colors.green[700] : Colors.orange[700],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SlimProgressIndicator extends StatelessWidget {
@@ -782,7 +956,17 @@ class _OrderItemCard extends StatelessWidget {
   final String imageUrl;
   final Uint8List? imageBytes;
   final ColorScheme cs;
-  const _OrderItemCard({required this.title, required this.subtitle, required this.price, required this.imageUrl, this.imageBytes, required this.cs});
+  final VoidCallback? onEditPrice;
+
+  const _OrderItemCard({
+    required this.title,
+    required this.subtitle,
+    required this.price,
+    required this.imageUrl,
+    this.imageBytes,
+    required this.cs,
+    this.onEditPrice,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -820,6 +1004,17 @@ class _OrderItemCard extends StatelessWidget {
           ),
         ),
         Text(price, style: GoogleFonts.notoSerif(fontSize: 13, fontWeight: FontWeight.bold, color: cs.primary)),
+        if (onEditPrice != null) ...[
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            color: cs.primary.withValues(alpha: 0.6),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: onEditPrice,
+            tooltip: "Edit Price",
+          ),
+        ],
       ],
     );
   }

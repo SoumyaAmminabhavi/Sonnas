@@ -379,94 +379,112 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 600;
+
+          final titleCol = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Expense Trends", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text("Expenses aggregated by ${_selectedRange.name}", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5), fontSize: 12)),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: cs.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: _SalesRange.values.map((range) {
-                        final isSelected = _selectedRange == range;
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedRange = range;
-                            if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
-                              _selectedYear = DateTime.now().year;
-                            }
-                            if (range == _SalesRange.monthly) {
-                              _selectedMonth = DateTime.now().month;
-                            }
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? cs.primary : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              range.name.toUpperCase(),
-                              style: GoogleFonts.plusJakartaSans(
-                                color: isSelected ? Colors.white : cs.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_selectedRange == _SalesRange.monthly)
-                            DropdownButton<int>(
-                              value: _selectedMonth,
-                              underline: const SizedBox(),
-                              style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                              onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
-                              items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
-                              )).toList(),
-                            ),
-                          const SizedBox(width: 8),
-                          DropdownButton<int>(
-                            value: _selectedYear,
-                            underline: const SizedBox(),
-                            style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                            onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
-                            items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+              Text("Expense Trends", style: GoogleFonts.plusJakartaSans(color: cs.secondary, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text("Expenses aggregated by ${_selectedRange.name}", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.5), fontSize: 12)),
             ],
-          ),
-          const SizedBox(height: 48),
+          );
+
+          final actionsCol = Column(
+            crossAxisAlignment: isNarrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _SalesRange.values.map((range) {
+                      final isSelected = _selectedRange == range;
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedRange = range;
+                          if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
+                            _selectedYear = DateTime.now().year;
+                          }
+                          if (range == _SalesRange.monthly) {
+                            _selectedMonth = DateTime.now().month;
+                          }
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cs.primary : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            range.name.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: isSelected ? Colors.white : cs.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedRange == _SalesRange.monthly)
+                        DropdownButton<int>(
+                          value: _selectedMonth,
+                          underline: const SizedBox(),
+                          style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                          onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
+                          items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
+                          )).toList(),
+                        ),
+                      const SizedBox(width: 8),
+                      DropdownButton<int>(
+                        value: _selectedYear,
+                        underline: const SizedBox(),
+                        style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                        onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
+                        items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isNarrow) ...[
+                titleCol,
+                const SizedBox(height: 16),
+                actionsCol,
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleCol,
+                    actionsCol,
+                  ],
+                ),
+              ],
+              const SizedBox(height: 48),
           SizedBox(
             height: 250,
             child: LineChart(
@@ -589,9 +607,11 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
+    },
+  ),
+);
+}
 
   Widget _buildSecondaryStats(ColorScheme cs) {
     return LayoutBuilder(builder: (context, constraints) {
@@ -646,16 +666,22 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
                   centerSpaceRadius: 40,
                   pieTouchData: PieTouchData(
                     touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
+                      final eventType = event.runtimeType.toString();
+                      final isHoverExit = eventType.contains('PointerExit');
+                      
                       setState(() {
-                        if (!event.isInterestedForInteractions ||
-                            response == null ||
-                            response.touchedSection == null) {
-                          _hoveredCategory = null;
+                        if (response == null || response.touchedSection == null) {
+                          if (isHoverExit) {
+                            _hoveredCategory = null;
+                          }
                           return;
                         }
                         final touchedIndex = response.touchedSection!.touchedSectionIndex;
                         if (touchedIndex >= 0 && touchedIndex < _categoryBreakdown.entries.length) {
-                          _hoveredCategory = _categoryBreakdown.entries.elementAt(touchedIndex).key;
+                          final cat = _categoryBreakdown.entries.elementAt(touchedIndex).key;
+                          if (!eventType.contains('PointerUp') && !eventType.contains('TapUp')) {
+                            _hoveredCategory = cat;
+                          }
                         }
                       });
                     },
@@ -666,31 +692,43 @@ class _ExpenseReportsPageState extends State<ExpenseReportsPage> {
             const SizedBox(height: 24),
             ..._categoryBreakdown.entries.map((e) {
               final isHovered = _hoveredCategory == e.key;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: isHovered ? 16 : 12,
-                      height: isHovered ? 16 : 12,
-                      decoration: BoxDecoration(color: _getCategoryColor(e.key), shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        e.key,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  setState(() {
+                    if (_hoveredCategory == e.key) {
+                      _hoveredCategory = null;
+                    } else {
+                      _hoveredCategory = e.key;
+                    }
+                  });
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: isHovered ? 16 : 12,
+                        height: isHovered ? 16 : 12,
+                        decoration: BoxDecoration(color: _getCategoryColor(e.key), shape: BoxShape.circle),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text("${PriceConstants.currencySymbol}${e.value.toInt()}", style: TextStyle(fontWeight: isHovered ? FontWeight.bold : FontWeight.w600)),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          e.key,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text("${PriceConstants.currencySymbol}${e.value.toInt()}", style: TextStyle(fontWeight: isHovered ? FontWeight.bold : FontWeight.w600)),
+                    ],
+                  ),
                 ),
               );
             }),

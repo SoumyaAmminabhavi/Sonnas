@@ -65,11 +65,8 @@ final dashboardStatsProvider = Provider<Map<String, dynamic>>((ref) {
             (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
         if (pStatus != 'PAID') continue;
 
-        final isCustom = order['isCustom'] == true;
         final price = PriceConstants.normalizePrice(order['totalPrice']);
-        if (!isCustom) {
-          totalRevenue += price;
-        }
+        totalRevenue += price;
         paidOrderCount++;
       }
 

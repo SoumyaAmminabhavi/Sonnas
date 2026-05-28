@@ -131,7 +131,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
   void _calculateMetrics() {
     _totalRevenue = 0;
-    final paidOrders = _paidOrders.where((o) => o['isCustom'] != true).toList();
+    final paidOrders = _paidOrders;
     _totalOrders = paidOrders.length;
 
     for (var order in paidOrders) {
@@ -690,7 +690,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     }
 
     double totalRevenue = 0;
-    final validOrders = filteredOrders.where((o) => o['isCustom'] != true).toList();
+    final validOrders = filteredOrders;
     final totalOrders = validOrders.length;
     for (var order in validOrders) {
       totalRevenue += _parsePrice(order['totalPrice']);
@@ -845,7 +845,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   List<FlSpot> _generateChartSpots() {
-    final paidOrders = _paidOrders.where((o) => o['isCustom'] != true).toList();
+    final paidOrders = _paidOrders;
     if (paidOrders.isEmpty) return [const FlSpot(0, 0)];
 
     final filtered = paidOrders.where((o) {
@@ -1178,112 +1178,132 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 600;
+
+          final titleCol = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Revenue Trends",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Revenue aggregated by ${_selectedRange.name}",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.secondary.withValues(alpha: 0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+              Text(
+                "Revenue Trends",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: cs.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: _SalesRange.values.map((range) {
-                        final isSelected = _selectedRange == range;
-                        return GestureDetector(
-                          onTap: () => setState(() {
-                            _selectedRange = range;
-                            if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
-                              _selectedYear = DateTime.now().year;
-                            }
-                            if (range == _SalesRange.monthly) {
-                              _selectedMonth = DateTime.now().month;
-                            }
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSelected ? cs.primary : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              range.name.toUpperCase(),
-                              style: GoogleFonts.plusJakartaSans(
-                                color: isSelected ? Colors.white : cs.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 9,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (_selectedRange == _SalesRange.monthly)
-                            DropdownButton<int>(
-                              value: _selectedMonth,
-                              underline: const SizedBox(),
-                              style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                              onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
-                              items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
-                                value: m,
-                                child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
-                              )).toList(),
-                            ),
-                          const SizedBox(width: 8),
-                          DropdownButton<int>(
-                            value: _selectedYear,
-                            underline: const SizedBox(),
-                            style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
-                            onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
-                            items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+              const SizedBox(height: 4),
+              Text(
+                "Revenue aggregated by ${_selectedRange.name}",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
               ),
             ],
-          ),
-          const SizedBox(height: 48),
-          SizedBox(
-            height: 300,
-            child: _buildRevenueLineChart(cs),
-          ),
-        ],
+          );
+
+          final actionsCol = Column(
+            crossAxisAlignment: isNarrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _SalesRange.values.map((range) {
+                      final isSelected = _selectedRange == range;
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedRange = range;
+                          if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
+                            _selectedYear = DateTime.now().year;
+                          }
+                          if (range == _SalesRange.monthly) {
+                            _selectedMonth = DateTime.now().month;
+                          }
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cs.primary : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            range.name.toUpperCase(),
+                            style: GoogleFonts.plusJakartaSans(
+                              color: isSelected ? Colors.white : cs.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedRange == _SalesRange.monthly)
+                        DropdownButton<int>(
+                          value: _selectedMonth,
+                          underline: const SizedBox(),
+                          style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                          onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
+                          items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
+                          )).toList(),
+                        ),
+                      const SizedBox(width: 8),
+                      DropdownButton<int>(
+                        value: _selectedYear,
+                        underline: const SizedBox(),
+                        style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                        onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
+                        items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isNarrow) ...[
+                titleCol,
+                const SizedBox(height: 16),
+                actionsCol,
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleCol,
+                    actionsCol,
+                  ],
+                ),
+              ],
+              const SizedBox(height: 48),
+              SizedBox(
+                height: 300,
+                child: _buildRevenueLineChart(cs),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1439,14 +1459,19 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                 sections: _generatePieSections(cs),
                 pieTouchData: PieTouchData(
                   touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
-                    final isLeave = event is FlPointerExitEvent || event is FlTapUpEvent || event is FlLongPressEnd;
-                    if (isLeave || response == null || response.touchedSection == null) {
-                      setState(() => _hoveredCategory = null);
+                    final eventType = event.runtimeType.toString();
+                    final isHoverExit = eventType.contains('PointerExit');
+                    if (response == null || response.touchedSection == null) {
+                      if (isHoverExit) {
+                        setState(() => _hoveredCategory = null);
+                      }
                       return;
                     }
                     final idx = response.touchedSection!.touchedSectionIndex;
                     if (idx >= 0 && idx < _categorySales.length) {
-                      setState(() => _hoveredCategory = _categorySales.keys.elementAt(idx));
+                      if (!eventType.contains('PointerUp') && !eventType.contains('TapUp')) {
+                        setState(() => _hoveredCategory = _categorySales.keys.elementAt(idx));
+                      }
                     }
                   },
                 ),
@@ -1457,14 +1482,24 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           ..._categorySales.entries.map((e) {
             final isHovered = _hoveredCategory == e.key;
             final color = _getCategoryColor(e.key);
-            return MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter: (_) => setState(() => _hoveredCategory = e.key),
-              onExit: (_) => setState(() => _hoveredCategory = null),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                margin: const EdgeInsets.only(bottom: 6),
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (_hoveredCategory == e.key) {
+                    _hoveredCategory = null;
+                  } else {
+                    _hoveredCategory = e.key;
+                  }
+                });
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => setState(() => _hoveredCategory = e.key),
+                onExit: (_) => setState(() => _hoveredCategory = null),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: isHovered ? color.withValues(alpha: 0.08) : Colors.transparent,
@@ -1512,8 +1547,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                   ],
                 ),
               ),
-            );
-          }),
+            ),
+          );
+        }),
         ],
       ),
     );
