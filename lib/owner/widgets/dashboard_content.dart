@@ -662,7 +662,7 @@ class _SalesLineChart extends StatelessWidget {
                 final point = data[barSpot.x.toInt()];
                 final count = point?.count ?? 0;
                 final amount = point?.amount ?? 0.0;
-                final formattedAmount = OrderService.formatPrice(amount * PriceConstants.minorUnitsPerMajor);
+                final formattedAmount = "${PriceConstants.currencySymbol}${amount.toStringAsFixed(0)}";
                 return LineTooltipItem(
                   'Orders: $count\nAmount: $formattedAmount',
                   GoogleFonts.plusJakartaSans(

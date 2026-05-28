@@ -152,9 +152,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       return widget.totalAmount;
     }
     final int subtotalCents = cartTotal.round();
-    final int packagingCents = widget.isSelfCheckout ? 0 : 15000;
-    final int taxCents = ((subtotalCents * 5) + 50) ~/ 100;
-    return (subtotalCents + packagingCents + taxCents).toDouble();
+    return subtotalCents.toDouble();
   }
 
   Future<void> _placeOrder(CartProvider cart, {String? paymentId}) async {
@@ -378,7 +376,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           children: [
                             const TextSpan(text: "Complete Your\n"),
                             const TextSpan(
-                              text: "Savoury Experience",
+                              text: "Order",
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
                                 color: primaryColor,
@@ -509,10 +507,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   style: GoogleFonts.notoSerif(fontSize: 40, fontWeight: FontWeight.w400, color: onSurfaceColor),
                                 ),
                               ],
-                            ),
-                            Text(
-                              "Incl. all taxes",
-                              style: GoogleFonts.plusJakartaSans(fontSize: 10, fontStyle: FontStyle.italic, color: secondaryColor.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),

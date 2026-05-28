@@ -21,6 +21,8 @@ class SalesReportsPage extends ConsumerStatefulWidget {
   ConsumerState<SalesReportsPage> createState() => _SalesReportsPageState();
 }
 
+enum _SalesRange { today, weekly, monthly, yearly }
+
 class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   bool _isLoading = true;
   bool _isLoadingData = false;
@@ -35,6 +37,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
   int _pendingFetchVersion = 0;
   String? _hoveredCategory;
+  _SalesRange _selectedRange = _SalesRange.weekly;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
 
   @override
   void initState() {
@@ -126,7 +131,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
 
   void _calculateMetrics() {
     _totalRevenue = 0;
-    final paidOrders = _paidOrders.where((o) => o['isCustom'] != true).toList();
+    final paidOrders = _paidOrders;
     _totalOrders = paidOrders.length;
 
     for (var order in paidOrders) {
@@ -685,7 +690,7 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     }
 
     double totalRevenue = 0;
-    final validOrders = filteredOrders.where((o) => o['isCustom'] != true).toList();
+    final validOrders = filteredOrders;
     final totalOrders = validOrders.length;
     for (var order in validOrders) {
       totalRevenue += _parsePrice(order['totalPrice']);
@@ -792,17 +797,221 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
     );
   }
 
+  bool _isInTimeWindow(DateTime date, _SalesRange range) {
+    final now = DateTime.now();
+    switch (range) {
+      case _SalesRange.today:
+        final today = DateTime(now.year, now.month, now.day);
+        return date.isAfter(today.subtract(const Duration(days: 1))) && date.isBefore(today.add(const Duration(days: 1)));
+      case _SalesRange.weekly:
+        final weekStart = DateTime(now.year, now.month, now.day).subtract(Duration(days: now.weekday - 1));
+        return date.isAfter(weekStart.subtract(const Duration(days: 1))) && date.isBefore(weekStart.add(const Duration(days: 7)));
+      case _SalesRange.monthly:
+        final monthStart = DateTime(_selectedYear, _selectedMonth, 1);
+        final monthEnd = DateTime(_selectedYear, _selectedMonth + 1, 1);
+        return date.isAfter(monthStart.subtract(const Duration(days: 1))) && date.isBefore(monthEnd);
+      case _SalesRange.yearly:
+        final yearStart = DateTime(_selectedYear, 1, 1);
+        final yearEnd = DateTime(_selectedYear + 1, 1, 1);
+        return date.isAfter(yearStart.subtract(const Duration(days: 1))) && date.isBefore(yearEnd);
+    }
+  }
+
+  int _getTimeBucket(DateTime date, _SalesRange range) {
+    switch (range) {
+      case _SalesRange.today: return date.hour;
+      case _SalesRange.weekly: return date.weekday;
+      case _SalesRange.monthly: return date.day;
+      case _SalesRange.yearly: return date.month;
+    }
+  }
+
+  double _getMinX() {
+    switch (_selectedRange) {
+      case _SalesRange.today: return 0;
+      case _SalesRange.weekly: return 1;
+      case _SalesRange.monthly: return 1;
+      case _SalesRange.yearly: return 1;
+    }
+  }
+
+  double _getMaxX() {
+    switch (_selectedRange) {
+      case _SalesRange.today: return 23;
+      case _SalesRange.weekly: return 7;
+      case _SalesRange.monthly: return DateTime(_selectedYear, _selectedMonth + 1, 0).day.toDouble();
+      case _SalesRange.yearly: return 12;
+    }
+  }
+
   List<FlSpot> _generateChartSpots() {
     final paidOrders = _paidOrders;
     if (paidOrders.isEmpty) return [const FlSpot(0, 0)];
-    final recent = paidOrders.take(7).toList().reversed.toList();
-    List<FlSpot> spots = [];
-    for (int i = 0; i < recent.length; i++) {
-      final amount = _parsePrice(recent[i]['totalPrice']);
-      spots.add(FlSpot(i.toDouble(), amount));
+
+    final filtered = paidOrders.where((o) {
+      final dateStr = o['createdAt']?.toString() ?? o['paidAt']?.toString();
+      if (dateStr == null) return false;
+      final date = DateTime.tryParse(dateStr);
+      return date != null && _isInTimeWindow(date, _selectedRange);
+    }).toList();
+
+    if (filtered.isEmpty) return [const FlSpot(0, 0)];
+
+    Map<int, double> buckets = {};
+    for (var order in filtered) {
+      final dateStr = order['createdAt']?.toString() ?? order['paidAt']?.toString();
+      if (dateStr == null) continue;
+      final date = DateTime.tryParse(dateStr);
+      if (date == null) continue;
+      final key = _getTimeBucket(date, _selectedRange);
+      final amount = _parsePrice(order['totalPrice']);
+      buckets[key] = (buckets[key] ?? 0) + amount;
     }
-    if (spots.isEmpty) return [const FlSpot(0, 0)];
+
+    if (buckets.isEmpty) return [const FlSpot(0, 0)];
+
+    List<FlSpot> spots = [];
+    final sortedKeys = buckets.keys.toList()..sort();
+    for (var key in sortedKeys) {
+      spots.add(FlSpot(key.toDouble(), buckets[key]!));
+    }
     return spots;
+  }
+
+  Widget _buildRevenueLineChart(ColorScheme cs) {
+    final spots = _generateChartSpots();
+    final amounts = spots.map((s) => s.y).toList();
+    double maxRevenue = 500.0;
+    for (var v in amounts) {
+      if (v > maxRevenue) maxRevenue = v;
+    }
+    maxRevenue = (maxRevenue / 5).ceil() * 5.0;
+    if (maxRevenue == 0) maxRevenue = 500.0;
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          horizontalInterval: maxRevenue / 5,
+          getDrawingHorizontalLine:
+              (_) => FlLine(
+                color: cs.secondary.withValues(alpha: 0.05),
+                strokeWidth: 1,
+              ),
+        ),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (touchedSpot) => cs.surfaceContainerHigh,
+            getTooltipItems: (touchedSpots) {
+              return touchedSpots.map((barSpot) {
+                final amount = barSpot.y;
+                final formattedAmount = "${PriceConstants.currencySymbol}${amount.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '')}";
+                return LineTooltipItem(
+                  'Revenue: $formattedAmount',
+                  GoogleFonts.plusJakartaSans(
+                    color: cs.secondary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                );
+              }).toList();
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              interval: maxRevenue / 5,
+              getTitlesWidget: (value, meta) {
+                if (value == meta.max || value == meta.min) return const SizedBox();
+                String text = '';
+                if (value >= 1000) {
+                  text = '${(value / 1000).toStringAsFixed(1)}K';
+                } else {
+                  text = value.toInt().toString();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Text(
+                    text,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: cs.secondary.withValues(alpha: 0.4),
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: _selectedRange == _SalesRange.monthly ? 5 : 1,
+              getTitlesWidget: (value, meta) {
+                String text = '';
+                if (_selectedRange == _SalesRange.today) {
+                  if (value % 4 == 0) text = "${value.toInt()}h";
+                } else if (_selectedRange == _SalesRange.weekly) {
+                  text = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'][(value.toInt() - 1) % 7];
+                } else if (_selectedRange == _SalesRange.monthly) {
+                  if (value % 5 == 0) text = "D${value.toInt()}";
+                } else {
+                  text = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][(value.toInt() - 1) % 12];
+                }
+                return text.isEmpty
+                    ? const SizedBox()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          text,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: cs.secondary.withValues(alpha: 0.4),
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(show: false),
+        minX: _getMinX(),
+        maxX: _getMaxX(),
+        minY: 0,
+        maxY: maxRevenue,
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            gradient: LinearGradient(colors: [cs.primary, cs.primaryContainer]),
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: true),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  cs.primary.withValues(alpha: 0.15),
+                  cs.primary.withValues(alpha: 0.0),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -969,101 +1178,132 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         borderRadius: BorderRadius.circular(32),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Revenue Trends",
-            style: GoogleFonts.plusJakartaSans(
-              color: cs.secondary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Daily performance over the last 7 entries",
-            style: GoogleFonts.plusJakartaSans(
-              color: cs.secondary.withValues(alpha: 0.5),
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 48),
-          SizedBox(
-            height: 300,
-            child: LineChart(
-              LineChartData(
-                minY: 0,
-                gridData: const FlGridData(show: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 52,
-                      interval: (_totalRevenue > 100 ? _totalRevenue / 4 : 100),
-                      getTitlesWidget: (value, meta) {
-                        String text = '';
-                        if (value >= 1000) {
-                          text = '${(value / 1000).toStringAsFixed(1)}K';
-                        } else {
-                          text = value.toInt().toString();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 600;
+
+          final titleCol = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Revenue Trends",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                "Revenue aggregated by ${_selectedRange.name}",
+                style: GoogleFonts.plusJakartaSans(
+                  color: cs.secondary.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          );
+
+          final actionsCol = Column(
+            crossAxisAlignment: isNarrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.primary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _SalesRange.values.map((range) {
+                      final isSelected = _selectedRange == range;
+                      return GestureDetector(
+                        onTap: () => setState(() {
+                          _selectedRange = range;
+                          if (range == _SalesRange.monthly || range == _SalesRange.yearly) {
+                            _selectedYear = DateTime.now().year;
+                          }
+                          if (range == _SalesRange.monthly) {
+                            _selectedMonth = DateTime.now().month;
+                          }
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected ? cs.primary : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           child: Text(
-                            text,
-                            textAlign: TextAlign.right,
+                            range.name.toUpperCase(),
                             style: GoogleFonts.plusJakartaSans(
-                              color: cs.secondary.withValues(alpha: 0.4),
-                              fontSize: 10,
+                              color: isSelected ? Colors.white : cs.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            "D${value.toInt() + 1}",
-                            style: GoogleFonts.plusJakartaSans(
-                              color: cs.secondary.withValues(alpha: 0.4),
-                              fontSize: 10,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _generateChartSpots(),
-                    isCurved: true,
-                    color: const Color(0xFFFF4D8D),
-                    barWidth: 4,
-                    isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: const Color(0xFFFF4D8D).withValues(alpha: 0.1),
-                    ),
-                  ),
-                ],
               ),
-            ),
-          ),
-        ],
+              if (_selectedRange == _SalesRange.monthly || _selectedRange == _SalesRange.yearly)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedRange == _SalesRange.monthly)
+                        DropdownButton<int>(
+                          value: _selectedMonth,
+                          underline: const SizedBox(),
+                          style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                          onChanged: (m) => m != null ? setState(() => _selectedMonth = m) : null,
+                          items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m - 1]),
+                          )).toList(),
+                        ),
+                      const SizedBox(width: 8),
+                      DropdownButton<int>(
+                        value: _selectedYear,
+                        underline: const SizedBox(),
+                        style: GoogleFonts.plusJakartaSans(color: cs.primary, fontSize: 11, fontWeight: FontWeight.bold),
+                        onChanged: (y) => y != null ? setState(() => _selectedYear = y) : null,
+                        items: List.generate(5, (i) => DateTime.now().year - i).map((y) => DropdownMenuItem(value: y, child: Text("$y"))).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isNarrow) ...[
+                titleCol,
+                const SizedBox(height: 16),
+                actionsCol,
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleCol,
+                    actionsCol,
+                  ],
+                ),
+              ],
+              const SizedBox(height: 48),
+              SizedBox(
+                height: 300,
+                child: _buildRevenueLineChart(cs),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1219,14 +1459,19 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                 sections: _generatePieSections(cs),
                 pieTouchData: PieTouchData(
                   touchCallback: (FlTouchEvent event, PieTouchResponse? response) {
-                    final isLeave = event is FlPointerExitEvent || event is FlTapUpEvent || event is FlLongPressEnd;
-                    if (isLeave || response == null || response.touchedSection == null) {
-                      setState(() => _hoveredCategory = null);
+                    final eventType = event.runtimeType.toString();
+                    final isHoverExit = eventType.contains('PointerExit');
+                    if (response == null || response.touchedSection == null) {
+                      if (isHoverExit) {
+                        setState(() => _hoveredCategory = null);
+                      }
                       return;
                     }
                     final idx = response.touchedSection!.touchedSectionIndex;
                     if (idx >= 0 && idx < _categorySales.length) {
-                      setState(() => _hoveredCategory = _categorySales.keys.elementAt(idx));
+                      if (!eventType.contains('PointerUp') && !eventType.contains('TapUp')) {
+                        setState(() => _hoveredCategory = _categorySales.keys.elementAt(idx));
+                      }
                     }
                   },
                 ),
@@ -1237,14 +1482,24 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
           ..._categorySales.entries.map((e) {
             final isHovered = _hoveredCategory == e.key;
             final color = _getCategoryColor(e.key);
-            return MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter: (_) => setState(() => _hoveredCategory = e.key),
-              onExit: (_) => setState(() => _hoveredCategory = null),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                margin: const EdgeInsets.only(bottom: 6),
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (_hoveredCategory == e.key) {
+                    _hoveredCategory = null;
+                  } else {
+                    _hoveredCategory = e.key;
+                  }
+                });
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (_) => setState(() => _hoveredCategory = e.key),
+                onExit: (_) => setState(() => _hoveredCategory = null),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: isHovered ? color.withValues(alpha: 0.08) : Colors.transparent,
@@ -1292,8 +1547,9 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                   ],
                 ),
               ),
-            );
-          }),
+            ),
+          );
+        }),
         ],
       ),
     );

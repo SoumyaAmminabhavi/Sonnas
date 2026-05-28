@@ -15,6 +15,7 @@ import '../services/theme_service.dart';
 import '../services/settings_service.dart';
 import '../services/system_setting_service.dart';
 import '../services/auth_provider.dart';
+import '../services/biometric_service.dart';
 
 class OwnerSettingsPage extends StatelessWidget {
   final ValueChanged<int>? onTabChanged;
@@ -49,6 +50,8 @@ class _SettingsContent extends ConsumerStatefulWidget {
 class _SettingsContentState extends ConsumerState<_SettingsContent> {
   bool _pushNotifications = true;
   bool _inventoryAlerts = true;
+  bool _biometricEnabled = false;
+  bool _supportBiometrics = false;
   Widget? _activeSubPage;
   
   bool _isLoadingSettings = true;
@@ -67,6 +70,8 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
   Future<void> _loadPreferences() async {
     final pushEnabled = await SettingsService.getPushNotificationsEnabled();
     final inventoryEnabled = await SettingsService.getInventoryAlertsEnabled();
+    final biometricEnabled = await SettingsService.getOwnerBiometricEnabled();
+    final canCheck = await BiometricService.canCheckBiometrics();
     
     // Load database settings
     final dbSettings = await SystemSettingService.fetchAllSettings();
@@ -75,6 +80,8 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
       setState(() {
         _pushNotifications = pushEnabled;
         _inventoryAlerts = inventoryEnabled;
+        _biometricEnabled = biometricEnabled;
+        _supportBiometrics = canCheck;
         
         if (dbSettings.containsKey('bakery_name')) _bakeryName = dbSettings['bakery_name']!;
         if (dbSettings.containsKey('contact_phone')) _contactPhone = dbSettings['contact_phone']!;
@@ -485,6 +492,108 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               }
             },
           ),
+          if (_supportBiometrics)
+            _buildSwitchRow(
+              cs,
+              "Biometric Login",
+              "Use Fingerprint/Face ID to access owner panel",
+              _biometricEnabled,
+              (val) async {
+                try {
+                  if (val) {
+                    final bool canCheck = await BiometricService.canCheckBiometrics();
+                    if (!canCheck) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("No biometric hardware detected.")),
+                      );
+                      return;
+                    }
+
+                    // Check if we have the owner PIN cached. If not, prompt for it.
+                    String? cachedPin = await SettingsService.getOwnerPin();
+                    if (cachedPin == null || cachedPin.isEmpty) {
+                      // Show a dialog asking for their owner PIN to set up biometrics
+                      if (!mounted) return;
+                      final String? pin = await showDialog<String>(
+                        context: context,
+                        builder: (context) {
+                          final tempPinController = TextEditingController();
+                          return AlertDialog(
+                            title: Text("Enable Biometrics", style: GoogleFonts.notoSerif()),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text("Enter your Owner PIN to confirm and enable biometric login:"),
+                                const SizedBox(height: 16),
+                                TextField(
+                                  controller: tempPinController,
+                                  obscureText: true,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: "Owner PIN",
+                                    border: OutlineInputBorder(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("CANCEL"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final pinText = tempPinController.text.trim();
+                                  Navigator.pop(context, pinText);
+                                },
+                                child: const Text("CONFIRM"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (pin == null || pin.isEmpty) return;
+
+                      // Verify if this PIN is valid using AuthService
+                      final isValid = await ref.read(authProvider.notifier).verifyOwnerPin(pin);
+                      if (!isValid) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Invalid Owner PIN.")),
+                        );
+                        return;
+                      }
+                      cachedPin = pin;
+                    }
+
+                    // Request biometric authentication to confirm
+                    final bool authenticated = await BiometricService.authenticate();
+                    if (authenticated) {
+                      await SettingsService.setOwnerBiometricEnabled(true);
+                      await SettingsService.setOwnerPin(cachedPin);
+                      setState(() => _biometricEnabled = true);
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Biometric login enabled successfully.")),
+                      );
+                    }
+                  } else {
+                    // Disable biometric login
+                    await SettingsService.setOwnerBiometricEnabled(false);
+                    await SettingsService.setOwnerPin(null);
+                    setState(() => _biometricEnabled = false);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Biometric login disabled.")),
+                    );
+                  }
+                } catch (e) {
+                  debugPrint("Error toggling biometrics: $e");
+                }
+              },
+            ),
         ],
       ),
     );
@@ -846,20 +955,26 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
               color: cs.surface,
               onSelected: (value) async {
                 if (value == 'edit') {
-                  await Navigator.push<void>(
+                  final result = await Navigator.push<dynamic>(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute<dynamic>(
                       builder: (context) => AddStaffPage(staff: staffData),
                     ),
                   );
+                  if (result != null && result is int) {
+                    widget.onTabChanged?.call(result);
+                  }
                 } else if (value == 'view') {
-                  await Navigator.push<void>(
+                  final result = await Navigator.push<dynamic>(
                     context,
-                    MaterialPageRoute<void>(
+                    MaterialPageRoute<dynamic>(
                       builder: (context) =>
                           AddStaffPage(staff: staffData, isReadOnly: true),
                     ),
                   );
+                  if (result != null && result is int) {
+                    widget.onTabChanged?.call(result);
+                  }
                 } else if (value == 'delete') {
                   final confirm = await showDialog<bool>(
                     context: context,

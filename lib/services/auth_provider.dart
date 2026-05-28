@@ -115,6 +115,7 @@ class AuthNotifier extends Notifier<AppAuthState> {
         // Persist the authenticated flag so the session survives app restarts
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_kOwnerAuthKey, true);
+        await prefs.setString('owner_pin', pin);
 
         state = state.copyWith(
           isLoading: false, 
@@ -148,6 +149,8 @@ class AuthNotifier extends Notifier<AppAuthState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_kOwnerAuthKey);
+      await prefs.remove('owner_pin');
+      await prefs.remove('owner_biometric_enabled');
     } catch (_) {
       // Ignore
     }

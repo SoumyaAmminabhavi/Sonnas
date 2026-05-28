@@ -301,7 +301,6 @@ class OrderService {
     return _client
         .from('Order')
         .stream(primaryKey: ['id'])
-        .eq('paymentStatus', 'PAID')
         .map((orders) {
           final Map<int, SalesChartDataPoint> chartData = {};
 
@@ -351,11 +350,6 @@ class OrderService {
             if (targetMonth != null && date.month != targetMonth) continue;
             if (targetYear != null && date.year != targetYear) continue;
 
-            // Only count PAID orders
-            if ((order['paymentStatus']?.toString().toUpperCase()) != 'PAID') {
-              continue;
-            }
-
             int key;
             if (range == 'today') {
               key = date.hour;
@@ -367,6 +361,8 @@ class OrderService {
               key = date.month;
             }
 
+            final isPaid = (order['paymentStatus'] ?? 'PENDING').toString().toUpperCase() == 'PAID';
+            if (!isPaid) continue;
             final price = PriceConstants.normalizePrice(order['totalPrice']);
             final current = chartData[key] ?? const SalesChartDataPoint(count: 0, amount: 0.0);
             chartData[key] = SalesChartDataPoint(
@@ -399,21 +395,29 @@ class OrderService {
 
   /// Update payment status
   static Future<void> updatePaymentStatus(String orderId, String status) async {
-    final now = DateTime.now().toUtc().toIso8601String();
     final normalizedStatus = status.toUpperCase();
     final Map<String, dynamic> payload = {'paymentStatus': normalizedStatus};
 
-    if (normalizedStatus == 'PAID') {
-      payload['paidAt'] = now;
-    } else {
-      payload['paidAt'] = null;
-    }
-
     try {
-      await _client.from('Order').update(payload).eq('id', orderId);
+      final now = DateTime.now().toUtc().toIso8601String();
+      final Map<String, dynamic> payloadWithPaidAt = {
+        ...payload,
+        'paidAt': normalizedStatus == 'PAID' ? now : null,
+      };
+      await _client.from('Order').update(payloadWithPaidAt).eq('id', orderId);
     } catch (e) {
-      debugPrint('❌ Payment Status Update Failed: $e');
-      rethrow;
+      if (e.toString().contains('paidAt')) {
+        debugPrint('⚠️ paidAt column missing in DB schema. Falling back to updating paymentStatus only.');
+        try {
+          await _client.from('Order').update(payload).eq('id', orderId);
+        } catch (fallbackError) {
+          debugPrint('❌ Payment Status Fallback Update Failed: $fallbackError');
+          rethrow;
+        }
+      } else {
+        debugPrint('❌ Payment Status Update Failed: $e');
+        rethrow;
+      }
     }
   }
 
@@ -505,6 +509,26 @@ class OrderService {
       } catch (_) {}
       return null;
     }
+  }
+
+  /// Update an order item's price and recalculate the order's total price.
+  static Future<void> updateOrderItemPrice(String orderId, String itemId, double newPriceInMajor) async {
+    final int newPriceInMinor = (newPriceInMajor * PriceConstants.minorUnitsPerMajor).toInt();
+    
+    // 1. Update the OrderItem price
+    await _client.from('OrderItem').update({'price': newPriceInMinor}).eq('id', itemId);
+    
+    // 2. Fetch all items for this order to calculate the new total
+    final items = await fetchOrderItems(orderId);
+    double newTotalInMinor = 0.0;
+    for (final item in items) {
+      final double itemPrice = double.tryParse(item['price']?.toString() ?? '0') ?? 0.0;
+      final int qty = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
+      newTotalInMinor += itemPrice * qty;
+    }
+    
+    // 3. Update the Order total price
+    await _client.from('Order').update({'totalPrice': newTotalInMinor.toInt()}).eq('id', orderId);
   }
 }
 

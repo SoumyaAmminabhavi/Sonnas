@@ -5,6 +5,8 @@ import '../owner/owner_dashboard.dart';
 import '../staff/auth/login_page.dart';
 import '../services/auth_provider.dart';
 import '../services/system_setting_service.dart';
+import '../services/settings_service.dart';
+import '../services/biometric_service.dart';
 
 class ModernDrawer extends ConsumerStatefulWidget {
   const ModernDrawer({super.key});
@@ -33,82 +35,118 @@ class _ModernDrawerState extends ConsumerState<ModernDrawer> {
 
   Future<void> _showOwnerAuth(BuildContext context, WidgetRef ref) async {
     final pinController = TextEditingController();
+    final isBiometricEnabled = await SettingsService.getOwnerBiometricEnabled();
+    final cachedPin = await SettingsService.getOwnerPin();
+    final canCheckBiometrics = await BiometricService.canCheckBiometrics();
+    
+    final bool showBiometricOption = isBiometricEnabled && canCheckBiometrics && cachedPin != null && cachedPin.isNotEmpty;
 
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return Consumer(
-          builder: (context, ref, child) {
-            final authState = ref.watch(authProvider);
+    if (context.mounted) {
+      Future<void> triggerBiometricAuth(BuildContext dialogContext) async {
+        final authenticated = await BiometricService.authenticate();
+        if (authenticated && dialogContext.mounted) {
+          final isValid = await ref.read(authProvider.notifier).verifyOwnerPin(cachedPin!);
+          if (isValid && dialogContext.mounted) {
+            final navigator = Navigator.of(dialogContext, rootNavigator: true);
+            Navigator.pop(dialogContext);
+            await navigator.push(
+              MaterialPageRoute<void>(
+                settings: const RouteSettings(name: 'OwnerDashboard'),
+                builder: (context) => const OwnerDashboard(),
+              ),
+            );
+          }
+        }
+      }
 
-            return AlertDialog(
-              title:
-                  Text("Owner Authentication", style: GoogleFonts.notoSerif()),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text("Please enter your admin PIN to continue.",
-                      style: GoogleFonts.plusJakartaSans(fontSize: 12)),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: pinController,
-                    obscureText: true,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: "Enter PIN",
-                      border: const OutlineInputBorder(),
-                      errorText: authState.error,
-                    ),
-                  ),
-                  if (authState.isLockedOut)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        "Too many attempts. Try again in ${authState.lockoutUntil!.difference(DateTime.now()).inSeconds}s",
-                        style: const TextStyle(color: Colors.red, fontSize: 11),
+      // Auto-trigger biometric after dialog is built
+      if (showBiometricOption) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          triggerBiometricAuth(context);
+        });
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return Consumer(
+            builder: (context, ref, child) {
+              final authState = ref.watch(authProvider);
+
+              return AlertDialog(
+                title: Text("Owner Authentication", style: GoogleFonts.notoSerif()),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Please enter your admin PIN to continue.",
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12)),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: pinController,
+                      obscureText: true,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        hintText: "Enter PIN",
+                        border: const OutlineInputBorder(),
+                        errorText: authState.error,
+                        suffixIcon: showBiometricOption
+                            ? IconButton(
+                                icon: const Icon(Icons.fingerprint, color: Colors.blue, size: 28),
+                                onPressed: () => triggerBiometricAuth(dialogContext),
+                              )
+                            : null,
                       ),
                     ),
+                    if (authState.isLockedOut)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          "Too many attempts. Try again in ${authState.lockoutUntil!.difference(DateTime.now()).inSeconds}s",
+                          style: const TextStyle(color: Colors.red, fontSize: 11),
+                        ),
+                      ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text("CANCEL"),
+                  ),
+                  ElevatedButton(
+                    onPressed: authState.isLoading || authState.isLockedOut
+                        ? null
+                        : () async {
+                            final isValid = await ref
+                                .read(authProvider.notifier)
+                                .verifyOwnerPin(pinController.text);
+                            if (isValid && dialogContext.mounted) {
+                              final navigator = Navigator.of(dialogContext, rootNavigator: true);
+                              Navigator.pop(dialogContext);
+                              await navigator.push(
+                                MaterialPageRoute<void>(
+                                  settings:
+                                      const RouteSettings(name: 'OwnerDashboard'),
+                                  builder: (context) => const OwnerDashboard(),
+                                ),
+                              );
+                            }
+                          },
+                    child: authState.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text("VERIFY"),
+                  ),
                 ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("CANCEL"),
-                ),
-                ElevatedButton(
-                  onPressed: authState.isLoading || authState.isLockedOut
-                      ? null
-                      : () async {
-                          final isValid = await ref
-                              .read(authProvider.notifier)
-                              .verifyOwnerPin(pinController.text);
-                          if (isValid && context.mounted) {
-                            final navigator = Navigator.of(context, rootNavigator: true);
-                            Navigator.pop(context);
-                            await navigator.push(
-                              MaterialPageRoute<void>(
-                                settings:
-                                    const RouteSettings(name: 'OwnerDashboard'),
-                                builder: (context) => const OwnerDashboard(),
-                              ),
-                            );
-                          }
-                        },
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text("VERIFY"),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    ).whenComplete(() {
-      Future.delayed(const Duration(milliseconds: 500), () => pinController.dispose());
-    });
+              );
+            },
+          );
+        },
+      ).whenComplete(() {
+        Future.delayed(const Duration(milliseconds: 500), () => pinController.dispose());
+      });
+    }
   }
 
   @override
