@@ -33,12 +33,23 @@ class StaffProfilePage extends ConsumerStatefulWidget {
 class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
   late bool _biometricEnabled;
   late Map<String, dynamic> _localData;
+  bool _supportBiometrics = false;
 
   @override
   void initState() {
     super.initState();
     _biometricEnabled = widget.currentBiometricStatus;
     _localData = Map<String, dynamic>.from(widget.staffData ?? {});
+    _checkBiometricsSupport();
+  }
+
+  Future<void> _checkBiometricsSupport() async {
+    final canCheck = await BiometricService.canCheckBiometrics();
+    if (mounted) {
+      setState(() {
+        _supportBiometrics = canCheck;
+      });
+    }
   }
 
   String get _displayName {
@@ -497,99 +508,139 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                           color: widget.cs.secondary,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: widget.cs.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+                      if (_supportBiometrics) ...[
+                        const SizedBox(height: 16),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: widget.cs.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.fingerprint_rounded,
+                              color: widget.cs.primary,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.fingerprint_rounded,
-                            color: widget.cs.primary,
+                          title: Text(
+                            "Biometric Login",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.bold,
+                              color: widget.cs.secondary,
+                            ),
                           ),
-                        ),
-                        title: Text(
-                          "Biometric Login",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.bold,
-                            color: widget.cs.secondary,
+                          subtitle: Text(
+                            _biometricEnabled
+                                ? "Fingerprint / Face ID login is enabled"
+                                : "Enable for quick fingerprint / Face ID login",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 12,
+                              color: widget.cs.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          _biometricEnabled
-                              ? "Fingerprint / Face ID login is enabled"
-                              : "Enable for quick fingerprint / Face ID login",
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: widget.cs.onSurfaceVariant,
-                          ),
-                        ),
-                        trailing: Switch(
-                          value: _biometricEnabled,
-                          activeThumbColor: widget.cs.primary,
-                          onChanged: (val) async {
-                            try {
-                              if (val) {
-                                final bool canCheck =
-                                    await BiometricService.canCheckBiometrics();
-                                if (!canCheck) {
-                                  if (!mounted) return;
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.error_outline,
-                                            color: Colors.white,
-                                          ),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              "No biometric hardware detected.",
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      backgroundColor: Colors.redAccent,
-                                    ),
-                                    );
-                                  }
-                                  return;
-                                }
-                                final bool success =
-                                    await BiometricService.authenticate();
-                                if (success) {
-                                  final bool dbUpdated =
-                                      await StaffService.updateBiometricStatus(
-                                        widget.staffId,
-                                        val,
-                                      );
-                                  if (!context.mounted) return;
-
-                                  if (dbUpdated) {
-                                    await SessionService.updateBiometricStatus(val);
-                                    if (!context.mounted) return;
-                                    if (widget.staffData != null) {
-                                      widget.staffData!['biometricEnabled'] = val;
-                                    }
-                                    setState(() => _biometricEnabled = val);
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                          trailing: Switch(
+                            value: _biometricEnabled,
+                            activeThumbColor: widget.cs.primary,
+                            onChanged: (val) async {
+                              try {
+                                if (val) {
+                                  final bool canCheck =
+                                      await BiometricService.canCheckBiometrics();
+                                  if (!canCheck) {
+                                    if (!mounted) return;
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Row(
                                           children: [
                                             Icon(
-                                              Icons.check_circle_outline,
+                                              Icons.error_outline,
                                               color: Colors.white,
                                             ),
                                             SizedBox(width: 12),
                                             Expanded(
                                               child: Text(
-                                                "Biometric Login Enabled",
+                                                "No biometric hardware detected.",
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                      );
+                                    }
+                                    return;
+                                  }
+                                  final bool success =
+                                      await BiometricService.authenticate();
+                                  if (success) {
+                                    final bool dbUpdated =
+                                        await StaffService.updateBiometricStatus(
+                                          widget.staffId,
+                                          val,
+                                        );
+                                    if (!context.mounted) return;
+
+                                    if (dbUpdated) {
+                                      await SessionService.updateBiometricStatus(val);
+                                      if (!context.mounted) return;
+                                      if (widget.staffData != null) {
+                                        widget.staffData!['biometricEnabled'] = val;
+                                      }
+                                      setState(() => _biometricEnabled = val);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.check_circle_outline,
+                                                color: Colors.white,
+                                              ),
+                                              SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  "Biometric Login Enabled",
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      // Revert toggle on failure
+                                      setState(() => _biometricEnabled = !val);
+                                    }
+                                  }
+                                } else {
+                                  final bool dbUpdated =
+                                      await StaffService.updateBiometricStatus(
+                                        widget.staffId,
+                                        false,
+                                      );
+                                  if (!context.mounted) return;
+
+                                  if (dbUpdated) {
+                                    await SessionService.updateBiometricStatus(false);
+                                    if (!context.mounted) return;
+                                    if (widget.staffData != null) {
+                                      widget.staffData!['biometricEnabled'] = false;
+                                    }
+                                    setState(() => _biometricEnabled = false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                "Biometric Login Disabled",
                                                 overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
@@ -602,78 +653,40 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                                     setState(() => _biometricEnabled = !val);
                                   }
                                 }
-                              } else {
-                                final bool dbUpdated =
-                                    await StaffService.updateBiometricStatus(
-                                      widget.staffId,
-                                      false,
-                                    );
-                                if (!context.mounted) return;
-
-                                if (dbUpdated) {
-                                  await SessionService.updateBiometricStatus(false);
-                                  if (!context.mounted) return;
-                                  if (widget.staffData != null) {
-                                    widget.staffData!['biometricEnabled'] = false;
-                                  }
-                                  setState(() => _biometricEnabled = false);
+                              } catch (e) {
+                                debugPrint('Biometric toggle error: $e');
+                                // Revert toggle on exception
+                                if (mounted) {
+                                  setState(() => _biometricEnabled = !val);
+                                }
+                                if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Row(
                                         children: [
                                           Icon(
-                                            Icons.info_outline,
+                                            Icons.error_outline,
                                             color: Colors.white,
                                           ),
                                           SizedBox(width: 12),
                                           Expanded(
                                             child: Text(
-                                              "Biometric Login Disabled",
+                                              "Failed to update biometric settings. Please try again.",
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                         ],
                                       ),
+                                      backgroundColor: Colors.redAccent,
                                     ),
                                   );
-                                } else {
-                                  // Revert toggle on failure
-                                  setState(() => _biometricEnabled = !val);
                                 }
                               }
-                            } catch (e) {
-                              debugPrint('Biometric toggle error: $e');
-                              // Revert toggle on exception
-                              if (mounted) {
-                                setState(() => _biometricEnabled = !val);
-                              }
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.error_outline,
-                                          color: Colors.white,
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            "Failed to update biometric settings. Please try again.",
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
-                              }
-                            }
-                          },
+                            },
+                          ),
                         ),
-                      ),
-                      const Divider(height: 32),
+                        const Divider(height: 32),
+                      ],
                       Builder(
                         builder: (context) {
                           final themeMode = ref.watch(themeProvider);
