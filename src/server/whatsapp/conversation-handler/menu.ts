@@ -67,8 +67,8 @@ export async function safeGetCakes(): Promise<Cake[]> {
           // Ensure image is a valid URL or placeholder
           image: (dbCake.image && String(dbCake.image).trim().length > 0)
             ? (String(dbCake.image).startsWith('http')
-              ? dbCake.image
-              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
+              ? dbCake.image.replace(/\.webp$/i, '.png')
+              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`.replace(/\.webp$/i, '.png'))
             : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
         } as unknown as Cake;
       })
@@ -167,8 +167,8 @@ export async function safeGetTopSellers(): Promise<Cake[]> {
           category: effectiveCategory,
           image: (dbCake.image && String(dbCake.image).trim().length > 0)
             ? (String(dbCake.image).startsWith('http')
-              ? dbCake.image
-              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`)
+              ? dbCake.image.replace(/\.webp$/i, '.png')
+              : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${dbCake.image}`.replace(/\.webp$/i, '.png'))
             : "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/placeholder.png"
         } as unknown as Cake;
       });

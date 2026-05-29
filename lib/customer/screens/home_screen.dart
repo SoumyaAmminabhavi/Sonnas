@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import '../../services/supabase_service.dart';
 import 'dart:async';
+import '../../widgets/performance_loader.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(String?) onViewMenu;
@@ -303,7 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: 100,
               child: _isLoadingCategories
-                  ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                  ? const Center(child: PerformanceLoader(color: primaryColor))
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -336,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_isLoading)
               const SizedBox(
                 height: 240,
-                child: Center(child: CircularProgressIndicator(color: primaryColor)),
+                child: Center(child: PerformanceLoader(color: primaryColor)),
               )
             else if (featuredCakes.isEmpty)
               const SizedBox(
