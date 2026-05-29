@@ -1115,7 +1115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 32),
                   Center(
                     child: Text(
-                      "SONNA'S PATISSERIE V2.4.0",
+                      "Sonnas V2.4.0",
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,

@@ -1,4 +1,4 @@
-package com.example.app
+package com.sonnas.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

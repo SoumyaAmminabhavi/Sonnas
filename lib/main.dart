@@ -99,7 +99,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeProvider);
     return MaterialApp(
-      title: "Sonna's Patisserie & Cafe",
+      title: "Sonnas",
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
       builder: (context, child) => ConnectivityBanner(child: child!),

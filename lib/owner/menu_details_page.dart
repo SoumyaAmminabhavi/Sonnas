@@ -123,7 +123,7 @@ class MenuDetailsPage extends ConsumerWidget {
                   onPressed: () => Navigator.pop(context),
                 ),
                 title: Text(
-                  isDesktop ? "Sonna's Patisserie & Cafe" : "Menu Details",
+                  isDesktop ? "Sonnas" : "Menu Details",
                   style: GoogleFonts.notoSerif(
                     color: cs.primary,
                     fontStyle: isDesktop ? FontStyle.italic : FontStyle.normal,

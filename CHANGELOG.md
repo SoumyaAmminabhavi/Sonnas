@@ -53,7 +53,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Completed `completedAt` column added to Supabase Order table.
 - WhatsApp settings unified into single page.
 - Staff profile self-editing with form validation and blood group dropdown.
-- App label set to "Sonna's Patisserie & Cafe" on Android and iOS.
+- App label set to "Sonnas" on Android and iOS.
 - Dine N Dash branding replaced with Sonna's in `web/index.html`.
 - Duplicate viewport meta tag removed from `web/index.html`.
 

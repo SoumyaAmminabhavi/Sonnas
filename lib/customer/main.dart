@@ -232,7 +232,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
             ),
             centerTitle: true,
             title: Text(
-              "Sonna's Patisserie",
+              "Sonnas",
               style: GoogleFonts.notoSerif(
                 fontSize: 24,
                 fontWeight: FontWeight.w400,

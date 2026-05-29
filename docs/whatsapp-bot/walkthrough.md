@@ -1,6 +1,6 @@
 # WhatsApp Bot Optimization & Documentation Walkthrough
 
-We have completed a major stabilization and professionalization of the Sonna's Patisserie WhatsApp bot. The system is now more reliable, easier to maintain, and provides a better user experience for customers.
+We have completed a major stabilization and professionalization of the Sonnas WhatsApp bot. The system is now more reliable, easier to maintain, and provides a better user experience for customers.
 
 ## 1. Technical Documentation 📚
 We created a dedicated `docs/whatsapp-bot/` folder containing high-level technical documentation for future developers:

@@ -88,7 +88,7 @@ class ReportService {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("Sonnas", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
                   pw.Text("Sales Report", style: pw.TextStyle(fontSize: 18)),
                 ],
               ),
@@ -221,7 +221,7 @@ class ReportService {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("Sonnas", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
                   pw.Text("Expense Report", style: pw.TextStyle(fontSize: 18)),
                 ],
               ),

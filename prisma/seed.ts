@@ -101,8 +101,8 @@ async function main() {
     data: {
       templateId: welcomeTemplate.id,
       versionNumber: 1,
-      headerText: "Sonna's Patisserie",
-      bodyText: "Hi {{customer_name}}! ✨\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart",
+      headerText: "Sonnas",
+      bodyText: "Hi {{customer_name}}! ✨\n\nWelcome to *Sonnas*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart",
       mediaUrl: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/menu_compressed.pdf",
       mediaType: "DOCUMENT",
       footerText: "Our Menu",

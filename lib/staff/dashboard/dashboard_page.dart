@@ -118,7 +118,7 @@ class _StaffDashboardState extends State<StaffDashboard> {
           },
         ),
         title: Text(
-          "Sonna's Patisserie & Cafe",
+          "Sonnas",
           style: GoogleFonts.notoSerif(
             color: cs.primary,
             fontStyle: FontStyle.italic,

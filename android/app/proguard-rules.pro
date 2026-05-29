@@ -10,3 +10,6 @@
 -keep class com.razorpay.** { *; }
 -keep class de.greenrobot.** { *; }
 -dontwarn com.razorpay.**
+
+# Google Play Core (Flutter Deferred Components)
+-dontwarn com.google.android.play.core.**

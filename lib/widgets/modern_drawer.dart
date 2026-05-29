@@ -165,7 +165,7 @@ class _ModernDrawerState extends ConsumerState<ModernDrawer> {
                 children: [
                   Expanded(
                     child: Text(
-                      "Sonna's Patisserie & Cafe",
+                      "Sonnas",
                       style: GoogleFonts.notoSerif(
                         color: cs.primary,
                         fontSize: 18,

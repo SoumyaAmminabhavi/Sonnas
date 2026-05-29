@@ -164,7 +164,7 @@ class _AddStaffPageState extends State<AddStaffPage> {
                       onPressed: _isSaving ? null : () => Navigator.pop(context),
                     ),
                     title: Text(
-                      "Sonna's Patisserie & Cafe",
+                      "Sonnas",
                       style: GoogleFonts.notoSerif(
                         color: cs.primary,
                         fontStyle: FontStyle.italic,

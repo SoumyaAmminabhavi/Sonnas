@@ -42,7 +42,7 @@ export async function handleIncomingMessage(msg: IncomingMessage) {
       ].includes(normalizedText ?? "") || msg.interactiveId === "btn_status";
 
       if (await isBotPaused() && !isStatusRequest) {
-        const maintenanceMessage = await getWhatsAppSetting("MAINTENANCE_MESSAGE", "🌸 *Sonna's Patisserie is currently resting.*\n\nOur artisan kitchen is taking a short break to prepare for upcoming collections. We'll be back shortly to delight you! ✨\n\n_If you have an existing order, don't worry — our team is still working on it!_");
+        const maintenanceMessage = await getWhatsAppSetting("MAINTENANCE_MESSAGE", "🌸 *Sonnas is currently resting.*\n\nOur artisan kitchen is taking a short break to prepare for upcoming collections. We'll be back shortly to delight you! ✨\n\n_If you have an existing order, don't worry — our team is still working on it!_");
         await sendTextMessage(
           msg.from,
           maintenanceMessage

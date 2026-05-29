@@ -129,7 +129,7 @@ class OrderCardReactive extends ConsumerWidget {
 
             await OrderService.launchWhatsApp(
               customerPhone, 
-              "Hi $customerName, this is Sonna's Patisserie. Your order #$orderId ($cakeName) is ready for you!"
+              "Hi $customerName, this is Sonnas. Your order #$orderId ($cakeName) is ready for you!"
             );
           },
           onTabChanged: onTabChanged,

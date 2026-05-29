@@ -46,7 +46,7 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   String get mapsUrl {
-    final name = _settings['bakery_name'] ?? "Sonna's Patisserie and Cafe";
+    final name = _settings['bakery_name'] ?? "Sonnas and Cafe";
     final addr = _settings['address'] ?? "Akshay Colony";
     return "https://maps.google.com/?q=${Uri.encodeComponent('$name $addr')}";
   }
@@ -339,7 +339,7 @@ class _ContactScreenState extends State<ContactScreen> {
             const SizedBox(height: 60),
              Center(
               child: Text(
-                "${_settings['bakery_name'] ?? "Sonna's Patisserie"} Support\nAvailable 9 AM - 9 PM",
+                "${_settings['bakery_name'] ?? "Sonnas"} Support\nAvailable 9 AM - 9 PM",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(fontSize: 12, color: secondaryColor.withValues(alpha: 0.4)),
               ),
@@ -489,7 +489,7 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Widget _buildVisitSection() {
-    final bakeryName = _settings['bakery_name'] ?? "Sonna's Patisserie and Cafe";
+    final bakeryName = _settings['bakery_name'] ?? "Sonnas and Cafe";
     final addressVal = _settings['address'] ?? "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Apartment, Akshay Colony, Unkal, Hubballi, Karnataka 580021";
     final timingsVal = _settings['visit_timings'] ?? "Mon, Wed-Sat: 2:00 PM – 10:00 PM\nSun: 2:00 PM – 10:30 PM\nTue: Closed";
     final phoneVal = _settings['contact_phone'] ?? "+91 91132 31424";

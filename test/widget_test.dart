@@ -10,7 +10,7 @@ void main() {
     ));
 
     // Verify that the title and description are present
-    expect(find.text("Sonna's Patisserie"), findsOneWidget);
+    expect(find.text("Sonnas"), findsOneWidget);
     expect(find.text("Cakes & desserts"), findsOneWidget);
 
     // Verify the buttons are rendered

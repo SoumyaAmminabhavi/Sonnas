@@ -827,7 +827,7 @@ class AddMenuPage extends StatelessWidget {
             ),
             title: Text(
               isDesktop
-                  ? "Sonna's Patisserie & Cafe"
+                  ? "Sonnas"
                   : (cakeData != null ? "Edit Item" : "New Menu Item"),
               style: GoogleFonts.notoSerif(
                 color: cs.primary,
