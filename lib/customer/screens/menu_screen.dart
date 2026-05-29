@@ -100,20 +100,7 @@ class _MenuScreenState extends State<MenuScreen> {
             }
 
             final String imageName = (cake['image'] as String?) ?? '';
-            String imageUrl = '';
-
-            if (imageName.startsWith('http')) {
-              imageUrl = imageName;
-            } else if (imageName.isNotEmpty) {
-              // 1. Fix bucket name to 'cakes'
-              // 2. Fix 'pngpng' typo if it exists in the DB
-              final cleanPath = imageName
-                .replaceFirst('cakes/', '')
-                .replaceFirst('/cakes/', '')
-                .replaceAll('.pngpng', '.png'); 
-                
-              imageUrl = Supabase.instance.client.storage.from('cakes').getPublicUrl(cleanPath);
-            }
+            String imageUrl = SupabaseService.getPublicUrl(imageName, bucket: 'cakes');
 
             // If we still don't have a valid URL or it's empty, use a unique Unsplash fallback
             if (imageUrl.isEmpty || imageUrl.contains('null')) {

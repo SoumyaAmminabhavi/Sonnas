@@ -183,9 +183,7 @@ class StaffOrderCard extends StatelessWidget {
       );
     }
 
-    final resolvedUrl = (imageUrl.startsWith('http') || imageUrl.startsWith('data:') || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://'))
-        ? imageUrl
-        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+    final resolvedUrl = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
 
     if (imageUrl.startsWith('data:')) {
       try {

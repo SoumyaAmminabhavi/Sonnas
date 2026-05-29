@@ -13,16 +13,27 @@ Future<Uint8List> convertToWebP(Uint8List bytes, String fileName) async {
     await img.onLoad.first.timeout(const Duration(seconds: 10));
     html.Url.revokeObjectUrl(img.src!);
 
+    final int width = img.naturalWidth;
+    final int height = img.naturalHeight;
+    if (width == 0 || height == 0) {
+      html.window.console.warn('Image loaded but natural dimensions are 0');
+      return bytes;
+    }
+
     final canvas = html.CanvasElement()
-      ..width = img.width!
-      ..height = img.height!;
+      ..width = width
+      ..height = height;
     canvas.context2D.drawImage(img, 0, 0);
 
-    final dataUrl = (canvas as dynamic).toDataURL('image/webp') as String;
-    if (!dataUrl.startsWith('data:image/webp')) return bytes;
+    final dataUrl = canvas.toDataUrl('image/webp');
+    if (!dataUrl.startsWith('data:image/webp')) {
+      html.window.console.warn('Canvas toDataURL returned non-webp data url');
+      return bytes;
+    }
 
     return base64Decode(dataUrl.split(',').last);
-  } catch (_) {
+  } catch (e) {
+    html.window.console.error('WebP conversion failed: $e');
     return bytes;
   }
 }

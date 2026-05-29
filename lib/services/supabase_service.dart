@@ -86,21 +86,28 @@ class SupabaseService {
     }
   }
 
-  /// Unified helper to get public URL for a file in Supabase storage
-  /// Note: Resize parameters (width/height) are not supported on Supabase Free Tier.
   static String getPublicUrl(String? path, {required String bucket, int? width, int? height}) {
     // 1. Path guards first
     if (path == null || path.isEmpty || path == 'cake_placeholder.png') return '';
-    if (path.startsWith('http')) return path;
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
+    if (path.startsWith('data:')) return path;
+
+    // Convert any png/jpg/jpeg extension (with or without query parameters) to webp,
+    // unless the file is a newly uploaded image (starts with 'cmp57z')
+    String cleanPath = path;
+    final lastSegment = path.split('/').last;
+    if (!lastSegment.startsWith('cmp57z')) {
+      cleanPath = path.replaceAll(RegExp(r'\.(png|jpg|jpeg)(\?.*)?$', caseSensitive: false), '.webp');
+    }
 
     // 2. Validation
     if (width != null || height != null) {
       throw UnsupportedError('Image resize parameters (width/height) are no longer supported on Supabase Free Tier. Remove them from the call.');
     }
     
+    if (cleanPath.startsWith('http')) return cleanPath;
+    
     // 3. Sanitize path: strip leading bucket names or extra slashes if present
-    String cleanPath = path;
     if (cleanPath.startsWith('/$bucket/')) {
       cleanPath = cleanPath.replaceFirst('/$bucket/', '');
     } else if (cleanPath.startsWith('$bucket/')) {
