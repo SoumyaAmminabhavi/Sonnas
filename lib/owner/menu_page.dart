@@ -12,6 +12,7 @@ import '../services/order_service.dart';
 import '../services/menu_service.dart';
 import '../services/dashboard_provider.dart';
 import '../services/constants.dart';
+import '../services/image_conversion.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
 
@@ -1024,28 +1025,22 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       // 2. Upload new image if selected
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
-        String extension = _selectedImage!.name.split('.').last.toLowerCase();
-        
-        final fileName = '$finalCakeId.$extension';
-        
-        // Fix: Use the canonical path returned by uploadImage
+        final convertedBytes = await convertToWebP(bytes, _selectedImage!.name);
+        final isWebp = convertedBytes != bytes;
+        final fileName = '$finalCakeId.${isWebp ? 'webp' : _selectedImage!.name.split('.').last.toLowerCase()}';
+
         final uploadedPath = await SupabaseService.uploadImage(
-          bucket: 'cakes',
-          path: fileName,
-          file: bytes,
+          bucket: 'cakes', path: fileName, file: convertedBytes,
         );
-        
         if (uploadedPath == null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to upload image. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
+            const SnackBar(content: Text('Failed to upload image. Please try again.'), backgroundColor: Colors.red),
           );
           setState(() => _isUploading = false);
           return;
         }
+
         imagePath = uploadedPath;
       }
 

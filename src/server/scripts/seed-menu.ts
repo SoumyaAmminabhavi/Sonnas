@@ -95,8 +95,8 @@ async function main() {
             "strawberry--vanilla",
             "panipuri"
           ].includes(slug)
-            ? `/cakes/${slug}.png`
-            : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
+            ? `/cakes/${slug}.webp`
+            : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.webp`,
         },
         create: {
           name: cakeData.name,
@@ -114,8 +114,8 @@ async function main() {
             "strawberry--vanilla",
             "panipuri"
           ].includes(slug)
-            ? `/cakes/${slug}.png`
-            : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.png`,
+            ? `/cakes/${slug}.webp`
+            : `https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/${slug}.webp`,
           categoryId: category.id,
           options: {
             create: cakeData.options,

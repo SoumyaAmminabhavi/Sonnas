@@ -1,14 +1,24 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-import 'package:csv/csv.dart';
+import 'package:pdf/pdf.dart' deferred as pdf_lib;
+import 'package:pdf/widgets.dart' deferred as pw;
+import 'package:printing/printing.dart' deferred as printing_lib;
+import 'package:csv/csv.dart' deferred as csv_lib;
 import 'package:intl/intl.dart';
 import 'constants.dart';
 
 class ReportService {
+  static Future<void> _ensureDeferred() async {
+    await Future.wait([
+      pdf_lib.loadLibrary(),
+      pw.loadLibrary(),
+      printing_lib.loadLibrary(),
+      csv_lib.loadLibrary(),
+    ]);
+  }
+
   static Future<void> downloadCSV(List<Map<String, dynamic>> orders, double totalRevenue, int totalOrders) async {
+    await _ensureDeferred();
     List<List<dynamic>> rows = [];
     
     // Header
@@ -40,12 +50,12 @@ class ReportService {
     rows.add(["Total Orders", totalOrders]);
     rows.add(["Total Revenue", totalRevenue]);
     
-    String csv = const ListToCsvConverter().convert(rows);
+    String csv = csv_lib.ListToCsvConverter().convert(rows);
     
     // Add UTF-8 BOM so Excel opens it with correct encoding
     final bytes = [0xEF, 0xBB, 0xBF, ...utf8.encode(csv)];
     
-    await Printing.sharePdf(
+    await printing_lib.Printing.sharePdf(
       bytes: Uint8List.fromList(bytes),
       filename: 'sonna_sales_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv',
     );
@@ -58,17 +68,18 @@ class ReportService {
     double avgOrder,
     Map<String, double> categorySales,
   ) async {
+    await _ensureDeferred();
     try {
       final pdf = pw.Document();
       
       pdf.addPage(
         pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
+          pageFormat: pdf_lib.PdfPageFormat.a4,
           footer: (context) => pw.Align(
             alignment: pw.Alignment.centerRight,
             child: pw.Text(
               "Page ${context.pageNumber} of ${context.pagesCount}",
-              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+              style: pw.TextStyle(fontSize: 10, color: pdf_lib.PdfColors.grey),
             ),
           ),
           build: (context) => [
@@ -78,7 +89,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                  pw.Text("Sales Report", style: const pw.TextStyle(fontSize: 18)),
+                  pw.Text("Sales Report", style: pw.TextStyle(fontSize: 18)),
                 ],
               ),
             ),
@@ -106,7 +117,7 @@ class ReportService {
             pw.Text("Category Performance", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
             pw.Divider(),
             ...categorySales.entries.map((e) => pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 4),
+              padding: pw.EdgeInsets.symmetric(vertical: 4),
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -135,7 +146,7 @@ class ReportService {
       );
 
       final pdfBytes = await pdf.save();
-      await Printing.sharePdf(
+      await printing_lib.Printing.sharePdf(
         bytes: pdfBytes,
         filename: 'sonna_sales_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
       );
@@ -147,6 +158,8 @@ class ReportService {
   }
 
   static Future<void> downloadExpenseCSV(List<Map<String, dynamic>> expenses, double totalExpenses) async {
+    await _ensureDeferred();
+    
     List<List<dynamic>> rows = [];
     
     // Header
@@ -174,10 +187,10 @@ class ReportService {
     rows.add(["SUMMARY"]);
     rows.add(["Total Expenses", totalExpenses]);
     
-    String csv = const ListToCsvConverter().convert(rows);
+    String csv = csv_lib.ListToCsvConverter().convert(rows);
     final bytes = [0xEF, 0xBB, 0xBF, ...utf8.encode(csv)];
     
-    await Printing.sharePdf(
+    await printing_lib.Printing.sharePdf(
       bytes: Uint8List.fromList(bytes),
       filename: 'sonna_expense_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv',
     );
@@ -188,17 +201,18 @@ class ReportService {
     double totalExpenses,
     Map<String, double> categoryBreakdown,
   ) async {
+    await _ensureDeferred();
     try {
       final pdf = pw.Document();
       
       pdf.addPage(
         pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
+          pageFormat: pdf_lib.PdfPageFormat.a4,
           footer: (context) => pw.Align(
             alignment: pw.Alignment.centerRight,
             child: pw.Text(
               "Page ${context.pageNumber} of ${context.pagesCount}",
-              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey),
+              style: pw.TextStyle(fontSize: 10, color: pdf_lib.PdfColors.grey),
             ),
           ),
           build: (context) => [
@@ -208,7 +222,7 @@ class ReportService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text("Sonna's Patisserie & Cafe", style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                  pw.Text("Expense Report", style: const pw.TextStyle(fontSize: 18)),
+                  pw.Text("Expense Report", style: pw.TextStyle(fontSize: 18)),
                 ],
               ),
             ),
@@ -224,7 +238,7 @@ class ReportService {
             pw.Text("Category Breakdown", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
             pw.Divider(),
             ...categoryBreakdown.entries.map((e) => pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(vertical: 4),
+              padding: pw.EdgeInsets.symmetric(vertical: 4),
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
@@ -254,7 +268,7 @@ class ReportService {
       );
 
       final pdfBytes = await pdf.save();
-      await Printing.sharePdf(
+      await printing_lib.Printing.sharePdf(
         bytes: pdfBytes,
         filename: 'sonna_expense_report_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
       );

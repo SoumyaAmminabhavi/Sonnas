@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
@@ -15,6 +16,7 @@ import 'services/supabase_service.dart';
 import 'widgets/landing_page.dart';
 import 'widgets/modern_drawer.dart';
 import 'widgets/glass_bottom_nav.dart';
+import 'widgets/connectivity_banner.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/cart_provider.dart' as service_cart;
@@ -29,8 +31,18 @@ class ThemeNotifier extends Notifier<ThemeMode> {
 }
 
 void main() async {
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('❌ Flutter Error: ${details.exception}');
+  };
+  ui.PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('❌ Unhandled Error: $error\n$stack');
+    return true;
+  };
+
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    
     
     try {
       await dotenv.load(fileName: ".env");
@@ -90,6 +102,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
       title: "Sonna's Patisserie & Cafe",
       debugShowCheckedModeBanner: false,
       themeMode: themeMode,
+      builder: (context, child) => ConnectivityBanner(child: child!),
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: const ColorScheme.light(
