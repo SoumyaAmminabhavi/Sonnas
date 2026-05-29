@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
 import 'package:google_fonts/google_fonts.dart';
@@ -44,10 +45,12 @@ void main() async {
     WidgetsFlutterBinding.ensureInitialized();
     
     
-    try {
-      await dotenv.load(fileName: ".env");
-    } catch (e) {
-      debugPrint('⚠️ .env file not found — using --dart-define values for production build');
+    if (!kReleaseMode) {
+      try {
+        await dotenv.load(fileName: ".env");
+      } catch (e) {
+        debugPrint('⚠️ .env file not found — using --dart-define values for production build');
+      }
     }
     
     await SupabaseService.initialize();
