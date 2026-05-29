@@ -112,20 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
               price = "₹ ${numericPrice.toStringAsFixed(2)}";
             }
 
-            // Robust image URL generation
+            // Robust image URL generation using shared helper
             final String imageName = (cake['image'] as String?) ?? '';
-            String imageUrl = '';
-
-            if (imageName.startsWith('http')) {
-              imageUrl = imageName;
-            } else if (imageName.isNotEmpty) {
-              final cleanPath = imageName
-                  .replaceFirst('cakes/', '')
-                  .replaceFirst('/cakes/', '')
-                  .replaceAll('.pngpng', '.png');
-              
-              imageUrl = supabase.storage.from('cakes').getPublicUrl(cleanPath);
-            }
+            String imageUrl = SupabaseService.getPublicUrl(imageName, bucket: 'cakes');
 
             // Fallback for missing or broken images
             if (imageUrl.isEmpty || imageUrl.contains('null')) {

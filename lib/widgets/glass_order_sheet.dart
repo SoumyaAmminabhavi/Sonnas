@@ -291,9 +291,7 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
             child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
           );
         } else {
-          final resolvedUrl = (displayImageUrl.startsWith('http://') || displayImageUrl.startsWith('https://'))
-              ? displayImageUrl
-              : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
+          final resolvedUrl = SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
           imageWidget = ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: CachedNetworkImage(

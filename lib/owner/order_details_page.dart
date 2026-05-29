@@ -340,7 +340,6 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                         final decodedCustom = decodeDataUrlToBytes(rawCustomUrl);
                                                         final resolvedCustomUrl = decodedCustom.url;
                                                         final resolvedCustomBytes = decodedCustom.imageBytes;
-                                                        bool isCustomUrl = false;
                                                         if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
                                                             (resolvedCustomUrl != null || resolvedCustomBytes != null)) {
                                                           if (resolvedCustomBytes != null) {
@@ -348,15 +347,10 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                           } else {
                                                             displayImageUrl = resolvedCustomUrl!;
                                                           }
-                                                          isCustomUrl = true;
                                                         }
 
                                                         final finalImageUrl = (displayImageBytes == null && displayImageUrl.isNotEmpty)
-                                                            ? ((isCustomUrl ||
-                                                                    displayImageUrl.startsWith('http') ||
-                                                                    displayImageUrl.startsWith('data:'))
-                                                                ? displayImageUrl
-                                                                : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
+                                                            ? SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes')
                                                             : '';
 
                                                         final bool isCustomItem = cakeName.toUpperCase().contains('CUSTOM') || (double.tryParse(item['price']?.toString() ?? '0') ?? 0.0) == 0;
@@ -560,10 +554,8 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
       return (url: null, imageBytes: null);
     }
 
-    final url = lower.startsWith('http')
-        ? trimmed
-        : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
-    return (url: url, imageBytes: null);
+    final url = SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
+    return (url: url.isEmpty ? null : url, imageBytes: null);
   }
 
   Widget _buildViewImageButton(ColorScheme cs, Map<String, dynamic> order, dynamic conversation) {
