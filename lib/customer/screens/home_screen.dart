@@ -104,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           final allCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
             final options = cake['options'] as List?;
-            debugPrint("DEBUG: Cake ${cake['name']} has ${options?.length ?? 0} options");
             
             String price = "₹ 0.00";
             if (options != null && options.isNotEmpty) {
@@ -269,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          "Sonna's Patisserie",
+                          "Sonnas",
                           style: GoogleFonts.notoSerif(
                             fontSize: 40,
                             color: const Color(0xFFFF4D8D),

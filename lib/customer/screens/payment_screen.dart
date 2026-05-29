@@ -98,7 +98,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final options = {
       'key': dotenv.get('RAZORPAY_KEY_ID', fallback: 'rzp_test_SlapcQRITI3KNO'),
       'amount': amountInPaise,
-      'name': "Sonna's Patisserie",
+      'name': "Sonnas",
       'description': 'Order Payment',
       'retry': {'enabled': true, 'max_count': 1},
       'send_sms_hash': true,
@@ -331,7 +331,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
                 ),
                 title: Text(
-                  "Sonna's Patisserie",
+                  "Sonnas",
                   style: GoogleFonts.notoSerif(
                     color: primaryColor,
                     fontSize: 20,

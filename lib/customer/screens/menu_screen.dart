@@ -123,8 +123,6 @@ class _MenuScreenState extends State<MenuScreen> {
               imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
             }
 
-            debugPrint('DEBUG: Cake: ${cake['name']}, Image Path: $imageName, Generated URL: $imageUrl');
-
             // Extract category name from relation
             final catObj = cake['category'];
             final String catName = (catObj is Map) ? (catObj['name'] ?? 'General') : 'General';

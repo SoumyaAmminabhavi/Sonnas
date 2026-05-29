@@ -335,7 +335,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
               icon: Icon(Icons.arrow_back, color: cs.primary),
               onPressed: () => Navigator.pop(context),
             ),
-            title: isDesktop ? Text("Sonna's Patisserie & Cafe", style: GoogleFonts.notoSerif(color: cs.primary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600, letterSpacing: -0.5)) : Column(
+            title: isDesktop ? Text("Sonnas", style: GoogleFonts.notoSerif(color: cs.primary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600, letterSpacing: -0.5)) : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(widget.staff == null ? "Add New Staff" : "Edit Staff Profile", style: GoogleFonts.notoSerif(color: cs.primary, fontSize: 18, fontWeight: FontWeight.bold)),

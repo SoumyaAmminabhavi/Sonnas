@@ -146,7 +146,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     title: Text(
-                      isDesktop ? "Sonna's Patisserie & Cafe" : "Order Details",
+                      isDesktop ? "Sonnas" : "Order Details",
                       style: GoogleFonts.notoSerif(
                         color: isDesktop
                             ? const Color.fromARGB(255, 146, 6, 53)
@@ -522,7 +522,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                    : 'your order';
                                                await OrderService.launchWhatsApp(
                                                  phone,
-                                                 "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding $orderRef ($cake).",
+                                                 "Hi $name, this is Sonnas. I'm contacting you regarding $orderRef ($cake).",
                                                );
                                             },
                                           ),
@@ -855,7 +855,7 @@ class _SlimProgressIndicator extends StatelessWidget {
     } else if (normalizedStatus == 'COMPLETED') {
       progress = 1.0;
       statusText = "COMPLETED";
-      poeticNote = "The order is complete. Thank you for choosing Sonna's Patisserie.";
+      poeticNote = "The order is complete. Thank you for choosing Sonnas.";
     } else if (normalizedStatus == 'CANCELLED') {
       progress = 0.0;
       statusText = "CANCELLED";

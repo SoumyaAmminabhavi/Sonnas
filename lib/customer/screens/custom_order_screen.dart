@@ -133,7 +133,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             ),
             centerTitle: true,
             title: Text(
-              "Sonna’s Patisserie",
+              "Sonnas",
               style: GoogleFonts.notoSerif(
                 color: primaryColor,
                 fontSize: 22,
@@ -511,7 +511,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    "© 2024 Sonna's Patisserie. Crafted for Sensory Delight.",
+                    "© 2024 Sonnas. Crafted for Sensory Delight.",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,

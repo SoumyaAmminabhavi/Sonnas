@@ -208,7 +208,7 @@ export async function sendWelcome(to: string, name?: string) {
       const context = { customer_name: customerName };
 
       const bodyText = compileTemplate(activeVersion.bodyText, context);
-      const headerText = activeVersion.headerText ? compileTemplate(activeVersion.headerText, context) : "Sonna's Patisserie";
+      const headerText = activeVersion.headerText ? compileTemplate(activeVersion.headerText, context) : "Sonnas";
       const footerText = activeVersion.footerText ? compileTemplate(activeVersion.footerText, context) : undefined;
 
       // Sort listSections explicitly in code to guarantee the required sequence:
@@ -294,8 +294,8 @@ export async function sendWelcome(to: string, name?: string) {
 
   await sendInteractiveList(
     to,
-    "Sonna's Patisserie",
-    `${greeting}\n\nWelcome to *Sonna's Patisserie*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart`,
+    "Sonnas",
+    `${greeting}\n\nWelcome to *Sonnas*\n_Where every dessert is a handcrafted masterpiece._\n\nHow can we delight you today? 🌸\n\n💡 *Quick Tips:*\n• Send *Menu* to browse all categories and items\n• Send *Status* to see order history\n• Send *Cancel* or *Restart* to clear your cart`,
     "View Menu",
     [
       {

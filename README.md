@@ -1,6 +1,6 @@
-# Sonna's Patisserie & Cafe 🍰✨
+# Sonnas 🍰✨
 
-Welcome to the unified workspace repository for **Sonna's Patisserie & Cafe** — a luxury artisan bakery. This repository co-locates two main components in a streamlined monorepo setup, sharing a unified database schema:
+Welcome to the unified workspace repository for **Sonnas** — a luxury artisan bakery. This repository co-locates two main components in a streamlined monorepo setup, sharing a unified database schema:
 
 1.  **Web Admin Portal & WhatsApp Order Bot Backend** (Next.js · Tailwind v4 · Prisma ^6.6.0 · tRPC · Node.js)
 2.  **Mobile & Desktop Application** (Flutter · Riverpod · Material 3 · Supabase SDK)
@@ -150,5 +150,5 @@ This project utilizes Prisma to define its schemas. To prevent conflicts between
 
 ---
 
-*Made with ❤️ for Sonna's Patisserie & Cafe*
+*Made with ❤️ for Sonnas*
 

@@ -18,7 +18,7 @@ const inter = Inter({
 
 // Deployment pulse: Multi-item cart system v1.1
 export const metadata: Metadata = {
-  title: "SONNA'S PATISSERIE & CAFE | Luxury French Desserts",
+  title: "Sonnas | Luxury French Desserts",
   description: "Experience the finest luxury French patisserie and cakes, crafted with love and baked to perfection.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

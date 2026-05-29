@@ -90,7 +90,7 @@
 - Offline connectivity banner in `MaterialApp.builder`.
 
 ### 6.3 Android/iOS app label ✅
-- Set to "Sonna's Patisserie & Cafe".
+- Set to "Sonnas".
 
 ### 6.4 Splash screen ✅
 - Branded pink gradient splash in `web/index.html` (auto-fades).

@@ -1,6 +1,6 @@
 # Comprehensive UML Documentation for WhatsApp Bot
 
-This document provides a full suite of UML diagrams describing the structural and behavioral aspects of the Sonna's Patisserie WhatsApp Bot.
+This document provides a full suite of UML diagrams describing the structural and behavioral aspects of the Sonnas WhatsApp Bot.
 
 ---
 

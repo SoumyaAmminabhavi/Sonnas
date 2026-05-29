@@ -31,7 +31,7 @@ export async function createPaymentLink(options: {
       currency: "INR",
       accept_partial: false,
       reference_id: options.orderNumber,
-      description: `Cake Order #${options.orderNumber} from Sonna's Patisserie`,
+      description: `Cake Order #${options.orderNumber} from Sonnas`,
       customer: {
         name: options.name,
         contact: options.phone.replace(/\D/g, ""), // Ensure clean phone number

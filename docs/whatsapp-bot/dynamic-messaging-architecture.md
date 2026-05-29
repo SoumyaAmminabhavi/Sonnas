@@ -1,5 +1,5 @@
 # Production-Grade Dynamic Messaging Architecture
-## Sonna's Patisserie & Cafe — WhatsApp Ordering Bot
+## Sonnas — WhatsApp Ordering Bot
 
 This document outlines the architectural blueprint, database schema, caching strategy, and integration guide for transitioning from hardcoded strings to a **fully database-driven, dynamic WhatsApp template management engine**. This architecture is designed like a production-grade scalable SaaS platform, allowing non-technical admins to edit any template, button, interactive list, or media resource directly from an admin panel without modifying a single line of codebase.
 
@@ -219,7 +219,7 @@ enum SectionDataSource {
 
 ## 3. Recommended Structure for Storing Message Types
 
-This structure categorizes and models all different styles of messages required by Sonna’s Patisserie:
+This structure categorizes and models all different styles of messages required by Sonnas:
 
 | Template Code | Category | Message Style | Dynamic Components / Context Variables |
 | :--- | :--- | :--- | :--- |
@@ -253,7 +253,7 @@ This structure categorizes and models all different styles of messages required 
 
 ### 4.2 Dynamic Placeholder Compiler Engine
 Admins should write clear templates like:
-> *"Hi {{customer_name}}! 🧁 Welcome to Sonna's Patisserie. Your order {{order_number}} is confirmed. Total: {{total_amount}}."*
+> *"Hi {{customer_name}}! 🧁 Welcome to Sonnas. Your order {{order_number}} is confirmed. Total: {{total_amount}}."*
 
 The compiler compiles these templates at runtime. We use a high-performance regex compiler with specific sanitization rules:
 
@@ -340,7 +340,7 @@ export async function sendWelcome(to: string, name?: string) {
   
   if (!template || !template.activeVersion) {
     // 2. Resilient Fallback to Hardcoded Text if Database is inaccessible
-    await sendTextMessage(to, `Welcome to Sonna's Patisserie! 🧁\nReply *Menu* to see our cakes.`);
+    await sendTextMessage(to, `Welcome to Sonnas! 🧁\nReply *Menu* to see our cakes.`);
     return;
   }
 
@@ -400,7 +400,7 @@ export async function sendWelcome(to: string, name?: string) {
   // 5. Send Dynamic WhatsApp List
   await sendInteractiveList(
     to,
-    headerText ?? "Sonna's Patisserie",
+    headerText ?? "Sonnas",
     bodyText,
     activeVersion.listButtonTitle ?? "View Options",
     resolvedSections
@@ -448,13 +448,13 @@ Clicking `[Edit]` opens a WYSIWYG side-by-side Live Preview Editor:
 +-----------------------------------------------------------------------------------+
 | EDIT: WELCOME_MESSAGE (English)                                 [Version Log (v4)]|
 +-----------------------------------------------------------------------------------+
-| [ Header Text ]  - e.g., Sonna's Patisserie & Cafe                                |
-| [ Sonna's Patisserie ]                                                            |
+| [ Header Text ]  - e.g., Sonnas                                |
+| [ Sonnas ]                                                            |
 |                                                                                   |
 | [ Body Editor ] (Supports *Bold*, _Italic_, and emojis)                           |
 | +-------------------------------------------------------------------------------+ |
 | | Hi {{customer_name}}! 🌸                                                      | |
-| | Welcome to Sonna's Patisserie! Our master chef has prepared some new          | |
+| | Welcome to Sonnas! Our master chef has prepared some new          | |
 | | luxury cakes for you today.                                                   | |
 | +-------------------------------------------------------------------------------+ |
 | Available variables: {{customer_name}}, {{order_id}}, {{total_amount}}           |

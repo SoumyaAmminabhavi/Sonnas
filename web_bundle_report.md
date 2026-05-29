@@ -1,7 +1,7 @@
 # Web Build Bundle Analysis
 
 **Updated:** 2026-05-29  
-**Build:** `flutter build web --dart-define=FLUTTER_WEB_RENDERER=html --dump-info`  
+**Build:** `flutter build web --dart-define=FLUTTER_WEB_RENDERER=html --no-wasm-dry-run --dump-info`  
 **Flutter:** 3.41.9 (stable)
 
 ---
@@ -12,16 +12,16 @@ Phase 5 (HTML Renderer) completed. ✅
 
 | Metric | Before (Phase 0) | Current | Δ |
 |--------|------------------|---------|---|
-| main.dart.js | 4.97 MB | 4.16 MB | −730 KB (14.7%) |
+| main.dart.js | 4.97 MB | 4.16 MB | −810 KB (16.3%) |
 | Renderer wasm downloads | ~14 MB (canvaskit + skwasm + wimp) | 0 MB (HTML renderer) | −14 MB |
-| Deferred chunks (lazy) | — | 604 KB (loaded on demand) | +604 KB |
+| Deferred chunks (lazy) | — | 606 KB (loaded on demand) | +606 KB |
 | Total runtime transfer | ~19 MB | ~4.8 MB | −14.2 MB |
 
 ## Bundle Files (build/web/)
 
 | File | Size | Notes |
 |------|------|-------|
-| main.dart.js | 4,361 KB | Initial load |
+| main.dart.js | 4,362 KB | Initial load |
 | main.dart.js_1.part.js | 543 KB | Deferred: pdf, archive, bidi |
 | main.dart.js_7.part.js | 73 KB | Deferred: flutter_map |
 | main.dart.js_{2-6}.part.js | 4 KB total | Deferred: overhead chunks |
@@ -35,7 +35,7 @@ Phase 5 (HTML Renderer) completed. ✅
 
 | Category | Size | % of main.dart.js |
 |----------|------|-------------------|
-| flutter (framework) | 1,446 KB | 33.2% |
+| flutter (framework) | 1,445 KB | 33.1% |
 | app (application code) | 706 KB | 16.2% |
 | dart:_engine | 510 KB | 11.7% |
 | fl_chart | 71 KB | 1.6% |
@@ -45,7 +45,7 @@ Phase 5 (HTML Renderer) completed. ✅
 | dart:_js_helper | 42 KB | 1.0% |
 | dart:ui | 33 KB | 0.8% |
 | realtime_client | 33 KB | 0.8% |
-| (remaining 120+ packages) | 403 KB | 9.2% |
+| (remaining 120+ packages) | 404 KB | 9.3% |
 
 ## What's Deferred (not in initial load)
 
@@ -57,7 +57,7 @@ Phase 5 (HTML Renderer) completed. ✅
 ## Key Improvements
 
 1. **HTML renderer**: eliminated ~14 MB of WebAssembly downloads (canvaskit.wasm + skwasm.wasm + wimp.wasm) and ~250ms+ WebAssembly compilation time.
-2. **Deferred imports**: 604 KB of rarely-used code (PDF generation, map rendering) moved out of initial bundle.
+2. **Deferred imports**: 606 KB of rarely-used code (PDF generation, map rendering) moved out of initial bundle.
 3. **Total runtime transfer reduced** from ~19 MB to ~4.8 MB.
 
 ## Before vs After
@@ -70,7 +70,7 @@ Phase 5 (HTML Renderer) completed. ✅
 | 3.5 MB wimp.wasm | 0 MB |
 | PNG images | WebP images |
 | Render-blocking Razorpay script | Lazy-loaded Razorpay |
-| No deferred chunks | 604 KB deferred |
+| No deferred chunks | 606 KB deferred |
 
 ## Remaining Items
 
