@@ -78,7 +78,7 @@ class StaffOrderCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
+          color: cs.surfaceContainer,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: cs.secondary.withValues(alpha: 0.06)),
           boxShadow: [

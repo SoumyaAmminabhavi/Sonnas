@@ -415,21 +415,11 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                                   style: GoogleFonts.plusJakartaSans(
                                     color: cs.primary,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 9,
-                                    letterSpacing: 2.0,
+                                    fontSize: 12,
+                                    letterSpacing: 2.5,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Atelier Collection",
-                                  style: GoogleFonts.notoSerif(
-                                    color: cs.secondary,
-                                    fontSize: 24,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Text(
                                   "${items.length} items cataloged",
                                   style: GoogleFonts.plusJakartaSans(
@@ -1257,22 +1247,22 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                     letterSpacing: 2.0,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   widget.initialData != null ? "Edit Creation" : "Add New Cake",
-                  style: GoogleFonts.notoSerif(
+                  style: GoogleFonts.plusJakartaSans(
                     color: cs.secondary,
-                    fontSize: widget.isDesktop ? 48 : 32,
-                    height: 1.1,
+                    fontSize: widget.isDesktop ? 22 : 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
         const SizedBox(height: 24),
-        Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
-        const SizedBox(height: 48),
 
         Form(
           key: _formKey,

@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.5] - 2026-05-30
+
+### Phase 7: Staff Space Optimization (Clean UI & Spacing)
+
+#### Changed
+- **Unified Staff Headers**: Applied the compact uppercase theme (`fontSize: 12`, `color: cs.primary`, `letterSpacing: 2.5`) to headers and action areas across all staff pages including Dashboard, Inventory, Profile, and Management.
+- **Staff Add / Edit Page**: Standardized nested and non-nested headers using uppercase styling, minimized vertical element spacings from `40` to `20`, and removed duplicate nested back buttons.
+- **Layout Adjustments**: 
+  - Reduced vertical spacing on Staff Dashboard from `48` to `24`, and converted stacked metrics cards into a single horizontal row with responsive padding and text scaling to align with the owner dashboard layout.
+  - Optimized margins and layout dividers on Staff Inventory, Profile, and Management.
+  - Swapped component container backgrounds from `cs.surfaceContainerLow` (pinkish) to `cs.surfaceContainer` (pure white) across all staff views (Dashboard, Kitchen, Orders, Inventory, Profile, Staff List, Add/Edit Pages), matching the owner portal's clean white-on-mild-pink look.
+- **Bug Fixes & Flow Improvements**:
+  - Integrated `PopScope` to intercept system/browser back presses when the nested "Add/Edit Staff" form is active, closing the form overlay cleanly rather than popping the whole application.
+  - Fixed a `RenderFlex` overflow exception (by 13 pixels) in the staff operations overview tabbar header by tightening padding/spacing and adjusting the `PreferredSize` height to `115`.
+
+## [1.0.4] - 2026-05-30
+
+### Phase 6: Owner Space Optimization (Clean UI & Spacing)
+
+#### Changed
+- **Unified Header Theme**: Replaced bulky page headers on owner pages (Sales Reports, Expense Reports, Inventory Analytics, WhatsApp Settings, Orders Page, and Menu Page) with a unified, space-efficient uppercase label theme (`fontSize: 12`, `color: cs.primary`, `letterSpacing: 2.5`).
+- **Layout and Spacing Reductions**:
+  - Tightened vertical layout gaps (reduced spacing from `48` to responsive `32/20`) on the main Dashboard view.
+  - Converted stacked KPI and analytics metrics cards to flat horizontal rows (`Row` with `FittedBox`) to eliminate excessive scrolling on mobile.
+  - Reduced vertical margins on Order Details and Menu Details pages (cutting vertical spacers to `16/24/20`).
+  - Streamlined Edit Menu Item and Add Staff forms (removing redundant subtitle views and decreasing form spacers).
+- **Cleaned Code**: Removed unused widgets (such as the customer reviews section on the dashboard) to solve compiler warnings.
+
 ## [1.0.3] - 2026-05-29
 
 ### Phase 5: HTML Renderer (Eliminate Canvaskit Wasm)

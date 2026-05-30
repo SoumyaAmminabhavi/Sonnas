@@ -1025,7 +1025,7 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
     }
 
     final headerWidget = Container(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
       color: cs.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1037,21 +1037,20 @@ class _WhatsAppSettingsPageState extends State<WhatsAppSettingsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "WhatsApp Notification Engine",
-                      style: GoogleFonts.notoSerif(
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                        fontSize: isMobile ? 18 : 22,
+                      "WHATSAPP ENGINE OVERVIEW",
+                      style: GoogleFonts.plusJakartaSans(
                         color: cs.primary,
-                        height: 1.2,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        letterSpacing: 2.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      "Manage transactional template layouts and dynamic bot responses",
+                      "Manage templates & response actions",
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: isMobile ? 10 : 12,
-                        color: cs.secondary.withValues(alpha: 0.6),
+                        color: cs.secondary.withValues(alpha: 0.4),
+                        fontSize: 12,
                       ),
                     ),
                   ],

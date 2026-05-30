@@ -180,27 +180,13 @@ class _AddStaffPageState extends State<AddStaffPage> {
                       icon: Icon(Icons.arrow_back, color: cs.primary),
                       onPressed: _isSaving ? null : () => Navigator.pop(context),
                     ),
-                    title: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Add New Staff",
-                          style: GoogleFonts.notoSerif(
-                            color: cs.primary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
-                          style: GoogleFonts.plusJakartaSans(
-                            color: cs.secondary.withValues(alpha: 0.6),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ],
+                    title: Text(
+                      widget.isReadOnly ? "Staff Details" : (widget.staff != null ? "Edit Staff" : "Add New Staff"),
+                      style: GoogleFonts.plusJakartaSans(
+                        color: cs.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
             body: Row(
@@ -225,26 +211,24 @@ class _AddStaffPageState extends State<AddStaffPage> {
                         children: [
                           if (isDesktop) ...[
                              Text(
-                               widget.isReadOnly ? "Staff Details" : (widget.staff != null ? "Edit Staff" : "Add New Staff"),
-                               style: GoogleFonts.notoSerif(
-                                 color: cs.primary,
-                                 fontSize: 32,
-                                 fontWeight: FontWeight.bold,
-
-
-                               ),
-                             ),
-                             const SizedBox(height: 8),
-                             Text(
-                               "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
+                               "STAFF MEMBERSHIP",
                                style: GoogleFonts.plusJakartaSans(
-                                 color: cs.secondary.withValues(alpha: 0.6),
-                                 fontSize: 10,
+                                 color: cs.primary,
                                  fontWeight: FontWeight.bold,
-                                 letterSpacing: 1.0,
+                                 fontSize: 12,
+                                 letterSpacing: 2.0,
                                ),
                              ),
-                             const SizedBox(height: 40),
+                             const SizedBox(height: 6),
+                             Text(
+                               widget.isReadOnly ? "Staff Details" : (widget.staff != null ? "Edit Staff" : "Add New Staff"),
+                               style: GoogleFonts.plusJakartaSans(
+                                 color: cs.secondary,
+                                 fontSize: 22,
+                                 fontWeight: FontWeight.bold,
+                               ),
+                             ),
+                             const SizedBox(height: 24),
                           ],
                           _buildBasicInfoSection(cs),
                           const SizedBox(height: 40),

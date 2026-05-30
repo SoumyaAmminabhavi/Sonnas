@@ -266,27 +266,25 @@ class _DashboardContent extends StatelessWidget {
                     color: cs.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    letterSpacing: 2.0,
+                    letterSpacing: 2.5,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  greeting,
-                  style: GoogleFonts.notoSerif(
-                    fontSize: isDesktop ? 48 : 36,
+                  greeting.toUpperCase(),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: isDesktop ? 22 : 18,
+                    fontWeight: FontWeight.bold,
                     color: cs.secondary,
-                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 24),
-                Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
+            const SizedBox(height: 20),
             LayoutBuilder(
               builder: (context, constraints) {
-                final bool useGrid = constraints.maxWidth < 600;
-                
                 // Hide order metrics for cleaning staff
                 if (isCleaning) {
                   return const _MetricCard(
@@ -297,39 +295,42 @@ class _DashboardContent extends StatelessWidget {
                   );
                 }
 
-                if (useGrid) {
-                  return Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: _MetricCard(icon: Icons.bakery_dining_rounded, value: "${allOrders.length}", label: "TOTAL")),
-                          const SizedBox(width: 16),
-                          Expanded(child: _MetricCard(icon: Icons.timer_rounded, value: "${activeOrders.length}", label: "ACTIVE")),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _MetricCard(icon: Icons.task_alt_rounded, value: "$completedOrdersCount", label: "COMPLETED", fullWidth: true),
-                    ],
-                  );
-                }
                 return Row(
                   children: [
-                    Expanded(child: _MetricCard(icon: Icons.bakery_dining_rounded, value: "${allOrders.length}", label: "TOTAL ORDERS")),
-                    const SizedBox(width: 16),
-                    Expanded(child: _MetricCard(icon: Icons.timer_rounded, value: "${activeOrders.length}", label: "ACTIVE")),
-                    const SizedBox(width: 16),
-                    Expanded(child: _MetricCard(icon: Icons.task_alt_rounded, value: "$completedOrdersCount", label: "DONE")),
+                    Expanded(
+                      child: _MetricCard(
+                        icon: Icons.bakery_dining_rounded, 
+                        value: "${allOrders.length}", 
+                        label: isDesktop ? "TOTAL ORDERS" : "TOTAL"
+                      ),
+                    ),
+                    SizedBox(width: isDesktop ? 16 : 8),
+                    Expanded(
+                      child: _MetricCard(
+                        icon: Icons.timer_rounded, 
+                        value: "${activeOrders.length}", 
+                        label: "ACTIVE"
+                      ),
+                    ),
+                    SizedBox(width: isDesktop ? 16 : 8),
+                    Expanded(
+                      child: _MetricCard(
+                        icon: Icons.task_alt_rounded, 
+                        value: "$completedOrdersCount", 
+                        label: isDesktop ? "DONE" : "COMPLETED"
+                      ),
+                    ),
                   ],
                 );
               }
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: 24),
             _TaskSectionHeader(
               title: isCleaning ? "Hygiene Tasks" : "Current Tasks", 
               color: isCleaning ? Colors.green : cs.primary, 
               isPulse: !isCleaning && activeOrders.isNotEmpty
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             if (isCleaning)
               const _MetricCard(
                 icon: Icons.checklist_rtl_rounded, 
@@ -428,21 +429,46 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
     return Container(
       width: fullWidth ? double.infinity : null,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isDesktop ? 20 : 12),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: cs.primary.withValues(alpha: 0.05), blurRadius: 20, offset: const Offset(0, 4))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: cs.primary, size: 20),
-          const SizedBox(height: 12),
-          Text(value, style: GoogleFonts.notoSerif(fontSize: 24, fontWeight: FontWeight.bold, color: cs.secondary)),
-          Text(label, style: GoogleFonts.plusJakartaSans(fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: cs.secondary.withValues(alpha: 0.4))),
+          Icon(icon, color: cs.primary, size: isDesktop ? 20 : 16),
+          SizedBox(height: isDesktop ? 12 : 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value, 
+              style: GoogleFonts.notoSerif(
+                fontSize: isDesktop ? 24 : 20, 
+                fontWeight: FontWeight.bold, 
+                color: cs.secondary
+              )
+            ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label, 
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: isDesktop ? 9 : 8, 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 1.0, 
+                color: cs.secondary.withValues(alpha: 0.4)
+              )
+            ),
+          ),
         ],
       ),
     );
@@ -536,7 +562,7 @@ class _TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.08)),
       ),
@@ -698,20 +724,33 @@ class _OperationsCombinedPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: PreferredSize(
-          preferredSize: Size.fromHeight(isDesktop ? 200 : 180),
+          preferredSize: Size.fromHeight(isDesktop ? 130 : 115),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("ATELIER MANAGEMENT", style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 2.0)),
-                    const SizedBox(height: 8),
-                    Text("Operations", style: GoogleFonts.notoSerif(fontSize: isDesktop ? 48 : 36, color: cs.secondary, height: 1.1)),
-                    const SizedBox(height: 24),
-                    Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
+                    Text(
+                      "ATELIER MANAGEMENT",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                        letterSpacing: 2.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "OPERATIONS OVERVIEW",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: isDesktop ? 22 : 18,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -766,12 +805,43 @@ class _CleaningTasksPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("HYGIENE & MAINTENANCE", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 1.5)),
-          const SizedBox(height: 4),
-          Text("Hygiene Standards", style: GoogleFonts.notoSerif(fontSize: 32, fontWeight: FontWeight.bold, color: cs.secondary)),
+          Text(
+            "HYGIENE & MAINTENANCE",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: cs.primary,
+              letterSpacing: 2.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "HYGIENE STANDARDS",
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: cs.secondary,
+              letterSpacing: 2.0,
+            ),
+          ),
           const SizedBox(height: 8),
-          Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)), child: Text("${shift.toUpperCase()} SHIFT", style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 1.5))),
-          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              "${shift.toUpperCase()} SHIFT",
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: cs.primary,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           ...tasks.map((task) => _TaskItem(task: task, cs: cs)),
         ],
       ),
@@ -795,7 +865,7 @@ class _TaskItemState extends State<_TaskItem> {
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: widget.cs.surfaceContainerLow, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: widget.cs.primary.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 10))], border: isDone ? Border.all(color: Colors.green.withValues(alpha: 0.3)) : null),
+      decoration: BoxDecoration(color: widget.cs.surfaceContainer, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: widget.cs.primary.withValues(alpha: 0.05), blurRadius: 30, offset: const Offset(0, 10))], border: isDone ? Border.all(color: Colors.green.withValues(alpha: 0.3)) : null),
       child: Row(
         children: [
           Checkbox(value: isDone, onChanged: (v) => setState(() => isDone = v ?? false), activeColor: Colors.green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4))),

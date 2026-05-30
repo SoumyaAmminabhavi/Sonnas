@@ -130,22 +130,13 @@ class _SettingsContentState extends ConsumerState<_SettingsContent> {
                     letterSpacing: 2.0,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  "Business Settings",
-                  style: GoogleFonts.notoSerif(
-                    color: cs.secondary,
-                    fontSize: widget.isDesktop ? 48 : 32,
-                    height: 1.1,
-                  ),
-                ),
               ],
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
-        const SizedBox(height: 48),
+        const SizedBox(height: 12),
+        Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
+        SizedBox(height: widget.isDesktop ? 32 : 20),
 
         LayoutBuilder(
           builder: (context, constraints) {

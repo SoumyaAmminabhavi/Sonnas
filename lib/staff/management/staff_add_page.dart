@@ -288,33 +288,42 @@ class _StaffAddPageState extends State<StaffAddPage> {
                 children: [
                   if (widget.isNested) ...[
                     _buildNestedHeader(cs, isDesktop),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
                   ] else if (isDesktop) ...[
                     Text(
-                      widget.isReadOnly ? "Staff Details" : (widget.staff != null ? "Edit Staff" : "Add New Staff"),
-                      style: GoogleFonts.notoSerif(color: cs.primary, fontSize: 32, fontWeight: FontWeight.bold),
+                      "STAFF OPERATIONS",
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                        letterSpacing: 2.5,
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
-                      style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0),
+                      widget.isReadOnly ? "STAFF DETAILS" : (widget.staff != null ? "EDIT STAFF" : "ADD NEW STAFF"),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: cs.secondary,
+                      ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 20),
                   ],
                   _buildBasicInfoSection(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   _buildAdditionalInfoSection(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   _buildRoleSelectionSection(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   _buildSubRoleSelectionSection(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   _buildPermissionsSection(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   _buildWorkDetailsSection(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   if (!widget.isReadOnly) _buildActions(cs),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -338,8 +347,23 @@ class _StaffAddPageState extends State<StaffAddPage> {
             title: isDesktop ? Text("Sonnas", style: GoogleFonts.notoSerif(color: cs.primary, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600, letterSpacing: -0.5)) : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.staff == null ? "Add New Staff" : "Edit Staff Profile", style: GoogleFonts.notoSerif(color: cs.primary, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text("CREATE AND ASSIGN ROLES FOR YOUR TEAM", style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                Text(
+                  "STAFF OPERATIONS",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                    letterSpacing: 2.0,
+                  ),
+                ),
+                Text(
+                  widget.staff == null ? "ADD NEW STAFF" : "EDIT STAFF PROFILE",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: cs.secondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -353,15 +377,37 @@ class _StaffAddPageState extends State<StaffAddPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.staff == null ? "Add New Staff" : "Edit Staff Profile",
-          style: GoogleFonts.notoSerif(color: cs.primary, fontSize: isDesktop ? 32 : 24, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "STAFF OPERATIONS",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.staff == null ? "ADD NEW STAFF" : "EDIT STAFF PROFILE",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: isDesktop ? 22 : 18,
+                      fontWeight: FontWeight.bold,
+                      color: cs.secondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          "CREATE AND ASSIGN ROLES FOR YOUR TEAM",
-          style: GoogleFonts.plusJakartaSans(color: cs.secondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.0),
-        ),
+        const SizedBox(height: 12),
+        Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
       ],
     );
   }
@@ -379,7 +425,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
                   Container(
                     width: 80, height: 80,
                     decoration: BoxDecoration(
-                      color: cs.surfaceContainerLow,
+                      color: cs.surfaceContainer,
                       shape: BoxShape.circle,
                       border: Border.all(color: cs.primaryContainer.withValues(alpha: 0.5), style: BorderStyle.solid, width: 2),
                       image: _imageBytes != null 
@@ -513,7 +559,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
       child: Container(
         width: 130, padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: isSelected ? cs.primaryContainer.withValues(alpha: 0.1) : cs.surfaceContainerLow,
+          color: isSelected ? cs.primaryContainer.withValues(alpha: 0.1) : cs.surfaceContainer,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: isSelected ? cs.primaryContainer : Colors.transparent, width: 2),
         ),
@@ -538,7 +584,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
         const SizedBox(height: 16),
         DropdownButtonFormField<SubRole>(
           initialValue: _selectedSubRole,
-          decoration: InputDecoration(filled: true, fillColor: cs.surfaceContainerLow, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+          decoration: InputDecoration(filled: true, fillColor: cs.surfaceContainer, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
           items: SubRole.values.map((sr) => DropdownMenuItem(value: sr, child: Text(sr.displayName))).toList(),
           onChanged: widget.isReadOnly ? null : (v) => setState(() => _selectedSubRole = v!),
         ),
@@ -549,7 +595,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
   Widget _buildPermissionsSection(ColorScheme cs) {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: cs.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: cs.surfaceContainer, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -631,7 +677,7 @@ class _StaffAddPageState extends State<StaffAddPage> {
               onTap: widget.isReadOnly ? null : () => setState(() => isSelected ? _workingDays.remove(day) : _workingDays.add(day)),
               child: Container(
                 width: 38, height: 32,
-                decoration: BoxDecoration(color: isSelected ? cs.primary : cs.surfaceContainerLow, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(color: isSelected ? cs.primary : cs.surfaceContainer, borderRadius: BorderRadius.circular(8)),
                 alignment: Alignment.center,
                 child: Text(day.substring(0, day == 'Sun' || day == 'Sat' || day == 'Tue' || day == 'Thu' ? 2 : 1), style: GoogleFonts.plusJakartaSans(color: isSelected ? cs.onPrimary : cs.secondary.withValues(alpha: 0.5), fontSize: 10, fontWeight: FontWeight.bold)),
               ),

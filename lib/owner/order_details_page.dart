@@ -184,7 +184,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const SizedBox(height: 24),
+                                      const SizedBox(height: 16),
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -197,18 +197,16 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                               color: cs.primary.withValues(alpha: 0.5),
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 4),
                                           Row(
                                             children: [
                                               Expanded(
                                                 child: Text(
                                                   "Order #${order['orderNumber'] ?? '---'}",
-                                                  style: GoogleFonts.notoSerif(
-                                                    fontSize: 24,
+                                                  style: GoogleFonts.plusJakartaSans(
+                                                    fontSize: 18,
                                                     fontWeight: FontWeight.bold,
-                                                    fontStyle: FontStyle.italic,
                                                     color: cs.onSurface,
-                                                    letterSpacing: -1,
                                                   ),
                                                 ),
                                               ),
@@ -253,9 +251,9 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 16),
                                       _SlimProgressIndicator(cs: cs, status: (order['status'] as String?) ?? 'PENDING'),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 16),
                                       _CustomerInfoCard(
                                         name: (order['customerName'] as String?) ?? (conversation?['name'] as String?) ?? 'Guest Customer',
                                         phone: (() {
@@ -270,7 +268,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         address: (order['address'] ?? conversation?['selectedAddress'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 20),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
@@ -410,7 +408,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         },
                                       ),
                                       if (order['notes'] != null && order['notes'].toString().isNotEmpty) ...[
-                                        const SizedBox(height: 32),
+                                        const SizedBox(height: 20),
                                         _SectionTitle(title: "Special Instructions", cs: cs),
                                         const SizedBox(height: 12),
                                         Container(

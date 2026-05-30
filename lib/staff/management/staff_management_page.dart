@@ -46,11 +46,19 @@ class ManageStaffPageState extends State<ManageStaffPage> {
   @override
   Widget build(BuildContext context) {
     if (_isAddingStaff) {
-      return StaffAddPage(
-        cs: widget.cs,
-        staff: _editingStaff,
-        onClose: _hideAddStaff,
-        isNested: true,
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) {
+            _hideAddStaff();
+          }
+        },
+        child: StaffAddPage(
+          cs: widget.cs,
+          staff: _editingStaff,
+          onClose: _hideAddStaff,
+          isNested: true,
+        ),
       );
     }
 
@@ -112,20 +120,20 @@ class ManageStaffPageState extends State<ManageStaffPage> {
             fontSize: 12,
             fontWeight: FontWeight.bold,
             color: widget.cs.primary,
-            letterSpacing: 2.0,
+            letterSpacing: 2.5,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
-          "Manage Staff",
-          style: GoogleFonts.notoSerif(
-            fontSize: widget.isDesktop ? 48 : 36,
+          "MANAGE STAFF",
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: widget.isDesktop ? 22 : 18,
+            fontWeight: FontWeight.bold,
             color: widget.cs.secondary,
-            height: 1.1,
           ),
         ),
-        const SizedBox(height: 24),
-        Container(height: 1, color: widget.cs.secondary.withValues(alpha: 0.3)),
+        const SizedBox(height: 16),
+        Container(height: 1, color: widget.cs.secondary.withValues(alpha: 0.1)),
       ],
     );
   }
@@ -173,7 +181,7 @@ class _StaffCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
+            color: cs.surfaceContainer,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(

@@ -157,12 +157,12 @@ class MenuDetailsPage extends ConsumerWidget {
                                 "ATELIER SPECIFICATION",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.primary),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 6),
                               Text(
                                 (cake['name'] as String?) ?? 'Untitled Creation',
-                                style: GoogleFonts.notoSerif(fontSize: isDesktop ? 42 : 32, height: 1.1, color: cs.secondary),
+                                style: GoogleFonts.plusJakartaSans(fontSize: isDesktop ? 22 : 18, fontWeight: FontWeight.bold, color: cs.secondary),
                               ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 16),
                               Container(
                                 width: double.infinity,
                                 height: isDesktop ? 450 : 300,
@@ -183,7 +183,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                       child: Icon(Icons.restaurant, color: cs.primary, size: 48),
                                     ),
                               ),
-                              const SizedBox(height: 48),
+                              const SizedBox(height: 24),
                               Text(
                                 "ARTISAN DESCRIPTION",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.secondary.withValues(alpha: 0.4)),
@@ -193,7 +193,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                 (cake['description'] as String?) ?? 'No description provided.',
                                 style: GoogleFonts.notoSerif(fontSize: 16, height: 1.6, color: cs.onSurface.withValues(alpha: 0.8)),
                               ),
-                              const SizedBox(height: 48),
+                              const SizedBox(height: 24),
                               Row(
                                 children: [
                                   _InfoBadge(
@@ -213,7 +213,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                   ],
                                 ],
                               ),
-                              const SizedBox(height: 48),
+                              const SizedBox(height: 24),
                               Text(
                                 "AVAILABLE CONFIGURATIONS",
                                 style: GoogleFonts.plusJakartaSans(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 2.0, color: cs.secondary.withValues(alpha: 0.4)),
@@ -225,7 +225,7 @@ class MenuDetailsPage extends ConsumerWidget {
                                   "No size configurations found for this item.",
                                   style: GoogleFonts.plusJakartaSans(fontStyle: FontStyle.italic, color: cs.onSurface.withValues(alpha: 0.5)),
                                 ),
-                              const SizedBox(height: 64),
+                              const SizedBox(height: 32),
                             ],
                           ),
                         ),

@@ -73,20 +73,20 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildKPIs(cs, allItems.length, lowStockItems.length),
-                      const SizedBox(height: 32),
+                      SizedBox(height: isDesktop ? 32 : 20),
                       _buildStockChart(cs, allItems),
-                      const SizedBox(height: 32),
+                      SizedBox(height: isDesktop ? 32 : 20),
                       if (lowStockItems.isNotEmpty) ...[
                         _buildAlertSection(cs, lowStockItems),
-                        const SizedBox(height: 32),
+                        SizedBox(height: isDesktop ? 32 : 20),
                       ],
                       _buildCategoryFilter(cs),
-                      const SizedBox(height: 24),
+                      SizedBox(height: isDesktop ? 24 : 16),
                       if (filteredItems.isEmpty)
                         _buildEmptyState(cs)
                       else
                         _buildInventoryGrid(cs, filteredItems),
-                      const SizedBox(height: 64),
+                      SizedBox(height: isDesktop ? 64 : 32),
                     ],
                   ),
                 ),
@@ -541,35 +541,20 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
   Widget _buildSliverHeader(ColorScheme cs, bool isDesktop) {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Stock Intelligence",
-              style: GoogleFonts.notoSerif(
-                fontSize: isDesktop ? 48 : 36,
-                color: cs.secondary,
-                height: 1.1,
+              "STOCK OVERVIEW",
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                letterSpacing: 2.0,
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    "Performance Overview",
-                    style: GoogleFonts.plusJakartaSans(
-                      color: cs.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
           ],
         ),
@@ -578,60 +563,60 @@ class _InventoryAnalyticsPageState extends State<InventoryAnalyticsPage> {
   }
 
   Widget _buildKPIs(ColorScheme cs, int total, int low) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 450;
-      if (isMobile) {
-        return Column(
-          children: [
-            _kpiCard(cs, "TOTAL ITEMS", total.toString(), Icons.inventory_2_outlined, cs.primary),
-            const SizedBox(height: 16),
-            _kpiCard(cs, "LOW STOCK", low.toString(), Icons.warning_amber_rounded, low > 0 ? Colors.orange : cs.secondary.withValues(alpha: 0.4)),
-          ],
-        );
-      }
-      return Row(
+    final isDesktop = MediaQuery.sizeOf(context).width > 800;
+    return IntrinsicHeight(
+      child: Row(
         children: [
-          Expanded(child: _kpiCard(cs, "TOTAL ITEMS", total.toString(), Icons.inventory_2_outlined, cs.primary)),
-          const SizedBox(width: 16),
-          Expanded(child: _kpiCard(cs, "LOW STOCK", low.toString(), Icons.warning_amber_rounded, low > 0 ? Colors.orange : cs.secondary.withValues(alpha: 0.4))),
+          Expanded(
+            child: _kpiCard(cs, "TOTAL ITEMS", total.toString(), Icons.inventory_2_outlined, cs.primary, isDesktop),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _kpiCard(cs, "LOW STOCK", low.toString(), Icons.warning_amber_rounded, low > 0 ? Colors.orange : cs.secondary.withValues(alpha: 0.4), isDesktop),
+          ),
         ],
-      );
-    });
+      ),
+    );
   }
 
-  Widget _kpiCard(ColorScheme cs, String title, String value, IconData icon, Color accent) {
+  Widget _kpiCard(ColorScheme cs, String title, String value, IconData icon, Color accent, bool isDesktop) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isDesktop ? 24 : 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: cs.secondary.withValues(alpha: 0.5),
-                  letterSpacing: 1.2,
-                ),
+          Icon(icon, color: accent, size: isDesktop ? 20 : 16),
+          SizedBox(height: isDesktop ? 16 : 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: GoogleFonts.notoSerif(
+                color: cs.secondary,
+                fontSize: isDesktop ? 28 : 24,
+                fontWeight: FontWeight.bold,
               ),
-              Icon(icon, color: accent, size: 20),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: GoogleFonts.notoSerif(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: cs.secondary,
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.4),
+                fontSize: isDesktop ? 10 : 8,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
