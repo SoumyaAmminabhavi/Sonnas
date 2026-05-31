@@ -37,7 +37,8 @@ class _CustomerProductDetailPageState extends ConsumerState<CustomerProductDetai
     } else if (rawImage.startsWith('data:') ||
         rawImage.startsWith('http://') ||
         rawImage.startsWith('https://')) {
-      imageUrl = rawImage;
+      // Enforce HTTPS to prevent mixed-content warnings
+      imageUrl = rawImage.startsWith('http://') ? rawImage.replaceFirst('http://', 'https://') : rawImage;
     } else {
       imageUrl = SupabaseService.getPublicUrl(rawImage, bucket: 'cakes');
     }

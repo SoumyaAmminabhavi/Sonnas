@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -27,11 +26,7 @@ class GlassBottomNav extends StatelessWidget {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: SafeArea(
+        child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(
                 top: 12,
@@ -44,7 +39,7 @@ class GlassBottomNav extends StatelessWidget {
                 children: [
                   _BottomNavItem(
                     icon: Icons.storefront_outlined,
-                    label: "Boutique",
+                    label: "Home",
                     isActive: currentIndex == 0,
                     onTap: () => onTap(0),
                     cs: cs,
@@ -74,8 +69,6 @@ class GlassBottomNav extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 }

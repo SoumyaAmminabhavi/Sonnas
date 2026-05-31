@@ -113,9 +113,11 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
-                  onPressed: () {
-                    HapticService.selection();
-                    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                  onPressed: () async {
+                    await HapticService.selection();
+                    if (context.mounted) {
+                      await Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
@@ -126,7 +128,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    "BACK TO BOUTIQUE",
+                    "BACK TO HOME",
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,

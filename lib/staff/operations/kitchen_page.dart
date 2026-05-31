@@ -404,13 +404,23 @@ class KitchenOrderCard extends StatelessWidget {
     }
 
     final resolvedUrl = (() {
+      String url;
       if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        if (version == null) return imageUrl;
-        return imageUrl.contains('?') ? '$imageUrl&v=$version' : '$imageUrl?v=$version';
+        url = imageUrl;
+        if (version != null) {
+          url = url.contains('?') ? '$url&v=$version' : '$url?v=$version';
+        }
+      } else {
+        url = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+        if (version != null) {
+          url = url.contains('?') ? '$url&v=$version' : '$url?v=$version';
+        }
       }
-      final base = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
-      if (version == null) return base;
-      return base.contains('?') ? '$base&v=$version' : '$base?v=$version';
+      // Enforce HTTPS to prevent mixed-content warnings
+      if (url.startsWith('http://')) {
+        url = url.replaceFirst('http://', 'https://');
+      }
+      return url;
     })();
 
     return ClipRRect(

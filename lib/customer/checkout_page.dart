@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/cart_provider.dart';
 import '../services/order_service.dart';
 import '../services/constants.dart';
@@ -20,6 +21,25 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedGuestInfo();
+  }
+
+  Future<void> _loadSavedGuestInfo() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _nameController.text = prefs.getString('guest_name') ?? '';
+        _phoneController.text = prefs.getString('guest_phone') ?? '';
+        _addressController.text = prefs.getString('default_address') ?? '';
+      });
+    } catch (e) {
+      debugPrint("Error loading guest details in checkout: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,6 +227,11 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
     setState(() => _isSubmitting = true);
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('guest_name', _nameController.text.trim());
+      await prefs.setString('guest_phone', _phoneController.text.trim());
+      await prefs.setString('default_address', _addressController.text.trim());
+
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final randomSuffix = Random().nextInt(10000).toString().padLeft(4, '0');
       final orderData = {
@@ -254,7 +279,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
               Navigator.pop(context); // Dialog
               Navigator.pop(context); // Checkout
             },
-            child: const Text("Return to Boutique"),
+            child: const Text("Return to Home"),
           ),
         ],
       ),

@@ -88,7 +88,8 @@ class OrderCardReactive extends ConsumerWidget {
           imageUrl: imageUrl.isEmpty
               ? ''
               : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
-                  ? imageUrl
+                  // Enforce HTTPS to prevent mixed-content warnings
+                  ? (imageUrl.startsWith('http://') ? imageUrl.replaceFirst('http://', 'https://') : imageUrl)
                   : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
           deliveryDate: (() {
             final rawDate = data['deliveryDate']?.toString();
@@ -301,10 +302,12 @@ class _CardImage extends StatelessWidget {
       }
     }
 
+    // Enforce HTTPS to prevent mixed-content warnings
+    final secureUrl = imageUrl.startsWith('http://') ? imageUrl.replaceFirst('http://', 'https://') : imageUrl;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: CachedNetworkImage(
-        imageUrl: imageUrl,
+        imageUrl: secureUrl,
         width: 90,
         height: 90,
         fit: BoxFit.cover,

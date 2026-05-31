@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -133,7 +133,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
             ),
             centerTitle: true,
             title: Text(
-              "Sonna’s Patisserie",
+              "Sonna’s",
               style: GoogleFonts.notoSerif(
                 color: primaryColor,
                 fontSize: 22,

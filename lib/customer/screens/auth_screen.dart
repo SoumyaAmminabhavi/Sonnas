@@ -19,8 +19,10 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _otpController = TextEditingController();
+  final _nameFocusNode = FocusNode();
   final _phoneFocusNode = FocusNode();
   final _otpFocusNode = FocusNode();
 
@@ -42,7 +44,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _loadSavedPhone();
+    _loadSavedDetails();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -58,18 +60,22 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   void dispose() {
     _timer?.cancel();
     _animationController.dispose();
+    _nameController.dispose();
     _phoneController.dispose();
     _otpController.dispose();
+    _nameFocusNode.dispose();
     _phoneFocusNode.dispose();
     _otpFocusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _loadSavedPhone() async {
+  Future<void> _loadSavedDetails() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedPhone = prefs.getString(_phoneKey);
-    if (savedPhone != null && mounted) {
-      _phoneController.text = savedPhone;
+    final savedPhone = prefs.getString('guest_phone') ?? prefs.getString(_phoneKey);
+    final savedName = prefs.getString('guest_name');
+    if (mounted) {
+      if (savedPhone != null) _phoneController.text = savedPhone;
+      if (savedName != null) _nameController.text = savedName;
     }
   }
 
@@ -96,6 +102,47 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         timer.cancel();
       }
     });
+  }
+
+  Future<void> _saveGuestDetails() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('guest_name', name);
+      await prefs.setString('guest_phone', phone);
+      await prefs.setBool('is_guest_logged_in', true);
+
+      if (mounted) {
+        if (widget.onSuccess != null) {
+          widget.onSuccess!();
+        } else {
+          unawaited(Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+          ));
+        }
+      }
+    } catch (e) {
+      debugPrint("Error saving guest profile: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to enter. Please try again."),
+            backgroundColor: primary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _routeUserAfterLogin(String phone) async {
@@ -315,6 +362,32 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         ),
                       ),
                       const SizedBox(height: 48),
+
+                      if (!widget.isOwner) ...[
+                        _buildLabel("Full Name"),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _nameController,
+                          focusNode: _nameFocusNode,
+                          keyboardType: TextInputType.name,
+                          textCapitalization: TextCapitalization.words,
+                          enabled: !_isLoading,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: berry, 
+                            fontWeight: FontWeight.w600
+                          ),
+                          decoration: _buildInputDecoration(
+                            "Enter your full name", 
+                            Icons.person_outline,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) return "Name is required";
+                            if (value.trim().length < 2) return "Please enter a valid name";
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                       
                       // Phone Field
                       _buildLabel("Mobile Number"),
@@ -431,7 +504,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           child: ElevatedButton(
                             onPressed: _isLoading 
                               ? null 
-                              : (_otpSent ? _verifyOtp : _sendOtp),
+                              : (widget.isOwner 
+                                  ? (_otpSent ? _verifyOtp : _sendOtp)
+                                  : _saveGuestDetails),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primary,
                               foregroundColor: Colors.white,
@@ -442,7 +517,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                             child: _isLoading 
                               ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                               : Text(
-                                  _otpSent ? "VERIFY & SIGN IN" : "SEND OTP",
+                                  widget.isOwner 
+                                    ? (_otpSent ? "VERIFY & SIGN IN" : "SEND OTP")
+                                    : "CONTINUE",
                                   style: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 16,

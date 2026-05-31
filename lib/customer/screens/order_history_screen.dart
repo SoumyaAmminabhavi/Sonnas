@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/cart_provider.dart';
 
 class CustomerOrderHistoryScreen extends StatefulWidget {
@@ -28,35 +29,60 @@ class _CustomerOrderHistoryScreenState
     try {
       final supabase = Supabase.instance.client;
       final user = supabase.auth.currentUser;
-      if (user == null) {
-        setState(() => _isLoading = false);
-        return;
+
+      String? userEmail = user?.email?.trim();
+      String? userPhone;
+
+      if (user != null && user.userMetadata != null) {
+        final meta = user.userMetadata!;
+        if (meta['phone'] != null) {
+          userPhone = meta['phone'].toString().replaceAll(RegExp(r'\D'), '');
+        }
       }
 
-      final rawPhone = (user.userMetadata?['phone']?.toString() ??
-          user.phone ??
-          '').replaceAll(RegExp(r'\D'), '');
+      if ((userPhone == null || userPhone.isEmpty) && user != null && user.phone != null) {
+        userPhone = user.phone!.replaceAll(RegExp(r'\D'), '');
+      }
 
-      final userPhone = rawPhone.length > 10
-          ? rawPhone.substring(rawPhone.length - 10)
-          : rawPhone;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (userPhone == null || userPhone.isEmpty) {
+          userPhone = (prefs.getString('guest_phone') ?? prefs.getString('saved_phone'))
+              ?.replaceAll(RegExp(r'\D'), '');
+        }
+      } catch (e) {
+        debugPrint("Error loading SharedPreferences in order history screen: $e");
+      }
 
-      final userEmail = user.email?.trim();
+      if (userPhone != null && userPhone.isNotEmpty) {
+        userPhone = userPhone.length > 10
+            ? userPhone.substring(userPhone.length - 10)
+            : userPhone;
+      }
 
       var query = supabase
           .from('Order')
           .select('*, items:OrderItem(*)');
 
-      if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
-        query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
-      } else if (userEmail != null && userEmail.isNotEmpty) {
-        query = query.eq('customerEmail', userEmail);
-      } else if (userPhone.isNotEmpty) {
-        query = query.eq('customerPhone', userPhone);
-      } else {
+      List<String> filters = [];
+      if (userEmail != null && userEmail.isNotEmpty) {
+        filters.add('customerEmail.eq.$userEmail');
+      }
+      if (userPhone != null && userPhone.isNotEmpty) {
+        filters.add('customerPhone.eq.$userPhone');
+        filters.add('customerPhone.eq.91$userPhone');
+        filters.add('customerPhone.eq.+91$userPhone');
+        filters.add('whatsappPhone.eq.$userPhone');
+        filters.add('whatsappPhone.eq.91$userPhone');
+        filters.add('whatsappPhone.eq.+91$userPhone');
+      }
+
+      if (filters.isEmpty) {
         if (mounted) setState(() => _isLoading = false);
         return;
       }
+
+      query = query.or(filters.join(','));
 
       final response = await query.order('createdAt', ascending: false);
 

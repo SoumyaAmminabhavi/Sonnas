@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/cart_provider.dart';
 import '../../services/haptic_service.dart';
 import 'checkout_screen.dart';
@@ -242,46 +243,53 @@ class CartScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           InkWell(
-            onTap: () {
-              HapticService.selection();
+            onTap: () async {
+              await HapticService.selection();
               final currentUser = Supabase.instance.client.auth.currentUser;
-              if (currentUser == null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AuthScreen(
-                      isOwner: false,
-                      onSuccess: () {
-                        Navigator.pop(context);
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.check_circle_outline, color: Colors.white),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Welcome back! Restoring your cart...",
-                                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: primaryColor,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        );
+              final prefs = await SharedPreferences.getInstance();
+              final isGuestLoggedIn = prefs.getBool('is_guest_logged_in') ?? false;
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
-                        );
-                      },
+              if (currentUser == null && !isGuestLoggedIn) {
+                if (context.mounted) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AuthScreen(
+                        isOwner: false,
+                        onSuccess: () async {
+                          Navigator.pop(context);
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.check_circle_outline, color: Colors.white),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    "Welcome back! Restoring your cart...",
+                                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: primaryColor,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               } else {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()));
+                if (context.mounted) {
+                  await Navigator.push(context, MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()));
+                }
               }
             },
             child: Container(
@@ -297,46 +305,53 @@ class CartScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           InkWell(
-            onTap: () {
-              HapticService.selection();
+            onTap: () async {
+              await HapticService.selection();
               final currentUser = Supabase.instance.client.auth.currentUser;
-              if (currentUser == null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AuthScreen(
-                      isOwner: false,
-                      onSuccess: () {
-                        Navigator.pop(context);
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.check_circle_outline, color: Colors.white),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Welcome back! Restoring your cart...",
-                                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            backgroundColor: primaryColor,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        );
+              final prefs = await SharedPreferences.getInstance();
+              final isGuestLoggedIn = prefs.getBool('is_guest_logged_in') ?? false;
 
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()),
-                        );
-                      },
+              if (currentUser == null && !isGuestLoggedIn) {
+                if (context.mounted) {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AuthScreen(
+                        isOwner: false,
+                        onSuccess: () async {
+                          Navigator.pop(context);
+                          
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.check_circle_outline, color: Colors.white),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    "Welcome back! Restoring your cart...",
+                                    style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: primaryColor,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               } else {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()));
+                if (context.mounted) {
+                  await Navigator.push(context, MaterialPageRoute(builder: (context) => const SelfCheckoutScreen()));
+                }
               }
             },
             child: Container(

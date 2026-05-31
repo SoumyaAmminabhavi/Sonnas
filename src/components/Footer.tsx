@@ -50,7 +50,10 @@ export const Footer = () => (
           <p className="text-xs text-text-muted mb-md font-body">Join our list for exclusive seasonal releases.</p>
           <div className="flex">
             <input
+              id="newsletter-email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder="Your email"
               className="bg-white border border-cream px-md py-sm w-full text-sm font-body focus:outline-none focus:border-rose transition-default"
             />

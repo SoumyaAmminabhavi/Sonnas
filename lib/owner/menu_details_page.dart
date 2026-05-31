@@ -105,7 +105,8 @@ class MenuDetailsPage extends ConsumerWidget {
         final imageField = cake['image']?.toString().trim();
         final String? imageUrl = (imageField != null && imageField.isNotEmpty)
             ? (imageField.startsWith('http://') || imageField.startsWith('https://') || imageField.startsWith('data:'))
-                ? imageField
+                // Enforce HTTPS to prevent mixed-content warnings
+                ? (imageField.startsWith('http://') ? imageField.replaceFirst('http://', 'https://') : imageField)
                 : SupabaseService.getPublicUrl(imageField, bucket: 'cakes')
             : null;
 

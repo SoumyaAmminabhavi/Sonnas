@@ -221,7 +221,8 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         } else if (rawImage.startsWith('data:') ||
             rawImage.startsWith('http://') ||
             rawImage.startsWith('https://')) {
-          resolvedImage = rawImage;
+          // Enforce HTTPS to prevent mixed-content warnings
+          resolvedImage = rawImage.startsWith('http://') ? rawImage.replaceFirst('http://', 'https://') : rawImage;
         } else {
           resolvedImage = SupabaseService.getPublicUrl(rawImage, bucket: 'cakes');
         }

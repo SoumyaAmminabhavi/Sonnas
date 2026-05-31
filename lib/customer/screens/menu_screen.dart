@@ -37,6 +37,33 @@ class _MenuScreenState extends State<MenuScreen> {
     _subscribeToMenuChanges();
   }
 
+  @override
+  void didUpdateWidget(covariant MenuScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialSearchQuery != oldWidget.initialSearchQuery) {
+      if (widget.initialSearchQuery != null) {
+        _searchController.text = widget.initialSearchQuery!;
+        final queryLower = widget.initialSearchQuery!.trim().toLowerCase();
+        final matchedCat = categories.firstWhere(
+          (c) => c.toLowerCase() == queryLower,
+          orElse: () => '',
+        );
+        
+        if (matchedCat.isNotEmpty) {
+          _selectedCategory = matchedCat;
+          _searchController.clear();
+        } else {
+          _selectedCategory = "All";
+          _searchController.text = widget.initialSearchQuery!;
+        }
+      } else {
+        _selectedCategory = "All";
+        _searchController.clear();
+      }
+      _filterByCategory();
+    }
+  }
+
   void _subscribeToMenuChanges() {
     _menuChannel = Supabase.instance.client
         .channel('public:Cake')
@@ -123,7 +150,7 @@ class _MenuScreenState extends State<MenuScreen> {
               imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
             }
 
-            debugPrint('DEBUG: Cake: ${cake['name']}, Image Path: $imageName, Generated URL: $imageUrl');
+
 
             // Extract category name from relation
             final catObj = cake['category'];

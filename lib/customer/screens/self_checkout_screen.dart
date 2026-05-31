@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
@@ -15,6 +17,51 @@ class SelfCheckoutScreen extends StatefulWidget {
 class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null && user.userMetadata != null) {
+        final meta = user.userMetadata!;
+        if (meta['full_name'] != null) {
+          _nameController.text = meta['full_name'];
+        }
+        if (meta['phone'] != null) {
+          _phoneController.text = meta['phone'];
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking Supabase auth in self checkout: $e");
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_nameController.text.isEmpty) {
+        final savedName = prefs.getString('guest_name');
+        if (savedName != null && mounted) {
+          setState(() {
+            _nameController.text = savedName;
+          });
+        }
+      }
+      if (_phoneController.text.isEmpty) {
+        final savedPhone = prefs.getString('guest_phone') ?? prefs.getString('saved_phone');
+        if (savedPhone != null && mounted) {
+          setState(() {
+            _phoneController.text = savedPhone;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading guest details in self checkout: $e");
+    }
+  }
 
   @override
   void dispose() {
@@ -146,6 +193,16 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                   final int subtotalCents = cart.total.round();
                   final int grandTotalCents = subtotalCents;
                   
+                  // Save guest details to SharedPreferences for future pre-filling
+                  final trimmedName = _nameController.text.trim();
+                  final trimmedPhone = phone;
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString('guest_name', trimmedName);
+                    prefs.setString('guest_phone', trimmedPhone);
+                  }).catchError((e) {
+                    debugPrint("Error saving guest details to SharedPreferences: $e");
+                  });
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(

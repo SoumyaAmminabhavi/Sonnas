@@ -31,7 +31,9 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   Timer? _abandonedCartTimer;
   final Map<String, bool> _previousStockStatus = {};
 
-  List<Widget> _getScreens() {
+  late final List<Widget> _screens;
+
+  List<Widget> _buildScreens() {
     final authId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
     return [
       HomeScreen(onViewMenu: (query) {
@@ -42,7 +44,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       }),
       MenuScreen(
         initialSearchQuery: _menuSearchQuery,
-        key: ValueKey('menu_${_menuSearchQuery ?? "none"}'),
+        key: const ValueKey('menu_screen_stable'),
       ),
       CartScreen(key: ValueKey('cart_$authId')),
       OrdersScreen(key: ValueKey('orders_$authId')),
@@ -69,6 +71,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   @override
   void initState() {
     super.initState();
+    _screens = _buildScreens();
     _setupStatusListener();
     _setupStockListener();
     _setupAbandonedCartListener();
@@ -236,7 +239,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                 setState(() => _currentIndex = 0);
               },
               child: Text(
-                "Sonna's Patisserie",
+                "Sonna's",
                 style: GoogleFonts.notoSerif(
                   fontSize: 24,
                   fontWeight: FontWeight.w400,
@@ -260,7 +263,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               Expanded(
                 child: IndexedStack(
                   index: _currentIndex,
-                  children: _getScreens(),
+                  children: _screens,
                 ),
               ),
             ],
@@ -283,7 +286,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(0, Icons.storefront, "BOUTIQUE"),
+                  _buildNavItem(0, Icons.storefront, "HOME"),
                   _buildNavItem(1, Icons.restaurant_menu, "MENU"),
                   _buildNavItem(2, Icons.shopping_bag_outlined, "BAG"),
                   _buildNavItem(3, Icons.receipt_long, "ORDERS"),
@@ -328,15 +331,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                       color: primaryColor,
                     ),
                   ),
-                  Text(
-                    "PATISSERIE",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 4,
-                      color: secondaryColor.withValues(alpha: 0.4),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -349,7 +343,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _buildSidebarItem(0, Icons.storefront, "BOUTIQUE"),
+                  _buildSidebarItem(0, Icons.storefront, "HOME"),
                   const SizedBox(height: 12),
                   _buildSidebarItem(1, Icons.restaurant_menu, "THE MENU"),
                   const SizedBox(height: 12),
@@ -518,7 +512,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   Widget _buildDrawer() {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color secondaryColor = Color(0xFF701235);
 
     return Drawer(
       backgroundColor: surfaceColor,
@@ -544,15 +537,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                         color: primaryColor,
                       ),
                     ),
-                    Text(
-                      "PATISSERIE",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 4,
-                        color: secondaryColor.withValues(alpha: 0.4),
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -560,7 +544,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.storefront, color: primaryColor),
-            title: Text("BOUTIQUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            title: Text("HOME", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentIndex = 0);

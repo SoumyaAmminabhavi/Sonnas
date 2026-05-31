@@ -215,7 +215,8 @@ class _ProductCard extends ConsumerWidget {
     if (imagePath.isEmpty) {
       imageUrl = '';
     } else if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
-      imageUrl = imagePath;
+      // Enforce HTTPS to prevent mixed-content warnings
+      imageUrl = imagePath.startsWith('http://') ? imagePath.replaceFirst('http://', 'https://') : imagePath;
     } else {
       imageUrl = SupabaseService.getPublicUrl(imagePath, bucket: 'cakes');
     }

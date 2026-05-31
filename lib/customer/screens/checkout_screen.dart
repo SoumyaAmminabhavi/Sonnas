@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -48,7 +49,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     _loadUserData();
   }
 
-  void _loadUserData() {
+  Future<void> _loadUserData() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null && user.userMetadata != null) {
       final meta = user.userMetadata!;
@@ -61,6 +62,36 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
       if (meta['default_address'] != null) {
         _addressController.text = meta['default_address'];
       }
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_nameController.text.isEmpty) {
+        final savedName = prefs.getString('guest_name');
+        if (savedName != null && mounted) {
+          setState(() {
+            _nameController.text = savedName;
+          });
+        }
+      }
+      if (_phoneController.text.isEmpty) {
+        final savedPhone = prefs.getString('guest_phone') ?? prefs.getString('saved_phone');
+        if (savedPhone != null && mounted) {
+          setState(() {
+            _phoneController.text = savedPhone;
+          });
+        }
+      }
+      if (_addressController.text.isEmpty) {
+        final savedAddress = prefs.getString('default_address');
+        if (savedAddress != null && mounted) {
+          setState(() {
+            _addressController.text = savedAddress;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading guest details in checkout: $e");
     }
   }
 
@@ -251,6 +282,15 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                     return;
                   }
                   
+
+                  // Save user details to SharedPreferences for future pre-filling
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString('guest_name', trimmedName);
+                    prefs.setString('guest_phone', trimmedPhone);
+                    prefs.setString('default_address', trimmedAddress);
+                  }).catchError((e) {
+                    debugPrint("Error saving guest details to SharedPreferences: $e");
+                  });
 
                   Navigator.push(
                     context,

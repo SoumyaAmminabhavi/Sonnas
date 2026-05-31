@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -58,6 +58,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
       // Save locally to SharedPreferences for fast, offline access
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('guest_name', _nameController.text.trim());
+      await prefs.setString('guest_phone', _phoneController.text.trim());
       await prefs.setString('default_address', _addressController.text.trim());
       await prefs.setString('saved_addresses', Uri.encodeComponent(_addressController.text.trim()));
 
