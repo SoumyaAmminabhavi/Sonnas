@@ -85,12 +85,7 @@ class OrderCardReactive extends ConsumerWidget {
           price: data['totalPrice'] != null
               ? OrderService.formatPrice(data['totalPrice'])
               : OrderService.formatPrice(calculatedTotal),
-          imageUrl: imageUrl.isEmpty
-              ? ''
-              : (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:'))
-                  // Enforce HTTPS to prevent mixed-content warnings
-                  ? (imageUrl.startsWith('http://') ? imageUrl.replaceFirst('http://', 'https://') : imageUrl)
-                  : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
+          imageUrl: SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes'),
           deliveryDate: (() {
             final rawDate = data['deliveryDate']?.toString();
             if (rawDate == null || rawDate.isEmpty) return 'Not scheduled';
@@ -130,7 +125,7 @@ class OrderCardReactive extends ConsumerWidget {
 
             await OrderService.launchWhatsApp(
               customerPhone, 
-              "Hi $customerName, this is Sonna's Patisserie. Your order #$orderId ($cakeName) is ready for you!"
+              "Hi $customerName, this is Sonnas. Your order #$orderId ($cakeName) is ready for you!"
             );
           },
           onTabChanged: onTabChanged,

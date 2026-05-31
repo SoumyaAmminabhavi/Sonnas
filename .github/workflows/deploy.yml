@@ -58,9 +58,12 @@ jobs:
 
       - name: Build Flutter Web
         run: >
-          flutter build web --release --base-href "/"
-          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
-          --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          flutter build web --release --dart-define=FLUTTER_WEB_RENDERER=html --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" --no-wasm-dry-run --base-href "/"
+
+      - name: Patch HTML Renderer and Clean CanvasKit
+        run: |
+          rm -rf build/web/canvaskit
+          sed -i 's/"renderer":"canvaskit"/"renderer":"html"/g' build/web/flutter_bootstrap.js
 
       - name: Install Vercel CLI
         run: npm install -g vercel

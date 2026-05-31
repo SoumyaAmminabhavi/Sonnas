@@ -79,7 +79,7 @@ export async function POST(req: Request) {
             year: "numeric",
           });
 
-          let bill = `✧ *SONNA’S PATISSERIE* ✧\n`;
+          let bill = `✧ *Sonnas* ✧\n`;
           bill += `_Luxurious Handcrafted Desserts_\n\n`;
 
           bill += `✅ *Payment Successful*\n`;

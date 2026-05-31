@@ -67,7 +67,7 @@ class LandingPage extends StatelessWidget {
 
                 // Headline
                 Text(
-                  "Sonna's Patisserie & Cafe",
+                  "Sonnas",
                   style: theme.textTheme.displayLarge?.copyWith(
                     fontSize: 48,
                     height: 1.1,

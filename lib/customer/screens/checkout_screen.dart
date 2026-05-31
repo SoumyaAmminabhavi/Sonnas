@@ -12,7 +12,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/flutter_map.dart' deferred as fm;
 import 'package:latlong2/latlong.dart';
 
 class CustomerCheckoutScreen extends StatefulWidget {
@@ -28,8 +28,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   DateTime? selectedDate;
   String? selectedTimeSlot;
   bool _isGettingLocation = false;
+  bool _mapLibLoaded = false;
   LatLng _currentLatLng = const LatLng(12.9716, 77.5946); // Default to Bangalore
-  final MapController _mapController = MapController();
+  dynamic _mapController;
 
   static const primary = Color(0xFFC2185B);
   static const background = Color(0xFFFFF0F5);
@@ -47,6 +48,17 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   void initState() {
     super.initState();
     _loadUserData();
+    _loadMapLib();
+  }
+
+  Future<void> _loadMapLib() async {
+    await fm.loadLibrary();
+    if (mounted) {
+      setState(() {
+        _mapLibLoaded = true;
+        _mapController = fm.MapController();
+      });
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -157,13 +169,13 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
           _addressController.text = finalAddress!;
           _currentLatLng = LatLng(position.latitude, position.longitude);
         });
-        _mapController.move(_currentLatLng, 15);
+        _mapController?.move(_currentLatLng, 15);
       } else {
         setState(() {
           _addressController.text = "Lat: ${position.latitude}, Lon: ${position.longitude}";
           _currentLatLng = LatLng(position.latitude, position.longitude);
         });
-        _mapController.move(_currentLatLng, 15);
+        _mapController?.move(_currentLatLng, 15);
       }
     } catch (e) {
       debugPrint("Location Error: $e");
@@ -356,35 +368,37 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
         border: Border.all(color: const Color(0xFFC2185B).withValues(alpha: 0.1)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: _currentLatLng,
-          initialZoom: 13,
-          onTap: (tapPosition, latLng) {
-            setState(() {
-              _currentLatLng = latLng;
-            });
-            _reverseGeocode(latLng);
-          },
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            userAgentPackageName: 'com.sonnas.patisserie',
-          ),
-          MarkerLayer(
-            markers: [
-              Marker(
-                point: _currentLatLng,
-                width: 40,
-                height: 40,
-                child: const Icon(Icons.location_on, color: Color(0xFFC2185B), size: 40),
+      child: _mapLibLoaded
+        ? fm.FlutterMap(
+            mapController: _mapController,
+            options: fm.MapOptions(
+              initialCenter: _currentLatLng,
+              initialZoom: 13,
+              onTap: (tapPosition, latLng) {
+                setState(() {
+                  _currentLatLng = latLng;
+                });
+                _reverseGeocode(latLng);
+              },
+            ),
+            children: [
+              fm.TileLayer(
+                urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                userAgentPackageName: 'com.sonnas.patisserie',
+              ),
+              fm.MarkerLayer(
+                markers: [
+                  fm.Marker(
+                    point: _currentLatLng,
+                    width: 40,
+                    height: 40,
+                    child: const Icon(Icons.location_on, color: Color(0xFFC2185B), size: 40),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
-      ),
+          )
+        : const Center(child: CircularProgressIndicator()),
     );
   }
 

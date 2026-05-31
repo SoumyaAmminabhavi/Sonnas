@@ -94,7 +94,7 @@ class KitchenOrderCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(28),
       child: Container(
         decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
+          color: cs.surfaceContainer,
           borderRadius: BorderRadius.circular(28),
           border: Border.all(
             color: isConfirmed ? cs.primary.withValues(alpha: 0.2) : cs.secondary.withValues(alpha: 0.08),
@@ -404,23 +404,9 @@ class KitchenOrderCard extends StatelessWidget {
     }
 
     final resolvedUrl = (() {
-      String url;
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        url = imageUrl;
-        if (version != null) {
-          url = url.contains('?') ? '$url&v=$version' : '$url?v=$version';
-        }
-      } else {
-        url = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
-        if (version != null) {
-          url = url.contains('?') ? '$url&v=$version' : '$url?v=$version';
-        }
-      }
-      // Enforce HTTPS to prevent mixed-content warnings
-      if (url.startsWith('http://')) {
-        url = url.replaceFirst('http://', 'https://');
-      }
-      return url;
+      final base = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+      if (version == null) return base;
+      return base.contains('?') ? '$base&v=$version' : '$base?v=$version';
     })();
 
     return ClipRRect(

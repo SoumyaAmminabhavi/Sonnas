@@ -78,7 +78,7 @@ class StaffOrderCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
+          color: cs.surfaceContainer,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: cs.secondary.withValues(alpha: 0.06)),
           boxShadow: [
@@ -183,9 +183,7 @@ class StaffOrderCard extends StatelessWidget {
       );
     }
 
-    final resolvedUrl = (imageUrl.startsWith('http') || imageUrl.startsWith('data:') || imageUrl.startsWith('whatsapp://') || imageUrl.startsWith('file://'))
-        ? imageUrl
-        : SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
+    final resolvedUrl = SupabaseService.getPublicUrl(imageUrl, bucket: 'cakes');
 
     if (imageUrl.startsWith('data:')) {
       try {

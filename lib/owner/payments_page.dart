@@ -197,13 +197,6 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.03),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: Row(
         children: [
@@ -220,16 +213,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
                     letterSpacing: 2.5,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  "Revenue",
-                  style: GoogleFonts.notoSerif(
-                    color: cs.onSurface,
-                    fontSize: isDesktop ? 32 : 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Wrap(
                   spacing: 40,
                   runSpacing: 16,
@@ -243,7 +227,7 @@ class _PaymentsTabState extends ConsumerState<_PaymentsTab> with SingleTickerPro
           ),
           if (isDesktop)
             Container(
-              height: 100,
+              height: 70,
               width: 1,
               color: cs.secondary.withValues(alpha: 0.05),
               margin: const EdgeInsets.symmetric(horizontal: 40),

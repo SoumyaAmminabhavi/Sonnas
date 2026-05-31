@@ -12,6 +12,7 @@ import '../services/order_service.dart';
 import '../services/menu_service.dart';
 import '../services/dashboard_provider.dart';
 import '../services/constants.dart';
+import '../services/image_conversion.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
 
@@ -414,21 +415,11 @@ class _MenuPageState extends ConsumerState<MenuPage> {
                                   style: GoogleFonts.plusJakartaSans(
                                     color: cs.primary,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 9,
-                                    letterSpacing: 2.0,
+                                    fontSize: 12,
+                                    letterSpacing: 2.5,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Atelier Collection",
-                                  style: GoogleFonts.notoSerif(
-                                    color: cs.secondary,
-                                    fontSize: 24,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Text(
                                   "${items.length} items cataloged",
                                   style: GoogleFonts.plusJakartaSans(
@@ -826,7 +817,7 @@ class AddMenuPage extends StatelessWidget {
             ),
             title: Text(
               isDesktop
-                  ? "Sonna's Patisserie & Cafe"
+                  ? "Sonnas"
                   : (cakeData != null ? "Edit Item" : "New Menu Item"),
               style: GoogleFonts.notoSerif(
                 color: cs.primary,
@@ -1024,28 +1015,22 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       // 2. Upload new image if selected
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
-        String extension = _selectedImage!.name.split('.').last.toLowerCase();
-        
-        final fileName = '$finalCakeId.$extension';
-        
-        // Fix: Use the canonical path returned by uploadImage
+        final convertedBytes = await convertToWebP(bytes, _selectedImage!.name);
+        final isWebp = convertedBytes != bytes;
+        final fileName = '$finalCakeId.${isWebp ? 'webp' : _selectedImage!.name.split('.').last.toLowerCase()}';
+
         final uploadedPath = await SupabaseService.uploadImage(
-          bucket: 'cakes',
-          path: fileName,
-          file: bytes,
+          bucket: 'cakes', path: fileName, file: convertedBytes,
         );
-        
         if (uploadedPath == null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to upload image. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
+            const SnackBar(content: Text('Failed to upload image. Please try again.'), backgroundColor: Colors.red),
           );
           setState(() => _isUploading = false);
           return;
         }
+
         imagePath = uploadedPath;
       }
 
@@ -1262,22 +1247,22 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
                     letterSpacing: 2.0,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   widget.initialData != null ? "Edit Creation" : "Add New Cake",
-                  style: GoogleFonts.notoSerif(
+                  style: GoogleFonts.plusJakartaSans(
                     color: cs.secondary,
-                    fontSize: widget.isDesktop ? 48 : 32,
-                    height: 1.1,
+                    fontSize: widget.isDesktop ? 22 : 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
         const SizedBox(height: 24),
-        Container(height: 1, color: cs.secondary.withValues(alpha: 0.3)),
-        const SizedBox(height: 48),
 
         Form(
           key: _formKey,

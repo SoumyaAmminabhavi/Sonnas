@@ -18,42 +18,110 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Dine N Dash - Your favorite food delivered fast in Hubli">
+  <meta name="description" content="Sonnas - Artisan Patisserie & Cafe Boutique">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="Dine N Dash">
+  <meta name="apple-mobile-web-app-title" content="Sonnas">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Preconnect to Google Fonts and Supabase -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://qwqsarpzcwwpgyimhxzn.supabase.co">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>Dine N Dash</title>
+  <title>Sonnas</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body { font-family: 'Georgia', 'Times New Roman', serif; }
+    #splash {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #FF4D8D 0%, #701235 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.5s ease-out;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+    #splash.hide { opacity: 0; pointer-events: none; }
+    #splash h1 {
+      color: white; font-size: 2rem; margin: 0; text-align: center;
+      font-weight: 400; letter-spacing: 0.02em;
+    }
+    #splash p {
+      color: rgba(255,255,255,0.8); text-align: center;
+      margin-top: 8px; font-size: 1rem; letter-spacing: 0.05em;
+    }
+    #splash .heart { color: #FFB6D3; }
+  </style>
 </head>
 <body>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <div id="splash">
+    <div>
+      <h1>Sonnas <span class="heart">&#9825;</span></h1>
+      <p>Handcrafted with love</p>
+    </div>
+  </div>
+  <script>
+    (function() {
+      const observer = new MutationObserver((mutations, obs) => {
+        const pane = document.querySelector('flt-glass-pane') || document.querySelector('canvas');
+        if (pane) {
+          removeSplash();
+          obs.disconnect();
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      const timeout = setTimeout(removeSplash, 5000);
+
+      function removeSplash() {
+        clearTimeout(timeout);
+        const s = document.getElementById('splash');
+        if (s) {
+          s.classList.add('hide');
+          setTimeout(function() { s.remove(); }, 600);
+        }
+      }
+    })();
+  </script>
   <script>
     window.openRazorpayCheckout = function(options, onSuccess, onFailure) {
-      // options is passed from Dart as a JS object/map
+      if (typeof Razorpay === 'undefined') {
+        var script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = function() {
+          openCheckout(options, onSuccess, onFailure);
+        };
+        script.onerror = function() {
+          if (onFailure) onFailure('SCRIPT_LOAD_ERROR', 'Failed to load payment SDK. Please try again.');
+        };
+        document.head.appendChild(script);
+      } else {
+        openCheckout(options, onSuccess, onFailure);
+      }
+    };
+
+    function openCheckout(options, onSuccess, onFailure) {
       options.handler = function(response) {
         if (onSuccess) {
           onSuccess(response.razorpay_payment_id);
         }
       };
-      
+
       var rzp = new Razorpay(options);
-      
+
       rzp.on('payment.failed', function(response) {
         if (onFailure) {
           onFailure(response.error.code, response.error.description);
         }
       });
-      
+
       rzp.open();
-    };
+    }
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

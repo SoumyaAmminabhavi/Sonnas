@@ -1,6 +1,6 @@
 # WhatsApp Bot Tech Stack (Detailed)
 
-The Sonna's Patisserie WhatsApp bot is built with a modern, serverless-first architecture optimized for speed and reliability.
+The Sonnas WhatsApp bot is built with a modern, serverless-first architecture optimized for speed and reliability.
 
 ## Core Technologies
 - **Framework**: [Next.js 15.5+](https://nextjs.org/) (App Router). Leverages Route Handlers for high-concurrency webhooks.

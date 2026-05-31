@@ -33,7 +33,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 67500 },
       { size: "1050g", serves: "8-12", price: 125000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/classic-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/classic-chocolate.webp",
   },
   {
     id: 2,
@@ -44,7 +44,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/almond-brittle.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/almond-brittle.webp",
   },
   {
     id: 3,
@@ -55,7 +55,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/orange-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/orange-chocolate.webp",
   },
   {
     id: 4,
@@ -66,7 +66,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/hazelnut-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/hazelnut-chocolate.webp",
   },
   {
     id: 5,
@@ -77,7 +77,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/coffee-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/coffee-chocolate.webp",
   },
   {
     id: 6,
@@ -88,7 +88,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/white-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/white-chocolate.webp",
   },
   {
     id: 7,
@@ -99,7 +99,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pina-colada.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pina-colada.webp",
   },
   {
     id: 8,
@@ -110,7 +110,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pineapple.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/pineapple.webp",
   },
   {
     id: 9,
@@ -121,7 +121,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/rich-mawa.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/rich-mawa.webp",
   },
   {
     id: 10,
@@ -132,7 +132,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/persian-cake.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/persian-cake.webp",
   },
   {
     id: 11,
@@ -143,7 +143,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/butter-cake.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/butter-cake.webp",
   },
   {
     id: 12,
@@ -154,7 +154,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-chocolate.webp",
   },
   {
     id: 13,
@@ -165,7 +165,7 @@ export const products: Product[] = [
       { size: "600g", serves: "4-6", price: 75000 },
       { size: "1050g", serves: "8-12", price: 135000 }
     ],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-vanilla.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/strawberry-vanilla.webp",
   },
   // Mini Cheesecakes
   {
@@ -174,7 +174,7 @@ export const products: Product[] = [
     description: "Creamy cheesecake with glossy blueberry compote",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 17000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-blueberry.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-blueberry.webp",
   },
   {
     id: 15,
@@ -182,7 +182,7 @@ export const products: Product[] = [
     description: "Nutella flavor with smooth hazelnut chocolate swirl",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 18000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-nutella.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-nutella.webp",
   },
   {
     id: 16,
@@ -190,7 +190,7 @@ export const products: Product[] = [
     description: "Lotus Biscoff flavor with speculoos cookie spread drip",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 19000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-biscoff.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-biscoff.webp",
   },
   {
     id: 17,
@@ -198,7 +198,7 @@ export const products: Product[] = [
     description: "Fresh Mango flavor with vibrant yellow mango glaze",
     category: "Mini Cheesecakes",
     options: [{ size: "Single", serves: "1", price: 16000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-mango.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/mini-cheesecake-mango.webp",
   },
   // Slices
   {
@@ -207,7 +207,7 @@ export const products: Product[] = [
     description: "Almond Brittle with Salted Caramel Ganache slice",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 17500 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-almond-brittle.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-almond-brittle.webp",
   },
   {
     id: 19,
@@ -215,7 +215,7 @@ export const products: Product[] = [
     description: "Deep dark chocolate layers with airy mousse texture",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 14500 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.webp",
   },
   {
     id: 20,
@@ -223,7 +223,7 @@ export const products: Product[] = [
     description: "Layers of chocolate and bright orange mousse",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 12000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-orange.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-orange.webp",
   },
   {
     id: 21,
@@ -231,7 +231,7 @@ export const products: Product[] = [
     description: "Bright yellow and white layers with tangy lemon curd",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 9500 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-lemon-mousse.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-lemon-mousse.webp",
   },
   {
     id: 22,
@@ -239,7 +239,7 @@ export const products: Product[] = [
     description: "Elegant macaron-themed cake slice",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 8000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-macaron.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-macaron.webp",
   },
   {
     id: 23,
@@ -247,7 +247,7 @@ export const products: Product[] = [
     description: "Layers of tropical coconut sponge and fresh mango mousse",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 18000 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-coconut-mango.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-coconut-mango.webp",
 },
   {
     id: 100,
@@ -255,7 +255,7 @@ export const products: Product[] = [
     description: "Classic chocolate cake slice",
     category: "Slices",
     options: [{ size: "Slice", serves: "1", price: 13500 }],
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.png", // Fallback image
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/slice-chocolate-mousse.webp", // Fallback image
   },
   {
     id: 101,
@@ -273,37 +273,37 @@ export const categories: Category[] = [
     id: "chocolate",
     name: "Chocolate Cakes",
     slug: "chocolate-cakes",
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-chocolate.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-chocolate.webp",
   },
   {
     id: "vanilla",
     name: "Vanilla Cakes",
     slug: "vanilla-cakes",
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-vanilla.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-vanilla.webp",
   },
   {
     id: "tea",
     name: "Tea Cakes",
     slug: "tea-cakes",
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-tea.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-tea.webp",
   },
   {
     id: "seasonal",
     name: "Seasonal Cakes",
     slug: "seasonal-cakes",
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-seasonal.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-seasonal.webp",
   },
   {
     id: "cheesecakes",
     name: "Mini Cheesecakes",
     slug: "mini-cheesecakes",
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-mini-cheesecakes.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-mini-cheesecakes.webp",
   },
   {
     id: "slices",
     name: "Slices",
     slug: "slices",
-    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-slices.png",
+    image: "https://qwqsarpzcwwpgyimhxzn.supabase.co/storage/v1/object/public/cakes/cat-slices.webp",
   },
   {
     id: "chaat",

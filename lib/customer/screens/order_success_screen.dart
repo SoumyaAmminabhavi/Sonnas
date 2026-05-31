@@ -74,7 +74,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                "Thank you for choosing Sonna's Patisserie. Your sweet treats are being prepared with love.",
+                "Thank you for choosing Sonnas. Your sweet treats are being prepared with love.",
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: secondaryColor.withValues(alpha: 0.6),

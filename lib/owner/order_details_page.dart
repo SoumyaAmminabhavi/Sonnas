@@ -146,7 +146,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                       onPressed: () => Navigator.pop(context),
                     ),
                     title: Text(
-                      isDesktop ? "Sonna's Patisserie & Cafe" : "Order Details",
+                      isDesktop ? "Sonnas" : "Order Details",
                       style: GoogleFonts.notoSerif(
                         color: isDesktop
                             ? const Color.fromARGB(255, 146, 6, 53)
@@ -184,7 +184,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const SizedBox(height: 24),
+                                      const SizedBox(height: 16),
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
@@ -197,18 +197,16 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                               color: cs.primary.withValues(alpha: 0.5),
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
+                                          const SizedBox(height: 4),
                                           Row(
                                             children: [
                                               Expanded(
                                                 child: Text(
                                                   "Order #${order['orderNumber'] ?? '---'}",
-                                                  style: GoogleFonts.notoSerif(
-                                                    fontSize: 24,
+                                                  style: GoogleFonts.plusJakartaSans(
+                                                    fontSize: 18,
                                                     fontWeight: FontWeight.bold,
-                                                    fontStyle: FontStyle.italic,
                                                     color: cs.onSurface,
-                                                    letterSpacing: -1,
                                                   ),
                                                 ),
                                               ),
@@ -253,9 +251,9 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 16),
                                       _SlimProgressIndicator(cs: cs, status: (order['status'] as String?) ?? 'PENDING'),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 16),
                                       _CustomerInfoCard(
                                         name: (order['customerName'] as String?) ?? (conversation?['name'] as String?) ?? 'Guest Customer',
                                         phone: (() {
@@ -270,7 +268,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         address: (order['address'] ?? conversation?['selectedAddress'] ?? 'No location provided').toString().replaceAll('Location: ', '').trim(),
                                         cs: cs,
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: 20),
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
@@ -340,7 +338,6 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                         final decodedCustom = decodeDataUrlToBytes(rawCustomUrl);
                                                         final resolvedCustomUrl = decodedCustom.url;
                                                         final resolvedCustomBytes = decodedCustom.imageBytes;
-                                                        bool isCustomUrl = false;
                                                         if ((displayImageUrl.isEmpty || cakeName.toUpperCase().contains('CUSTOM')) &&
                                                             (resolvedCustomUrl != null || resolvedCustomBytes != null)) {
                                                           if (resolvedCustomBytes != null) {
@@ -348,15 +345,10 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                           } else {
                                                             displayImageUrl = resolvedCustomUrl!;
                                                           }
-                                                          isCustomUrl = true;
                                                         }
 
                                                         final finalImageUrl = (displayImageBytes == null && displayImageUrl.isNotEmpty)
-                                                            ? ((isCustomUrl ||
-                                                                    displayImageUrl.startsWith('http') ||
-                                                                    displayImageUrl.startsWith('data:'))
-                                                                ? displayImageUrl
-                                                                : SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes'))
+                                                            ? SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes')
                                                             : '';
 
                                                         final bool isCustomItem = cakeName.toUpperCase().contains('CUSTOM') || (double.tryParse(item['price']?.toString() ?? '0') ?? 0.0) == 0;
@@ -416,7 +408,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                         },
                                       ),
                                       if (order['notes'] != null && order['notes'].toString().isNotEmpty) ...[
-                                        const SizedBox(height: 32),
+                                        const SizedBox(height: 20),
                                         _SectionTitle(title: "Special Instructions", cs: cs),
                                         const SizedBox(height: 12),
                                         Container(
@@ -522,7 +514,7 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
                                                    : 'your order';
                                                await OrderService.launchWhatsApp(
                                                  phone,
-                                                 "Hi $name, this is Sonna's Patisserie. I'm contacting you regarding $orderRef ($cake).",
+                                                 "Hi $name, this is Sonnas. I'm contacting you regarding $orderRef ($cake).",
                                                );
                                             },
                                           ),
@@ -560,10 +552,8 @@ class _OwnerOrderDetailsViewState extends ConsumerState<OwnerOrderDetailsView> {
       return (url: null, imageBytes: null);
     }
 
-    final url = lower.startsWith('http')
-        ? trimmed
-        : SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
-    return (url: url, imageBytes: null);
+    final url = SupabaseService.getPublicUrl(trimmed, bucket: 'cakes');
+    return (url: url.isEmpty ? null : url, imageBytes: null);
   }
 
   Widget _buildViewImageButton(ColorScheme cs, Map<String, dynamic> order, dynamic conversation) {
@@ -855,7 +845,7 @@ class _SlimProgressIndicator extends StatelessWidget {
     } else if (normalizedStatus == 'COMPLETED') {
       progress = 1.0;
       statusText = "COMPLETED";
-      poeticNote = "The order is complete. Thank you for choosing Sonna's Patisserie.";
+      poeticNote = "The order is complete. Thank you for choosing Sonnas.";
     } else if (normalizedStatus == 'CANCELLED') {
       progress = 0.0;
       statusText = "CANCELLED";

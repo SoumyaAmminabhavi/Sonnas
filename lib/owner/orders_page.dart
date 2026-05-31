@@ -50,20 +50,10 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
                   Text(
                     "ATELIER MANAGEMENT",
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2.5,
-                      color: cs.secondary.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Active Orders",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: cs.secondary,
-                      letterSpacing: -0.5,
+                      color: cs.primary,
                     ),
                   ),
                 ],

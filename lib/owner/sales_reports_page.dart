@@ -1030,24 +1030,15 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Sales Intelligence",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 48,
-                      color: cs.secondary,
-                      height: 1.1,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Performance Overview",
+                        "PERFORMANCE OVERVIEW",
                         style: GoogleFonts.plusJakartaSans(
                           color: cs.primary,
                           fontWeight: FontWeight.bold,
@@ -1063,15 +1054,15 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Container(height: 1, color: cs.secondary.withValues(alpha: 0.1)),
-                  const SizedBox(height: 32),
+                  SizedBox(height: MediaQuery.sizeOf(context).width > 800 ? 32 : 20),
                   _buildMetricsGrid(cs),
-                  const SizedBox(height: 32),
+                  SizedBox(height: MediaQuery.sizeOf(context).width > 800 ? 32 : 20),
                   _buildRevenueChart(cs, isDark),
-                  const SizedBox(height: 32),
+                  SizedBox(height: MediaQuery.sizeOf(context).width > 800 ? 32 : 20),
                   _buildSecondaryStats(cs, isDark),
-                  const SizedBox(height: 100),
+                  SizedBox(height: MediaQuery.sizeOf(context).width > 800 ? 100 : 48),
                 ],
               ),
             ),
@@ -1082,89 +1073,87 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
   }
 
   Widget _buildMetricsGrid(ColorScheme cs) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final isMobile = constraints.maxWidth < 600;
-      return GridView.count(
-        crossAxisCount: isMobile ? 1 : 3,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: isMobile ? 2.5 : 1.5,
+    final isDesktop = MediaQuery.sizeOf(context).width > 800;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildMetricCard(
-            cs,
-            "Total Revenue",
-            NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(_totalRevenue),
-            Icons.account_balance_wallet_outlined,
-            const Color(0xFFFF4D8D),
+          Expanded(
+            child: _buildMetricCard(
+              cs,
+              "Total Revenue",
+              NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(_totalRevenue),
+              Icons.account_balance_wallet_outlined,
+              const Color(0xFFFF4D8D),
+              isDesktop,
+            ),
           ),
-          _buildMetricCard(
-            cs,
-            "Total Orders",
-            _totalOrders.toString(),
-            Icons.shopping_bag_outlined,
-            const Color(0xFF701235),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildMetricCard(
+              cs,
+              "Total Orders",
+              _totalOrders.toString(),
+              Icons.shopping_bag_outlined,
+              const Color(0xFF701235),
+              isDesktop,
+            ),
           ),
-          _buildMetricCard(
-            cs,
-            "Avg. Order",
-            NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(_avgOrderValue),
-            Icons.analytics_outlined,
-            Colors.blueGrey,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildMetricCard(
+              cs,
+              "Avg. Order",
+              NumberFormat.currency(symbol: PriceConstants.currencySymbol, decimalDigits: 0).format(_avgOrderValue),
+              Icons.analytics_outlined,
+              Colors.blueGrey,
+              isDesktop,
+            ),
           ),
         ],
-      );
-    });
+      ),
+    );
   }
 
-  Widget _buildMetricCard(ColorScheme cs, String title, String value, IconData icon, Color accent) {
+  Widget _buildMetricCard(ColorScheme cs, String title, String value, IconData icon, Color accent, bool isDesktop) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isDesktop ? 24 : 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: cs.secondary.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: cs.secondary.withValues(alpha: 0.02),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  color: cs.secondary.withValues(alpha: 0.6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+          Icon(icon, color: accent, size: isDesktop ? 20 : 16),
+          SizedBox(height: isDesktop ? 16 : 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: GoogleFonts.notoSerif(
+                color: cs.secondary,
+                fontSize: isDesktop ? 28 : 24,
+                fontWeight: FontWeight.bold,
               ),
-              Icon(icon, color: accent, size: 20),
-            ],
-          ),
-          Text(
-            value,
-            style: GoogleFonts.notoSerif(
-              color: cs.secondary,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
             ),
           ),
-          LinearProgressIndicator(
-            value: 0.7,
-            backgroundColor: accent.withValues(alpha: 0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(accent),
-            borderRadius: BorderRadius.circular(4),
-            minHeight: 4,
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title.toUpperCase(),
+              maxLines: 1,
+              style: GoogleFonts.plusJakartaSans(
+                color: cs.secondary.withValues(alpha: 0.4),
+                fontSize: isDesktop ? 10 : 8,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

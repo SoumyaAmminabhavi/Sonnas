@@ -220,7 +220,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
     const groups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     return Container(
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow.withValues(alpha: 0.5),
+        color: cs.surfaceContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: cs.secondary.withValues(alpha: 0.08)),
       ),
@@ -261,7 +261,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
         hintText: label,
         hintStyle: GoogleFonts.plusJakartaSans(fontSize: 14, color: cs.secondary.withValues(alpha: 0.3)),
         filled: true,
-        fillColor: cs.surfaceContainerLow.withValues(alpha: 0.5),
+        fillColor: cs.surfaceContainer.withValues(alpha: 0.5),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: cs.secondary.withValues(alpha: 0.08))),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: cs.primary.withValues(alpha: 0.3))),
@@ -293,24 +293,24 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                     color: widget.cs.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    letterSpacing: 2.0,
+                    letterSpacing: 2.5,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  "Profile",
-                  style: GoogleFonts.notoSerif(
-                    fontSize: widget.isDesktop ? 48 : 36,
+                  "PROFILE OVERVIEW",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: widget.isDesktop ? 22 : 18,
+                    fontWeight: FontWeight.bold,
                     color: widget.cs.secondary,
-                    height: 1.1,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Container(
                   height: 1,
-                  color: widget.cs.secondary.withValues(alpha: 0.3),
+                  color: widget.cs.secondary.withValues(alpha: 0.1),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
 
                 Center(
                   child: Column(
@@ -487,7 +487,7 @@ class _StaffProfilePageState extends ConsumerState<StaffProfilePage> {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: widget.cs.surfaceContainerLow,
+                    color: widget.cs.surfaceContainer,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
@@ -963,7 +963,7 @@ class _InfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: cs.surfaceContainer,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(

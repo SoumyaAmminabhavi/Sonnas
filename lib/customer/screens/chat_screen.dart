@@ -107,7 +107,7 @@ class _ChatScreenState extends State<ChatScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "Sonna's Patisserie",
+                  "Sonnas",
                   style: GoogleFonts.notoSerif(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

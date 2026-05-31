@@ -1,6 +1,6 @@
 # WhatsApp Bot Architecture & Message Lifecycle
 
-This document describes the complete system design and the lifecycle of a message within the Sonna's Patisserie WhatsApp Bot ecosystem.
+This document describes the complete system design and the lifecycle of a message within the Sonnas WhatsApp Bot ecosystem.
 
 ---
 

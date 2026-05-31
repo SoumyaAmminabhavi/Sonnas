@@ -28,7 +28,7 @@ const testPayloads = [
   }
 ];
 
-console.log("🛡️  SONNA'S PATISSERIE SECURITY AUDIT\n" + "=".repeat(40));
+console.log("🛡️  Sonnas SECURITY AUDIT\n" + "=".repeat(40));
 
 testPayloads.forEach((payload) => {
   console.log(`\nTesting: [${payload.name}]`);

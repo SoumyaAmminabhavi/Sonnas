@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../providers/favorites_provider.dart';
 import '../../services/supabase_service.dart';
 import 'dart:async';
+import '../../widgets/performance_loader.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(String?) onViewMenu;
@@ -103,20 +104,9 @@ class _HomeScreenState extends State<HomeScreen> {
               price = "₹ ${numericPrice.toStringAsFixed(2)}";
             }
 
-            // Robust image URL generation
+            // Robust image URL generation using shared helper
             final String imageName = (cake['image'] as String?) ?? '';
-            String imageUrl = '';
-
-            if (imageName.startsWith('http')) {
-              imageUrl = imageName;
-            } else if (imageName.isNotEmpty) {
-              final cleanPath = imageName
-                  .replaceFirst('cakes/', '')
-                  .replaceFirst('/cakes/', '')
-                  .replaceAll('.pngpng', '.png');
-              
-              imageUrl = supabase.storage.from('cakes').getPublicUrl(cleanPath);
-            }
+            String imageUrl = SupabaseService.getPublicUrl(imageName, bucket: 'cakes');
 
             // Fallback for missing or broken images
             if (imageUrl.isEmpty || imageUrl.contains('null')) {
@@ -286,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: 100,
               child: _isLoadingCategories
-                  ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                  ? const Center(child: PerformanceLoader(color: primaryColor))
                   : ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -319,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_isLoading)
               const SizedBox(
                 height: 240,
-                child: Center(child: CircularProgressIndicator(color: primaryColor)),
+                child: Center(child: PerformanceLoader(color: primaryColor)),
               )
             else if (featuredCakes.isEmpty)
               const SizedBox(
