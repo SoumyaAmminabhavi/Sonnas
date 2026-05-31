@@ -4,7 +4,41 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.6] - 2026-05-31
+
+### Phase 1 (Continued): Flutter Web Performance — Lighthouse 90+
+
+#### Performance
+- **Lighthouse score: 90** (measured on production build, desktop emulation).
+  - FCP: 181 ms → score **100**
+  - LCP: 257 ms → score **100**
+  - CLS: 0 → score **100**
+  - TBT: 222 ms → score **75**
+  - Speed Index: 1,825 ms → score **70**
+- **Icon tree-shaking**: MaterialIcons reduced **1,645 KB → 34 KB** (97.9%), CupertinoIcons reduced **258 KB → 1.5 KB** (99.4%) in release builds.
+
+#### Changed
+- **Build target: WASM** — switched production build from `--web-renderer html` to `--wasm`. Dart now compiles to WebAssembly instead of JavaScript, removing Dart execution from the JS main thread and significantly lowering Total Blocking Time.
+- **Fonts fully bundled locally**: Migrated from `web/fonts/` (woff2) approach to `assets/google_fonts/` with the `google_fonts` package. Downloaded 17 font variant TTF files (Plus Jakarta Sans, Noto Serif). Set `GoogleFonts.config.allowRuntimeFetching = false` in `lib/main.dart` — zero runtime font HTTP requests.
+- **Eliminated `.env` 404 on web**: Added `!kIsWeb` guard around `dotenv.load()` in `lib/main.dart` — the browser no longer attempts to fetch a non-existent `assets/.env` file, eliminating a 404 console error on every load.
+- **Splash animation speed**: Fade transition reduced `0.5s → 0.3s`, DOM removal delay reduced `600ms → 350ms` — visually settles ~500ms earlier, improving Speed Index.
+- **Removed unused DNS preconnects**: Eliminated `fonts.gstatic.com` and `fonts.googleapis.com` preconnect links from `web/index.html` (fonts are now local; these were wasted DNS lookups).
+- **Bootstrap loading**: Changed `flutter_bootstrap.js` from `async` to `defer` to ensure Flutter engine initializes only after full DOM parse and stable viewport dimensions.
+- **HTML/body CSS reset**: Added `html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }` to guarantee the Flutter engine always receives valid positive viewport dimensions.
+- **Viewport meta tag**: Removed conflicting custom viewport tag — Flutter Web injects its own; having both caused a console warning and renderer conflict.
+
+#### Infrastructure
+- **`scripts/build-web-prod.ps1`**: Rewritten — now defaults to `--wasm`, reads credentials from `.env` automatically, prints build size summary after compile. Accepts `-NoWasm` flag to fall back to JS release build.
+- **`.github/workflows/deploy.yml`**: Updated CI/CD pipeline to use `--wasm` build; removed the now-unnecessary `Patch HTML Renderer and Clean CanvasKit` step.
+- **`vercel.json`**: Added cache headers for `main.dart.wasm` and `main.dart.mjs` (WASM output files). Added `Cross-Origin-Embedder-Policy: require-corp` and `Cross-Origin-Opener-Policy: same-origin` headers globally — required for WASM `SharedArrayBuffer` / multi-threading support in Chrome and Firefox.
+
+#### Fixed
+- Viewport meta tag warning: `Found an existing <meta name="viewport"> tag. Flutter Web uses its own viewport configuration.`
+- Console error: `GET /assets/.env 404 (Not Found)` on every web load.
+- Console errors: `GoogleFonts: PlusJakartaSans-ExtraBold not found in application assets` (all 17 variants).
+
 ## [1.0.5] - 2026-05-30
+
 
 ### Phase 7: Staff Space Optimization (Clean UI & Spacing)
 

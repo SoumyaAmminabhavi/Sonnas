@@ -1,4 +1,4 @@
-name: Deploy Flutter Web to Vercel
+name: Deploy Flutter Web to Vercel (WASM)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,14 +56,18 @@ jobs:
             exit 1
           fi
 
-      - name: Build Flutter Web
+      - name: Build Flutter Web (WASM)
         run: >
-          flutter build web --release --dart-define=FLUTTER_WEB_RENDERER=html --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}" --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}" --no-wasm-dry-run --base-href "/"
+          flutter build web --wasm
+          --dart-define=SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          --dart-define=SUPABASE_ANON_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          --base-href "/"
 
-      - name: Patch HTML Renderer and Clean CanvasKit
+      - name: Print build size
         run: |
-          rm -rf build/web/canvaskit
-          sed -i 's/"renderer":"canvaskit"/"renderer":"html"/g' build/web/flutter_bootstrap.js
+          echo "=== Build size summary ==="
+          du -sh build/web/
+          ls -lh build/web/main.dart.* 2>/dev/null || true
 
       - name: Install Vercel CLI
         run: npm install -g vercel

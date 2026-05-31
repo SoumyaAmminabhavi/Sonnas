@@ -44,8 +44,9 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
     
-    
-    if (!kReleaseMode) {
+    // Disable dynamic HTTP font fetching to ensure local assets are used
+    GoogleFonts.config.allowRuntimeFetching = false;
+    if (!kReleaseMode && !kIsWeb) {
       try {
         await dotenv.load(fileName: ".env");
       } catch (e) {
