@@ -32,6 +32,12 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- WASM critical path preloads: browser fetches these in parallel with HTML parse
+       instead of waiting for the serial chain: HTML → bootstrap.js → .mjs → .wasm -->
+  <link rel="preload" href="flutter_bootstrap.js" as="script">
+  <link rel="modulepreload" href="main.dart.mjs" crossorigin>
+  <link rel="preload" href="main.dart.wasm" as="fetch" crossorigin>
+
   <title>Sonnas</title>
   <link rel="manifest" href="manifest.json">
   <style>
