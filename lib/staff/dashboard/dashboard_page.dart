@@ -111,19 +111,22 @@ class _StaffDashboardState extends State<StaffDashboard> {
         backgroundColor: cs.surface.withValues(alpha: 0.9),
         elevation: 0,
         scrolledUnderElevation: 0,
+        automaticallyImplyLeading: false,
+        centerTitle: true,
         leading: isDesktop ? null : IconButton(
-          icon: Icon(Icons.menu_rounded, color: cs.primary),
-          onPressed: () {
-            // Optional: Handle drawer or menu
-          },
+          icon: Icon(Icons.arrow_back, color: cs.primary),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          "Sonnas",
-          style: GoogleFonts.notoSerif(
-            color: cs.primary,
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
+        title: GestureDetector(
+          onTap: () => _onItemTapped(0),
+          child: Text(
+            "Sonnas",
+            style: GoogleFonts.notoSerif(
+              color: cs.primary,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+            ),
           ),
         ),
         actions: [
