@@ -278,7 +278,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(0, Icons.storefront, "BOUTIQUE"),
+                  _buildNavItem(0, Icons.home_outlined, "HOME"),
                   _buildNavItem(1, Icons.restaurant_menu, "MENU"),
                   _buildNavItem(2, Icons.shopping_bag_outlined, "BAG"),
                   _buildNavItem(3, Icons.receipt_long, "ORDERS"),
@@ -339,7 +339,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _buildSidebarItem(0, Icons.storefront, "BOUTIQUE"),
+                  _buildSidebarItem(0, Icons.home_outlined, "HOME"),
                   const SizedBox(height: 12),
                   _buildSidebarItem(1, Icons.restaurant_menu, "THE MENU"),
                   const SizedBox(height: 12),
@@ -543,8 +543,8 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.storefront, color: primaryColor),
-            title: Text("BOUTIQUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            leading: const Icon(Icons.home_outlined, color: primaryColor),
+            title: Text("HOME", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentIndex = 0);

@@ -46,7 +46,7 @@ void main() async {
     
     // Disable dynamic HTTP font fetching to ensure local assets are used
     GoogleFonts.config.allowRuntimeFetching = false;
-    if (!kReleaseMode && !kIsWeb) {
+    if (!kReleaseMode) {
       try {
         await dotenv.load(fileName: ".env");
       } catch (e) {
@@ -81,9 +81,14 @@ void main() async {
     );
   } catch (e, stackTrace) {
     debugPrint('Critical Initialization Error: $e\n$stackTrace');
-    runApp(const MaterialApp(
+    runApp(MaterialApp(
       home: Scaffold(
-        body: Center(child: Text('Initialization failed. Please restart the app.')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('Initialization failed:\n$e', textAlign: TextAlign.center),
+          ),
+        ),
       ),
     ));
   }

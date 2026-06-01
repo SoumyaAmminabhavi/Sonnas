@@ -19,8 +19,8 @@ if (-not (Test-Path $envFile)) {
 $supabaseUrl = ""
 $supabaseKey = ""
 Get-Content $envFile | ForEach-Object {
-    if ($_ -match "^SUPABASE_URL=(.+)$")      { $supabaseUrl = $Matches[1].Trim() }
-    if ($_ -match "^SUPABASE_ANON_KEY=(.+)$") { $supabaseKey = $Matches[1].Trim() }
+    if ($_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=([^`"]+)$" -or $_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=`"([^`"]+)`"$")      { $supabaseUrl = $Matches[1].Trim() }
+    if ($_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=([^`"]+)$" -or $_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=`"([^`"]+)`"$") { $supabaseKey = $Matches[1].Trim() }
 }
 
 if (-not $supabaseUrl -or -not $supabaseKey) {
