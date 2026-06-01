@@ -16,6 +16,14 @@
   -->
   <base href="$FLUTTER_BASE_HREF">
 
+  <script>
+    // Delete the deprecated, non-standard Intl.v8BreakIterator if Intl.Segmenter is available,
+    // which prevents the browser deprecation warning and forces Dart SDK to use Intl.Segmenter.
+    if (typeof Intl !== 'undefined' && Intl.v8BreakIterator && Intl.Segmenter) {
+      delete Intl.v8BreakIterator;
+    }
+  </script>
+
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="Sonnas - Artisan Patisserie & Cafe Boutique">

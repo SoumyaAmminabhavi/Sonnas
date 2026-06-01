@@ -5,6 +5,7 @@
 #   SUPABASE_URL=https://...
 #   SUPABASE_ANON_KEY=eyJ...
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "")]
 param(
     [switch]$NoWasm   # Pass -NoWasm to fall back to standard JS release build
 )
@@ -18,9 +19,9 @@ if (-not (Test-Path $envFile)) {
 
 $supabaseUrl = ""
 $supabaseKey = ""
-Get-Content $envFile | ForEach-Object {
-    if ($_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=([^`"]+)$" -or $_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=`"([^`"]+)`"$")      { $supabaseUrl = $Matches[1].Trim() }
-    if ($_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=([^`"]+)$" -or $_ -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=`"([^`"]+)`"$") { $supabaseKey = $Matches[1].Trim() }
+foreach ($line in Get-Content $envFile) {
+    if ($line -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=([^`"]+)$" -or $line -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=`"([^`"]+)`"$")      { $supabaseUrl = $Matches[1].Trim() }
+    if ($line -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=([^`"]+)$" -or $line -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=`"([^`"]+)`"$") { $supabaseKey = $Matches[1].Trim() }
 }
 
 if (-not $supabaseUrl -or -not $supabaseKey) {
