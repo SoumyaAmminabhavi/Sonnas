@@ -5,6 +5,7 @@
 #   SUPABASE_URL=https://...
 #   SUPABASE_ANON_KEY=eyJ...
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseDeclaredVarsMoreThanAssignments", "")]
 param(
     [switch]$NoWasm   # Pass -NoWasm to fall back to standard JS release build
 )
@@ -17,10 +18,10 @@ if (-not (Test-Path $envFile)) {
 }
 
 $supabaseUrl = ""
-$supabaseKey = ""
-Get-Content $envFile | ForEach-Object {
-    if ($_ -match "^SUPABASE_URL=(.+)$")      { $supabaseUrl = $Matches[1].Trim() }
-    if ($_ -match "^SUPABASE_ANON_KEY=(.+)$") { $supabaseKey = $Matches[1].Trim() }
+$supabaseKey = ""       
+foreach ($line in Get-Content $envFile) {
+    if ($line -match "^SUPABASE_URL=(.+)$")      { $supabaseUrl = $Matches[1].Trim() }
+    if ($line -match "^SUPABASE_ANON_KEY=(.+)$") { $supabaseKey = $Matches[1].Trim() }
 }
 
 if (-not $supabaseUrl -or -not $supabaseKey) {
