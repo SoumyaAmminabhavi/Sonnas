@@ -1,0 +1,449 @@
+﻿diff --git a/lib/customer/main.dart b/lib/customer/main.dart
+index 2abfd39..b7670fc 100644
+--- a/lib/customer/main.dart
++++ b/lib/customer/main.dart
+@@ -31,9 +31,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+   Timer? _abandonedCartTimer;
+   final Map<String, bool> _previousStockStatus = {};
+ 
+-  late final List<Widget> _screens;
+-
+-  List<Widget> _buildScreens() {
++  List<Widget> _getScreens() {
+     final authId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
+     return [
+       HomeScreen(onViewMenu: (query) {
+@@ -44,7 +42,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+       }),
+       MenuScreen(
+         initialSearchQuery: _menuSearchQuery,
+-        key: const ValueKey('menu_screen_stable'),
++        key: ValueKey('menu_${_menuSearchQuery ?? "none"}'),
+       ),
+       CartScreen(key: ValueKey('cart_$authId')),
+       OrdersScreen(key: ValueKey('orders_$authId')),
+@@ -71,7 +69,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+   @override
+   void initState() {
+     super.initState();
+-    _screens = _buildScreens();
+     _setupStatusListener();
+     _setupStockListener();
+     _setupAbandonedCartListener();
+@@ -234,18 +231,13 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+             ),
+             centerTitle: true,
+-            title: InkWell(
+-              onTap: () {
+-                setState(() => _currentIndex = 0);
+-              },
+-              child: Text(
+-                "Sonna's",
+-                style: GoogleFonts.notoSerif(
+-                  fontSize: 24,
+-                  fontWeight: FontWeight.w400,
+-                  fontStyle: FontStyle.italic,
+-                  color: primaryColor,
+-                ),
++            title: Text(
++              "Sonnas",
++              style: GoogleFonts.notoSerif(
++                fontSize: 24,
++                fontWeight: FontWeight.w400,
++                fontStyle: FontStyle.italic,
++                color: primaryColor,
+               ),
+             ),
+             actions: [
+@@ -263,7 +255,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+               Expanded(
+                 child: IndexedStack(
+                   index: _currentIndex,
+-                  children: _screens,
++                  children: _getScreens(),
+                 ),
+               ),
+             ],
+@@ -286,7 +278,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceAround,
+                 children: [
+-                  _buildNavItem(0, Icons.storefront, "HOME"),
++                  _buildNavItem(0, Icons.storefront, "BOUTIQUE"),
+                   _buildNavItem(1, Icons.restaurant_menu, "MENU"),
+                   _buildNavItem(2, Icons.shopping_bag_outlined, "BAG"),
+                   _buildNavItem(3, Icons.receipt_long, "ORDERS"),
+@@ -316,23 +308,27 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+           // Sidebar Logo
+           Padding(
+             padding: const EdgeInsets.symmetric(horizontal: 24),
+-            child: InkWell(
+-              onTap: () {
+-                setState(() => _currentIndex = 0);
+-              },
+-              child: Column(
+-                children: [
+-                  Text(
+-                    "Sonna's",
+-                    style: GoogleFonts.notoSerif(
+-                      fontSize: 32,
+-                      fontWeight: FontWeight.w400,
+-                      fontStyle: FontStyle.italic,
+-                      color: primaryColor,
+-                    ),
++            child: Column(
++              children: [
++                Text(
++                  "Sonna's",
++                  style: GoogleFonts.notoSerif(
++                    fontSize: 32,
++                    fontWeight: FontWeight.w400,
++                    fontStyle: FontStyle.italic,
++                    color: primaryColor,
+                   ),
+-                ],
+-              ),
++                ),
++                Text(
++                  "PATISSERIE",
++                  style: GoogleFonts.plusJakartaSans(
++                    fontSize: 10,
++                    fontWeight: FontWeight.w800,
++                    letterSpacing: 4,
++                    color: secondaryColor.withValues(alpha: 0.4),
++                  ),
++                ),
++              ],
+             ),
+           ),
+           const SizedBox(height: 80),
+@@ -343,7 +339,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+               padding: const EdgeInsets.symmetric(horizontal: 16),
+               child: Column(
+                 children: [
+-                  _buildSidebarItem(0, Icons.storefront, "HOME"),
++                  _buildSidebarItem(0, Icons.storefront, "BOUTIQUE"),
+                   const SizedBox(height: 12),
+                   _buildSidebarItem(1, Icons.restaurant_menu, "THE MENU"),
+                   const SizedBox(height: 12),
+@@ -512,6 +508,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+   Widget _buildDrawer() {
+     const Color primaryColor = Color(0xFFFF4D8D);
+     const Color surfaceColor = Color(0xFFFFF0F6);
++    const Color secondaryColor = Color(0xFF701235);
+ 
+     return Drawer(
+       backgroundColor: surfaceColor,
+@@ -519,32 +516,35 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
+         children: [
+           DrawerHeader(
+             decoration: const BoxDecoration(color: Colors.white),
+-            child: InkWell(
+-              onTap: () {
+-                Navigator.pop(context);
+-                setState(() => _currentIndex = 0);
+-              },
+-              child: Center(
+-                child: Column(
+-                  mainAxisAlignment: MainAxisAlignment.center,
+-                  children: [
+-                    Text(
+-                      "Sonna's",
+-                      style: GoogleFonts.notoSerif(
+-                        fontSize: 32,
+-                        fontWeight: FontWeight.w400,
+-                        fontStyle: FontStyle.italic,
+-                        color: primaryColor,
+-                      ),
++            child: Center(
++              child: Column(
++                mainAxisAlignment: MainAxisAlignment.center,
++                children: [
++                  Text(
++                    "Sonna's",
++                    style: GoogleFonts.notoSerif(
++                      fontSize: 32,
++                      fontWeight: FontWeight.w400,
++                      fontStyle: FontStyle.italic,
++                      color: primaryColor,
+                     ),
+-                  ],
+-                ),
++                  ),
++                  Text(
++                    "PATISSERIE",
++                    style: GoogleFonts.plusJakartaSans(
++                      fontSize: 10,
++                      fontWeight: FontWeight.w800,
++                      letterSpacing: 4,
++                      color: secondaryColor.withValues(alpha: 0.4),
++                    ),
++                  ),
++                ],
+               ),
+             ),
+           ),
+           ListTile(
+             leading: const Icon(Icons.storefront, color: primaryColor),
+-            title: Text("HOME", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
++            title: Text("BOUTIQUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+             onTap: () {
+               Navigator.pop(context);
+               setState(() => _currentIndex = 0);
+diff --git a/lib/customer/screens/custom_order_screen.dart b/lib/customer/screens/custom_order_screen.dart
+index 9a06846..9005df5 100644
+--- a/lib/customer/screens/custom_order_screen.dart
++++ b/lib/customer/screens/custom_order_screen.dart
+@@ -1,4 +1,4 @@
+-import 'dart:async';
++∩╗┐import 'dart:async';
+ import 'package:flutter/material.dart';
+ import 'package:google_fonts/google_fonts.dart';
+ import 'package:supabase_flutter/supabase_flutter.dart';
+@@ -133,7 +133,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
+             ),
+             centerTitle: true,
+             title: Text(
+-              "SonnaΓÇÖs",
++              "Sonnas",
+               style: GoogleFonts.notoSerif(
+                 color: primaryColor,
+                 fontSize: 22,
+@@ -511,7 +511,7 @@ class _CustomOrderScreenState extends State<CustomOrderScreen> {
+                   ),
+                   const SizedBox(height: 24),
+                   Text(
+-                    "┬⌐ 2024 Sonna's Patisserie. Crafted for Sensory Delight.",
++                    "┬⌐ 2024 Sonnas. Crafted for Sensory Delight.",
+                     textAlign: TextAlign.center,
+                     style: GoogleFonts.plusJakartaSans(
+                       fontSize: 11,
+diff --git a/lib/customer/screens/home_screen.dart b/lib/customer/screens/home_screen.dart
+index 0cf9365..d455065 100644
+--- a/lib/customer/screens/home_screen.dart
++++ b/lib/customer/screens/home_screen.dart
+@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
+ import '../providers/favorites_provider.dart';
+ import '../../services/supabase_service.dart';
+ import 'dart:async';
++import '../../widgets/performance_loader.dart';
+ 
+ class HomeScreen extends StatefulWidget {
+   final Function(String?) onViewMenu;
+@@ -31,13 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
+     _fetchCategories();
+   }
+ 
+-  @override
+-  void didChangeDependencies() {
+-    super.didChangeDependencies();
+-    precacheImage(const AssetImage("assets/images/storefront.png"), context);
+-    precacheImage(const AssetImage("assets/patisserie_bg.png"), context);
+-  }
+-
+   @override
+   void dispose() {
+     _searchController.dispose();
+@@ -84,16 +78,31 @@ class _HomeScreenState extends State<HomeScreen> {
+   Future<void> _fetchFeaturedCakes() async {
+     try {
+       final supabase = Supabase.instance.client;
+-      // Fetch only the top 5 cakes ordered by sortOrder (instead of fetching everything and computing on client)
++      // Fetch all cakes and their options
+       final cakesData = await supabase
+           .from('Cake')
+-          .select('*, options:CakeOption(*)')
+-          .order('sortOrder', ascending: true)
+-          .limit(5);
++          .select('*, options:CakeOption(*)');
++      
++      // Fetch order items to compute sales count per cake
++      final Map<String, int> cakeOrderCounts = {};
++      try {
++        final orderItemsData = await supabase
++            .from('OrderItem')
++            .select('cakeId, quantity');
++        for (final item in orderItemsData) {
++          final cakeId = item['cakeId']?.toString();
++          if (cakeId != null) {
++            final qty = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
++            cakeOrderCounts[cakeId] = (cakeOrderCounts[cakeId] ?? 0) + qty;
++          }
++        }
++      } catch (e) {
++        debugPrint("Error fetching order popularity metrics: $e");
++      }
+       
+       if (mounted) {
+         setState(() {
+-          featuredCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
++          final allCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
+             final options = cake['options'] as List?;
+             
+             String price = "Γé╣ 0.00";
+@@ -103,20 +112,9 @@ class _HomeScreenState extends State<HomeScreen> {
+               price = "Γé╣ ${numericPrice.toStringAsFixed(2)}";
+             }
+ 
+-            // Robust image URL generation
++            // Robust image URL generation using shared helper
+             final String imageName = (cake['image'] as String?) ?? '';
+-            String imageUrl = '';
+-
+-            if (imageName.startsWith('http')) {
+-              imageUrl = imageName;
+-            } else if (imageName.isNotEmpty) {
+-              final cleanPath = imageName
+-                  .replaceFirst('cakes/', '')
+-                  .replaceFirst('/cakes/', '')
+-                  .replaceAll('.pngpng', '.png');
+-              
+-              imageUrl = supabase.storage.from('cakes').getPublicUrl(cleanPath);
+-            }
++            String imageUrl = SupabaseService.getPublicUrl(imageName, bucket: 'cakes');
+ 
+             // Fallback for missing or broken images
+             if (imageUrl.isEmpty || imageUrl.contains('null')) {
+@@ -134,6 +132,14 @@ class _HomeScreenState extends State<HomeScreen> {
+             };
+           }).toList();
+ 
++          // Sort cakes by total orders (descending)
++          allCakes.sort((a, b) {
++            final countA = cakeOrderCounts[a['id']] ?? 0;
++            final countB = cakeOrderCounts[b['id']] ?? 0;
++            return countB.compareTo(countA);
++          });
++
++          featuredCakes = allCakes.take(5).toList();
+           _isLoading = false;
+         });
+       }
+@@ -251,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
+                       mainAxisAlignment: MainAxisAlignment.end,
+                       children: [
+                         Text(
+-                          "Sonna's",
++                          "Sonnas",
+                           style: GoogleFonts.notoSerif(
+                             fontSize: 40,
+                             color: const Color(0xFFFF4D8D),
+@@ -286,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
+             SizedBox(
+               height: 100,
+               child: _isLoadingCategories
+-                  ? const Center(child: CircularProgressIndicator(color: primaryColor))
++                  ? const Center(child: PerformanceLoader(color: primaryColor))
+                   : ListView.builder(
+                       scrollDirection: Axis.horizontal,
+                       padding: const EdgeInsets.symmetric(horizontal: 24),
+@@ -319,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
+             if (_isLoading)
+               const SizedBox(
+                 height: 240,
+-                child: Center(child: CircularProgressIndicator(color: primaryColor)),
++                child: Center(child: PerformanceLoader(color: primaryColor)),
+               )
+             else if (featuredCakes.isEmpty)
+               const SizedBox(
+diff --git a/lib/customer/screens/menu_screen.dart b/lib/customer/screens/menu_screen.dart
+index 04a92c4..8ff714b 100644
+--- a/lib/customer/screens/menu_screen.dart
++++ b/lib/customer/screens/menu_screen.dart
+@@ -37,33 +37,6 @@ class _MenuScreenState extends State<MenuScreen> {
+     _subscribeToMenuChanges();
+   }
+ 
+-  @override
+-  void didUpdateWidget(covariant MenuScreen oldWidget) {
+-    super.didUpdateWidget(oldWidget);
+-    if (widget.initialSearchQuery != oldWidget.initialSearchQuery) {
+-      if (widget.initialSearchQuery != null) {
+-        _searchController.text = widget.initialSearchQuery!;
+-        final queryLower = widget.initialSearchQuery!.trim().toLowerCase();
+-        final matchedCat = categories.firstWhere(
+-          (c) => c.toLowerCase() == queryLower,
+-          orElse: () => '',
+-        );
+-        
+-        if (matchedCat.isNotEmpty) {
+-          _selectedCategory = matchedCat;
+-          _searchController.clear();
+-        } else {
+-          _selectedCategory = "All";
+-          _searchController.text = widget.initialSearchQuery!;
+-        }
+-      } else {
+-        _selectedCategory = "All";
+-        _searchController.clear();
+-      }
+-      _filterByCategory();
+-    }
+-  }
+-
+   void _subscribeToMenuChanges() {
+     _menuChannel = Supabase.instance.client
+         .channel('public:Cake')
+@@ -127,20 +100,7 @@ class _MenuScreenState extends State<MenuScreen> {
+             }
+ 
+             final String imageName = (cake['image'] as String?) ?? '';
+-            String imageUrl = '';
+-
+-            if (imageName.startsWith('http')) {
+-              imageUrl = imageName;
+-            } else if (imageName.isNotEmpty) {
+-              // 1. Fix bucket name to 'cakes'
+-              // 2. Fix 'pngpng' typo if it exists in the DB
+-              final cleanPath = imageName
+-                .replaceFirst('cakes/', '')
+-                .replaceFirst('/cakes/', '')
+-                .replaceAll('.pngpng', '.png'); 
+-                
+-              imageUrl = Supabase.instance.client.storage.from('cakes').getPublicUrl(cleanPath);
+-            }
++            String imageUrl = SupabaseService.getPublicUrl(imageName, bucket: 'cakes');
+ 
+             // If we still don't have a valid URL or it's empty, use a unique Unsplash fallback
+             if (imageUrl.isEmpty || imageUrl.contains('null')) {
+@@ -150,8 +110,6 @@ class _MenuScreenState extends State<MenuScreen> {
+               imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
+             }
+ 
+-
+-
+             // Extract category name from relation
+             final catObj = cake['category'];
+             final String catName = (catObj is Map) ? (catObj['name'] ?? 'General') : 'General';
+diff --git a/lib/customer/screens/payment_screen.dart b/lib/customer/screens/payment_screen.dart
+index f32366f..941edee 100644
+--- a/lib/customer/screens/payment_screen.dart
++++ b/lib/customer/screens/payment_screen.dart
+@@ -98,7 +98,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
+     final options = {
+       'key': dotenv.get('RAZORPAY_KEY_ID', fallback: 'rzp_test_SlapcQRITI3KNO'),
+       'amount': amountInPaise,
+-      'name': "Sonna's",
++      'name': "Sonnas",
+       'description': 'Order Payment',
+       'retry': {'enabled': true, 'max_count': 1},
+       'send_sms_hash': true,
+@@ -331,7 +331,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
+                   icon: const Icon(Icons.arrow_back_ios_new, color: primaryColor, size: 20),
+                 ),
+                 title: Text(
+-                  "Sonna's",
++                  "Sonnas",
+                   style: GoogleFonts.notoSerif(
+                     color: primaryColor,
+                     fontSize: 20,
+@@ -732,7 +732,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
+               ),
+               const SizedBox(height: 16),
+               Text(
+-                "Your selection is being prepared\nby our expert artisans.",
++                "Your boutique selection is being prepared\nby our expert artisans.",
+                 textAlign: TextAlign.center,
+                 style: GoogleFonts.plusJakartaSans(
+                   fontSize: 14,

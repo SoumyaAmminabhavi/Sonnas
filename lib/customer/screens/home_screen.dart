@@ -78,31 +78,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchFeaturedCakes() async {
     try {
       final supabase = Supabase.instance.client;
-      // Fetch all cakes and their options
+      // Fetch only the top 5 cakes ordered by sortOrder (instead of fetching everything and computing on client)
       final cakesData = await supabase
           .from('Cake')
-          .select('*, options:CakeOption(*)');
-      
-      // Fetch order items to compute sales count per cake
-      final Map<String, int> cakeOrderCounts = {};
-      try {
-        final orderItemsData = await supabase
-            .from('OrderItem')
-            .select('cakeId, quantity');
-        for (final item in orderItemsData) {
-          final cakeId = item['cakeId']?.toString();
-          if (cakeId != null) {
-            final qty = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
-            cakeOrderCounts[cakeId] = (cakeOrderCounts[cakeId] ?? 0) + qty;
-          }
-        }
-      } catch (e) {
-        debugPrint("Error fetching order popularity metrics: $e");
-      }
+          .select('*, options:CakeOption(*)')
+          .order('sortOrder', ascending: true)
+          .limit(5);
       
       if (mounted) {
         setState(() {
-          final allCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
+          featuredCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
             final options = cake['options'] as List?;
             
             String price = "₹ 0.00";
@@ -132,14 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
             };
           }).toList();
 
-          // Sort cakes by total orders (descending)
-          allCakes.sort((a, b) {
-            final countA = cakeOrderCounts[a['id']] ?? 0;
-            final countB = cakeOrderCounts[b['id']] ?? 0;
-            return countB.compareTo(countA);
-          });
-
-          featuredCakes = allCakes.take(5).toList();
           _isLoading = false;
         });
       }
