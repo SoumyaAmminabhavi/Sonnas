@@ -85,9 +85,10 @@ class LandingPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 48),
 
-                // Contact Icons Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  spacing: 24,
+                  runSpacing: 16,
+                  alignment: WrapAlignment.center,
                   children: [
                     _ContactGlassIcon(
                       icon: Icons.location_on_outlined,
@@ -98,7 +99,6 @@ class LandingPage extends StatelessWidget {
                         "4TH Phase, Shop No. 5,6,7 Ground Floor, Akshay Colony, Hubballi",
                       ),
                     ),
-                    const SizedBox(width: 24),
                     _ContactGlassIcon(
                       icon: Icons.mail_outline,
                       cs: cs,
@@ -108,14 +108,12 @@ class LandingPage extends StatelessWidget {
                         "sonnaspatisseriecafe@gmail.com",
                       ),
                     ),
-                    const SizedBox(width: 24),
                     _ContactGlassIcon(
                       icon: Icons.photo_camera_outlined,
                       cs: cs,
                       onPressed: () =>
                           _showContactInfo(context, "Instagram", "@sonnas__"),
                     ),
-                    const SizedBox(width: 24),
                     _ContactGlassIcon(
                       icon: Icons.call_outlined,
                       cs: cs,
