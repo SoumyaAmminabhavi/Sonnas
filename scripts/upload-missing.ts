@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
@@ -63,7 +62,18 @@ async function main() {
   ];
 
   for (const file of files) {
-    const filePath = path.join(IMAGES_DIR, file);
+    let filePath = path.join(IMAGES_DIR, file);
+    
+    // Check if the webp file exists
+    if (!fs.existsSync(filePath)) {
+      // Fallback: Check if the png file exists instead
+      const pngFile = file.replace(/\.webp$/i, '.png');
+      const pngPath = path.join(IMAGES_DIR, pngFile);
+      if (fs.existsSync(pngPath)) {
+        filePath = pngPath;
+      }
+    }
+
     if (fs.existsSync(filePath)) {
       await uploadImage(filePath, file);
     } else {
