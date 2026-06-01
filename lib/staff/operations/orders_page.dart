@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../../widgets/wasm_image.dart';
 import '../../services/order_service.dart';
 import '../../services/supabase_service.dart';
 import '../../models/order.dart';
@@ -229,23 +229,11 @@ class StaffOrderCard extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: CachedNetworkImage(
+      child: SafeWasmImage(
         imageUrl: resolvedUrl,
         width: 52,
         height: 52,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          width: 52,
-          height: 52,
-          color: cs.primary.withValues(alpha: 0.05),
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        errorWidget: (context, url, error) => Container(
-          width: 52,
-          height: 52,
-          color: cs.primary.withValues(alpha: 0.05),
-          child: Icon(_getStatusIcon(order.status), color: _getStatusColor(order.status, cs).withValues(alpha: 0.7), size: 22),
-        ),
       ),
     );
   }

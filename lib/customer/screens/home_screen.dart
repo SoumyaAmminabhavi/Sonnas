@@ -82,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final cakesData = await supabase
           .from('Cake')
           .select('*, options:CakeOption(*)');
-      
+
       // Fetch order items to compute sales count per cake
       final Map<String, int> cakeOrderCounts = {};
       try {
@@ -99,38 +99,44 @@ class _HomeScreenState extends State<HomeScreen> {
       } catch (e) {
         debugPrint("Error fetching order popularity metrics: $e");
       }
-      
+
       if (mounted) {
         setState(() {
-          final allCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
-            final options = cake['options'] as List?;
-            
-            String price = "₹ 0.00";
-            if (options != null && options.isNotEmpty) {
-              final rawPrice = options[0]['price']?.toString() ?? "0";
-              final numericPrice = (double.tryParse(rawPrice) ?? 0.0) / 100.0;
-              price = "₹ ${numericPrice.toStringAsFixed(2)}";
-            }
+          final allCakes =
+              List<Map<String, dynamic>>.from(cakesData).map((cake) {
+                final options = cake['options'] as List?;
 
-            // Robust image URL generation using shared helper
-            final String imageName = (cake['image'] as String?) ?? '';
-            String imageUrl = SupabaseService.getPublicUrl(imageName, bucket: 'cakes');
+                String price = "₹ 0.00";
+                if (options != null && options.isNotEmpty) {
+                  final rawPrice = options[0]['price']?.toString() ?? "0";
+                  final numericPrice =
+                      (double.tryParse(rawPrice) ?? 0.0) / 100.0;
+                  price = "₹ ${numericPrice.toStringAsFixed(2)}";
+                }
 
-            // Fallback for missing or broken images
-            if (imageUrl.isEmpty || imageUrl.contains('null')) {
-              final String name = (cake['name'] as String?)?.toLowerCase() ?? '';
-              final String id = cake['id']?.toString() ?? '1';
-              imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
-            }
+                // Robust image URL generation using shared helper
+                final String imageName = (cake['image'] as String?) ?? '';
+                String imageUrl = SupabaseService.getPublicUrl(
+                  imageName,
+                  bucket: 'cakes',
+                );
 
-            return {
-              'id': cake['id']?.toString() ?? '',
-              'title': (cake['name'] as String?) ?? 'Unnamed',
-              'price': price,
-              'image': imageUrl,
-              'rawOptions': options ?? [],
-            };
-          }).toList();
+                // Fallback for missing or broken images
+                if (imageUrl.isEmpty || imageUrl.contains('null')) {
+                  final String name =
+                      (cake['name'] as String?)?.toLowerCase() ?? '';
+                  final String id = cake['id']?.toString() ?? '1';
+                  imageUrl = 'https://picsum.photos/seed/${id + name}/600/600';
+                }
+
+                return {
+                  'id': cake['id']?.toString() ?? '',
+                  'title': (cake['name'] as String?) ?? 'Unnamed',
+                  'price': price,
+                  'image': imageUrl,
+                  'rawOptions': options ?? [],
+                };
+              }).toList();
 
           // Sort cakes by total orders (descending)
           allCakes.sort((a, b) {
@@ -152,28 +158,34 @@ class _HomeScreenState extends State<HomeScreen> {
               'id': '1',
               'title': "Classic Chocolate",
               'price': "₹ 650",
-              'image': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
+              'image':
+                  'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=1000&auto=format&fit=crop',
               'rawOptions': [],
             },
             {
               'id': '2',
               'title': "Strawberry Bliss",
               'price': "₹ 720",
-              'image': 'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
+              'image':
+                  'https://images.unsplash.com/photo-1535141192574-5d4897c12636?q=80&w=1000&auto=format&fit=crop',
               'rawOptions': [],
             },
             {
               'id': '3',
               'title': "Red Velvet",
               'price': "₹ 680",
-              'image': 'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?q=80&w=1000&auto=format&fit=crop',
+              'image':
+                  'https://images.unsplash.com/photo-1616541823729-00fe0aacd32c?q=80&w=1000&auto=format&fit=crop',
               'rawOptions': [],
             },
           ];
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Using local cache (Backend restricted)"), backgroundColor: Color(0xFFFF4D8D)),
+          const SnackBar(
+            content: Text("Using local cache (Backend restricted)"),
+            backgroundColor: Color(0xFFFF4D8D),
+          ),
         );
       }
     }
@@ -184,14 +196,15 @@ class _HomeScreenState extends State<HomeScreen> {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color background = Color(0xFFFFF0F6);
 
-
     return Scaffold(
       backgroundColor: background,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerTrackingScreen()),
+            MaterialPageRoute(
+              builder: (context) => const CustomerTrackingScreen(),
+            ),
           );
         },
         backgroundColor: primaryColor,
@@ -291,20 +304,23 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             SizedBox(
               height: 100,
-              child: _isLoadingCategories
-                  ? const Center(child: PerformanceLoader(color: primaryColor))
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        final catName = categories[index];
-                        return _buildCategoryItem(
-                          catName,
-                          _getCategoryIcon(catName),
-                        );
-                      },
-                    ),
+              child:
+                  _isLoadingCategories
+                      ? const Center(
+                        child: PerformanceLoader(color: primaryColor),
+                      )
+                      : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          final catName = categories[index];
+                          return _buildCategoryItem(
+                            catName,
+                            _getCategoryIcon(catName),
+                          );
+                        },
+                      ),
             ),
             const SizedBox(height: 32),
 
@@ -330,111 +346,135 @@ class _HomeScreenState extends State<HomeScreen> {
             else if (featuredCakes.isEmpty)
               const SizedBox(
                 height: 240,
-                child: Center(child: Text("Our signature items will be back shortly.")),
+                child: Center(
+                  child: Text("Our signature items will be back shortly."),
+                ),
               )
             else
               SizedBox(
                 height: 240,
                 child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                itemCount: featuredCakes.length,
-                itemBuilder: (context, index) {
-                  final cake = featuredCakes[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailScreen(
-                              cakeId: cake['id'] as String,
-                              title: cake['title'] as String,
-                              price: cake['price'] as String,
-                              imageUrl: cake['image'] as String,
-                              rawOptions: cake['rawOptions'] as List<dynamic>,
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  itemCount: featuredCakes.length,
+                  itemBuilder: (context, index) {
+                    final cake = featuredCakes[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => ProductDetailScreen(
+                                    cakeId: cake['id'] as String,
+                                    title: cake['title'] as String,
+                                    price: cake['price'] as String,
+                                    imageUrl: cake['image'] as String,
+                                    rawOptions:
+                                        cake['rawOptions'] as List<dynamic>,
+                                  ),
                             ),
-                          ),
-                        );
-                      },
-                      child: SizedBox(
-                        width: 180,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              height: 180,
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  cake['image']!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => Container(
-                                    color: primaryColor.withValues(alpha: 0.1),
-                                    child: const Icon(Icons.cake, color: primaryColor),
+                          );
+                        },
+                        child: SizedBox(
+                          width: 180,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                height: 180,
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    cake['image']!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
+                                              color: primaryColor.withValues(
+                                                alpha: 0.1,
+                                              ),
+                                              child: const Icon(
+                                                Icons.cake,
+                                                color: primaryColor,
+                                              ),
+                                            ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          cake['title']!,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFFFF4D8D),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        Text(
+                                          cake['price']!,
+                                          style: GoogleFonts.notoSerif(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            color: primaryColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Consumer<FavoritesProvider>(
+                                    builder: (context, favorites, _) {
+                                      final isFav = favorites.isFavorite(
+                                        null,
                                         cake['title']!,
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFFFF4D8D),
+                                      );
+                                      return IconButton(
+                                        onPressed:
+                                            () =>
+                                                favorites.toggleFavorite(cake),
+                                        icon: Icon(
+                                          isFav
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color:
+                                              isFav
+                                                  ? primaryColor
+                                                  : Colors.grey.withValues(
+                                                    alpha: 0.4,
+                                                  ),
+                                          size: 18,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
-                                        cake['price']!,
-                                        style: GoogleFonts.notoSerif(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: primaryColor,
-                                        ),
-                                      ),
-                                    ],
+                                        visualDensity: VisualDensity.compact,
+                                        padding: EdgeInsets.zero,
+                                      );
+                                    },
                                   ),
-                                ),
-                                Consumer<FavoritesProvider>(
-                                  builder: (context, favorites, _) {
-                                    final isFav = favorites.isFavorite(null, cake['title']!);
-                                    return IconButton(
-                                      onPressed: () => favorites.toggleFavorite(cake),
-                                      icon: Icon(
-                                        isFav ? Icons.favorite : Icons.favorite_border,
-                                        color: isFav ? primaryColor : Colors.grey.withValues(alpha: 0.4),
-                                        size: 18,
-                                      ),
-                                      visualDensity: VisualDensity.compact,
-                                      padding: EdgeInsets.zero,
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
 
             const SizedBox(height: 64),
 
@@ -460,19 +500,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMainButton(String text, {required VoidCallback onPressed, bool isGradient = false}) {
+  Widget _buildMainButton(
+    String text, {
+    required VoidCallback onPressed,
+    bool isGradient = false,
+  }) {
     const Color primaryColor = Color(0xFFFF4D8D);
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: isGradient
-            ? const LinearGradient(
-                colors: [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
-              )
-            : null,
-        border: isGradient ? null : Border.all(color: primaryColor.withValues(alpha: 0.2)),
+        gradient:
+            isGradient
+                ? const LinearGradient(
+                  colors: [Color(0xFFFF4D8D), Color(0xFFFFB6D3)],
+                )
+                : null,
+        border:
+            isGradient
+                ? null
+                : Border.all(color: primaryColor.withValues(alpha: 0.2)),
         color: isGradient ? null : Colors.white.withValues(alpha: 0.8),
       ),
       child: Material(
@@ -534,6 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   Widget _buildSearchBar(Color primaryColor) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -571,7 +620,10 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
         ),
         onSubmitted: (value) {
           if (value.trim().isNotEmpty) {
@@ -581,6 +633,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-
 }

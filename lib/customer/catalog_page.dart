@@ -7,7 +7,7 @@ import '../services/supabase_service.dart';
 import '../services/constants.dart';
 import 'checkout_page.dart';
 import 'product_detail_page.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/wasm_image.dart';
 
 class CustomerCatalogPage extends ConsumerStatefulWidget {
   const CustomerCatalogPage({super.key});
@@ -254,14 +254,9 @@ class _ProductCard extends ConsumerWidget {
                         child: imageUrl.isNotEmpty
                             ? (imageUrl.startsWith('data:')
                                 ? _buildDataImage(imageUrl, cs)
-                                : CachedNetworkImage(
+                                : SafeWasmImage(
                                     imageUrl: imageUrl,
                                     fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: cs.primary.withValues(alpha: 0.05),
-                                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                                    ),
-                                    errorWidget: (context, url, error) => _placeholder(cs),
                                   ))
                             : _placeholder(cs),
                       ),

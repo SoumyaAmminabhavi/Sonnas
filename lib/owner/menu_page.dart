@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+// import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:math';
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
@@ -15,6 +15,7 @@ import '../services/constants.dart';
 import '../services/image_conversion.dart';
 import '../widgets/owner_sidebar.dart';
 import 'menu_details_page.dart';
+import '../widgets/wasm_image.dart';
 
 
 // ─────────────────────────────────────────────
@@ -681,26 +682,9 @@ class _MenuItemCard extends StatelessWidget {
               child: SizedBox(
                 width: 110,
                 height: double.infinity,
-                child: CachedNetworkImage(
+                child: SafeWasmImage(
                   imageUrl: item.imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: cs.surface,
-                    child: Center(
-                      child: Shimmer.fromColors(
-                        baseColor: cs.surfaceContainer,
-                        highlightColor: cs.surface,
-                        child: Container(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: cs.surface,
-                    child: Icon(
-                      Icons.cake,
-                      color: cs.primary.withValues(alpha: 0.2),
-                    ),
-                  ),
                 ),
               ),
             ),

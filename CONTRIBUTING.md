@@ -38,15 +38,22 @@ perf: performance improvements
 - **Web**: Run `flutter build web --release` and test locally at `localhost:3000`.
 - **Database**: Verify Supabase queries work with RLS policies.
 
-## Web Performance
+## Web Performance & WASM Compatibility
 
 When making web-related changes:
 
-1. Run `flutter build web --release --dump-info --dart-define=FLUTTER_WEB_RENDERER=html`.
-2. Check bundle size: `ls -lh build/web/main.dart.js`.
-3. Check deferred chunk sizes: `ls -lh build/web/main.dart.js_*.part.js`.
-4. Run Lighthouse audit on local build (`npx serve build/web` or deploy to Vercel preview).
-5. Update `web_bundle_report.md` if significant changes.
+1. Run `flutter build web --wasm --release`.
+2. Ensure Vercel routing configuration (`vercel.json`) has headers enabled for WebAssembly:
+   - `Cross-Origin-Embedder-Policy: require-corp`
+   - `Cross-Origin-Opener-Policy: same-origin`
+3. Run Lighthouse audit on local build (`npx serve build/web` or deploy to Vercel preview).
+4. Update `web_bundle_report.md` if significant changes occur.
+
+### Image Loading Convention (`SafeWasmImage`)
+
+To prevent runtime errors under the Dart WebAssembly (WASM) GC compiler toolchain:
+- **Do NOT** use `CachedNetworkImage` directly in standard UI screens or widgets. It uses legacy JS-interop libraries that crash under WASM.
+- **DO** use `SafeWasmImage` from `lib/widgets/wasm_image.dart`. It automatically loads images natively via `Image.network` under Web/WASM, and safely delegates to `CachedNetworkImage` on Mobile platforms (Android/iOS) to preserve offline caching features.
 
 ### Deferred Imports (Bundle Splitting)
 
@@ -69,12 +76,7 @@ Known constraints:
 
 ### Renderer
 
-The app uses the **HTML renderer** (`--dart-define=FLUTTER_WEB_RENDERER=html`). This avoids downloading ~14 MB of WebAssembly (canvaskit.wasm, skwasm.wasm, wimp.wasm) that the CanvasKit renderer requires.
-
-Before deploying, remove unused renderer wasm files:
-```powershell
-Remove-Item -Recurse -Force build/web/canvaskit/
-```
+The app compiles targeting **WebAssembly (WASM)** (`flutter build web --wasm`). This achieves high-performance rendering (using CanvasKit/Skwasm) while removing JS execution from the main browser UI thread, reducing Total Blocking Time (TBT).
 
 ## Environment Setup
 

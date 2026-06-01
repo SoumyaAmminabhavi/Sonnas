@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.7] - 2026-06-01
+
+### Image Rendering & WASM Stability
+
+#### Added
+- **`SafeWasmImage` Component**: Introduced a unified image loading widget ([wasm_image.dart](file:///c:/Arka/Bakery/Sonna/lib/widgets/wasm_image.dart)) that automatically chooses the correct image rendering strategy based on target platform.
+  - **Web/WASM**: Renders natively using `Image.network` to leverage browser-native rendering and caching pipelines, bypassing the legacy JS interop exceptions that crashed WebAssembly.
+  - **Mobile (Android/iOS)**: Uses `CachedNetworkImage` to maintain high-performance offline caching support.
+
+#### Changed
+- **Refactored All UI Pages**: Replaced direct instantiations of `CachedNetworkImage` with `SafeWasmImage` across all client, owner, and staff views:
+  - Owner: `menu_page.dart`, `menu_details_page.dart`, `order_details_page.dart`, `sales_reports_page.dart`.
+  - Customer: `catalog_page.dart`, `product_detail_page.dart`.
+  - Staff & Shared: `glass_order_sheet.dart`, `kitchen_page.dart`, `orders_page.dart`.
+- **Removed Unused Imports**: Cleaned up all unused `CachedNetworkImage` imports from those files to resolve compilation warnings.
+- **Enclosed blocks**: Fixed lint warnings in [supabase_service.dart](file:///c:/Arka/Bakery/Sonna/lib/services/supabase_service.dart) regarding nested code blocks.
+
 ## [1.0.6] - 2026-05-31
 
 ### Phase 1 (Continued): Flutter Web Performance — Lighthouse 90+

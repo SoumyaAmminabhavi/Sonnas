@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../../widgets/wasm_image.dart';
 import '../../services/dashboard_provider.dart';
 import '../../services/order_service.dart';
 import '../../services/supabase_service.dart';
@@ -411,23 +411,11 @@ class KitchenOrderCard extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: CachedNetworkImage(
+      child: SafeWasmImage(
         imageUrl: resolvedUrl,
         width: 60,
         height: 60,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          width: 60,
-          height: 60,
-          color: cs.primary.withValues(alpha: 0.05),
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        errorWidget: (context, url, error) => Container(
-          width: 60,
-          height: 60,
-          color: cs.primary.withValues(alpha: 0.05),
-          child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.2)),
-        ),
       ),
     );
   }

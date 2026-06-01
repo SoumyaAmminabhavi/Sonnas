@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/owner_sidebar.dart';
+import '../widgets/wasm_image.dart';
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/dashboard_provider.dart';
@@ -985,11 +985,9 @@ class _OrderItemCard extends StatelessWidget {
                     errorBuilder: (context, error, stackTrace) => const _ImagePlaceholder(),
                   )
                 : (imageUrl.isNotEmpty)
-                    ? CachedNetworkImage(
+                    ? SafeWasmImage(
                         imageUrl: imageUrl,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => const _ImagePlaceholder(),
-                        errorWidget: (context, url, error) => const _ImagePlaceholder(),
                       )
                     : const _ImagePlaceholder(),
           ),
@@ -1182,12 +1180,9 @@ class _HolographicViewerState extends State<_HolographicViewer> {
                                     height: 400,
                                     errorBuilder: (context, error, stackTrace) => const Icon(Icons.error, color: Colors.white),
                                   )
-                                : CachedNetworkImage(
+                                : SafeWasmImage(
                                     imageUrl: widget.imageUrl ?? '',
                                     fit: BoxFit.contain,
-                                    height: 400,
-                                    placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                                    errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
                                   ),
                           ),
                         ),

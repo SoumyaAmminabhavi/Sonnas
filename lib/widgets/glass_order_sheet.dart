@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/order.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/wasm_image.dart';
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
 import '../services/dashboard_provider.dart';
@@ -294,21 +294,11 @@ class _GlassOrderSheetState extends State<GlassOrderSheet> {
           final resolvedUrl = SupabaseService.getPublicUrl(displayImageUrl, bucket: 'cakes');
           imageWidget = ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: CachedNetworkImage(
+            child: SafeWasmImage(
               imageUrl: resolvedUrl,
               width: 48,
               height: 48,
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: cs.primary.withValues(alpha: 0.05),
-                child: Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary))),
-              ),
-              errorWidget: (context, url, error) => Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(color: cs.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
-                child: Center(child: Icon(Icons.cake_outlined, color: cs.primary.withValues(alpha: 0.3))),
-              ),
             ),
           );
         }

@@ -11,7 +11,7 @@ import '../services/report_service.dart';
 import '../services/constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/wasm_image.dart';
 
 class SalesReportsPage extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
@@ -1347,23 +1347,11 @@ class _SalesReportsPageState extends ConsumerState<SalesReportsPage> {
                 item['image'] != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: CachedNetworkImage(
+                        child: SafeWasmImage(
                           imageUrl: item['image'] as String,
                           width: 48,
                           height: 48,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            width: 48,
-                            height: 48,
-                            color: cs.primary.withValues(alpha: 0.05),
-                            child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                          ),
-                          errorWidget: (c, e, s) => Container(
-                            width: 48,
-                            height: 48,
-                            color: cs.primary.withValues(alpha: 0.1),
-                            child: Icon(Icons.cake, color: cs.primary, size: 20),
-                          ),
                         ),
                       )
                     : Container(

@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../services/supabase_service.dart';
 import '../../services/order_service.dart';
 import '../../services/dashboard_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../../widgets/wasm_image.dart';
 import '../order_details_page.dart';
 
 class OrderCardReactive extends ConsumerWidget {
@@ -299,24 +299,11 @@ class _CardImage extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: CachedNetworkImage(
+      child: SafeWasmImage(
         imageUrl: imageUrl,
         width: 90,
         height: 90,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
-          width: 90,
-          height: 90,
-          color: cs.primary.withValues(alpha: 0.05),
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-        errorWidget: (context, url, error) => Container(
-          width: 90,
-          height: 90,
-          color: cs.primary.withValues(alpha: 0.05),
-          child: Icon(Icons.cake_outlined,
-              color: cs.primary.withValues(alpha: 0.2), size: 32),
-        ),
       ),
     );
   }

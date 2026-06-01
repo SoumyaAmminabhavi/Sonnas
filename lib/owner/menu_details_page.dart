@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import '../widgets/owner_sidebar.dart';
 import '../services/supabase_service.dart';
 import '../services/order_service.dart';
+import '../widgets/wasm_image.dart';
 import 'menu_page.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,11 +262,9 @@ class MenuDetailsPage extends ConsumerWidget {
         return _imagePlaceholder(cs);
       }
     }
-    return CachedNetworkImage(
+    return SafeWasmImage(
       imageUrl: imageUrl,
       fit: BoxFit.cover,
-      placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-      errorWidget: (context, url, error) => _imagePlaceholder(cs),
     );
   }
 
