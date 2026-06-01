@@ -31,9 +31,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   Timer? _abandonedCartTimer;
   final Map<String, bool> _previousStockStatus = {};
 
-  late final List<Widget> _screens;
-
-  List<Widget> _buildScreens() {
+  List<Widget> _getScreens() {
     final authId = Supabase.instance.client.auth.currentUser?.id ?? 'guest';
     return [
       HomeScreen(onViewMenu: (query) {
@@ -44,7 +42,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
       }),
       MenuScreen(
         initialSearchQuery: _menuSearchQuery,
-        key: const ValueKey('menu_screen_stable'),
+        key: ValueKey('menu_${_menuSearchQuery ?? "none"}'),
       ),
       CartScreen(key: ValueKey('cart_$authId')),
       OrdersScreen(key: ValueKey('orders_$authId')),
@@ -71,7 +69,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   @override
   void initState() {
     super.initState();
-    _screens = _buildScreens();
     _setupStatusListener();
     _setupStockListener();
     _setupAbandonedCartListener();
@@ -234,18 +231,13 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             centerTitle: true,
-            title: InkWell(
-              onTap: () {
-                setState(() => _currentIndex = 0);
-              },
-              child: Text(
-                "Sonna's",
-                style: GoogleFonts.notoSerif(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w400,
-                  fontStyle: FontStyle.italic,
-                  color: primaryColor,
-                ),
+            title: Text(
+              "Sonnas",
+              style: GoogleFonts.notoSerif(
+                fontSize: 24,
+                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.italic,
+                color: primaryColor,
               ),
             ),
             actions: [
@@ -263,7 +255,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               Expanded(
                 child: IndexedStack(
                   index: _currentIndex,
-                  children: _screens,
+                  children: _getScreens(),
                 ),
               ),
             ],
@@ -286,7 +278,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(0, Icons.storefront, "HOME"),
+                  _buildNavItem(0, Icons.storefront, "BOUTIQUE"),
                   _buildNavItem(1, Icons.restaurant_menu, "MENU"),
                   _buildNavItem(2, Icons.shopping_bag_outlined, "BAG"),
                   _buildNavItem(3, Icons.receipt_long, "ORDERS"),
@@ -316,23 +308,27 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           // Sidebar Logo
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: InkWell(
-              onTap: () {
-                setState(() => _currentIndex = 0);
-              },
-              child: Column(
-                children: [
-                  Text(
-                    "Sonna's",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.italic,
-                      color: primaryColor,
-                    ),
+            child: Column(
+              children: [
+                Text(
+                  "Sonna's",
+                  style: GoogleFonts.notoSerif(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w400,
+                    fontStyle: FontStyle.italic,
+                    color: primaryColor,
                   ),
-                ],
-              ),
+                ),
+                Text(
+                  "PATISSERIE",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 4,
+                    color: secondaryColor.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 80),
@@ -343,7 +339,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _buildSidebarItem(0, Icons.storefront, "HOME"),
+                  _buildSidebarItem(0, Icons.storefront, "BOUTIQUE"),
                   const SizedBox(height: 12),
                   _buildSidebarItem(1, Icons.restaurant_menu, "THE MENU"),
                   const SizedBox(height: 12),
@@ -512,6 +508,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   Widget _buildDrawer() {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color surfaceColor = Color(0xFFFFF0F6);
+    const Color secondaryColor = Color(0xFF701235);
 
     return Drawer(
       backgroundColor: surfaceColor,
@@ -519,32 +516,35 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(color: Colors.white),
-            child: InkWell(
-              onTap: () {
-                Navigator.pop(context);
-                setState(() => _currentIndex = 0);
-              },
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Sonna's",
-                      style: GoogleFonts.notoSerif(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w400,
-                        fontStyle: FontStyle.italic,
-                        color: primaryColor,
-                      ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Sonna's",
+                    style: GoogleFonts.notoSerif(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w400,
+                      fontStyle: FontStyle.italic,
+                      color: primaryColor,
                     ),
-                  ],
-                ),
+                  ),
+                  Text(
+                    "PATISSERIE",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 4,
+                      color: secondaryColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.storefront, color: primaryColor),
-            title: Text("HOME", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            title: Text("BOUTIQUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentIndex = 0);

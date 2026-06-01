@@ -33,13 +33,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    precacheImage(const AssetImage("assets/images/storefront.png"), context);
-    precacheImage(const AssetImage("assets/patisserie_bg.png"), context);
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -85,16 +78,31 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchFeaturedCakes() async {
     try {
       final supabase = Supabase.instance.client;
-      // Fetch only the top 5 cakes ordered by sortOrder (instead of fetching everything and computing on client)
+      // Fetch all cakes and their options
       final cakesData = await supabase
           .from('Cake')
-          .select('*, options:CakeOption(*)')
-          .order('sortOrder', ascending: true)
-          .limit(5);
+          .select('*, options:CakeOption(*)');
+      
+      // Fetch order items to compute sales count per cake
+      final Map<String, int> cakeOrderCounts = {};
+      try {
+        final orderItemsData = await supabase
+            .from('OrderItem')
+            .select('cakeId, quantity');
+        for (final item in orderItemsData) {
+          final cakeId = item['cakeId']?.toString();
+          if (cakeId != null) {
+            final qty = int.tryParse(item['quantity']?.toString() ?? '1') ?? 1;
+            cakeOrderCounts[cakeId] = (cakeOrderCounts[cakeId] ?? 0) + qty;
+          }
+        }
+      } catch (e) {
+        debugPrint("Error fetching order popularity metrics: $e");
+      }
       
       if (mounted) {
         setState(() {
-          featuredCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
+          final allCakes = List<Map<String, dynamic>>.from(cakesData).map((cake) {
             final options = cake['options'] as List?;
             
             String price = "₹ 0.00";
@@ -124,6 +132,14 @@ class _HomeScreenState extends State<HomeScreen> {
             };
           }).toList();
 
+          // Sort cakes by total orders (descending)
+          allCakes.sort((a, b) {
+            final countA = cakeOrderCounts[a['id']] ?? 0;
+            final countB = cakeOrderCounts[b['id']] ?? 0;
+            return countB.compareTo(countA);
+          });
+
+          featuredCakes = allCakes.take(5).toList();
           _isLoading = false;
         });
       }
@@ -241,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text(
-                          "Sonna's",
+                          "Sonnas",
                           style: GoogleFonts.notoSerif(
                             fontSize: 40,
                             color: const Color(0xFFFF4D8D),

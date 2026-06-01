@@ -89,13 +89,6 @@ class SupabaseService {
   static String getPublicUrl(String? path, {required String bucket, int? width, int? height}) {
     // 1. Path guards first
     if (path == null || path.isEmpty || path == 'cake_placeholder.png') return '';
-    if (path.startsWith('http')) {
-      // Enforce HTTPS to prevent mixed-content browser warnings
-      if (path.startsWith('http://')) {
-        return path.replaceFirst('http://', 'https://');
-      }
-      return path;
-    }
     if (path.startsWith('whatsapp://') || path.startsWith('file://')) return '';
     if (path.startsWith('data:')) return path;
 

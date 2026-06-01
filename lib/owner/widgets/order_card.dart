@@ -297,12 +297,10 @@ class _CardImage extends StatelessWidget {
       }
     }
 
-    // Enforce HTTPS to prevent mixed-content warnings
-    final secureUrl = imageUrl.startsWith('http://') ? imageUrl.replaceFirst('http://', 'https://') : imageUrl;
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: CachedNetworkImage(
-        imageUrl: secureUrl,
+        imageUrl: imageUrl,
         width: 90,
         height: 90,
         fit: BoxFit.cover,

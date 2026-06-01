@@ -47,7 +47,7 @@ class WelcomeScreen extends StatelessWidget {
                   children: [
                     const Spacer(),
                     Text(
-                      "Sonna's",
+                      "Sonnas",
                       style: GoogleFonts.dmSerifDisplay(
                         fontSize: 48,
                         color: Colors.white,
@@ -98,7 +98,7 @@ class WelcomeScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         ),
                         child: Text(
-                          "STEP INTO THE CAFE",
+                          "ENTER PATISSERIE",
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
