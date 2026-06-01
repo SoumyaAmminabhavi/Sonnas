@@ -1015,13 +1015,21 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
       // 2. Upload new image if selected
       if (_selectedImage != null) {
         final bytes = await _selectedImage!.readAsBytes();
-        final convertedBytes = await convertToWebP(bytes, _selectedImage!.name);
-        final isWebp = convertedBytes != bytes;
-        final fileName = '$finalCakeId.${isWebp ? 'webp' : _selectedImage!.name.split('.').last.toLowerCase()}';
 
-        final uploadedPath = await SupabaseService.uploadImage(
-          bucket: 'cakes', path: fileName, file: convertedBytes,
+        // 2a. Convert and upload PNG version for WhatsApp compatibility
+        final pngBytes = await convertToPng(bytes, _selectedImage!.name);
+        final pngFileName = '$finalCakeId.png';
+        await SupabaseService.uploadImage(
+          bucket: 'cakes', path: pngFileName, file: pngBytes,
         );
+
+        // 2b. Convert and upload WebP version for high performance in Web/Mobile App
+        final webpBytes = await convertToWebP(bytes, _selectedImage!.name);
+        final webpFileName = '$finalCakeId.webp';
+        final uploadedPath = await SupabaseService.uploadImage(
+          bucket: 'cakes', path: webpFileName, file: webpBytes,
+        );
+
         if (uploadedPath == null) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1031,7 +1039,7 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
           return;
         }
 
-        imagePath = uploadedPath;
+        imagePath = uploadedPath; // Points to the high-performance WebP version in DB
       }
 
       // 3. Resolve Categories (Foreign Key Guard)
