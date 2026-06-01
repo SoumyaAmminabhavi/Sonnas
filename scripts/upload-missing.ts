@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
@@ -48,22 +47,33 @@ async function main() {
   console.log('🚀 Starting image upload to Supabase from public/images...');
   
   const files = [
-    'mini-cheesecake-blueberry.png',
-    'mini-cheesecake-nutella.png',
-    'mini-cheesecake-biscoff.png',
-    'mini-cheesecake-mango.png',
-    'slice-almond-brittle.png',
-    'slice-chocolate-mousse.png',
-    'slice-chocolate-orange.png',
-    'slice-lemon-mousse.png',
-    'slice-macaron.png',
-    'slice-coconut-mango.png',
-    'cat-mini-cheesecakes.png',
-    'cat-slices.png'
+    'mini-cheesecake-blueberry.webp',
+    'mini-cheesecake-nutella.webp',
+    'mini-cheesecake-biscoff.webp',
+    'mini-cheesecake-mango.webp',
+    'slice-almond-brittle.webp',
+    'slice-chocolate-mousse.webp',
+    'slice-chocolate-orange.webp',
+    'slice-lemon-mousse.webp',
+    'slice-macaron.webp',
+    'slice-coconut-mango.webp',
+    'cat-mini-cheesecakes.webp',
+    'cat-slices.webp'
   ];
 
   for (const file of files) {
-    const filePath = path.join(IMAGES_DIR, file);
+    let filePath = path.join(IMAGES_DIR, file);
+    
+    // Check if the webp file exists
+    if (!fs.existsSync(filePath)) {
+      // Fallback: Check if the png file exists instead
+      const pngFile = file.replace(/\.webp$/i, '.png');
+      const pngPath = path.join(IMAGES_DIR, pngFile);
+      if (fs.existsSync(pngPath)) {
+        filePath = pngPath;
+      }
+    }
+
     if (fs.existsSync(filePath)) {
       await uploadImage(filePath, file);
     } else {
