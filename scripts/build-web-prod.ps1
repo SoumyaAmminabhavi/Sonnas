@@ -1,42 +1,72 @@
-# Build Flutter web for production with HTML renderer
+# Build Flutter web for production with WebAssembly (WASM)
 # Usage: .\scripts\build-web-prod.ps1
+#
+# Requires .env file with:
+#   SUPABASE_URL=https://...
+#   SUPABASE_ANON_KEY=eyJ...
 
-Write-Host "Building Flutter web for production with HTML renderer..." -ForegroundColor Green
+param(
+    [switch]$NoWasm   # Pass -NoWasm to fall back to standard JS release build
+)
 
-# Build web
-flutter build web --dart-define=FLUTTER_WEB_RENDERER=html --dart-define-from-file=.env --no-wasm-dry-run
+# ── Load env vars from .env ───────────────────────────────────────────────────
+$envFile = ".env"
+if (-not (Test-Path $envFile)) {
+    Write-Host "Error: .env file not found. Create one with SUPABASE_URL and SUPABASE_ANON_KEY." -ForegroundColor Red
+    exit 1
+}
+
+$supabaseUrl = ""
+$supabaseKey = ""
+Get-Content $envFile | ForEach-Object {
+    if ($_ -match "^SUPABASE_URL=(.+)$")      { $supabaseUrl = $Matches[1].Trim() }
+    if ($_ -match "^SUPABASE_ANON_KEY=(.+)$") { $supabaseKey = $Matches[1].Trim() }
+}
+
+if (-not $supabaseUrl -or -not $supabaseKey) {
+    Write-Host "Error: SUPABASE_URL or SUPABASE_ANON_KEY missing from .env" -ForegroundColor Red
+    exit 1
+}
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+if ($NoWasm) {
+    Write-Host "`nBuilding Flutter Web (release / JS)..." -ForegroundColor Green
+    flutter build web --release `
+        --dart-define=SUPABASE_URL="$supabaseUrl" `
+        --dart-define=SUPABASE_ANON_KEY="$supabaseKey"
+} else {
+    Write-Host "`nBuilding Flutter Web (WASM)..." -ForegroundColor Green
+    flutter build web --wasm `
+        --dart-define=SUPABASE_URL="$supabaseUrl" `
+        --dart-define=SUPABASE_ANON_KEY="$supabaseKey"
+}
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "`nError: Flutter build failed." -ForegroundColor Red
+    exit 1
+}
 
 if (-not (Test-Path "build/web")) {
-    Write-Host "Error: Build failed - build/web directory not found" -ForegroundColor Red
+    Write-Host "Error: build/web directory not found after build." -ForegroundColor Red
     exit 1
 }
 
-# Remove canvaskit directory (not needed with HTML renderer)
-$canvaskitPath = "build/web/canvaskit"
-if (Test-Path $canvaskitPath) {
-    Write-Host "Removing canvaskit directory..." -ForegroundColor Yellow
-    Remove-Item -Recurse -Force $canvaskitPath
-} else {
-    Write-Host "Canvaskit directory not found (already removed?)" -ForegroundColor Yellow
+# ── Size summary ──────────────────────────────────────────────────────────────
+Write-Host "`nBuild size summary:" -ForegroundColor Cyan
+$totalBytes = (Get-ChildItem "build/web" -Recurse -File | Measure-Object -Property Length -Sum).Sum
+$totalMB    = [math]::Round($totalBytes / 1MB, 2)
+Write-Host "  Total: $totalMB MB" -ForegroundColor Cyan
+
+$mainJs = Get-ChildItem "build/web" -Filter "main.dart.*" -Recurse | Select-Object -First 1
+if ($mainJs) {
+    $mainKB = [math]::Round($mainJs.Length / 1KB, 1)
+    Write-Host "  $($mainJs.Name): $mainKB KB" -ForegroundColor Cyan
 }
 
-# Patch flutter_bootstrap.js to use HTML renderer
-$bootstrapPath = "build/web/flutter_bootstrap.js"
-if (Test-Path $bootstrapPath) {
-    Write-Host "Patching flutter_bootstrap.js for HTML renderer..." -ForegroundColor Yellow
-    (Get-Content $bootstrapPath) -replace '"renderer":"canvaskit"', '"renderer":"html"' | Set-Content $bootstrapPath
-    Write-Host "Bootstrap patched successfully." -ForegroundColor Green
-} else {
-    Write-Host "Error: flutter_bootstrap.js not found at $bootstrapPath" -ForegroundColor Red
-    exit 1
-}
-
+# ── Done ──────────────────────────────────────────────────────────────────────
 Write-Host "`nBuild completed successfully!" -ForegroundColor Green
-Write-Host "To test locally:" -ForegroundColor Cyan
-Write-Host "  1. Install a local server if needed: npm install -g serve" -ForegroundColor Cyan
-Write-Host "  2. Serve the build: serve -s build/web" -ForegroundColor Cyan
-Write-Host "  3. Open http://localhost:3000 in Chrome" -ForegroundColor Cyan
-Write-Host "" -ForegroundColor Cyan
-Write-Host "To deploy to Vercel:" -ForegroundColor Cyan
-Write-Host "  1. Copy build/web contents to Vercel deployment directory" -ForegroundColor Cyan
-Write-Host "  2. Or run: vercel --prod build/web" -ForegroundColor Cyan
+Write-Host "`nTo test locally:" -ForegroundColor Yellow
+Write-Host "  npx serve -s build/web" -ForegroundColor White
+Write-Host "  Open http://localhost:3000 in Chrome (Incognito for clean Lighthouse)" -ForegroundColor White
+Write-Host "`nTo deploy to Vercel:" -ForegroundColor Yellow
+Write-Host "  vercel --prod build/web" -ForegroundColor White

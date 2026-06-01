@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html style="height: 100%; width: 100%;">
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -26,23 +26,36 @@
   <meta name="apple-mobile-web-app-title" content="Sonnas">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <!-- Preconnect to Google Fonts and Supabase -->
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- Preconnect to Supabase (fonts are bundled locally) -->
   <link rel="preconnect" href="https://qwqsarpzcwwpgyimhxzn.supabase.co">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
+  <!-- WASM critical path preloads: browser fetches these in parallel with HTML parse
+       instead of waiting for the serial chain: HTML → bootstrap.js → .mjs → .wasm -->
+  <link rel="preload" href="flutter_bootstrap.js" as="script">
+  <link rel="modulepreload" href="main.dart.mjs" crossorigin>
+  <link rel="preload" href="main.dart.wasm" as="fetch" crossorigin>
+
   <title>Sonnas</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    body { font-family: 'Georgia', 'Times New Roman', serif; }
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
     #splash {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: linear-gradient(135deg, #FF4D8D 0%, #701235 100%);
       display: flex; align-items: center; justify-content: center;
-      z-index: 9999; transition: opacity 0.5s ease-out;
+      z-index: 9999; transition: opacity 0.3s ease-out;
       font-family: 'Georgia', 'Times New Roman', serif;
     }
     #splash.hide { opacity: 0; pointer-events: none; }
@@ -83,7 +96,7 @@
         const s = document.getElementById('splash');
         if (s) {
           s.classList.add('hide');
-          setTimeout(function() { s.remove(); }, 600);
+          setTimeout(function() { s.remove(); }, 350);
         }
       }
     })();
@@ -123,6 +136,6 @@
       rzp.open();
     }
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js" defer></script>
 </body>
 </html>

@@ -121,6 +121,7 @@ artifacts/
 projects/
 issues.txt
 
+<<<<<<< HEAD
 # ── Redundant Archives, Screenshots & Logs ────────────────────
 /assets.zip
 /flutter_01.png
@@ -177,3 +178,7 @@ x64/
 x86/
 *.[Cc]ache
 !*.[Cc]ache/
+=======
+# google_fonts package runtime cache (fonts are bundled in assets/google_fonts/)
+/google_fonts/
+>>>>>>> company/new-setup
