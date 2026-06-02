@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../../owner/owner_dashboard.dart' deferred as owner_dashboard;
 import 'profile_setup_screen.dart';
+import 'cart_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   final bool isOwner;
@@ -41,6 +42,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   static const Color berry = Color(0xFF701235);
   static const String _phoneKey = 'saved_phone';
 
+  StreamSubscription<AuthState>? _authSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -54,10 +57,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       curve: Curves.easeIn,
     );
     _animationController.forward();
+
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.signedIn && data.session != null) {
+        _routeUserAfterLogin(_phoneController.text.trim());
+      }
+    });
   }
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _timer?.cancel();
     _animationController.dispose();
     _nameController.dispose();
@@ -123,7 +133,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+            MaterialPageRoute(builder: (context) => const CartScreen()),
           ));
         }
       }
@@ -181,7 +191,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerMainScreen()),
+            MaterialPageRoute(builder: (context) => const CartScreen()),
           ));
         }
       }
@@ -544,6 +554,61 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           textAlign: TextAlign.center,
                         ),
                       ),
+                      
+                      const SizedBox(height: 16),
+                      Center(
+                        child: Text("OR", style: GoogleFonts.plusJakartaSans(color: berry.withValues(alpha: 0.5), fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Google Sign-In Button
+                      Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _signInWithGoogle,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: berry,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(color: primary, strokeWidth: 2),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.g_mobiledata, color: berry, size: 36),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Continue with Google",
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -553,6 +618,24 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         ],
       ),
     );
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final origin = Uri.base.origin; // e.g. http://localhost:3000
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: '$origin/#/auth-callback',
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to sign in with Google: $e")),
+        );
+      }
+    }
   }
 
   Widget _buildCircle(double size, Color color) {

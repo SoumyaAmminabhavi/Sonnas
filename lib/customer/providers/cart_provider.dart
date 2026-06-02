@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:flutter_riverpod/legacy.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/haptic_service.dart';
@@ -126,3 +128,5 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+
+final cartProvider = ChangeNotifierProvider<CartProvider>((ref) => CartProvider());

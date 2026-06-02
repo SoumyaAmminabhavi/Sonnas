@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
@@ -15,15 +15,15 @@ import 'package:geocoding/geocoding.dart';
 import 'package:flutter_map/flutter_map.dart' deferred as fm;
 import 'package:latlong2/latlong.dart';
 
-class CustomerCheckoutScreen extends StatefulWidget {
+class CustomerCheckoutScreen extends ConsumerStatefulWidget {
   final bool isSelfCheckout;
   const CustomerCheckoutScreen({super.key, this.isSelfCheckout = false});
 
   @override
-  State<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
+  ConsumerState<CustomerCheckoutScreen> createState() => _CustomerCheckoutScreenState();
 }
 
-class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
+class _CustomerCheckoutScreenState extends ConsumerState<CustomerCheckoutScreen> {
   String selectedPayment = "UPI";
   DateTime? selectedDate;
   String? selectedTimeSlot;
@@ -65,14 +65,36 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null && user.userMetadata != null) {
       final meta = user.userMetadata!;
-      if (meta['full_name'] != null) {
-        _nameController.text = meta['full_name'];
+      String? name;
+      if (meta['full_name'] != null && meta['full_name'].toString().isNotEmpty) {
+        name = meta['full_name'].toString();
+      } else if (meta['name'] != null && meta['name'].toString().isNotEmpty) {
+        name = meta['name'].toString();
+      } else if (meta['given_name'] != null) {
+        name = "${meta['given_name']} ${meta['family_name'] ?? ''}".trim();
       }
-      if (meta['phone'] != null) {
-        _phoneController.text = meta['phone'];
+
+      if (name == null || name.isEmpty) {
+        final email = user.email;
+        if (email != null && email.contains('@')) {
+          final prefix = email.split('@').first;
+          name = prefix.replaceAll(RegExp(r'[._-]'), ' ').split(' ').map((word) {
+            if (word.isEmpty) return '';
+            return word[0].toUpperCase() + word.substring(1).toLowerCase();
+          }).join(' ').trim();
+        }
       }
-      if (meta['default_address'] != null) {
-        _addressController.text = meta['default_address'];
+
+      if (name != null && name.isNotEmpty) {
+        _nameController.text = name;
+      }
+      final phone = meta['phone'];
+      if (phone != null) {
+        _phoneController.text = phone.toString().replaceAll('+91', '');
+      }
+      final address = meta['default_address'];
+      if (address != null) {
+        _addressController.text = address.toString();
       }
     }
 
@@ -201,7 +223,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context);
+    final cart = ref.watch(cartProvider);
     final int subtotalCents = cart.total.round();
     final int wrappingCents = _isGiftWrapping ? wrappingFeePaise : 0;
     final int grandTotalCents = subtotalCents + wrappingCents;

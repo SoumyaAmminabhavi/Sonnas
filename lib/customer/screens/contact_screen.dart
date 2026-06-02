@@ -2,19 +2,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/cart_provider.dart';
 import 'cart_screen.dart';
 
-class ContactScreen extends StatefulWidget {
+class ContactScreen extends ConsumerStatefulWidget {
   const ContactScreen({super.key});
 
   @override
-  State<ContactScreen> createState() => _ContactScreenState();
+  ConsumerState<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ContactScreenState extends State<ContactScreen> {
+class _ContactScreenState extends ConsumerState<ContactScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _orderIdController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
@@ -140,7 +140,7 @@ class _ContactScreenState extends State<ContactScreen> {
   void _handleOrderAgain() {
     if (_realCakes.isEmpty) return;
     
-    final cart = Provider.of<CartProvider>(context, listen: false);
+    final cart = ref.read(cartProvider);
     for (var item in _realCakes) {
       final String name = item['name'] ?? 'Exquisite Creation';
       final double price = item['price'] ?? 0.0;

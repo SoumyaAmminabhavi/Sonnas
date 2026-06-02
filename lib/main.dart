@@ -2,13 +2,10 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'customer/providers/cart_provider.dart' show CartProvider;
-import 'customer/providers/favorites_provider.dart' show FavoritesProvider;
 import 'customer/main.dart';
 import 'customer/screens/welcome_screen.dart';
 
@@ -22,6 +19,7 @@ import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 import 'services/cart_provider.dart' as service_cart;
 import 'customer/checkout_page.dart';
+import 'customer/screens/auth_callback_screen.dart';
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
 
@@ -69,14 +67,8 @@ void main() async {
     }
     
     runApp(
-      ProviderScope(
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => CartProvider()),
-            ChangeNotifierProvider(create: (_) => FavoritesProvider()),
-          ],
-          child: const PatisserieApp(),
-        ),
+      const ProviderScope(
+        child: PatisserieApp(),
       ),
     );
   } catch (e, stackTrace) {
@@ -169,6 +161,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
       routes: {
         '/home': (context) => const CustomerMainScreen(),
         '/welcome': (context) => const WelcomeScreen(),
+        '/auth-callback': (context) => const AuthCallbackScreen(),
       },
       home: const AppNavigation(),
     );

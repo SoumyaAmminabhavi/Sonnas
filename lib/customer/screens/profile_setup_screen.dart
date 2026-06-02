@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/haptic_service.dart';
-import 'checkout_screen.dart';
+import 'cart_screen.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   final VoidCallback? onSuccess;
@@ -26,6 +26,53 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   static const Color primary = Color(0xFFFF4D8D);
   static const Color background = Color(0xFFFFF0F6);
   static const Color berry = Color(0xFF701235);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGoogleData();
+  }
+
+  void _loadGoogleData() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && user.userMetadata != null) {
+      final meta = user.userMetadata!;
+      
+      String? name;
+      if (meta['full_name'] != null && meta['full_name'].toString().isNotEmpty) {
+        name = meta['full_name'].toString();
+      } else if (meta['name'] != null && meta['name'].toString().isNotEmpty) {
+        name = meta['name'].toString();
+      } else if (meta['given_name'] != null) {
+        name = "${meta['given_name']} ${meta['family_name'] ?? ''}".trim();
+      }
+
+      if (name == null || name.isEmpty) {
+        final email = user.email;
+        if (email != null && email.contains('@')) {
+          final prefix = email.split('@').first;
+          name = prefix.replaceAll(RegExp(r'[._-]'), ' ').split(' ').map((word) {
+            if (word.isEmpty) return '';
+            return word[0].toUpperCase() + word.substring(1).toLowerCase();
+          }).join(' ').trim();
+        }
+      }
+
+      String? phoneStr;
+      if (meta['phone'] != null) {
+        phoneStr = meta['phone'].toString().replaceAll('+91', '');
+      }
+
+      setState(() {
+        if (name != null && name.isNotEmpty) {
+          _nameController.text = name;
+        }
+        if (phoneStr != null && phoneStr.isNotEmpty) {
+          _phoneController.text = phoneStr;
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -92,7 +139,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         } else {
           unawaited(Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerCheckoutScreen()),
+            MaterialPageRoute(builder: (context) => const CartScreen()),
           ));
         }
       }

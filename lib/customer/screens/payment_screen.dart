@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -16,7 +16,7 @@ import 'tracking_screen.dart';
 import '../utils/razorpay_service.dart';
 
 
-class PaymentScreen extends StatefulWidget {
+class PaymentScreen extends ConsumerStatefulWidget {
   final String? customerName;
   final String? phone;
   final String? address;
@@ -39,40 +39,44 @@ class PaymentScreen extends StatefulWidget {
   });
 
   @override
-  State<PaymentScreen> createState() => _PaymentScreenState();
+  ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   String _selectedMethod = 'Razorpay';
   final bool _showSuccess = false;
   bool _isLoading = false;
   String? _placedOrderId;
   double? _placedOrderTotal;
-  late Razorpay _razorpay;
+  Razorpay? _razorpay;
 
   @override
   void initState() {
     super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    if (!kIsWeb) {
+      _razorpay = Razorpay();
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+      _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cart = Provider.of<CartProvider>(context, listen: false);
+      final cart = ref.read(cartProvider);
       _startRazorpayPayment(cart);
     });
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    if (!kIsWeb) {
+      _razorpay?.clear();
+    }
     super.dispose();
   }
 
   void _handlePaymentSuccess(PaymentSuccessResponse response) {
     debugPrint("Razorpay Payment Success: ${response.paymentId}");
-    final cart = context.read<CartProvider>();
+    final cart = ref.read(cartProvider);
     _placeOrder(cart, paymentId: response.paymentId);
   }
 
@@ -140,7 +144,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       setState(() => _isLoading = true);
-      _razorpay.open(options);
+      _razorpay?.open(options);
     } catch (e) {
       debugPrint("Error opening Razorpay: $e");
       setState(() => _isLoading = false);
@@ -292,7 +296,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.watch<CartProvider>();
+    final cart = ref.watch(cartProvider);
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color primaryContainerColor = Color(0xFFFFB6D3);
     const Color surfaceColor = Color(0xFFFFF0F6);
@@ -623,7 +627,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         onTap: () {
           setState(() => _selectedMethod = id);
           if (id == 'Razorpay') {
-            final cart = context.read<CartProvider>();
+            final cart = ref.read(cartProvider);
             _startRazorpayPayment(cart);
           }
         },

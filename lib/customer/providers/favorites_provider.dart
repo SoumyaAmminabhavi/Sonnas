@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -61,3 +63,5 @@ class FavoritesProvider extends ChangeNotifier {
     }
   }
 }
+
+final favoritesProvider = ChangeNotifierProvider<FavoritesProvider>((ref) => FavoritesProvider());

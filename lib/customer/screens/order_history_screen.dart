@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/cart_provider.dart';
 
-class CustomerOrderHistoryScreen extends StatefulWidget {
+class CustomerOrderHistoryScreen extends ConsumerStatefulWidget {
   const CustomerOrderHistoryScreen({super.key});
 
   @override
-  State<CustomerOrderHistoryScreen> createState() =>
+  ConsumerState<CustomerOrderHistoryScreen> createState() =>
       _CustomerOrderHistoryScreenState();
 }
 
 class _CustomerOrderHistoryScreenState
-    extends State<CustomerOrderHistoryScreen> {
+    extends ConsumerState<CustomerOrderHistoryScreen> {
   List<Map<String, dynamic>> _orders = [];
   bool _isLoading = true;
 
@@ -319,7 +319,7 @@ class _CustomerOrderHistoryScreenState
                 Expanded(
                   child: TextButton(
                     onPressed: () {
-                      final cart = context.read<CartProvider>();
+                      final cart = ref.read(cartProvider);
                       for (var item in items) {
                         cart.addItem(
                           "reorder_${item['cakeName']}_${DateTime.now().millisecondsSinceEpoch}",

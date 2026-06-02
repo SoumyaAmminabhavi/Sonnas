@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import 'product_detail_screen.dart';
 import 'contact_screen.dart';
@@ -11,22 +11,22 @@ import 'auth_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoading = true;
   bool _isLocalGuestLoggedIn = false;
 
-  final TextEditingController _nameController = TextEditingController(text: "Sonnas Cafe");
-  final TextEditingController _emailController = TextEditingController(text: "soonas@gmail.com");
-  final TextEditingController _phoneController = TextEditingController(text: "09113231424");
-  final TextEditingController _addressController = TextEditingController(text: "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021");
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   String _avatarUrl = "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=120&h=120&fit=crop";
   List<String> _savedAddresses = [];
@@ -60,15 +60,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final isLoggedIn = prefs.getBool('is_guest_logged_in') ?? false;
+      
+      final user = Supabase.instance.client.auth.currentUser;
+      String? cloudName;
+      String? cloudEmail;
+      String? cloudPhone;
+      
+      if (user != null) {
+        cloudEmail = user.email;
+        cloudPhone = user.phone;
+        final meta = user.userMetadata ?? {};
+        
+        if (meta['full_name'] != null && meta['full_name'].toString().isNotEmpty) {
+          cloudName = meta['full_name'].toString();
+        } else if (meta['name'] != null && meta['name'].toString().isNotEmpty) {
+          cloudName = meta['name'].toString();
+        } else if (meta['given_name'] != null) {
+          cloudName = "${meta['given_name']} ${meta['family_name'] ?? ''}".trim();
+        }
+
+        if (cloudName == null || cloudName.isEmpty) {
+          if (cloudEmail != null && cloudEmail.contains('@')) {
+            final prefix = cloudEmail.split('@').first;
+            cloudName = prefix.replaceAll(RegExp(r'[._-]'), ' ').split(' ').map((word) {
+              if (word.isEmpty) return '';
+              return word[0].toUpperCase() + word.substring(1).toLowerCase();
+            }).join(' ').trim();
+          }
+        }
+      }
+
       final guestName = prefs.getString('guest_name') ?? "Guest";
       final guestPhone = prefs.getString('guest_phone') ?? "";
       final guestEmail = prefs.getString('guest_email') ?? "";
 
       setState(() {
         _isLocalGuestLoggedIn = isLoggedIn;
-        if (guestPhone.isNotEmpty) _phoneController.text = guestPhone;
-        if (guestEmail.isNotEmpty) _emailController.text = guestEmail;
-        if (guestName != "Guest") _nameController.text = guestName;
+        
+        _emailController.text = cloudEmail ?? guestEmail;
+        
+        if (cloudPhone != null && cloudPhone.isNotEmpty) {
+          _phoneController.text = cloudPhone.replaceAll('+91', '');
+        } else if (guestPhone.isNotEmpty) {
+          _phoneController.text = guestPhone;
+        }
+        
+        if (cloudName != null && cloudName.isNotEmpty) {
+          _nameController.text = cloudName;
+        } else if (guestName != "Guest") {
+          _nameController.text = guestName;
+        } else {
+          _nameController.text = "Guest";
+        }
       });
       
       // Load all other offline/online details concurrently!
@@ -721,8 +764,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 32),
                   
                   // My Wishlist Section
-                  Consumer<FavoritesProvider>(
-                    builder: (context, favorites, _) {
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final favorites = ref.watch(favoritesProvider);
                       if (favorites.favorites.isEmpty) return const SizedBox.shrink();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

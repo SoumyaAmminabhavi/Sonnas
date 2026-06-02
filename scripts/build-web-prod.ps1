@@ -18,10 +18,10 @@ if (-not (Test-Path $envFile)) {
 }
 
 $supabaseUrl = ""
-$supabaseKey = ""
+$supabaseKey = ""       
 foreach ($line in Get-Content $envFile) {
-    if ($line -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=([^`"]+)$" -or $line -match "^(?:NEXT_PUBLIC_)?SUPABASE_URL=`"([^`"]+)`"$")      { $supabaseUrl = $Matches[1].Trim() }
-    if ($line -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=([^`"]+)$" -or $line -match "^(?:NEXT_PUBLIC_)?SUPABASE_ANON_KEY=`"([^`"]+)`"$") { $supabaseKey = $Matches[1].Trim() }
+    if ($line -match "^SUPABASE_URL=(.+)$")      { $supabaseUrl = $Matches[1].Trim() }
+    if ($line -match "^SUPABASE_ANON_KEY=(.+)$") { $supabaseKey = $Matches[1].Trim() }
 }
 
 if (-not $supabaseUrl -or -not $supabaseKey) {
