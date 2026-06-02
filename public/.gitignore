@@ -1,0 +1,7 @@
+.vercel
+.env*.local
+.last_build_id
+version.json
+canvaskit/
+main.dart.wasm
+main.dart.mjs

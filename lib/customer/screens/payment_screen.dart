@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../services/js_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -13,8 +14,9 @@ import '../../owner/owner_dashboard.dart' deferred as owner_dashboard;
 import '../main.dart';
 import '../providers/cart_provider.dart';
 import 'tracking_screen.dart';
-import '../utils/razorpay_service.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final String? customerName;
@@ -95,7 +97,161 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     debugPrint("External Wallet: ${response.walletName}");
   }
 
+  void _startWebPaymentLinkFlow(CartProvider cart) async {
+    final double totalWithExtras = _calculateTotal(cart.total);
+    final int amountInPaise = totalWithExtras.round();
+    final String orderId = "ORD-${DateTime.now().millisecondsSinceEpoch}";
+    final String orderNumber = "SN-${DateTime.now().millisecondsSinceEpoch}";
+    
+    String? customerPhone = widget.phone?.replaceAll(RegExp(r'\D'), '');
+    if (customerPhone == null || customerPhone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("A valid contact number is required to place an order."),
+          backgroundColor: Color(0xFFFF4D8D),
+        ),
+      );
+      return;
+    }
+    if (customerPhone.length > 10) {
+      customerPhone = customerPhone.substring(customerPhone.length - 10);
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      // 1. Pre-insert the Order in Supabase as PENDING
+      await supabase.from('Order').insert({
+        'id': orderId,
+        'orderNumber': orderNumber,
+        'customerPhone': customerPhone,
+        'customerEmail': supabase.auth.currentUser?.email?.trim(),
+        'customerName': widget.customerName ?? 'Guest Customer',
+        'address': widget.address ?? 'No Address',
+        'deliveryDate': widget.deliveryDate,
+        'deliverySlot': widget.deliveryTime,
+        'notes': widget.notes,
+        'totalPrice': amountInPaise,
+        'status': 'PENDING',
+        'paymentStatus': 'PENDING',
+        'source': 'APP',
+        'updatedAt': DateTime.now().toUtc().toIso8601String(),
+        'createdAt': DateTime.now().toUtc().toIso8601String(),
+        'isCustom': cart.items.any((item) => item.imageUrl.contains('custom')),
+        'customImageUrl': cart.items.isNotEmpty ? cart.items.first.imageUrl : null,
+      });
+
+      // 2. Insert Items
+      final List<Map<String, dynamic>> itemsToInsert = cart.items.asMap().entries.map((entry) => {
+        'id': "ITEM-$orderId-${entry.key}",
+        'orderId': orderId,
+        'cakeId': entry.value.cakeId ?? entry.value.id,
+        'cakeName': entry.value.name,
+        'size': 'Standard',
+        'price': entry.value.price.round(),
+        'quantity': entry.value.quantity,
+      }).toList();
+      
+      await supabase.from('OrderItem').insert(itemsToInsert);
+
+      // 3. Request the Razorpay Payment Link from Next.js server
+      const String backendUrl = String.fromEnvironment('BACKEND_URL');
+      final String baseDomain = backendUrl.isNotEmpty ? backendUrl : Uri.base.origin;
+      final response = await http.post(
+        Uri.parse('$baseDomain/api/payments/create-link'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'orderNumber': orderNumber,
+          'amount': amountInPaise,
+          'phone': customerPhone,
+          'name': widget.customerName ?? 'Guest Customer',
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception("Server failed to generate payment link: ${response.body}");
+      }
+
+      final data = json.decode(response.body);
+      final String? paymentUrl = data['short_url'];
+      if (paymentUrl == null || paymentUrl.isEmpty) {
+        throw Exception("Payment URL was not returned by the server");
+      }
+
+      // 4. Save the order reference to localStorage for the callback to verify
+      if (kIsWeb) {
+        setPendingOrder(orderNumber, (amountInPaise / 100).toString());
+      }
+
+      // 5. Launch the secure checkout page in the same window/tab
+      await launchUrl(Uri.parse(paymentUrl), webOnlyWindowName: '_self');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Opening secure Razorpay window. Please complete payment there."),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
+
+      // 5. Poll Supabase for payment completion webhook success
+      Timer.periodic(const Duration(seconds: 2), (timer) async {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        try {
+          final orderCheck = await supabase
+              .from('Order')
+              .select('status, paymentId')
+              .eq('id', orderId)
+              .maybeSingle();
+
+          if (orderCheck != null && orderCheck['status'] == 'CONFIRMED') {
+            timer.cancel();
+            cart.clear();
+            if (mounted) {
+              setState(() => _isLoading = false);
+              unawaited(Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => OrderSuccessScreen(
+                    orderNumber: orderNumber,
+                    totalAmount: totalWithExtras / 100,
+                    status: 'CONFIRMED',
+                  ),
+                ),
+              ));
+            }
+          }
+        } catch (e) {
+          debugPrint("Polling error: $e");
+        }
+      });
+
+    } catch (e) {
+      debugPrint("Web payment flow error: $e");
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error launching payment: $e"),
+            backgroundColor: const Color(0xFFFF4D8D),
+          ),
+        );
+      }
+    }
+  }
+
   void _startRazorpayPayment(CartProvider cart) {
+    if (kIsWeb) {
+      _startWebPaymentLinkFlow(cart);
+      return;
+    }
+
     final double totalWithExtras = _calculateTotal(cart.total);
     final int amountInPaise = totalWithExtras.round();
     
@@ -114,33 +270,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         'wallets': ['paytm']
       }
     };
-
-    if (kIsWeb) {
-      try {
-        setState(() => _isLoading = true);
-        openRazorpay(
-          options: options,
-          onSuccess: (paymentId) {
-            debugPrint("Razorpay Payment Success: $paymentId");
-            _placeOrder(cart, paymentId: paymentId);
-          },
-          onFailure: (code, message) {
-            debugPrint("Razorpay Payment Error: $code - $message");
-            setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Payment Failed: $message"),
-                backgroundColor: Colors.red,
-              ),
-            );
-          },
-        );
-      } catch (e) {
-        debugPrint("Error opening Razorpay Web: $e");
-        setState(() => _isLoading = false);
-      }
-      return;
-    }
 
     try {
       setState(() => _isLoading = true);
