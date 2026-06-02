@@ -526,7 +526,6 @@ class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   Widget _buildDrawer() {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color secondaryColor = Color(0xFF701235);
 
     return Drawer(
       backgroundColor: surfaceColor,

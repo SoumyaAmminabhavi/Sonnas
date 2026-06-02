@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart';
 import '../../owner/owner_dashboard.dart' deferred as owner_dashboard;
 import 'profile_setup_screen.dart';
 import 'cart_screen.dart';

@@ -6,8 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'profile_setup_screen.dart';
 import 'cart_screen.dart';
-import '../../main.dart';
-import '../providers/cart_provider.dart' as service_cart;
 
 class AuthCallbackScreen extends ConsumerStatefulWidget {
   const AuthCallbackScreen({super.key});
@@ -29,7 +27,7 @@ class _AuthCallbackScreenState extends ConsumerState<AuthCallbackScreen> {
     // Wait for Supabase to parse the URL and establish the session
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
       if (data.event == AuthChangeEvent.signedIn && data.session != null) {
-        _authSubscription?.cancel();
+        await _authSubscription?.cancel();
         
         final user = data.session!.user;
         final metadata = user.userMetadata ?? {};
@@ -38,7 +36,7 @@ class _AuthCallbackScreenState extends ConsumerState<AuthCallbackScreen> {
         if (!mounted) return;
 
         if (!isSetupCompleted) {
-          Navigator.pushReplacement(
+          await Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => const ProfileSetupScreen(),
@@ -46,7 +44,7 @@ class _AuthCallbackScreenState extends ConsumerState<AuthCallbackScreen> {
           );
         } else {
           // If profile is complete, always route to my bag page as requested
-          Navigator.pushReplacement(
+          await Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const CartScreen()),
           );
