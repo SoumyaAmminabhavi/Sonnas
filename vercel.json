@@ -1,5 +1,11 @@
 {
   "ignoreCommand": "exit 0",
+  "git": {
+    "deploymentEnabled": false
+  },
+  "github": {
+    "silent": true
+  },
   "headers": [
     {
       "source": "/main.dart.wasm",

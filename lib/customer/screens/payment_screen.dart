@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:js_interop';
+import '../../services/js_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -17,10 +17,6 @@ import 'tracking_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
-
-
-@JS('setPendingOrder')
-external void setPendingOrder(JSString orderNumber, JSString amount);
 
 class PaymentScreen extends ConsumerStatefulWidget {
   final String? customerName;
@@ -186,7 +182,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       // 4. Save the order reference to localStorage for the callback to verify
       if (kIsWeb) {
-        setPendingOrder(orderNumber.toJS, (amountInPaise / 100).toString().toJS);
+        setPendingOrder(orderNumber, (amountInPaise / 100).toString());
       }
 
       // 5. Launch the secure checkout page in the same window/tab
