@@ -22,6 +22,7 @@ import 'services/theme_service.dart';
 // import 'customer/checkout_page.dart';
 import 'customer/screens/auth_callback_screen.dart';
 import 'customer/screens/order_success_screen.dart';
+import 'customer/providers/cart_provider.dart';
 
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(
@@ -228,6 +229,9 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
 
         // Clear the global JS variable immediately so we don't pop this screen repeatedly
         clearOrderConfirmedNumber();
+
+        // Clear the shopping bag (cart)
+        ref.read(cartProvider).clear();
 
         if (mounted) {
           unawaited(Navigator.of(context).push(
