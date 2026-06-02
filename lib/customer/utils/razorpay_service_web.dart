@@ -1,17 +1,25 @@
-// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
-import 'dart:js' as js;
+import 'dart:js_interop';
+
+@JS('openRazorpayCheckout')
+external void _openRazorpayCheckout(JSAny? options, JSFunction onSuccess, JSFunction onFailure);
 
 void openRazorpay({
   required Map<String, dynamic> options,
   required Function(String paymentId) onSuccess,
   required Function(String code, String message) onFailure,
 }) {
-  final jsOptions = js.JsObject.jsify(options);
-  js.context.callMethod('openRazorpayCheckout', [
+  final jsOptions = options.jsify();
+  
+  _openRazorpayCheckout(
     jsOptions,
-    onSuccess,
-    (code, message) {
-      onFailure(code?.toString() ?? '', message?.toString() ?? '');
-    },
-  ]);
+    ((String paymentId) {
+      onSuccess(paymentId);
+    }).toJS,
+    ((JSAny? code, JSAny? message) {
+      onFailure(
+        code?.dartify()?.toString() ?? '',
+        message?.dartify()?.toString() ?? ''
+      );
+    }).toJS,
+  );
 }
