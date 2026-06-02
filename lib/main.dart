@@ -20,8 +20,8 @@ import 'widgets/glass_bottom_nav.dart';
 import 'widgets/connectivity_banner.dart';
 import 'services/auth_service.dart';
 import 'services/theme_service.dart';
-import 'services/cart_provider.dart' as service_cart;
-import 'customer/checkout_page.dart';
+// import 'services/cart_provider.dart' as service_cart;
+// import 'customer/checkout_page.dart';
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
 
@@ -195,21 +195,9 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
     });
   }
 
-  void _openCheckout() {
-    final cart = ref.read(service_cart.cartProvider);
-    if (cart.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Your cart is empty")),
-      );
-      return;
-    }
-    Navigator.push<void>(context, MaterialPageRoute<void>(builder: (_) => const CustomerCheckoutPage()));
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final cart = ref.watch(service_cart.cartProvider);
     
     return Scaffold(
       extendBody: true,
@@ -221,35 +209,7 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
         scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: cs.primary),
         title: const Text(" "),
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.shopping_bag_outlined),
-                onPressed: _openCheckout,
-              ),
-              if (cart.itemCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      cart.itemCount.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 8),
-        ],
+        actions: const [],
       ) : AppBar(
         backgroundColor: cs.surface.withValues(alpha: 0.9),
         elevation: 0,

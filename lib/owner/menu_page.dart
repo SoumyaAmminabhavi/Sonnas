@@ -977,11 +977,14 @@ class _AddMenuContentState extends ConsumerState<_AddMenuContent> {
 
     try {
       final String cakeName = _nameController.text.trim();
-      String slug = cakeName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+      String slug = widget.initialData?['slug']?.toString() ?? '';
       
-      // Make slug unique for new items to avoid accidental overwrites
-      if (widget.initialData == null) {
-        slug = '$slug-${DateTime.now().millisecondsSinceEpoch}';
+      if (slug.isEmpty) {
+        slug = cakeName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+        // Make slug unique for new items to avoid accidental overwrites
+        if (widget.initialData == null) {
+          slug = '$slug-${DateTime.now().millisecondsSinceEpoch}';
+        }
       }
 
       if (slug.isEmpty || slug == '-') {
