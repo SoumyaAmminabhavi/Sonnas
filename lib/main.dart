@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:js_interop';
 
 import 'customer/main.dart';
 import 'customer/screens/welcome_screen.dart';
@@ -20,6 +21,16 @@ import 'services/theme_service.dart';
 // import 'services/cart_provider.dart' as service_cart;
 // import 'customer/checkout_page.dart';
 import 'customer/screens/auth_callback_screen.dart';
+import 'customer/screens/order_success_screen.dart';
+
+@JS('getOrderConfirmedNumber')
+external JSString getOrderConfirmedNumber();
+
+@JS('getOrderConfirmedAmount')
+external JSString getOrderConfirmedAmount();
+
+@JS('clearOrderConfirmedNumber')
+external void clearOrderConfirmedNumber();
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(
   ThemeNotifier.new,
@@ -206,6 +217,44 @@ class AppNavigation extends ConsumerStatefulWidget {
 
 class _AppNavigationState extends ConsumerState<AppNavigation> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPaymentCallback();
+    });
+  }
+
+  void _checkPaymentCallback() async {
+    if (!kIsWeb) return;
+    try {
+      final jsOrderNumber = getOrderConfirmedNumber();
+      final orderNumber = jsOrderNumber.toDart;
+      if (orderNumber.isNotEmpty) {
+        final jsAmount = getOrderConfirmedAmount();
+        final amountStr = jsAmount.toDart;
+        final amount = double.tryParse(amountStr) ?? 0.0;
+
+        // Clear the global JS variable immediately so we don't pop this screen repeatedly
+        clearOrderConfirmedNumber();
+
+        if (mounted) {
+          unawaited(Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => OrderSuccessScreen(
+                orderNumber: orderNumber,
+                totalAmount: amount,
+                status: 'CONFIRMED',
+              ),
+            ),
+          ));
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading redirected order: $e");
+    }
+  }
 
   @override
   void didChangeDependencies() {

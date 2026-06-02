@@ -46,7 +46,7 @@ export async function createPaymentLink(options: {
       notes: {
         orderNumber: options.orderNumber,
       },
-      callback_url: `${env.NEXT_PUBLIC_APP_URL}/order-confirmed?id=${options.orderNumber}`,
+      callback_url: `${env.NEXT_PUBLIC_APP_URL}/?order_confirmed=${options.orderNumber}`,
       callback_method: "get",
     });
 

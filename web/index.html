@@ -79,6 +79,69 @@
   </style>
 </head>
 <body>
+  <script>
+    // Extract order_confirmed query param on load and store in window context for Flutter access
+    (function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderConfirmed = urlParams.get('order_confirmed');
+      if (orderConfirmed) {
+        try {
+          localStorage.setItem('orderConfirmedNumber', orderConfirmed);
+          var pendingNum = localStorage.getItem('pendingOrderNumber');
+          if (pendingNum === orderConfirmed) {
+            var amount = localStorage.getItem('pendingOrderAmount') || '0.00';
+            window.orderConfirmedAmount = amount;
+            localStorage.setItem('orderConfirmedAmount', amount);
+          }
+        } catch (e) {
+          console.error("Failed to write to localStorage:", e);
+        }
+        window.orderConfirmedNumber = orderConfirmed;
+        // Clear the query parameters from the address bar immediately for a clean look
+        if (window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+        }
+      }
+
+      window.setPendingOrder = function(orderNumber, amount) {
+        try {
+          localStorage.setItem('pendingOrderNumber', orderNumber);
+          localStorage.setItem('pendingOrderAmount', amount);
+        } catch (e) {}
+      };
+
+      window.getOrderConfirmedNumber = function() {
+        var val = window.orderConfirmedNumber;
+        if (!val) {
+          try {
+            val = localStorage.getItem('orderConfirmedNumber');
+          } catch (e) {}
+        }
+        return val || '';
+      };
+
+      window.getOrderConfirmedAmount = function() {
+        var val = window.orderConfirmedAmount;
+        if (!val) {
+          try {
+            val = localStorage.getItem('orderConfirmedAmount');
+          } catch (e) {}
+        }
+        return val || '0.00';
+      };
+
+      window.clearOrderConfirmedNumber = function() {
+        window.orderConfirmedNumber = null;
+        window.orderConfirmedAmount = null;
+        try {
+          localStorage.removeItem('orderConfirmedNumber');
+          localStorage.removeItem('orderConfirmedAmount');
+          localStorage.removeItem('pendingOrderNumber');
+          localStorage.removeItem('pendingOrderAmount');
+        } catch (e) {}
+      };
+    })();
+  </script>
   <div id="splash">
     <div>
       <h1>Sonnas <span class="heart">&#9825;</span></h1>
