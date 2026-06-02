@@ -5,8 +5,6 @@ import '../widgets/skeleton.dart';
 import 'widgets/order_card.dart';
 
 class ManageOrdersPage extends StatefulWidget {
-
-
   final ValueChanged<int>? onTabChanged;
   const ManageOrdersPage({super.key, this.onTabChanged});
 
@@ -99,10 +97,26 @@ class _ManageOrdersPageState extends State<ManageOrdersPage>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.today),
-                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.all),
-                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.completed),
-                  _OrdersList(cs: cs, onTabChanged: widget.onTabChanged, filter: _OrderFilter.custom),
+                  _OrdersList(
+                    cs: cs,
+                    onTabChanged: widget.onTabChanged,
+                    filter: _OrderFilter.today,
+                  ),
+                  _OrdersList(
+                    cs: cs,
+                    onTabChanged: widget.onTabChanged,
+                    filter: _OrderFilter.all,
+                  ),
+                  _OrdersList(
+                    cs: cs,
+                    onTabChanged: widget.onTabChanged,
+                    filter: _OrderFilter.completed,
+                  ),
+                  _OrdersList(
+                    cs: cs,
+                    onTabChanged: widget.onTabChanged,
+                    filter: _OrderFilter.custom,
+                  ),
                 ],
               ),
             ),
@@ -150,34 +164,34 @@ class _OrdersList extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               itemCount: 6,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) => Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Row(
-                  children: [
-                    Skeleton(height: 50, width: 50, borderRadius: 12),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Skeleton(height: 14, width: 140),
-                          SizedBox(height: 8),
-                          Skeleton(height: 10, width: 90),
-                        ],
-                      ),
+              itemBuilder:
+                  (context, index) => Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    Skeleton(height: 24, width: 70, borderRadius: 12),
-                  ],
-                ),
-              ),
+                    child: const Row(
+                      children: [
+                        Skeleton(height: 50, width: 50, borderRadius: 12),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Skeleton(height: 14, width: 140),
+                              SizedBox(height: 8),
+                              Skeleton(height: 10, width: 90),
+                            ],
+                          ),
+                        ),
+                        Skeleton(height: 24, width: 70, borderRadius: 12),
+                      ],
+                    ),
+                  ),
             ),
           );
         }
-
 
         if (snapshot.hasError) {
           return _ErrorView(
@@ -187,7 +201,10 @@ class _OrdersList extends StatelessWidget {
               // Trigger a rebuild by popping and pushing or just using a key?
               // For now, providing a graceful UI is the priority.
               Navigator.of(context).pushReplacement<void, void>(
-                MaterialPageRoute<void>(builder: (context) => ManageOrdersPage(onTabChanged: onTabChanged)),
+                MaterialPageRoute<void>(
+                  builder:
+                      (context) => ManageOrdersPage(onTabChanged: onTabChanged),
+                ),
               );
             },
           );
@@ -197,41 +214,49 @@ class _OrdersList extends StatelessWidget {
 
         // Apply filtering logic
         final now = DateTime.now();
-        rawOrders = rawOrders.where((order) {
-          final isCustom = order['isCustom'] == true;
-          final status = order['status'] ?? 'PENDING';
-          final createdAtStr = order['createdAt'];
-          
-          DateTime? createdAt = createdAtStr != null ? DateTime.tryParse(createdAtStr as String) : null;
+        rawOrders =
+            rawOrders.where((order) {
+              final isCustom = order['isCustom'] == true;
+              final status = order['status'] ?? 'PENDING';
+              final createdAtStr = order['createdAt'];
 
-          switch (filter) {
-            case _OrderFilter.custom:
-              return isCustom && status != 'COMPLETED';
-            case _OrderFilter.completed:
-              return status == 'COMPLETED';
-            case _OrderFilter.today:
-              if (status == 'COMPLETED' || isCustom) return false;
-              if (createdAt == null) return true;
-              return createdAt.year == now.year && 
-                     createdAt.month == now.month && 
-                     createdAt.day == now.day;
-            case _OrderFilter.all:
-              if (isCustom) return false;
-              return true;
-          }
-        }).toList();
+              DateTime? createdAt =
+                  createdAtStr != null
+                      ? DateTime.tryParse(createdAtStr as String)
+                      : null;
+
+              switch (filter) {
+                case _OrderFilter.custom:
+                  return isCustom && status != 'COMPLETED';
+                case _OrderFilter.completed:
+                  return status == 'COMPLETED';
+                case _OrderFilter.today:
+                  if (status == 'COMPLETED' || isCustom) return false;
+                  if (createdAt == null) return true;
+                  return createdAt.year == now.year &&
+                      createdAt.month == now.month &&
+                      createdAt.day == now.day;
+                case _OrderFilter.all:
+                  if (isCustom) return false;
+                  return true;
+              }
+            }).toList();
 
         if (rawOrders.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.auto_awesome_outlined, color: cs.primary.withValues(alpha: 0.1), size: 64),
+                Icon(
+                  Icons.auto_awesome_outlined,
+                  color: cs.primary.withValues(alpha: 0.1),
+                  size: 64,
+                ),
                 const SizedBox(height: 24),
                 Text(
-                  filter == _OrderFilter.custom 
-                    ? "A Canvas Awaiting Color" 
-                    : "A Quiet Moment",
+                  filter == _OrderFilter.custom
+                      ? "A Canvas Awaiting Color"
+                      : "A Quiet Moment",
                   style: GoogleFonts.notoSerif(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -256,10 +281,11 @@ class _OrdersList extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           itemCount: rawOrders.length,
           separatorBuilder: (context, index) => const SizedBox(height: 16),
-          itemBuilder: (context, index) => OrderCardReactive(
-            data: rawOrders[index],
-            onTabChanged: onTabChanged,
-          ),
+          itemBuilder:
+              (context, index) => OrderCardReactive(
+                data: rawOrders[index],
+                onTabChanged: onTabChanged,
+              ),
         );
       },
     );
@@ -285,17 +311,41 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.wifi_off_rounded, color: cs.primary.withValues(alpha: 0.2), size: 48),
+            Icon(
+              Icons.wifi_off_rounded,
+              color: cs.primary.withValues(alpha: 0.2),
+              size: 48,
+            ),
             const SizedBox(height: 24),
-            Text("Connection Interrupted", style: GoogleFonts.notoSerif(fontSize: 20, fontWeight: FontWeight.bold, color: cs.secondary)),
+            Text(
+              "Connection Interrupted",
+              style: GoogleFonts.notoSerif(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: cs.secondary,
+              ),
+            ),
             const SizedBox(height: 12),
-            Text("The atelier's live pulse was briefly interrupted.", textAlign: TextAlign.center, style: GoogleFonts.plusJakartaSans(fontSize: 13, color: cs.secondary.withValues(alpha: 0.5))),
+            Text(
+              "The atelier's live pulse was briefly interrupted.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                color: cs.secondary.withValues(alpha: 0.5),
+              ),
+            ),
             const SizedBox(height: 32),
             TextButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text("RECONNECT"),
-              style: TextButton.styleFrom(foregroundColor: cs.primary, textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+              style: TextButton.styleFrom(
+                foregroundColor: cs.primary,
+                textStyle: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
             ),
           ],
         ),
@@ -303,6 +353,3 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-
-
-

@@ -21,7 +21,9 @@ import 'services/theme_service.dart';
 // import 'customer/checkout_page.dart';
 import 'customer/screens/auth_callback_screen.dart';
 
-final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
+final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(
+  ThemeNotifier.new,
+);
 
 class ThemeNotifier extends Notifier<ThemeMode> {
   @override
@@ -41,23 +43,27 @@ void main() async {
 
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    
+
     // Disable dynamic HTTP font fetching to ensure local assets are used
     GoogleFonts.config.allowRuntimeFetching = false;
     if (!kReleaseMode) {
       try {
         await dotenv.load(fileName: ".env");
       } catch (e) {
-        debugPrint('⚠️ .env file not found — using --dart-define values for production build');
+        debugPrint(
+          '⚠️ .env file not found — using --dart-define values for production build',
+        );
       }
     }
-    
+
     await SupabaseService.initialize();
-    
-    unawaited(AuthService.prewarmOwnerAuth().catchError((Object e) {
-      debugPrint('⚠️ Prewarm Owner Auth failed: $e');
-    }));
-    
+
+    unawaited(
+      AuthService.prewarmOwnerAuth().catchError((Object e) {
+        debugPrint('⚠️ Prewarm Owner Auth failed: $e');
+      }),
+    );
+
     try {
       final savedTheme = await ThemeService.getThemeMode();
       _initialThemeMode = savedTheme;
@@ -65,24 +71,25 @@ void main() async {
       debugPrint('Theme Loading Error: $e');
       _initialThemeMode = ThemeMode.light;
     }
-    
-    runApp(
-      const ProviderScope(
-        child: PatisserieApp(),
-      ),
-    );
+
+    runApp(const ProviderScope(child: PatisserieApp()));
   } catch (e, stackTrace) {
     debugPrint('Critical Initialization Error: $e\n$stackTrace');
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text('Initialization failed:\n$e', textAlign: TextAlign.center),
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Initialization failed:\n$e',
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -126,7 +133,9 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 8,
         ),
         textTheme: _textTheme(const Color(0xFF701235)),
@@ -153,7 +162,9 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           elevation: 8,
         ),
         textTheme: _textTheme(const Color(0xFFFFF0F6)),
@@ -169,10 +180,19 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
 
   TextTheme _textTheme(Color color) {
     return TextTheme(
-      displayLarge: GoogleFonts.notoSerif(color: color, fontWeight: FontWeight.w400),
-      headlineLarge: GoogleFonts.notoSerif(color: color, fontWeight: FontWeight.w400),
+      displayLarge: GoogleFonts.notoSerif(
+        color: color,
+        fontWeight: FontWeight.w400,
+      ),
+      headlineLarge: GoogleFonts.notoSerif(
+        color: color,
+        fontWeight: FontWeight.w400,
+      ),
       bodyLarge: GoogleFonts.plusJakartaSans(color: color),
-      labelSmall: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, letterSpacing: 2.0),
+      labelSmall: GoogleFonts.plusJakartaSans(
+        fontWeight: FontWeight.bold,
+        letterSpacing: 2.0,
+      ),
     );
   }
 }
@@ -192,12 +212,11 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
     super.didChangeDependencies();
     precacheImage(
       const NetworkImage(
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE'
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE',
       ),
       context,
     );
   }
-
 
   void _onTabSelected(int index) {
     setState(() {
@@ -208,43 +227,56 @@ class _AppNavigationState extends ConsumerState<AppNavigation> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       extendBody: true,
       extendBodyBehindAppBar: _currentIndex == 0,
       drawer: const ModernDrawer(),
-      appBar: _currentIndex == 0 ? AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: cs.primary),
-        title: const Text(" "),
-        actions: const [],
-      ) : AppBar(
-        backgroundColor: cs.surface.withValues(alpha: 0.9),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: cs.primary),
-        title: Text(
-          _currentIndex == 1 ? "MENU" : _currentIndex == 2 ? "ORDERS" : "PROFILE",
-          style: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: cs.primary, letterSpacing: 2),
-        ),
-      ),
+      appBar:
+          _currentIndex == 0
+              ? AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                iconTheme: IconThemeData(color: cs.primary),
+                title: const Text(" "),
+                actions: const [],
+              )
+              : AppBar(
+                backgroundColor: cs.surface.withValues(alpha: 0.9),
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                iconTheme: IconThemeData(color: cs.primary),
+                title: Text(
+                  _currentIndex == 1
+                      ? "MENU"
+                      : _currentIndex == 2
+                      ? "ORDERS"
+                      : "PROFILE",
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
       body: IndexedStack(
         index: _currentIndex,
         children: [
           LandingPage(onViewMenu: () => _onTabSelected(1)),
           const MenuPage(),
-          const Placeholder(), 
-          const Placeholder(), 
+          const Placeholder(),
+          const Placeholder(),
         ],
       ),
-      bottomNavigationBar: _currentIndex == 0 
-          ? null 
-          : GlassBottomNav(
-              currentIndex: _currentIndex,
-              onTap: _onTabSelected,
-            ),
+      bottomNavigationBar:
+          _currentIndex == 0
+              ? null
+              : GlassBottomNav(
+                currentIndex: _currentIndex,
+                onTap: _onTabSelected,
+              ),
     );
   }
 }
