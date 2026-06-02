@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html style="height: 100%; width: 100%;">
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <script>
+    // Delete the deprecated, non-standard Intl.v8BreakIterator if Intl.Segmenter is available,
+    // which prevents the browser deprecation warning and forces Dart SDK to use Intl.Segmenter.
+    if (typeof Intl !== 'undefined' && Intl.v8BreakIterator && Intl.Segmenter) {
+      delete Intl.v8BreakIterator;
+    }
+  </script>
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Sonnas - Artisan Patisserie & Cafe Boutique">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Sonnas">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Preconnect to Supabase (fonts are bundled locally) -->
+  <link rel="preconnect" href="https://qwqsarpzcwwpgyimhxzn.supabase.co">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+
+
+  <title>Sonnas</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+    #splash {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #FF4D8D 0%, #701235 100%);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; transition: opacity 0.3s ease-out;
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+    #splash.hide { opacity: 0; pointer-events: none; }
+    #splash h1 {
+      color: white; font-size: 2rem; margin: 0; text-align: center;
+      font-weight: 400; letter-spacing: 0.02em;
+    }
+    #splash p {
+      color: rgba(255,255,255,0.8); text-align: center;
+      margin-top: 8px; font-size: 1rem; letter-spacing: 0.05em;
+    }
+    #splash .heart { color: #FFB6D3; }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <div>
+      <h1>Sonnas <span class="heart">&#9825;</span></h1>
+      <p>Handcrafted with love</p>
+    </div>
+  </div>
+  <script>
+    (function() {
+      const observer = new MutationObserver((mutations, obs) => {
+        const pane = document.querySelector('flt-glass-pane') || document.querySelector('canvas');
+        if (pane) {
+          removeSplash();
+          obs.disconnect();
+        }
+      });
+
+      observer.observe(document.body, { childList: true, subtree: true });
+
+      const timeout = setTimeout(removeSplash, 5000);
+
+      function removeSplash() {
+        clearTimeout(timeout);
+        const s = document.getElementById('splash');
+        if (s) {
+          s.classList.add('hide');
+          setTimeout(function() { s.remove(); }, 350);
+        }
+      }
+    })();
+  </script>
+  <script>
+    window.openRazorpayCheckout = function(options, onSuccess, onFailure) {
+      if (typeof Razorpay === 'undefined') {
+        var script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = function() {
+          openCheckout(options, onSuccess, onFailure);
+        };
+        script.onerror = function() {
+          if (onFailure) onFailure('SCRIPT_LOAD_ERROR', 'Failed to load payment SDK. Please try again.');
+        };
+        document.head.appendChild(script);
+      } else {
+        openCheckout(options, onSuccess, onFailure);
+      }
+    };
+
+    function openCheckout(options, onSuccess, onFailure) {
+      options.handler = function(response) {
+        if (onSuccess) {
+          onSuccess(response.razorpay_payment_id);
+        }
+      };
+
+      var rzp = new Razorpay(options);
+
+      rzp.on('payment.failed', function(response) {
+        if (onFailure) {
+          onFailure(response.error.code, response.error.description);
+        }
+      });
+
+      rzp.open();
+    }
+  </script>
+  <script src="flutter_bootstrap.js" defer></script>
+</body>
+</html>

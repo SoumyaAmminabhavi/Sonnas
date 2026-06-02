@@ -1,0 +1,98 @@
+import { env } from "~/env";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize client only if key is present to avoid crash
+const getSupabaseAdmin = () => {
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return null;
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, key);
+};
+
+
+
+
+/**
+ * Helper to perform fetch with a timeout
+ */
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Downloads an image from WhatsApp and uploads it to Supabase Storage
+ * Returns the public URL of the uploaded image
+ */
+export async function downloadAndUploadImage(mediaId: string): Promise<string | null> {
+  try {
+    if (!env.WHATSAPP_TOKEN || !env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error("[WhatsApp Media] Missing required credentials (TOKEN or SERVICE_KEY)");
+      return null;
+    }
+
+
+    // 1. Get the media URL from Meta
+    const metaResponse = await fetchWithTimeout(`https://graph.facebook.com/v18.0/${mediaId}`, {
+      headers: { Authorization: `Bearer ${env.WHATSAPP_TOKEN}` },
+    });
+
+    if (!metaResponse.ok) {
+      console.error("[WhatsApp Media] Failed to get media URL:", await metaResponse.text());
+      return null;
+    }
+
+    const { url } = (await metaResponse.json()) as { url: string };
+
+    // 2. Download the actual image bytes
+    const imageResponse = await fetchWithTimeout(url, {
+      headers: { Authorization: `Bearer ${env.WHATSAPP_TOKEN}` },
+    });
+
+
+    if (!imageResponse.ok) {
+      console.error("[WhatsApp Media] Failed to download image:", await imageResponse.text());
+      return null;
+    }
+
+    const blob = await imageResponse.blob();
+    const fileName = `custom_${mediaId}_${Date.now()}.jpg`;
+
+    // 3. Upload to Supabase Storage (bucket: "cakes")
+    const supabase = getSupabaseAdmin();
+    if (!supabase) {
+      console.error("[WhatsApp Media] Cannot upload: SUPABASE_SERVICE_ROLE_KEY is missing.");
+      return null;
+    }
+
+    const { data, error } = await supabase.storage
+      .from("cakes")
+      .upload(`custom-requests/${fileName}`, blob, {
+        contentType: blob.type,
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("[WhatsApp Media] Supabase upload failed:", error);
+      return null;
+    }
+
+    // 4. Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from("cakes")
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  } catch (e) {
+    console.error("[WhatsApp Media] Error in media pipeline:", e);
+    return null;
+  }
+}

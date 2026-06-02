@@ -1,0 +1,185 @@
+# ─────────────────────────────────────────────────────────────
+#  Sonna Patisserie & Cafe — Unified Workspace .gitignore
+# ─────────────────────────────────────────────────────────────
+
+# ── Dependencies & Node.js (Web & Server Tooling) ────────────
+node_modules/
+.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Flutter / Dart / Pub ────────────
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+app.*.symbols
+app.*.map.json
+
+# ── Android Studio / Gradle / Build Artifacts ─────────────────
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+.gradle/
+
+# ── Next.js ───────────────────────────────────────────────────
+/.next/
+/out/
+/dist/
+
+# ── Environment Variables & Secret Credentials ────────────────
+.env*
+!.env.example
+!.env.*.example
+*.secret
+*.pem
+*.p12
+*.keystore
+key.properties
+
+# ── Vercel ────────────────────────────────────────────────────
+.vercel
+
+# ── TypeScript & Linting ──────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts
+.eslintcache
+
+# ── Prisma Database & Migrations ──────────────────────────────
+/generated
+lib/generated/
+/prisma/*.db
+/prisma/*.db-journal
+prisma.config.js
+lib/services/db_migration.sql
+
+# ── Custom Scratch & Temporary Files ──────────────────────────
+/scratch
+/tmp
+.temp
+migrate_working_dir/
+run_log.txt
+
+# ── IDE & Editor Configurations ───────────────────────────────
+# IntelliJ & Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code (Allow shared settings/launch configs)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Text editors & miscellaneous
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.class
+*.log
+*.pyc
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+.gemini/
+
+# ── OS Metadata & Trash ───────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── AI, Agents & Workspace Research Tooling ──────────────────
+.agents/
+.cursor/
+.jetro/
+.qodo/
+.mcp.json
+.windsurfrules
+AGENT.md
+CLAUDE.md
+artifacts/
+/data/
+projects/
+issues.txt
+graphify-out/
+**/graphify-out/
+
+# ── Redundant Archives, Screenshots & Logs ────────────────────
+/assets.zip
+/flutter_01.png
+/analysis_output.txt
+
+# ── Platform-Specific Consolidations (Android, iOS, macOS, Windows, Linux) ──
+# Android
+/android/local.properties
+/android/key.properties
+GeneratedPluginRegistrant.java
+.cxx/
+*.jks
+
+# iOS & macOS
+**/dgph
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+**/*sync/
+.sconsign.dblite
+.tags*
+**/.vagrant/
+**/DerivedData/
+Icon?
+**/Pods/
+**/.symlinks/
+/ios/profile
+**/xcuserdata/
+**/.generated/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Flutter.podspec
+**/Flutter/Generated.xcconfig
+**/Flutter/ephemeral/
+**/Flutter/app.flx
+**/Flutter/app.zip
+**/Flutter/flutter_assets/
+**/Flutter/flutter_export_environment.sh
+ServiceDefinitions.json
+**/Runner/GeneratedPluginRegistrant.*
+!default.mode1v3
+!default.mode2v3
+!default.pbxuser
+!default.perspectivev3
+
+# Windows & Linux
+**/flutter/ephemeral/
+*.user
+*.userosscache
+*.sln.docstates
+x64/
+x86/
+*.[Cc]ache
+!*.[Cc]ache/
+
+# google_fonts package runtime cache (fonts are bundled in assets/google_fonts/)
+/google_fonts/

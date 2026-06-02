@@ -1,0 +1,29 @@
+# .coderabbit.yaml
+language: "en-US"
+reviews:
+  profile: "assertive"
+  path_filters:
+    - "!**/*.g.dart"
+    - "!**/*.freezed.dart"
+    - "!**/*.gen.dart"
+    - "!**/generated_plugin_registrant.dart"
+    - "!**/pubspec.lock"
+    - "!ios/Pods/**"
+    - "!android/.gradle/**"
+    - "!lib/generated/**"
+    - "!package-lock.json"
+    - "!package.json"
+    - "!pubspec.yaml"
+    - "!.env*"
+    - "!.github/**"
+    - "!README.md"
+    - "!analysis_options.yaml"
+    - "!.gitignore"
+    - "!.coderabbit.yaml"
+  path_instructions:
+    - path: "**/*.dart"
+      instructions: |
+        Suggest using 'const' constructors in Flutter widgets wherever possible.
+        Check that state management (e.g., BLoC, Riverpod, Provider) is used consistently and clean architecture boundaries are respected.
+        Flag nested build methods that should be refactored into separate widgets for performance.
+        Ensure asynchronous operations handle errors/loading states properly.
