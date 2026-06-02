@@ -12,28 +12,38 @@ Welcome to the unified workspace repository for **Sonnas** — a luxury artisan 
 Both projects coexist at the root of this repository, organized as follows:
 
 ```text
-├── android/, ios/, macos/, windows/, linux/, web/  # Flutter platform-specific native directories
+├── android/, ios/, macos/, windows/, linux/, web/  # Flutter native platform-specific configurations
+├── assets/                                        # Flutter local static assets (images, configs)
 ├── lib/                                           # Flutter application codebase (Dart)
-├── lib/main.dart                                  # Flutter app entry point
-├── lib/models/                                    # Flutter shared data models
-├── lib/services/                                  # Flutter services (Supabase service, local auth, etc.)
-└── lib/customer/, owner/, staff/, widgets/        # Flutter portal screens and modular UI
+│   ├── main.dart                                  # Flutter application entry point
+│   ├── customer/, owner/, staff/, widgets/        # Modular Flutter screens and user portals
+│   ├── models/                                    # Shared client data models
+│   ├── services/                                  # Business logic (Supabase, Auth, Settings, etc.)
+│   └── generated/                                 # Generated Flutter Prisma client database models
 │
-├── prisma/                                        # Next.js / Server Prisma directory
-│   ├── schema.prisma                              # Next.js Prisma Database Schema (Source of truth)
-│   └── migrations/, seed.ts                       # Next.js migrations and seed script
+├── prisma/                                        # Master Database migrations & Next.js schema definitions
+│   ├── schema.prisma                              # Prisma DB Schema (Source of truth)
+│   └── migrations/, seed.ts                       # Database schema migrations & initial seed scripts
 │
-├── public/                                        # Next.js public assets (Cakes, static media)
-├── src/                                           # Next.js web application codebase (TypeScript/React)
-│   ├── app/                                       # Next.js Admin and WhatsApp Router Pages
-│   ├── components/                                # Next.js React UI Components (Tailwind v4)
-│   ├── server/                                    # Next.js backend & WhatsApp Bot state machine handlers
-│   └── styles/                                    # Global Tailwind stylesheet
+├── public/                                        # Next.js static asset serving (images, cakes)
+├── src/                                           # Next.js Web Admin & WhatsApp Bot backend codebase (TypeScript)
+│   ├── app/                                       # App Router Pages (Web dashboard & webhooks)
+│   ├── components/                                # Shared React components
+│   ├── data/                                      # Static datasets & localized mock database resources
+│   ├── lib/                                       # Helper utilities and type definitions
+│   ├── server/                                    # tRPC backend APIs & WhatsApp Bot state machine handlers
+│   ├── styles/                                    # Tailwind global styling configuration
+│   ├── trpc/                                      # React query client-to-server trpc integrations
+│   └── env.js                                     # Schema-validated environmental variables using Zod
 │
-├── .env.example                                   # Combined environment template for both platforms
-├── package.json                                   # Root configuration, Next.js build scripts, and DB utilities
-└── pubspec.yaml                                   # Flutter project configuration & dependency list
+├── .env.example                                   # Shared environment template for local configuration
+├── package.json                                   # Node.js dependencies, build tasks, and DB commands
+├── pubspec.yaml                                   # Flutter package dependencies & configuration
+├── tailwind.config.ts                             # Styling config for Tailwind CSS
+├── tsconfig.json                                  # TypeScript configuration definitions
+└── OmniBiz_PRD_v1.0_complete.md                   # Complete Business OS PRD & documentation
 ```
+
 
 ---
 

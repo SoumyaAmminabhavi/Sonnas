@@ -1,10 +1,11 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../services/order_service.dart' as service;
+
 class LandingPage extends StatelessWidget {
   final VoidCallback onViewMenu;
+  
   const LandingPage({super.key, required this.onViewMenu});
 
   void _showContactInfo(BuildContext context, String title, String content) {
@@ -31,9 +32,12 @@ class LandingPage extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Background Image
-          Image.network(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE',
-            fit: BoxFit.cover,
+          RepaintBoundary(
+            child: Image.network(
+              'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE',
+              fit: BoxFit.cover,
+              cacheWidth: 1080,
+            ),
           ),
           // Gradient Overlay
           Container(
@@ -177,36 +181,30 @@ class LandingPage extends StatelessWidget {
                         height: 54,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(999),
-                          color: cs.surface.withValues(alpha: 0.8),
+                          color: cs.surface.withValues(alpha: 0.9),
                           border: Border.all(
                             color: cs.primary.withValues(alpha: 0.2),
                           ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
-                          child: BackdropFilter(
-                            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: TextButton(
-                              onPressed: () {
-                                service.OrderService.launchWhatsApp(
-                                  "+919113231424",
-                                  "Hi Sonna, I'd like to inquire about a custom cake order."
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: cs.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
-                              child: Text(
-                                "CUSTOM ENQUIRY",
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  letterSpacing: 2.0,
-                                ),
-                              ),
+                        child: TextButton(
+                          onPressed: () {
+                            service.OrderService.launchWhatsApp(
+                              "+919113231424",
+                              "Hi Sonna, I'd like to inquire about a custom cake order."
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: cs.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                          ),
+                          child: Text(
+                            "CUSTOM ENQUIRY",
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              letterSpacing: 2.0,
                             ),
                           ),
                         ),
@@ -249,21 +247,16 @@ class _ContactGlassIcon extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: cs.surface.withValues(alpha: 0.5),
+        color: cs.surface.withValues(alpha: 0.7),
         border: Border.all(
           color: cs.outlineVariant.withValues(alpha: 0.3),
         ),
       ),
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-          child: IconButton(
-            onPressed: onPressed,
-            iconSize: 20,
-            icon: Icon(icon, color: cs.primary),
-            padding: EdgeInsets.zero,
-          ),
-        ),
+      child: IconButton(
+        onPressed: onPressed,
+        iconSize: 20,
+        icon: Icon(icon, color: cs.primary),
+        padding: EdgeInsets.zero,
       ),
     );
   }

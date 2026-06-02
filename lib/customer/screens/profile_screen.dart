@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import 'product_detail_screen.dart';
 import 'contact_screen.dart';
@@ -11,21 +11,22 @@ import 'auth_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _isEditing = false;
   bool _isLoading = true;
+  bool _isLocalGuestLoggedIn = false;
 
-  final TextEditingController _nameController = TextEditingController(text: "Sonnas Cafe");
-  final TextEditingController _emailController = TextEditingController(text: "soonas@gmail.com");
-  final TextEditingController _phoneController = TextEditingController(text: "09113231424");
-  final TextEditingController _addressController = TextEditingController(text: "4TH Phase, Shop No. 5,6,7 Ground Floor, \"Aum Shree\" Commercial & Residential Apartment Plot No-25, Akshay Colony, Unkal, Village, Karnataka 580021");
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   String _avatarUrl = "https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=120&h=120&fit=crop";
   List<String> _savedAddresses = [];
@@ -38,6 +39,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _totalOrders = 0;
   double _totalSpent = 0.0;
   String _loyaltyLevel = "Bronze Gourmet";
+  Stream<List<Map<String, dynamic>>>? _orderStream;
 
   @override
   void dispose() {
@@ -56,30 +58,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchUserData() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final isLoggedIn = prefs.getBool('is_guest_logged_in') ?? false;
+      
       final user = Supabase.instance.client.auth.currentUser;
+      String? cloudName;
+      String? cloudEmail;
+      String? cloudPhone;
+      
       if (user != null) {
-        final metadata = user.userMetadata ?? {};
-        final userPhone = metadata['phone']?.toString() ?? user.phone ?? "";
-        final userEmail = user.email ?? "";
-        final userName = metadata['full_name']?.toString() ?? "Boutique Guest";
+        cloudEmail = user.email;
+        cloudPhone = user.phone;
+        final meta = user.userMetadata ?? {};
         
-        if (mounted) {
-          setState(() {
-            if (userPhone.isNotEmpty) _phoneController.text = userPhone;
-            if (userEmail.isNotEmpty) _emailController.text = userEmail;
-            if (userName != "Boutique Guest") _nameController.text = userName;
-          });
+        if (meta['full_name'] != null && meta['full_name'].toString().isNotEmpty) {
+          cloudName = meta['full_name'].toString();
+        } else if (meta['name'] != null && meta['name'].toString().isNotEmpty) {
+          cloudName = meta['name'].toString();
+        } else if (meta['given_name'] != null) {
+          cloudName = "${meta['given_name']} ${meta['family_name'] ?? ''}".trim();
+        }
+
+        if (cloudName == null || cloudName.isEmpty) {
+          if (cloudEmail != null && cloudEmail.contains('@')) {
+            final prefix = cloudEmail.split('@').first;
+            cloudName = prefix.replaceAll(RegExp(r'[._-]'), ' ').split(' ').map((word) {
+              if (word.isEmpty) return '';
+              return word[0].toUpperCase() + word.substring(1).toLowerCase();
+            }).join(' ').trim();
+          }
         }
       }
+
+      final guestName = prefs.getString('guest_name') ?? "Guest";
+      final guestPhone = prefs.getString('guest_phone') ?? "";
+      final guestEmail = prefs.getString('guest_email') ?? "";
+
+      setState(() {
+        _isLocalGuestLoggedIn = isLoggedIn;
+        
+        _emailController.text = cloudEmail ?? guestEmail;
+        
+        if (cloudPhone != null && cloudPhone.isNotEmpty) {
+          _phoneController.text = cloudPhone.replaceAll('+91', '');
+        } else if (guestPhone.isNotEmpty) {
+          _phoneController.text = guestPhone;
+        }
+        
+        if (cloudName != null && cloudName.isNotEmpty) {
+          _nameController.text = cloudName;
+        } else if (guestName != "Guest") {
+          _nameController.text = guestName;
+        } else {
+          _nameController.text = "Guest";
+        }
+      });
       
       // Load all other offline/online details concurrently!
       await _loadAvatar();
       await _loadSavedAddresses();
       await _loadNotificationPrefs();
-      await _fetchOrderStats();
+      try {
+        await _fetchOrderStats();
+      } catch (e) {
+        debugPrint("Failed to fetch order stats: $e");
+      }
       
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _initOrderStream();
+          _isLoading = false;
+        });
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
@@ -108,13 +157,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     try {
       final supabase = Supabase.instance.client;
-      await supabase.auth.updateUser(
-        UserAttributes(
-          data: {
-            'avatar_url': url,
-          },
-        ),
-      );
+      if (supabase.auth.currentUser != null) {
+        await supabase.auth.updateUser(
+          UserAttributes(
+            data: {
+              'avatar_url': url,
+            },
+          ),
+        );
+      }
     } catch (e) {
       debugPrint("Failed to sync avatar with cloud: $e");
     }
@@ -174,32 +225,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _fetchOrderStats() async {
     try {
       final supabase = Supabase.instance.client;
-      final currentUser = supabase.auth.currentUser;
-      if (currentUser == null) return;
-
-      final rawPhone = (currentUser.userMetadata?['phone']?.toString() ??
-          currentUser.phone ??
-          '').replaceAll(RegExp(r'\D'), '');
+      final rawPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
 
       final userPhone = rawPhone.length > 10
           ? rawPhone.substring(rawPhone.length - 10)
           : rawPhone;
 
-      final userEmail = currentUser.email?.trim();
+      final userEmail = _emailController.text.trim();
 
       var query = supabase
           .from('Order')
           .select('totalPrice');
 
-      if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
-        query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
-      } else if (userEmail != null && userEmail.isNotEmpty) {
-        query = query.eq('customerEmail', userEmail);
-      } else if (userPhone.isNotEmpty) {
-        query = query.eq('customerPhone', userPhone);
-      } else {
+      List<String> filters = [];
+      if (userEmail.isNotEmpty) {
+        filters.add('customerEmail.eq.$userEmail');
+      }
+      if (userPhone.isNotEmpty) {
+        filters.add('customerPhone.eq.$userPhone');
+        filters.add('customerPhone.eq.91$userPhone');
+        filters.add('customerPhone.eq.+91$userPhone');
+        filters.add('whatsappPhone.eq.$userPhone');
+        filters.add('whatsappPhone.eq.91$userPhone');
+        filters.add('whatsappPhone.eq.+91$userPhone');
+      }
+
+      if (filters.isEmpty) {
         return;
       }
+
+      query = query.or(filters.join(','));
 
       final data = await query;
 
@@ -231,24 +286,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  void _initOrderStream() {
+    final rawPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
+    final cleanPhone = rawPhone.length > 10 
+        ? rawPhone.substring(rawPhone.length - 10) 
+        : rawPhone;
+    final email = _emailController.text.trim();
+    final client = Supabase.instance.client;
+
+    final streams = <Stream<List<Map<String, dynamic>>>>[];
+
+    if (cleanPhone.isNotEmpty) {
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('customerPhone', cleanPhone)
+          .limit(1));
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('customerPhone', '91$cleanPhone')
+          .limit(1));
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('customerPhone', '+91$cleanPhone')
+          .limit(1));
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('whatsappPhone', cleanPhone)
+          .limit(1));
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('whatsappPhone', '91$cleanPhone')
+          .limit(1));
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('whatsappPhone', '+91$cleanPhone')
+          .limit(1));
+    }
+    if (email.isNotEmpty) {
+      streams.add(client
+          .from('Order')
+          .stream(primaryKey: ['id'])
+          .eq('customerEmail', email)
+          .limit(1));
+    }
+
+    if (streams.isEmpty) {
+      _orderStream = const Stream<List<Map<String, dynamic>>>.empty();
+    } else if (streams.length == 1) {
+      _orderStream = streams.first;
+    } else {
+      _orderStream = _mergeOrderStreamsList(streams);
+    }
+  }
+
 
 
   Future<void> _saveProfile() async {
     setState(() => _isLoading = true);
     try {
-      final supabase = Supabase.instance.client;
-      await supabase.auth.updateUser(
-        UserAttributes(
-          data: {
-            'full_name': _nameController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'default_address': _addressController.text.trim(),
-          },
-        ),
-      );
-      
+      final name = _nameController.text.trim();
+      final phone = _phoneController.text.trim();
+      final address = _addressController.text.trim();
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('default_address', _addressController.text.trim());
+      await prefs.setString('guest_name', name);
+      await prefs.setString('guest_phone', phone);
+      await prefs.setString('default_address', address);
+      
+      try {
+        final supabase = Supabase.instance.client;
+        if (supabase.auth.currentUser != null) {
+          await supabase.auth.updateUser(
+            UserAttributes(
+              data: {
+                'full_name': name,
+                'phone': phone,
+                'default_address': address,
+              },
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint("Could not update cloud user: $e");
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -259,6 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
         setState(() {
+          _initOrderStream();
           _isEditing = false;
           _isLoading = false;
         });
@@ -376,17 +503,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Stream<List<Map<String, dynamic>>> _mergeOrderStreams(
-      Stream<List<Map<String, dynamic>>> s1,
-      Stream<List<Map<String, dynamic>>> s2) {
+  Stream<List<Map<String, dynamic>>> _mergeOrderStreamsList(
+      List<Stream<List<Map<String, dynamic>>>> streams) {
     final controller = StreamController<List<Map<String, dynamic>>>();
-    StreamSubscription? sub1;
-    StreamSubscription? sub2;
-    List<Map<String, dynamic>> last1 = [];
-    List<Map<String, dynamic>> last2 = [];
+    final subscriptions = <StreamSubscription>[];
+    final lastData = List<List<Map<String, dynamic>>>.generate(streams.length, (_) => []);
 
     void emitCombined() {
-      final combined = [...last1, ...last2];
+      final combined = <Map<String, dynamic>>[];
+      for (var list in lastData) {
+        combined.addAll(list);
+      }
       combined.sort((a, b) {
         final aTime = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime(1970);
         final bTime = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime(1970);
@@ -403,19 +530,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     controller.onListen = () {
-      sub1 = s1.listen((data) {
-        last1 = data;
-        emitCombined();
-      }, onError: controller.addError);
-      sub2 = s2.listen((data) {
-        last2 = data;
-        emitCombined();
-      }, onError: controller.addError);
+      for (int i = 0; i < streams.length; i++) {
+        final sub = streams[i].listen((data) {
+          lastData[i] = data;
+          emitCombined();
+        }, onError: controller.addError);
+        subscriptions.add(sub);
+      }
     };
 
     controller.onCancel = () {
-      sub1?.cancel();
-      sub2?.cancel();
+      for (var sub in subscriptions) {
+        sub.cancel();
+      }
       controller.close();
     };
 
@@ -433,7 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const Color outline = Color(0xFF867277);
 
     final currentUser = Supabase.instance.client.auth.currentUser;
-    if (currentUser == null) {
+    if (!_isLocalGuestLoggedIn && currentUser == null) {
       return _buildGuestView();
     }
 
@@ -637,8 +764,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 32),
                   
                   // My Wishlist Section
-                  Consumer<FavoritesProvider>(
-                    builder: (context, favorites, _) {
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final favorites = ref.watch(favoritesProvider);
                       if (favorites.favorites.isEmpty) return const SizedBox.shrink();
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -741,45 +869,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 24),
                   StreamBuilder<List<Map<String, dynamic>>>(
-                    key: Key("${_phoneController.text}_${_emailController.text}"),
-                    stream: (() {
-                      final rawPhone = _phoneController.text.replaceAll(RegExp(r'\D'), '');
-                      final cleanPhone = rawPhone.length > 10 
-                          ? rawPhone.substring(rawPhone.length - 10) 
-                          : rawPhone;
-                      final email = _emailController.text.trim();
-                      final client = Supabase.instance.client;
-
-                      if (cleanPhone.isNotEmpty && email.isNotEmpty) {
-                        final s1 = client
-                            .from('Order')
-                            .stream(primaryKey: ['id'])
-                            .eq('customerPhone', cleanPhone)
-                            .limit(1);
-                        final s2 = client
-                            .from('Order')
-                            .stream(primaryKey: ['id'])
-                            .eq('customerEmail', email)
-                            .limit(1);
-                        return _mergeOrderStreams(s1, s2);
-                      } else if (email.isNotEmpty) {
-                        return client
-                            .from('Order')
-                            .stream(primaryKey: ['id'])
-                            .eq('customerEmail', email)
-                            .order('createdAt', ascending: false)
-                            .limit(1);
-                      } else if (cleanPhone.isNotEmpty) {
-                        return client
-                            .from('Order')
-                            .stream(primaryKey: ['id'])
-                            .eq('customerPhone', cleanPhone)
-                            .order('createdAt', ascending: false)
-                            .limit(1);
-                      } else {
-                        return const Stream<List<Map<String, dynamic>>>.empty();
-                      }
-                    })(),
+                    key: Key("${_phoneController.text}_${_emailController.text}_${_nameController.text}"),
+                    stream: _orderStream,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());

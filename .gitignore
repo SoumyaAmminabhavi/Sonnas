@@ -4,8 +4,7 @@
 
 # ── Dependencies & Node.js (Web & Server Tooling) ────────────
 node_modules/
-/node_modules/
-/.pnp
+.pnp
 .pnp.js
 npm-debug.log*
 yarn-debug.log*
@@ -29,11 +28,7 @@ app.*.map.json
 /android/app/debug/
 /android/app/profile/
 /android/app/release/
-/android/app/debug
-/android/app/profile
-/android/app/release
 .gradle/
-android/.gradle/
 
 # ── Next.js ───────────────────────────────────────────────────
 /.next/
@@ -41,21 +36,14 @@ android/.gradle/
 /dist/
 
 # ── Environment Variables & Secret Credentials ────────────────
-# Ignore all .env files; whitelist only example/template files
-.env
 .env*
 !.env.example
 !.env.*.example
-.env*.local
-.env.test
-.env.production
-.env.development
 *.secret
 *.pem
 *.p12
 *.keystore
 key.properties
-android/key.properties
 
 # ── Vercel ────────────────────────────────────────────────────
 .vercel
@@ -135,6 +123,63 @@ projects/
 issues.txt
 graphify-out/
 **/graphify-out/
+
+# ── Redundant Archives, Screenshots & Logs ────────────────────
+/assets.zip
+/flutter_01.png
+/analysis_output.txt
+
+# ── Platform-Specific Consolidations (Android, iOS, macOS, Windows, Linux) ──
+# Android
+/android/local.properties
+/android/key.properties
+GeneratedPluginRegistrant.java
+.cxx/
+*.jks
+
+# iOS & macOS
+**/dgph
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+**/*sync/
+.sconsign.dblite
+.tags*
+**/.vagrant/
+**/DerivedData/
+Icon?
+**/Pods/
+**/.symlinks/
+/ios/profile
+**/xcuserdata/
+**/.generated/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Flutter.podspec
+**/Flutter/Generated.xcconfig
+**/Flutter/ephemeral/
+**/Flutter/app.flx
+**/Flutter/app.zip
+**/Flutter/flutter_assets/
+**/Flutter/flutter_export_environment.sh
+ServiceDefinitions.json
+**/Runner/GeneratedPluginRegistrant.*
+!default.mode1v3
+!default.mode2v3
+!default.pbxuser
+!default.perspectivev3
+
+# Windows & Linux
+**/flutter/ephemeral/
+*.user
+*.userosscache
+*.sln.docstates
+x64/
+x86/
+*.[Cc]ache
+!*.[Cc]ache/
 
 # google_fonts package runtime cache (fonts are bundled in assets/google_fonts/)
 /google_fonts/

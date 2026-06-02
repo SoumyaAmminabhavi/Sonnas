@@ -10,17 +10,17 @@ import 'dart:async';
 import 'providers/favorites_provider.dart';
 import 'providers/cart_provider.dart';
 import '../services/haptic_service.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CustomerMainScreen extends StatefulWidget {
+class CustomerMainScreen extends ConsumerStatefulWidget {
   const CustomerMainScreen({super.key});
 
   @override
-  State<CustomerMainScreen> createState() => _CustomerMainScreenState();
+  ConsumerState<CustomerMainScreen> createState() => _CustomerMainScreenState();
 }
 
-class _CustomerMainScreenState extends State<CustomerMainScreen> {
+class _CustomerMainScreenState extends ConsumerState<CustomerMainScreen> {
   int _currentIndex = 0;
   String? _menuSearchQuery;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -109,7 +109,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         : rawPhone;
     final String? email = user.email?.trim();
 
-    void handleOrders(List<Map<String, dynamic>> orders) {
+    bool isInitialLoadPhone = true;
+    bool isInitialLoadEmail = true;
+
+    void handleOrders(List<Map<String, dynamic>> orders, {required bool isInitial}) {
       for (final order in orders) {
         final String orderId = order['id'] ?? '';
         final String status = order['status'] ?? '';
@@ -118,12 +121,16 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
 
         if (_notifiedOrderStatuses.contains(notifyKey)) continue;
 
-        if (status == 'OUT_FOR_DELIVERY') {
+        if (isInitial) {
           _notifiedOrderStatuses.add(notifyKey);
-          _showStatusNotification("🚀 $orderNum is out for delivery!");
-        } else if (status == 'DELIVERED') {
-          _notifiedOrderStatuses.add(notifyKey);
-          _showStatusNotification("✨ $orderNum has been delivered! Enjoy!");
+        } else {
+          if (status == 'OUT_FOR_DELIVERY') {
+            _notifiedOrderStatuses.add(notifyKey);
+            _showStatusNotification("🚀 $orderNum is out for delivery!");
+          } else if (status == 'DELIVERED') {
+            _notifiedOrderStatuses.add(notifyKey);
+            _showStatusNotification("✨ $orderNum has been delivered! Enjoy!");
+          }
         }
       }
     }
@@ -133,7 +140,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           .from('Order')
           .stream(primaryKey: ['id'])
           .eq('customerPhone', phone)
-          .listen(handleOrders);
+          .listen((data) {
+            handleOrders(data, isInitial: isInitialLoadPhone);
+            isInitialLoadPhone = false;
+          });
     }
 
     if (email != null && email.isNotEmpty) {
@@ -141,7 +151,10 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           .from('Order')
           .stream(primaryKey: ['id'])
           .eq('customerEmail', email)
-          .listen(handleOrders);
+          .listen((data) {
+            handleOrders(data, isInitial: isInitialLoadEmail);
+            isInitialLoadEmail = false;
+          });
     }
   }
 
@@ -151,7 +164,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
         .stream(primaryKey: ['id'])
         .listen((List<Map<String, dynamic>> cakes) {
           if (!mounted) return;
-          final favoritesProvider = context.read<FavoritesProvider>();
+          final favoritesProviderState = ref.read(favoritesProvider);
           
           for (final cake in cakes) {
             final bool isAvailable = cake['isAvailable'] ?? true;
@@ -161,7 +174,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
             // Only notify if it was previously UNAVAILABLE and is now AVAILABLE
             final bool wasAvailable = _previousStockStatus[cakeId] ?? true; 
 
-            if (isAvailable && !wasAvailable && favoritesProvider.isFavorite(cakeId, cakeName)) {
+            if (isAvailable && !wasAvailable && favoritesProviderState.isFavorite(cakeId, cakeName)) {
               _showStatusNotification("🍰 Good news! $cakeName is back in stock!");
             }
             
@@ -174,7 +187,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   void _setupAbandonedCartListener() {
     // Check every 10 minutes if the cart is abandoned
     _abandonedCartTimer = Timer.periodic(const Duration(minutes: 10), (timer) {
-      final cart = context.read<CartProvider>();
+      final cart = ref.read(cartProvider);
       if (cart.items.isNotEmpty && _currentIndex != 2) {
         _showStatusNotification("🛒 Your bag is waiting! Don't miss out on your treats.");
       }
@@ -231,13 +244,18 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             ),
             centerTitle: true,
-            title: Text(
-              "Sonnas",
-              style: GoogleFonts.notoSerif(
-                fontSize: 24,
-                fontWeight: FontWeight.w400,
-                fontStyle: FontStyle.italic,
-                color: primaryColor,
+            title: InkWell(
+              onTap: () {
+                setState(() => _currentIndex = 0);
+              },
+              child: Text(
+                "Sonnas",
+                style: GoogleFonts.notoSerif(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w400,
+                  fontStyle: FontStyle.italic,
+                  color: primaryColor,
+                ),
               ),
             ),
             actions: [
@@ -278,7 +296,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildNavItem(0, Icons.storefront, "BOUTIQUE"),
+                  _buildNavItem(0, Icons.home_outlined, "HOME"),
                   _buildNavItem(1, Icons.restaurant_menu, "MENU"),
                   _buildNavItem(2, Icons.shopping_bag_outlined, "BAG"),
                   _buildNavItem(3, Icons.receipt_long, "ORDERS"),
@@ -308,9 +326,14 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
           // Sidebar Logo
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              children: [
-                Text(
+            child: InkWell(
+              onTap: () {
+                setState(() => _currentIndex = 0);
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
                   "Sonna's",
                   style: GoogleFonts.notoSerif(
                     fontSize: 32,
@@ -319,16 +342,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                     color: primaryColor,
                   ),
                 ),
-                Text(
-                  "PATISSERIE",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4,
-                    color: secondaryColor.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
           const SizedBox(height: 80),
@@ -339,7 +353,7 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  _buildSidebarItem(0, Icons.storefront, "BOUTIQUE"),
+                  _buildSidebarItem(0, Icons.home_outlined, "HOME"),
                   const SizedBox(height: 12),
                   _buildSidebarItem(1, Icons.restaurant_menu, "THE MENU"),
                   const SizedBox(height: 12),
@@ -375,7 +389,11 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
                   children: [
                     CircleAvatar(
                       radius: 20,
+                      backgroundColor: Colors.grey.withValues(alpha: 0.2),
                       backgroundImage: NetworkImage(_avatarUrl),
+                      onBackgroundImageError: (exception, stackTrace) {
+                        debugPrint('Could not load avatar: $exception');
+                      },
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -508,7 +526,6 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
   Widget _buildDrawer() {
     const Color primaryColor = Color(0xFFFF4D8D);
     const Color surfaceColor = Color(0xFFFFF0F6);
-    const Color secondaryColor = Color(0xFF701235);
 
     return Drawer(
       backgroundColor: surfaceColor,
@@ -520,22 +537,23 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    "Sonna's",
-                    style: GoogleFonts.notoSerif(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w400,
-                      fontStyle: FontStyle.italic,
-                      color: primaryColor,
-                    ),
-                  ),
-                  Text(
-                    "PATISSERIE",
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 4,
-                      color: secondaryColor.withValues(alpha: 0.4),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() => _currentIndex = 0);
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Sonna's",
+                        style: GoogleFonts.notoSerif(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w400,
+                          fontStyle: FontStyle.italic,
+                          color: primaryColor,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -543,8 +561,8 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.storefront, color: primaryColor),
-            title: Text("BOUTIQUE", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
+            leading: const Icon(Icons.home_outlined, color: primaryColor),
+            title: Text("HOME", style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentIndex = 0);

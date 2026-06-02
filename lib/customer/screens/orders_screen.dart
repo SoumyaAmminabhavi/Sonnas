@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'tracking_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_screen.dart';
@@ -16,6 +17,7 @@ class OrdersScreen extends StatefulWidget {
 class _OrdersScreenState extends State<OrdersScreen> {
   List<Map<String, dynamic>> orders = [];
   bool _isLoading = true;
+  bool _isLocalGuestLoggedIn = false;
 
   static const Color primary = Color(0xFFFF4D8D);
   static const Color background = Color(0xFFFFF0F6);
@@ -32,35 +34,69 @@ class _OrdersScreenState extends State<OrdersScreen> {
     try {
       final supabase = Supabase.instance.client;
       final currentUser = supabase.auth.currentUser;
-      if (currentUser == null) {
+      
+      final prefs = await SharedPreferences.getInstance();
+      final isGuestLoggedIn = prefs.getBool('is_guest_logged_in') ?? false;
+      if (mounted) {
+        setState(() {
+          _isLocalGuestLoggedIn = isGuestLoggedIn;
+        });
+      }
+
+      if (currentUser == null && !isGuestLoggedIn) {
         setState(() => _isLoading = false);
         return;
       }
 
-      final rawPhone = (currentUser.userMetadata?['phone']?.toString() ??
-          currentUser.phone ??
-          '').replaceAll(RegExp(r'\D'), '');
+      String? userEmail = currentUser?.email?.trim();
+      String? userPhone;
 
-      final userPhone = rawPhone.length > 10
-          ? rawPhone.substring(rawPhone.length - 10)
-          : rawPhone;
+      if (currentUser != null && currentUser.userMetadata != null) {
+        final meta = currentUser.userMetadata!;
+        if (meta['phone'] != null) {
+          userPhone = meta['phone'].toString().replaceAll(RegExp(r'\D'), '');
+        }
+      }
 
-      final userEmail = currentUser.email?.trim();
+      if ((userPhone == null || userPhone.isEmpty) && currentUser != null && currentUser.phone != null) {
+        userPhone = currentUser.phone!.replaceAll(RegExp(r'\D'), '');
+      }
+
+      // Check guest info from SharedPreferences
+      if (userPhone == null || userPhone.isEmpty) {
+        userPhone = (prefs.getString('guest_phone') ?? prefs.getString('saved_phone'))
+            ?.replaceAll(RegExp(r'\D'), '');
+      }
+
+      if (userPhone != null && userPhone.isNotEmpty) {
+        userPhone = userPhone.length > 10
+            ? userPhone.substring(userPhone.length - 10)
+            : userPhone;
+      }
 
       var query = supabase
           .from('Order')
           .select('*, items:OrderItem(*)');
 
-      if (userEmail != null && userEmail.isNotEmpty && userPhone.isNotEmpty) {
-        query = query.or('customerEmail.eq.$userEmail,customerPhone.eq.$userPhone');
-      } else if (userEmail != null && userEmail.isNotEmpty) {
-        query = query.eq('customerEmail', userEmail);
-      } else if (userPhone.isNotEmpty) {
-        query = query.eq('customerPhone', userPhone);
-      } else {
+      List<String> filters = [];
+      if (userEmail != null && userEmail.isNotEmpty) {
+        filters.add('customerEmail.eq.$userEmail');
+      }
+      if (userPhone != null && userPhone.isNotEmpty) {
+        filters.add('customerPhone.eq.$userPhone');
+        filters.add('customerPhone.eq.91$userPhone');
+        filters.add('customerPhone.eq.+91$userPhone');
+        filters.add('whatsappPhone.eq.$userPhone');
+        filters.add('whatsappPhone.eq.91$userPhone');
+        filters.add('whatsappPhone.eq.+91$userPhone');
+      }
+
+      if (filters.isEmpty) {
         if (mounted) setState(() => _isLoading = false);
         return;
       }
+
+      query = query.or(filters.join(','));
 
       final data = await query.order('createdAt', ascending: false);
 
@@ -398,7 +434,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final currentUser = Supabase.instance.client.auth.currentUser;
-    if (currentUser == null) {
+    if (!_isLocalGuestLoggedIn && currentUser == null) {
       return _buildGuestView(context);
     }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/cart_provider.dart';
 
@@ -18,7 +18,7 @@ class ProductOption {
   }
 }
 
-class ProductDetailScreen extends StatefulWidget {
+class ProductDetailScreen extends ConsumerStatefulWidget {
   final String? cakeId;
   final String title;
   final String price;
@@ -38,10 +38,10 @@ class ProductDetailScreen extends StatefulWidget {
             .toList();
 
   @override
-  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
+  ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen> {
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   String selectedSize = "";
   double currentPriceValue = 0.0;
   String currentPriceDisplay = "";
@@ -170,8 +170,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   ),
                                 ),
                               ),
-                               Consumer<FavoritesProvider>(
-                                builder: (context, favorites, _) {
+                               Consumer(
+                                builder: (context, ref, _) {
+                                  final favorites = ref.watch(favoritesProvider);
                                   final isFav = favorites.isFavorite(null, widget.title);
                                   return GestureDetector(
                                     onTap: () => favorites.toggleFavorite({
@@ -359,7 +360,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   .where((e) => e.value)
                                   .fold(0.0, (prev, e) => prev + (addonPrices[e.key]! / 100.0));
 
-                              context.read<CartProvider>().addItem(
+                              ref.read(cartProvider).addItem(
                                 "${widget.title}_${DateTime.now().millisecondsSinceEpoch}", 
                                 fullDescription, 
                                 (currentPriceValue + addonsTotal) * 100, 

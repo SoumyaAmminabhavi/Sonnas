@@ -3,21 +3,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'tracking_screen.dart';
 import 'product_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import '../../services/supabase_service.dart';
 import 'dart:async';
 import '../../widgets/performance_loader.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   final Function(String?) onViewMenu;
   const HomeScreen({super.key, required this.onViewMenu});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<Map<String, dynamic>> featuredCakes = [];
   bool _isLoading = true;
 
@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchFeaturedCakes() async {
     try {
       final supabase = Supabase.instance.client;
-      // Fetch all cakes and their options
+      // Fetch only the top 5 cakes ordered by sortOrder (instead of fetching everything and computing on client)
       final cakesData = await supabase
           .from('Cake')
           .select('*, options:CakeOption(*)');
@@ -438,26 +438,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ],
                                     ),
                                   ),
-                                  Consumer<FavoritesProvider>(
-                                    builder: (context, favorites, _) {
-                                      final isFav = favorites.isFavorite(
-                                        null,
-                                        cake['title']!,
-                                      );
+                                  Consumer(
+                                    builder: (context, ref, _) {
+                                      final favorites = ref.watch(favoritesProvider);
+                                      final isFav = favorites.isFavorite(null, cake['title']!);
                                       return IconButton(
-                                        onPressed:
-                                            () =>
-                                                favorites.toggleFavorite(cake),
+                                        onPressed: () => favorites.toggleFavorite(cake),
                                         icon: Icon(
-                                          isFav
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color:
-                                              isFav
-                                                  ? primaryColor
-                                                  : Colors.grey.withValues(
-                                                    alpha: 0.4,
-                                                  ),
+                                          isFav ? Icons.favorite : Icons.favorite_border,
+                                          color: isFav ? primaryColor : Colors.grey.withValues(alpha: 0.4),
                                           size: 18,
                                         ),
                                         visualDensity: VisualDensity.compact,

@@ -1,20 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/cart_provider.dart';
 import 'payment_screen.dart';
 
-class SelfCheckoutScreen extends StatefulWidget {
+class SelfCheckoutScreen extends ConsumerStatefulWidget {
   const SelfCheckoutScreen({super.key});
 
   @override
-  State<SelfCheckoutScreen> createState() => _SelfCheckoutScreenState();
+  ConsumerState<SelfCheckoutScreen> createState() => _SelfCheckoutScreenState();
 }
 
-class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
+class _SelfCheckoutScreenState extends ConsumerState<SelfCheckoutScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null && user.userMetadata != null) {
+        final meta = user.userMetadata!;
+        String? name;
+        if (meta['full_name'] != null && meta['full_name'].toString().isNotEmpty) {
+          name = meta['full_name'].toString();
+        } else if (meta['name'] != null && meta['name'].toString().isNotEmpty) {
+          name = meta['name'].toString();
+        } else if (meta['given_name'] != null) {
+          name = "${meta['given_name']} ${meta['family_name'] ?? ''}".trim();
+        }
+
+        if (name == null || name.isEmpty) {
+          final email = user.email;
+          if (email != null && email.contains('@')) {
+            final prefix = email.split('@').first;
+            name = prefix.replaceAll(RegExp(r'[._-]'), ' ').split(' ').map((word) {
+              if (word.isEmpty) return '';
+              return word[0].toUpperCase() + word.substring(1).toLowerCase();
+            }).join(' ').trim();
+          }
+        }
+
+        if (name != null && name.isNotEmpty) {
+          _nameController.text = name;
+        }
+        final phone = meta['phone'];
+        if (phone != null) {
+          _phoneController.text = phone.toString().replaceAll('+91', '');
+        }
+      }
+    } catch (e) {
+      debugPrint("Error checking Supabase auth in self checkout: $e");
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_nameController.text.isEmpty) {
+        final savedName = prefs.getString('guest_name');
+        if (savedName != null && mounted) {
+          setState(() {
+            _nameController.text = savedName;
+          });
+        }
+      }
+      if (_phoneController.text.isEmpty) {
+        final savedPhone = prefs.getString('guest_phone') ?? prefs.getString('saved_phone');
+        if (savedPhone != null && mounted) {
+          setState(() {
+            _phoneController.text = savedPhone;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error loading guest details in self checkout: $e");
+    }
+  }
 
   @override
   void dispose() {
@@ -28,7 +96,7 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
     const primary = Color(0xFFFF4D8D);
     const background = Color(0xFFFFF0F6);
     const berryText = Color(0xFF701235);
-    final cart = Provider.of<CartProvider>(context);
+    final cart = ref.watch(cartProvider);
 
     return Scaffold(
       backgroundColor: background,
@@ -146,6 +214,16 @@ class _SelfCheckoutScreenState extends State<SelfCheckoutScreen> {
                   final int subtotalCents = cart.total.round();
                   final int grandTotalCents = subtotalCents;
                   
+                  // Save guest details to SharedPreferences for future pre-filling
+                  final trimmedName = _nameController.text.trim();
+                  final trimmedPhone = phone;
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setString('guest_name', trimmedName);
+                    prefs.setString('guest_phone', trimmedPhone);
+                  }).catchError((e) {
+                    debugPrint("Error saving guest details to SharedPreferences: $e");
+                  });
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(

@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/favorites_provider.dart';
 import '../../services/supabase_service.dart';
 import 'product_detail_screen.dart';
 
-class MenuScreen extends StatefulWidget {
+class MenuScreen extends ConsumerStatefulWidget {
   final String? initialSearchQuery;
   const MenuScreen({super.key, this.initialSearchQuery});
 
   @override
-  State<MenuScreen> createState() => _MenuScreenState();
+  ConsumerState<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _MenuScreenState extends State<MenuScreen> {
+class _MenuScreenState extends ConsumerState<MenuScreen> {
   List<Map<String, dynamic>> menuItems = [];
   List<Map<String, dynamic>> filteredItems = [];
   bool _isLoading = true;
@@ -577,29 +577,17 @@ class _MenuScreenState extends State<MenuScreen> {
                   },
                 ),
               ),
-              title: Text(
-                item['title'],
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                item['price'],
-                style: GoogleFonts.notoSerif(
-                  color: primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              trailing: Consumer<FavoritesProvider>(
-                builder: (context, favorites, _) {
-                  final isFav = favorites.isFavorite(
-                    item['id']?.toString(),
-                    item['title'],
-                  );
+              title: Text(item['title'], style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold)),
+              subtitle: Text(item['price'], style: GoogleFonts.notoSerif(color: primary, fontWeight: FontWeight.bold)),
+              trailing: Consumer(
+                builder: (context, ref, _) {
+                  final favorites = ref.watch(favoritesProvider);
+                  final isFav = favorites.isFavorite(item['id']?.toString(), item['title']);
                   return IconButton(
                     onPressed: () => favorites.toggleFavorite(item),
                     icon: Icon(
                       isFav ? Icons.favorite : Icons.favorite_border,
-                      color:
-                          isFav ? primary : Colors.grey.withValues(alpha: 0.3),
+                      color: isFav ? primary : Colors.grey.withValues(alpha: 0.3),
                       size: 20,
                     ),
                   );
@@ -705,12 +693,10 @@ class _MenuScreenState extends State<MenuScreen> {
                 ],
               ),
             ),
-            Consumer<FavoritesProvider>(
-              builder: (context, favorites, _) {
-                final isFav = favorites.isFavorite(
-                  item['id']?.toString(),
-                  item['title'],
-                );
+            Consumer(
+              builder: (context, ref, _) {
+                final favorites = ref.watch(favoritesProvider);
+                final isFav = favorites.isFavorite(item['id']?.toString(), item['title']);
                 return IconButton(
                   onPressed: () => favorites.toggleFavorite(item),
                   icon: Icon(

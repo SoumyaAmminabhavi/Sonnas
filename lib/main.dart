@@ -2,13 +2,10 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'customer/providers/cart_provider.dart' show CartProvider;
-import 'customer/providers/favorites_provider.dart' show FavoritesProvider;
 import 'customer/main.dart';
 import 'customer/screens/welcome_screen.dart';
 
@@ -22,6 +19,7 @@ import 'services/auth_service.dart';
 import 'services/theme_service.dart';
 // import 'services/cart_provider.dart' as service_cart;
 // import 'customer/checkout_page.dart';
+import 'customer/screens/auth_callback_screen.dart';
 
 final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
 
@@ -46,7 +44,7 @@ void main() async {
     
     // Disable dynamic HTTP font fetching to ensure local assets are used
     GoogleFonts.config.allowRuntimeFetching = false;
-    if (!kReleaseMode && !kIsWeb) {
+    if (!kReleaseMode) {
       try {
         await dotenv.load(fileName: ".env");
       } catch (e) {
@@ -69,21 +67,20 @@ void main() async {
     }
     
     runApp(
-      ProviderScope(
-        child: MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => CartProvider()),
-            ChangeNotifierProvider(create: (_) => FavoritesProvider()),
-          ],
-          child: const PatisserieApp(),
-        ),
+      const ProviderScope(
+        child: PatisserieApp(),
       ),
     );
   } catch (e, stackTrace) {
     debugPrint('Critical Initialization Error: $e\n$stackTrace');
-    runApp(const MaterialApp(
+    runApp(MaterialApp(
       home: Scaffold(
-        body: Center(child: Text('Initialization failed. Please restart the app.')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text('Initialization failed:\n$e', textAlign: TextAlign.center),
+          ),
+        ),
       ),
     ));
   }
@@ -164,6 +161,7 @@ class _PatisserieAppState extends ConsumerState<PatisserieApp> {
       routes: {
         '/home': (context) => const CustomerMainScreen(),
         '/welcome': (context) => const WelcomeScreen(),
+        '/auth-callback': (context) => const AuthCallbackScreen(),
       },
       home: const AppNavigation(),
     );
@@ -188,6 +186,18 @@ class AppNavigation extends ConsumerStatefulWidget {
 
 class _AppNavigationState extends ConsumerState<AppNavigation> {
   int _currentIndex = 0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    precacheImage(
+      const NetworkImage(
+        'https://lh3.googleusercontent.com/aida-public/AB6AXuDByacWHy0qBkvb3ebrlLczBbsGfLJBx9g4Vj3Hf4Rf569lIXYKgH5nlnkTzU9zV4vEdhwPTtSpJbUM35KeRyEkvcU8cANByCauDlJo-EbylTpSvlTVI4mi8vLC2KjT5unMk_UwxMzUa_iRFQpAWBRVM-cIwySNaEJKYvDZAga_G0__V0h0mKmn7WZfPBUWETga8cpX86pb2zsU5fiMipshkb08cFRwG1zuIO7psicDnlPSrRJrC1Wva6_OgBNVKJ0I64vcZYWy7-KE'
+      ),
+      context,
+    );
+  }
+
 
   void _onTabSelected(int index) {
     setState(() {
