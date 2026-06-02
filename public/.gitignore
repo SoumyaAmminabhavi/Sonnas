@@ -5,3 +5,15 @@ version.json
 canvaskit/
 main.dart.wasm
 main.dart.mjs
+
+# Flutter web build artifacts
+/main.dart.js*
+/flutter.js
+/flutter_bootstrap.js
+/flutter_service_worker.js
+/index.html
+/favicon.ico
+/favicon.png
+/manifest.json
+/version.json
+/assets/
