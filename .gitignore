@@ -124,6 +124,7 @@ $RECYCLE.BIN/
 .agents/
 .cursor/
 .jetro/
+.qodo/
 .mcp.json
 .windsurfrules
 AGENT.md
@@ -132,8 +133,8 @@ artifacts/
 /data/
 projects/
 issues.txt
+graphify-out/
+**/graphify-out/
 
 # google_fonts package runtime cache (fonts are bundled in assets/google_fonts/)
 /google_fonts/
-.vercel
-.env*.local
