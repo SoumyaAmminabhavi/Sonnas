@@ -100,7 +100,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     final int amountInPaise = totalWithExtras.round();
     
     final options = {
-      'key': dotenv.get('RAZORPAY_KEY_ID', fallback: 'rzp_test_SlapcQRITI3KNO'),
+      'key': dotenv.isInitialized ? dotenv.get('RAZORPAY_KEY_ID', fallback: 'rzp_test_SlapcQRITI3KNO') : 'rzp_test_SlapcQRITI3KNO',
       'amount': amountInPaise,
       'name': "Sonnas",
       'description': 'Order Payment',
