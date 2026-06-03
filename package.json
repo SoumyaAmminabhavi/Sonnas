@@ -5,8 +5,9 @@
   "type": "module",
   "description": "Sonna Patisserie & Cafe — Next.js Admin & WhatsApp Bot backend + Flutter Mobile Application",
   "scripts": {
-    "build": "next build",
-    "build:vercel": "bash scripts/build-vercel.sh && next build",
+    "build": "npm run build:vercel",
+    "build:next": "next build",
+    "build:vercel": "bash scripts/build-vercel.sh && npm run build:next",
     "check": "eslint . && tsc --noEmit",
     "db:generate": "prisma migrate dev",
     "db:migrate": "prisma migrate deploy",
